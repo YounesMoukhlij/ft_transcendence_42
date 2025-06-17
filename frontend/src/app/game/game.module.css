@@ -1,0 +1,83 @@
+
+
+.pageContainer
+{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-direction: column;
+  height: 100vh;
+  background-color: transparent;
+
+
+}
+
+
+.gameContainer
+{
+  display: flex;
+  flex-direction: column;
+  height: 74vh;
+  width: 90%;
+
+
+
+}
+
+
+.gameHeader
+{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  flex-direction: row;
+  gap: 20px;
+
+  padding: 20px 50px;
+  background-color: transparent;
+
+
+}
+
+
+.gameUser
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 20px;
+
+    & h1
+    {
+        font-size: 20px;
+        font-weight: 800;
+    }
+}
+
+.playGround
+{
+    border: 6px solid rgb(255, 255, 255);
+    height: 58vh;
+    border-radius: 20px;
+    background-color: gray;
+    opacity: 60%;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+
+    & .left, .right
+    {
+        border-radius: 20px;
+        height: 58vh;
+        width: 50%;
+        border: 2px solid rgb(193, 28, 28);
+    }
+}
+
+
+
