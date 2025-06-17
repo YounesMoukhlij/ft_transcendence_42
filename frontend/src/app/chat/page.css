@@ -1,0 +1,120 @@
+.debug {
+  border: 2px solid red;
+}
+
+.debug > * {
+  border: 2px solid green;
+}
+
+.debug > * > * {
+  border: 2px solid blue;
+}
+
+
+
+
+.main-chat 
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+.chat{
+    display: flex;
+    flex-direction: column;
+    width: 80%;
+    height: 80%;
+    gap: 5%;
+}
+
+.freind {
+    position: relative;
+    width: 20%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap:2rem;
+
+    overflow: scroll;
+
+}
+
+.message{
+    flex-direction: row;
+    width: 75%;
+
+}
+
+.freind-title{
+    font-size: 60px;
+}
+
+.search-main{
+    border: 2px solid;
+    border-radius: 10px;
+    align-self: center;
+    /* justify-content: space-around; */
+    width: 90%;
+    /* margin-left: 20px; */
+    height: 4%;
+}
+
+.search{
+    width: 80%;
+    height: 100%;
+    outline: none;
+}
+
+.icon{
+    color:rgb(179, 173, 173);
+}
+
+
+
+.freind-card{
+    display: flex;
+    flex-direction: column;
+}
+
+.freind-div{
+    display: flex;
+    
+}
+
+
+.profile_status{
+    width: 80px;
+    height: 80px;
+
+}
+
+.img{
+    border-radius: 50%;
+} 
+
+
+.name-message{
+    padding-left: 10%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap:0.5rem;
+
+}
+
+
+
+
+
+
+
+
+
+
+.title 
+{
+    padding-left: 10%;
+    font-size: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+}
