@@ -20,7 +20,7 @@
 
         gap: 80px;
         padding: 20px;
-        
+
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -30,6 +30,13 @@
     }
 }
 
+
+.image:hover
+{
+
+    transform: scaleX(1.5) scaleY(1.5);
+    transition: all 0.6s ease-in-out;
+}
 
 
 

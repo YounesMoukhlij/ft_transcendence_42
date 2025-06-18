@@ -55,11 +55,9 @@ export default function ModeSwiper()
                 />
               </div>
               <div className={styles.textContainer}>
-                <h2 className={styles.title}>{mode.title}</h2>
-                <p className={styles.description}>{mode.description}</p>
-                <button className={styles.button}  onClick={() => handleClick(mode.route)}>
-                  <h2>{mode.buttonname}</h2>
-                </button>
+                  <button className={styles.button}  onClick={() => handleClick(mode.route)}>
+                    {mode.buttonname}
+                  </button>
               </div>
             </SwiperSlide>
           ))}
