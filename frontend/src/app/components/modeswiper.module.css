@@ -5,7 +5,8 @@
     height: 55vh;
 
     border-radius: 30px;
-     border: 10px solid y;
+
+
 
 
 }
@@ -51,28 +52,33 @@
 
     cursor: pointer;
 
-    & h2
-    {
-        font-size: x-large;
-        font-weight: bold;
-    }
+
+    font-size: x-large;
+    font-weight: bold;
+
+
 }
 
+button:hover
+{
+    background: white;
+    color: black;
+
+    transform: scaleX(1.1) scaleY(1.1);
+    transition: all 0.5s ease-in-out;
+}
 
 .textContainer
 {
-    height: 100%;
-
     display: flex;
     justify-content: center;
     align-items: end;
 
 
+    height: 100%;
 
     background: transparent;
-    padding: 10px;
 }
-
 
 
 

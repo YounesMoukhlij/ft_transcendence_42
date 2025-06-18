@@ -71,17 +71,14 @@
 
 
 
-
-
-  /* Existing styles remain the same */
-
-/* Dropdown styles */
-.imgGrp {
+.imgGrp
+{
   position: relative;
   display: inline-block;
 }
 
-.dropdownMenu {
+.dropdownMenu
+{
   position: absolute;
   right: 0;
   top: 100%;
@@ -95,7 +92,7 @@
 }
 
 .dropdownMenu ul {
-  list-style: none;
+    list-style: none;
   padding: 0;
   margin: 0;
 }
@@ -120,8 +117,8 @@
   display: block;
 }
 
-/* Animation */
-@keyframes fadeIn {
+@keyframes fadeIn
+{
   from {
     opacity: 0;
     transform: translateY(-10px);
@@ -132,7 +129,6 @@
   }
 }
 
-/* Make profile image clickable */
 .img {
   cursor: pointer;
   transition: transform 0.2s;
