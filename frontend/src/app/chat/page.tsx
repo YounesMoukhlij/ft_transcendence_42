@@ -33,13 +33,13 @@ const FreindsList = ({ photo ,title , message}) =>{
       <div className='profile_status'>
         <img className='img' src={photo}/>
       </div>
-      
+
       <div className='name-message'>
         <div className='title'><h1>{title}</h1></div>
         <div className='last-message'>
           <p>{message}</p>
         </div>
-    </div> 
+    </div>
     </div>
   );
 };
@@ -49,21 +49,23 @@ const FreindsList = ({ photo ,title , message}) =>{
 export default function chatPage() {
   return (
     <div className='main-chat' >
-      <div className='chat debug '>
+      <div className='chat  '>
 
 
           <div className="freind ">
-            <div><h1 className='freind-title'>Freinds</h1></div>
+            <div><h1 className='freind-title'>Friends</h1></div>
 
             <div className='search-main '>
                 <input className="search" placeholder=' Search for a freind' />
-                <button className='button'><FaSearch  className="icon" size={24}/></button>
+                {/* <button className='button'><FaSearch  className="icon" size={24}/></button> */}
+                <button className='button'>ssss</button>
             </div>
 
 
-    
-              
-                {array.map(friend => (
+
+
+                {array.map(friend =>
+                (
                   <div>
 
                   <FreindsList
