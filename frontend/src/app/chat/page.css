@@ -13,24 +13,21 @@
 
 
 
-.main-chat
+.main-chat 
 {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 90%;
-
-    border: 2px solid white;
+    height: 100%;
 }
 .chat{
     display: flex;
-    flex-direction: column;
     width: 80%;
     height: 80%;
     gap: 5%;
 }
 
-.freind {
+.freind {    
     position: relative;
     width: 20%;
     height: 100%;
@@ -39,13 +36,16 @@
     gap:2rem;
 
     overflow: scroll;
+    border: 1px solid;
 
+
+
+    
 }
 
 .message{
     flex-direction: row;
     width: 75%;
-
 }
 
 .freind-title{
@@ -56,15 +56,13 @@
     border: 2px solid;
     border-radius: 10px;
     align-self: center;
-    /* justify-content: space-around; */
     width: 90%;
-    /* margin-left: 20px; */
-    height: 4%;
+
 }
 
 .search{
     width: 80%;
-    height: 100%;
+    height: 4.5rem;
     outline: none;
 }
 
@@ -81,11 +79,20 @@
 
 .freind-div{
     display: flex;
+    
+}
+.freind-div:hover {
+    display: flex;
+    cursor: pointer;
+    background-color: rgba(66, 159, 115, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;;       
 
 }
 
 
 .profile_status{
+    flex-direction: column;
     width: 80px;
     height: 80px;
 
@@ -93,7 +100,7 @@
 
 .img{
     border-radius: 50%;
-}
+} 
 
 
 .name-message{
@@ -106,17 +113,118 @@
 }
 
 
-
-
-
-
-
-
-
-
-.title
+.title 
 {
     padding-left: 10%;
     font-size: 20px;
     font-family: Arial, Helvetica, sans-serif;
+}
+
+.Online{
+    position: relative;
+    bottom: 30%;
+    right: -80%;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: green;
+}
+
+
+.Offline{
+    position: relative;
+    bottom: 30%;
+    right: -80%;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgb(200, 9, 9);
+}
+
+
+.msg-body{
+    display: flex;
+    flex-direction: column;
+    overflow: scroll;
+}
+
+
+.Contact{
+    display: flex;
+    align-items: center;
+    justify-items: center;
+    background-color: rgb(37, 37, 43);
+    height: 5%;
+
+}
+
+.chat-profile-parent{padding-left: 2%; display: flex;  height: 80%; align-self: center;}
+.chat-profile{border-radius: 50%;}
+.contact-status{padding-left: 0.5%; font-size: large; display: flex; align-items: center;
+}
+
+
+.test{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+.options{display: flex; padding: 2rem  1rem;}
+
+.msg-body{
+    padding-left: 1rem;
+    padding-right: 1rem;
+    height: 85%;
+}
+
+.Fot-div{
+    height: 10%;
+    background-color: rgb(43, 226, 86);
+}
+
+.msg-parent{
+    padding-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+} 
+
+.send{
+    padding: 10px;
+    display: flex;
+    align-self: flex-end;
+    background-color: #2E372E;
+    border-radius: 10px;
+    padding-left: 0.5rem;
+    width: 300px;
+    word-wrap: break-all;
+
+}
+
+.recv{
+    padding: 10px;
+    display: flex;
+    text-wrap: wrap;
+    align-self: flex-start;
+    background-color: rgb(22, 20, 20);
+
+    border-radius: 10px;
+    padding-left: 0.5rem;
+    width: 300px;
+    word-wrap: break-all;
+
+}
+
+.message{
+    border: 1px solid;
+    display: flex;
+    flex-direction: column;
+}
+.message-test{
+    margin-top: 2rem;
+    display: flex;
+    width: 25rem;
+    padding: 1rem;
+    background-color: rgb(168, 147, 104);
+    align-self: center;
 }
