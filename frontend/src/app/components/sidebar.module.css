@@ -5,9 +5,11 @@
     width: 100px;
     height: 100%;
 
-    background-color: transparent;
+
     display: flex;
     align-items: center;
+
+    background: transparent;
 
     & .container
     {
@@ -25,6 +27,8 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
+
+        background-color: black;
 
 
     }

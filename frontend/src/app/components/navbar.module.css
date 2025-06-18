@@ -4,6 +4,9 @@
   background: transparent;
   height: 10vh;
   margin: 10px;
+
+
+  z-index: 1000;
 }
 
 
