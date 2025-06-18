@@ -13,23 +13,18 @@ import "./globals.css";
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>)
 {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
+      <head>
+        <title>Ping Pong Game</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body>
-        <div className="fixed inset-0 -z-10">
-          <Image
-            src="/Background.png"
-            alt="Background"
-            fill
-            quality={100}
-            className="object-cover"
-          />
-        </div>
         <Navbar />
-        <div style={{ display: "flex" }}>
+        <div className="fullContainer">
           <Sidebar />
-          <main style={{ flex: 1, padding: "1rem" }}>
+          <div className="child">
             {children}
-          </main>
+          </div>
         </div>
       </body>
     </html>

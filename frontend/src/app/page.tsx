@@ -11,7 +11,7 @@ export default function Home()
 {
   return (
 
-    <div className="container" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh" , border: "1px solid red"}}>
+    <div className="pageContainer">
       <h1 style={{ color: "red" }}>This is the opening Page</h1>
       <p>Welcome to the dashboard page!</p>
       <p>Click on the sidebar to navigate.</p>

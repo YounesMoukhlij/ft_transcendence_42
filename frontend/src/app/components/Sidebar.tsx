@@ -1,9 +1,11 @@
 'use client';
 
 import styles from './sidebar.module.css';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+
 
 export default function Sidebar()
 {
@@ -18,14 +20,14 @@ export default function Sidebar()
     <aside className={styles.sidebar}>
       <div className={styles.container}>
         {navItems.map((item) => (
-          <Link href={item.path} key={item.path}  className={`${styles.imgGrp} ${pathname === item.path ? styles.active : ''}`}>
+          <Link href={item.path} key={item.path}>
             <Image
               src={item.icon}
               alt={item.alt}
-              width={24}
-              height={24}
-              className={styles.img}
-            />
+              width={40}
+              height={40}
+              className={styles.image}
+              />
           </Link>
         ))}
       </div>
