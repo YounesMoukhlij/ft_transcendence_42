@@ -2,8 +2,7 @@
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import Image from "next/image";
-// import Loading from "./components/Loading";
+import ParticlesBackground from "./components/ParticlesBackground";
 
 import React  from "react";
 import "./globals.css";
@@ -26,6 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             {children}
           </div>
         </div>
+        <ParticlesBackground id="particles" />
       </body>
     </html>
   );

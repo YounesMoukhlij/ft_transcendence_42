@@ -8,17 +8,16 @@
 
 
 
-
 }
 
 .swiper
 {
     height: 100%;
-    /* background: transparent; */
 }
 
 .slide
 {
+  background: black;
 
 }
 

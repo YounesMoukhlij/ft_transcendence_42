@@ -7,11 +7,14 @@
   justify-content: center;
 
   flex-direction: column;
-  /* background-color: transparent; */
+
 
 
   height: 100%;
   width: 100%;
+
+
+
 
 }
 
@@ -83,7 +86,7 @@
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
   width: 100px;
   height: 100px;
-  
+
   & h2
   {
     font-weight: 800;
