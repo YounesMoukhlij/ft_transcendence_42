@@ -1,12 +1,14 @@
 
 "use client";
 import { useState } from 'react';
+import Link from 'next/link';
 import './page.css'
 import { FaSearch } from "react-icons/fa";
 import { SlOptions } from "react-icons/sl";
 import EmojiPicker from 'emoji-picker-react';
 import { BsEmojiSmile } from "react-icons/bs";
 import { IoSend } from "react-icons/io5";
+import { IoGameController } from "react-icons/io5";
 
 const array = [
   { id: 1, status: 1, photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHUndSzxcF1UbSXX3bVILVaUbSIhoc_GEA8g&s', title: "avatar" , message:"w fin cv hani fiha chi blan wla walo  " },
@@ -75,7 +77,7 @@ const FreindsList = ({  photo ,title , message , status, setConversation}) =>{
           <p>{message.length > 30 ? message.substr(0, 26) + "..." : message}</p>
 
         </div>
-    </div> 
+    </div>
     </div>
   );
 };
@@ -86,7 +88,24 @@ export default function chatPage() {
   const [messages, setMessages] = useState([]);
   const [show , setShow] = useState(false);
   const [input , setEmoji] = useState('');
-  
+  const [dropmenu , setdropmenu] = useState(false);
+  const [confirm_invite , setConfirm] = useState(false)
+
+
+  function handle_confirm_button(){
+    setConfirm(false);
+  }
+  function handle_cancel_invite(){
+    setConfirm(false);
+  }
+
+  function handle_dropmenu(){
+    setdropmenu(!dropmenu);
+  }
+
+  function handle_confirm_invite(){
+    setConfirm(true);
+  }
 
   function move_emoji_to_input(object){
     setShow(false);
@@ -96,7 +115,6 @@ export default function chatPage() {
   return (
     <div className='main-chat' >
       <div className='chat '>
-
           <div className="freind ">
             <div className='head'>
               <div><h1 className='freind-title'>Chats</h1></div>
@@ -118,8 +136,7 @@ export default function chatPage() {
                       />
                   </div>
                   ))}
-              </div>
-            
+              </div> 
           </div>
 
           <div className="message ">
@@ -129,11 +146,19 @@ export default function chatPage() {
                 <div className='chat-profile-parent'><img className='chat-profile' src='https://www.w3schools.com/howto/img_avatar2.png'/></div>
                 <div className='test'>
                   <p className='contact-name'>zalaksya</p>
-                  <button className='options'><SlOptions /></button>
+                  <button className='options' onClick={handle_dropmenu}><SlOptions /></button>
                 </div>
+                { dropmenu && 
+                  <div className='dropmenu'>
+                    <div className='block-button'><button className='buttonBlock'>Block</button></div>
+                    <div className='unfriend-button'><button className='buttonUfriend'>Unfriend</button></div>
+                  </div>
+                }
             </div>
             }
-            <div className='msg-body'>
+            {/* <div className='msg-body `{confirm_invite ? msg-body-blur : ""}` '>
+             */}
+             <div className={`msg-body ${confirm_invite ? "msg-body-blur" : ""}`}>
                 { messages.length > 0 && <div className='message-test'><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
               {
                 messages.map((item , index)=>(
@@ -145,20 +170,29 @@ export default function chatPage() {
               </div>
             {messages.length > 0 && 
             <div className='Fot-div'>
-              <div className='left-div'>
-                  <div className='Emojis-icon'>
+                <div className='Emojis-icon'>
                     <button  onClick={()=> handle_Emojis(setShow , show)}><BsEmojiSmile size={40}/></button>
                     {show && <div className='emoji-picker'><EmojiPicker onEmojiClick={move_emoji_to_input}/></div>}
                   </div>
                   <div className='message-feed'>
                     <input className='type-message' placeholder='Message ' value={input} onChange={(e) => setEmoji(e.target.value)}/> 
                   </div>
-              </div>
-              <div className='send-message-button'>
-              <IoSend size={40}/>
-              </div>
-
-            </div>}
+                  <div className='invite'><button onClick={handle_confirm_invite}><IoGameController size={40}/></button></div>
+                  <div className='send-message-button'><IoSend size={40}/></div>
+                  {confirm_invite && 
+                    <div className='confirm-game-invite'>
+                      <p>You are about to request a game sesstion with zalaksya</p>
+                      <div className='buttons-invite'>
+                        <div className='cancel-button'><button onClick={handle_cancel_invite} > Cancel</button></div>
+                        
+                          <div className='confirm-button'>
+                          <Link href="/game" key="/game"><button>Confirm</button></Link>
+                          </div>
+                      </div>
+                    </div>
+                  }
+            </div>
+            }
           </div>
       </div>
     </div>
