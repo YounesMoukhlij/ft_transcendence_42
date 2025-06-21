@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Ping Pong Game",
   description: "Created by Yns Zaka Ayb abechcha",
+  viewport: "width=device-width, initial-scale=1.0",
 };
 
 export default function Home()
