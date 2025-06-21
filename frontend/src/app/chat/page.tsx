@@ -55,24 +55,35 @@ const messgae =[
 
 
 
-function handle_Emojis(setShow , show ){
+function handle_Emojis(setShow: any , show: boolean ){
   setShow(!show)
 }
 
-const FreindsList = ({  photo ,title , message , status, setConversation}) =>{
+
+type FreindsListProps = {
+  photo: string,
+  title: string,
+  message: string,
+  status: number,
+  setConversation: any
+};
+
+const FreindsList = ({  photo ,title , message , status, setConversation}:FreindsListProps) =>{
   function Get_Conversation (){
     setConversation(messgae);
     
   }
   return (
-    <div onClick={Get_Conversation}  className='freind-div'>
-      <div className='profile_status'>
-        <img className='img-profile' src={photo}/>
-        <div className={status === 1 ? "Online" : "Offline" } ></div>
+    <div onClick={Get_Conversation}  className="flex w-full h-full hover:flex hover:cursor-pointer hover:bg-[#515151] hover:backdrop-blur-[10px] hover:rounded-[20px]">
+      <div className="flex-col pl-2 pt-4">
+        <div className='flex w-20 h-20 '>
+          <img className="w-20 rounded-[50%]" src={photo}/>
+        </div>
+        <div className={status === 1 ? "test w-5 h-5 bg-[green] rounded-[50%] " : "test w-5 h-5 bg-[red] rounded-[50%] "} ></div>
       </div>
       
-      <div className='name-message'>
-        <div className='title'><h1>{title}</h1></div>
+      <div className="flex flex-col justify-center gap-2 pl-[10%]">
+        <div className="text-3xl"><h1>{title}</h1></div>
         <div className='last-message'>
           <p>{message.length > 30 ? message.substr(0, 26) + "..." : message}</p>
 
@@ -107,24 +118,29 @@ export default function chatPage() {
     setConfirm(true);
   }
 
-  function move_emoji_to_input(object){
+
+  type objectOfEmoji = {
+    emoji: string;
+  };
+
+  function move_emoji_to_input(object: objectOfEmoji){
     setShow(false);
     setEmoji(prevValue => prevValue + object.emoji);
   }
 
   return (
-    <div className='main-chat' >
-      <div className='chat '>
-          <div className="freind ">
-            <div className='head'>
-              <div><h1 className='freind-title'>Chats</h1></div>
-              <div className='search-main'>
-                  <input className="search" placeholder='Search for a friend' />
-                  <button className='button'><FaSearch  className="icon" size={24}/></button>
+    <div className="flex justify-center items-center h-full">
+      <div className="flex w-4/5 h-4/5 gap-[5%]">
+          <div className="w-1/5 h-full flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
+            <div className="flex flex-col h-[28rem]">
+              <div><h1 className='italic text-[70px] p-[5px]'>Chats</h1></div>
+              <div className="flex justify-around self-center w-[90%] rounded-[2rem] border-2 border-solid">
+                  <input className="text-[25px] w-4/5 h-[4.5rem] pl-4 outline-none" placeholder='Search for a friend' />
+                  <button className='button'><FaSearch  className="text-[rgb(179,173,173)]" size={24}/></button>
               </div>
             </div>
 
-              <div className='body-of-chat'>
+              <div className="body-of-chat  flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide">
                   {array.map((friend , index) => (
                   <div key={index} >
                       <FreindsList
@@ -139,53 +155,51 @@ export default function chatPage() {
               </div> 
           </div>
 
-          <div className="message ">
+          <div className=" flex w-9/12 flex-col border rounded-[35px] border-solid ">
 
             { messages.length > 0 &&
-              <div className='Contact'>
-                <div className='chat-profile-parent'><img className='chat-profile' src='https://www.w3schools.com/howto/img_avatar2.png'/></div>
-                <div className='test'>
-                  <p className='contact-name'>zalaksya</p>
-                  <button className='options' onClick={handle_dropmenu}><SlOptions /></button>
+              <div className="flex items-center h-[9%] bg-[rgb(21,26,22)] rounded-[40px]">
+                <div className="flex h-4/5 self-center pl-[2%]"><img className="rounded-[50%]" src='https://www.w3schools.com/howto/img_avatar2.png'/></div>
+                <div className="w-full flex justify-between">
+                  <p className="text-3xl flex items-center pl-[1%]">zalaksya</p>
+                  <button className="flex px-12 py-8" onClick={handle_dropmenu}><SlOptions /></button>
                 </div>
                 { dropmenu && 
-                  <div className='dropmenu'>
-                    <div className='block-button'><button className='buttonBlock'>Block</button></div>
-                    <div className='unfriend-button'><button className='buttonUfriend'>Unfriend</button></div>
+                  <div className="flex flex-col absolute w-28 h-[4.5rem] right-[16%] top-[26%]">
+                    <div className="text-center w-full h-full border p-[0.7rem] border-solid  hover:bg-amber-400"><button className="text-center w-full h-full ">Block</button></div>
+                    <div className="text-center w-full h-full border p-[0.7rem] border-solid  hover:bg-amber-400"><button className="text-center w-full h-full ">Unfriend</button></div>
                   </div>
                 }
             </div>
             }
-            {/* <div className='msg-body `{confirm_invite ? msg-body-blur : ""}` '>
-             */}
-             <div className={`msg-body ${confirm_invite ? "msg-body-blur" : ""}`}>
-                { messages.length > 0 && <div className='message-test'><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
+             <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-[40px] h-[85%] px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
+                { messages.length > 0 && <div className="flex w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]"><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
               {
                 messages.map((item , index)=>(
                     
                   <div key={index} 
-                  className='msg-parent'><p className={item.sender == 'abechcha' ? "recv" : "send" }>{item.ms}</p></div>
+                  className="flex flex-col flex-wrap pt-8"><p className={item.sender == 'abechcha' ? "flex self-start bg-[#B0C4DE] text-[black] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all text-wrap" : "flex self-end bg-[#2E372E] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all" }>{item.ms}</p></div>
                 ))
               }
               </div>
             {messages.length > 0 && 
-            <div className='Fot-div'>
-                <div className='Emojis-icon'>
+            <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
+                <div className="pl-4">
                     <button  onClick={()=> handle_Emojis(setShow , show)}><BsEmojiSmile size={40}/></button>
-                    {show && <div className='emoji-picker'><EmojiPicker onEmojiClick={move_emoji_to_input}/></div>}
+                    {show && <div className="absolute left-[34%] top-[60%]"><EmojiPicker onEmojiClick={move_emoji_to_input}/></div>}
                   </div>
-                  <div className='message-feed'>
-                    <input className='type-message' placeholder='Message ' value={input} onChange={(e) => setEmoji(e.target.value)}/> 
+                  <div className=" w-[90%] h-16 px-4 py-0">
+                    <input className="w-full h-full bg-[black] p-4 rounded-[50px] outline-none" placeholder='Message ' value={input} onChange={(e) => setEmoji(e.target.value)}/> 
                   </div>
-                  <div className='invite'><button onClick={handle_confirm_invite}><IoGameController size={40}/></button></div>
-                  <div className='send-message-button'><IoSend size={40}/></div>
+                  <div className="pr-4"><button onClick={handle_confirm_invite}><IoGameController size={40}/></button></div>
+                  <div className="flex px-6 py-0"><IoSend size={40}/></div>
                   {confirm_invite && 
-                    <div className='confirm-game-invite'>
+                    <div className="flex flex-col justify-between absolute w-[22rem] h-36 bg-[gray] text-center border p-2 rounded-2xl border-solid left-[calc(50%)] top-[calc(50%)]">
                       <p>You are about to request a game sesstion with zalaksya</p>
-                      <div className='buttons-invite'>
-                        <div className='cancel-button'><button onClick={handle_cancel_invite} > Cancel</button></div>
+                      <div className="flex items-end justify-between h-3/6 px-2 py-0">
+                        <div className="text-center w-[48%] h-[70%] border bg-[rgb(201,49,38)] p-2 rounded-2xl border-solid"><button onClick={handle_cancel_invite} > Cancel</button></div>
                         
-                          <div className='confirm-button'>
+                          <div className="text-center border h-[70%] w-[48%] bg-[rgb(14,154,54)] p-2 rounded-2xl border-solid">
                           <Link href="/game" key="/game"><button>Confirm</button></Link>
                           </div>
                       </div>
