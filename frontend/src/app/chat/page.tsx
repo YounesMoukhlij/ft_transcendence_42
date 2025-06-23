@@ -130,8 +130,9 @@ export default function chatPage() {
 
   return (
     <div className="flex justify-center items-center h-full">
-      <div className="flex w-4/5 h-4/5 gap-[5%]">
-          <div className="w-1/5 h-full flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
+      <div className=" flex w-5/5 h-5/5 md:w-4/5 md:h-4/5 gap-[5%] ">
+           <div className="w-1.5/5 h-full hidden md:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
+
             <div className="flex flex-col h-[28rem]">
               <div><h1 className='italic text-[70px] p-[5px]'>Chats</h1></div>
               <div className="flex justify-around self-center w-[90%] rounded-[2rem] border-2 border-solid">
@@ -152,20 +153,20 @@ export default function chatPage() {
                       />
                   </div>
                   ))}
-              </div> 
+              </div>
           </div>
 
-          <div className=" flex w-9/12 flex-col border rounded-[35px] border-solid ">
+          <div className="flex w-12/12 md:w-9/12  flex-col border rounded-[35px] border-solid ">    {/*chat div converation*/}
 
             { messages.length > 0 &&
-              <div className="flex items-center h-[9%] bg-[rgb(21,26,22)] rounded-[40px]">
-                <div className="flex h-4/5 self-center pl-[2%]"><img className="rounded-[50%]" src='https://www.w3schools.com/howto/img_avatar2.png'/></div>
+              <div className=" flex items-center h-[9%] rounded-[40px] ml-0.5 bg-blue-950">
+                <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5"><img className="rounded-[50%]" src='https://www.w3schools.com/howto/img_avatar2.png'/></div>
                 <div className="w-full flex justify-between">
-                  <p className="text-3xl flex items-center pl-[1%]">zalaksya</p>
-                  <button className="flex px-12 py-8" onClick={handle_dropmenu}><SlOptions /></button>
+                  <p className="text-2xl md:text-3xl flex items-center pl-[1%]">zalaksya</p>
+                  <button className="flex pr-[4%]" onClick={handle_dropmenu}><SlOptions className="sm:w-10 sm:h-10  w-5 h-5"/></button>
                 </div>
                 { dropmenu && 
-                  <div className="flex flex-col absolute w-28 h-[4.5rem] right-[16%] top-[26%]">
+                  <div className="fixed flex flex-col w-28 top-[25rem] right-[31rem]">
                     <div className="text-center w-full h-full border p-[0.7rem] border-solid  hover:bg-amber-400"><button className="text-center w-full h-full ">Block</button></div>
                     <div className="text-center w-full h-full border p-[0.7rem] border-solid  hover:bg-amber-400"><button className="text-center w-full h-full ">Unfriend</button></div>
                   </div>
@@ -173,7 +174,7 @@ export default function chatPage() {
             </div>
             }
              <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-[40px] h-[85%] px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
-                { messages.length > 0 && <div className="flex w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]"><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
+                { messages.length > 0 && <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]"><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
               {
                 messages.map((item , index)=>(
                     
@@ -185,14 +186,14 @@ export default function chatPage() {
             {messages.length > 0 && 
             <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
                 <div className="pl-4">
-                    <button  onClick={()=> handle_Emojis(setShow , show)}><BsEmojiSmile size={40}/></button>
+                    <button  onClick={()=> handle_Emojis(setShow , show)}><BsEmojiSmile className="sm:w-10 sm:h-10  w-5 h-5"/></button>
                     {show && <div className="absolute left-[34%] top-[60%]"><EmojiPicker onEmojiClick={move_emoji_to_input}/></div>}
                   </div>
-                  <div className=" w-[90%] h-16 px-4 py-0">
+                  <div className=" w-[90%] h-10 sm:h-16 px-4 py-0">
                     <input className="w-full h-full bg-[black] p-4 rounded-[50px] outline-none" placeholder='Message ' value={input} onChange={(e) => setEmoji(e.target.value)}/> 
                   </div>
-                  <div className="pr-4"><button onClick={handle_confirm_invite}><IoGameController size={40}/></button></div>
-                  <div className="flex px-6 py-0"><IoSend size={40}/></div>
+                  <div className="pr-4"><button onClick={handle_confirm_invite}><IoGameController className="sm:w-10 sm:h-10  w-5 h-5"/></button></div>
+                  <div className="flex px-6 py-0"><IoSend className="sm:w-10 sm:h-10  w-5 h-5"/></div>
                   {confirm_invite && 
                     <div className="flex flex-col justify-between absolute w-[22rem] h-36 bg-[gray] text-center border p-2 rounded-2xl border-solid left-[calc(50%)] top-[calc(50%)]">
                       <p>You are about to request a game sesstion with zalaksya</p>
