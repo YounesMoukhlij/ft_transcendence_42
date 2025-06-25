@@ -158,7 +158,7 @@ export default function chatPage() {
 
           <div className="flex w-12/12 md:w-9/12  flex-col border rounded-[35px] border-solid ">    {/*chat div converation*/}
 
-            { messages.length > 0 &&
+            {/* { messages.length > 0 &&
               <div className=" flex items-center h-[9%] rounded-[40px] ml-0.5 bg-blue-950">
                 <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5"><img className="rounded-[50%]" src='https://www.w3schools.com/howto/img_avatar2.png'/></div>
                 <div className="w-full flex justify-between">
@@ -172,7 +172,24 @@ export default function chatPage() {
                   </div>
                 }
             </div>
-            }
+            } */}
+
+
+
+            <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-blue-950 justify-between">
+              <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5"><img className="rounded-[50%]" src='https://www.w3schools.com/howto/img_avatar2.png'/></div>
+              <div className=" mr-[2rem] w-21 h-10">
+                <button className="flex pr-[4%]" onClick={handle_dropmenu}><SlOptions className="sm:w-10 sm:h-10  w-5 h-5"/></button>
+                { dropmenu &&
+                  <div className="fixed flex flex-col w-28 self-">
+                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem] border-solid sm:text-center  hover:bg-amber-400"><button className="">Block</button></div>
+                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem] border-solid sm:text-center  hover:bg-amber-400"><button className="">Unfriend</button></div>
+                  </div>
+                }
+              </div>
+            </div>
+
+
              <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-[40px] h-[85%] px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
                 { messages.length > 0 && <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]"><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
               {
