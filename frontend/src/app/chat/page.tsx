@@ -1,6 +1,6 @@
 
 "use client";
-import { useState } from 'react';
+import { useState , useEffect } from 'react';
 import Link from 'next/link';
 import './page.css'
 import { FaSearch } from "react-icons/fa";
@@ -102,7 +102,18 @@ export default function chatPage() {
   const [dropmenu , setdropmenu] = useState(false);
   const [confirm_invite , setConfirm] = useState(false)
 
+    function handleEnterKey(event){
+    if (event.key === 'Enter') {
+      handleSend();
+    }
+  }
 
+  function handleSend(){
+    if (input.length == 0)
+      return ;
+    setMessages(prev => [...prev, {id: "1", sender: "abechchssa", ms: input}]);
+    setEmoji('');
+  }
   function handle_confirm_button(){
     setConfirm(false);
   }
@@ -158,22 +169,6 @@ export default function chatPage() {
 
           <div className="flex w-12/12 md:w-9/12  flex-col border rounded-[35px] border-solid ">    {/*chat div converation*/}
 
-            {/* { messages.length > 0 &&
-              <div className=" flex items-center h-[9%] rounded-[40px] ml-0.5 bg-blue-950">
-                <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5"><img className="rounded-[50%]" src='https://www.w3schools.com/howto/img_avatar2.png'/></div>
-                <div className="w-full flex justify-between">
-                  <p className="text-2xl md:text-3xl flex items-center pl-[1%]">zalaksya</p>
-                  <button className="flex pr-[4%]" onClick={handle_dropmenu}><SlOptions className="sm:w-10 sm:h-10  w-5 h-5"/></button>
-                </div>
-                { dropmenu && 
-                  <div className="fixed flex flex-col w-28 top-[25rem] right-[31rem]">
-                    <div className="text-center w-full h-full border p-[0.7rem] border-solid  hover:bg-amber-400"><button className="text-center w-full h-full ">Block</button></div>
-                    <div className="text-center w-full h-full border p-[0.7rem] border-solid  hover:bg-amber-400"><button className="text-center w-full h-full ">Unfriend</button></div>
-                  </div>
-                }
-            </div>
-            } */}
-
 
 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-blue-950 justify-between">
@@ -194,7 +189,6 @@ export default function chatPage() {
                 { messages.length > 0 && <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]"><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
               {
                 messages.map((item , index)=>(
-                    
                   <div key={index} 
                   className="flex flex-col flex-wrap pt-8"><p className={item.sender == 'abechcha' ? "flex self-start bg-[#B0C4DE] text-[black] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all text-wrap" : "flex self-end bg-[#2E372E] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all" }>{item.ms}</p></div>
                 ))
@@ -207,10 +201,10 @@ export default function chatPage() {
                     {show && <div className="absolute left-[34%] top-[60%]"><EmojiPicker onEmojiClick={move_emoji_to_input}/></div>}
                   </div>
                   <div className=" w-[90%] h-10 sm:h-16 px-4 py-0">
-                    <input className="w-full h-full bg-[black] p-4 rounded-[50px] outline-none" placeholder='Message ' value={input} onChange={(e) => setEmoji(e.target.value)}/> 
+                    <input className="w-full h-full bg-[black] p-4 rounded-[50px] outline-none" placeholder='Message ' onKeyDown={handleEnterKey} value={input} onChange={(e) => setEmoji(e.target.value)}/> 
                   </div>
                   <div className="pr-4"><button onClick={handle_confirm_invite}><IoGameController className="sm:w-10 sm:h-10  w-5 h-5"/></button></div>
-                  <div className="flex px-6 py-0"><IoSend className="sm:w-10 sm:h-10  w-5 h-5"/></div>
+                  <div className="flex px-6 py-0"><IoSend onClick={handleSend} className="sm:w-10 sm:h-10  w-5 h-5"/></div>
                   {confirm_invite && 
                     <div className="flex flex-col justify-between absolute w-[22rem] h-36 bg-[gray] text-center border p-2 rounded-2xl border-solid left-[calc(50%)] top-[calc(50%)]">
                       <p>You are about to request a game sesstion with zalaksya</p>
