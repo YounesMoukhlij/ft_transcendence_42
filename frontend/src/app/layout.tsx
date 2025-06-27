@@ -17,11 +17,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <title>Ping Pong Game</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body>
+      <body className="h-[100%] flex flex-col border-5 border-white">
         <Navbar />
-        <div className="fullContainer">
+        <div className="flex h-[90%] rounded-3xl gap-[10px] p-[10px] z-10 ">
           <Sidebar />
-          <div className="child">
+          <div className="w-[100%] md:w-[90%] bg-transparent ">
             {children}
           </div>
         </div>
