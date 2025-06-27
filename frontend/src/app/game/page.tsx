@@ -1,12 +1,11 @@
 
 'use client';
 import ModeSwiper from "../components/ModeSwiper";
-import styles from "./game.module.css";
-import Image from "next/image";
+
 
 export default function GamePage() {
   return (
-    <div className={styles.pageContainer}>
+    <div className=" flex flex-col items-center justify-center h-[100%] w-[100%]">
       <ModeSwiper/>
     </div>
   );

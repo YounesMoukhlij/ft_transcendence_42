@@ -5,9 +5,6 @@ import { loadSlim } from "@tsparticles/slim";
 
 
 
-import Styles from "../particlesBackground.module.css";
-
-
 const ParticlesBackground = (props) => {
 
   const [init, setInit] = useState(false);
@@ -100,7 +97,7 @@ const ParticlesBackground = (props) => {
   );
 
 
-  return <Particles id={props.id} init={particlesLoaded} options={options} />;
+  return <Particles init={particlesLoaded} options={options} />;
 };
 
 export default ParticlesBackground;
