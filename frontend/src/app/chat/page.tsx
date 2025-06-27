@@ -42,7 +42,7 @@ const fetchData = async (title:string) => {
 
 const FreindsList = ({  photo ,title , message , status, setConversation}:FreindsListProps) =>{
   function Get_Conversation (){
-    setConversation(messgae);
+    setConversation(message);
 
   }
   return (
@@ -197,6 +197,6 @@ export default function chatPage() {
             }
           </div>
       </div>
-    </div>
+    // </div>
   );
 }
