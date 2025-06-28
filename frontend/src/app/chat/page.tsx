@@ -23,7 +23,11 @@ function handle_Emojis(setShow: any , show: boolean ){
 const fetchData = async (title:string) => {
   try {
     const user = localStorage.getItem('name');
-    const res = await axios.post('http://localhost:4444/getConversation', { user, friend: title });
+    const result = await axios.post('http://localhost:4444/getConversationId', { user, friend: title });
+    localStorage.setItem('conversationId' , result.data.conversation_id);
+
+    const res = await axios.post('http://localhost:4444/getMsgs', { id :result.data.conversation_id });
+
     return (res.data);
   } catch (err) {
     console.error(err);
@@ -110,12 +114,25 @@ export default function chatPage() {
     }
   }
 
-  function handleSend(){
+  const  handleSend = async () =>{
     if (input.length == 0)
       return ;
-    setMessages(prev => [...prev, {id: "1", sender: "abechchssa", ms: input}]);
-    setEmoji('');
+    const user = localStorage.getItem('name');
+    setMessages(prev => [...prev, {sender: user, message: input}]);
+    
+  try {
+    const room_select = localStorage.getItem('room_select');
+    const id = localStorage.getItem('conversationId');
+    const res = await axios.post('http://localhost:4444/sendMsg', { user, input , id });
+  } catch (err) {
+    console.error(err);
   }
+  setEmoji('');
+  }
+
+
+
+
   function handle_confirm_button(){
     setConfirm(false);
   }
@@ -200,7 +217,7 @@ export default function chatPage() {
               {
                 messages.map((item , index)=>(
                   <div key={index} 
-                  className="flex flex-col flex-wrap pt-8"><p className={item.sender == 'abechcha' ? "flex self-start bg-[#B0C4DE] text-[black] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all text-wrap" : "flex self-end bg-[#2E372E] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all" }>{item.ms}</p></div>
+                  className="flex flex-col flex-wrap pt-8"><p className={item.sender != 'abechcha' ? "flex self-start bg-[#B0C4DE] text-[black] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all text-wrap" : "flex self-end bg-[#2E372E] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all" }>{item.message}</p></div>
                 ))
               }
               </div>

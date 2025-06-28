@@ -1,9 +1,11 @@
-import { createUser, getUsers  , getConversation ,aaa} from '../modules/user.module.js';
+import { createUser, getUsers  , getConversationId ,aaa , sendMsg , getMsgs} from '../modules/user.module.js';
 
 export default async function routes(fastify, options) {
   fastify.get('/user', createUser);
   fastify.get('/users', getUsers);
   fastify.get('/', aaa);
-  fastify.post('/getConversation', getConversation);
+  fastify.post('/getConversationId', getConversationId);
+  fastify.post('/sendMsg' , sendMsg);
+  fastify.post('/getMsgs' , getMsgs);
 
 }
