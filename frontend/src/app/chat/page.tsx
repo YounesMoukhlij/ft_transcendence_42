@@ -11,8 +11,6 @@ import { BsEmojiSmile } from "react-icons/bs";
 import { IoSend } from "react-icons/io5";
 import { IoGameController } from "react-icons/io5";
 
-import Image from 'next/image';
-
 
 
 
@@ -21,15 +19,6 @@ function handle_Emojis(setShow: any , show: boolean ){
 }
 
 
-type FreindsListProps = {
-  photo: string,
-  title: string,
-  message: string,
-  status: number,
-  setConversation: any
-  setroom: any
-  setimg: any
-};
 
 const fetchData = async (title:string) => {
   try {
@@ -41,30 +30,42 @@ const fetchData = async (title:string) => {
   }
 };
 
+type FreindsListProps = {
+  photo: string,
+  title: string,
+  message: string,
+  status: number,
+  setConversation: any
+  setroom: any
+  setimg: any
+};
 
 const FreindsList = ({ photo ,title , message , status, setConversation , setroom , setimg}:FreindsListProps) =>{
   
-  function Get_Conversation (){
-    localStorage.setItem('room_select' , title);
+  const Get_Conversation = async () => {
+    localStorage.setItem('room_select', title);
     setroom(title);
     setimg(photo);
-    setConversation(fetchData(title));
-  }
+
+    const conversation = await fetchData(title);
+    console.log(conversation);
+    setConversation(conversation);
+  };
   
   
   return (
     <div onClick={Get_Conversation}  className="flex w-full h-full hover:flex hover:cursor-pointer hover:bg-[#515151] hover:backdrop-blur-[10px] hover:rounded-[20px]">
-      <div className="  flex-col   ">
-        <div className='flex w-15 h-15 justify-center items-center flex-col  '>
-          <img className="w-15 h-15 rounded-[50%]   " src={photo}/>
+      <div className="flex-col pl-2 pt-4">
+        <div className='flex w-15 h-15 2xl:w-20 2xl:h-20 '>
+          <img className="w-15 h-15 2xl:h-20 2xl:w-20 rounded-[50%]" src={photo}/>
         </div>
-        <div className={status === 1 ? "test w-3 h-3 bg-[green] rounded-[50%] " : "test h-3 w-3 bg-[red] rounded-[50%] "} ></div>
+        <div className={status === 1 ? "test w-5 h-5 bg-[green] rounded-[50%] " : "test w-5 h-5 bg-[red] rounded-[50%] "} ></div>
       </div>
       
       <div className="flex flex-col justify-center gap-2 pl-[10%]">
-        <div className="text-2xl"><h1>{title}</h1></div>
+        <div className="text-3xl"><h1>{title}</h1></div>
         <div className='last-message'>
-          <p className='font-thin'>{message.length > 30 ? message.substr(0, 26) + "..." : message}</p>
+          <p>{message.length > 30 ? message.substr(0, 26) + "..." : message}</p>
 
         </div>
     </div>
@@ -141,19 +142,19 @@ export default function chatPage() {
   }
 
   return (
-    <div className="text-white flex justify-center items-center h-full border-2 border-white-100">
+    <div className="flex justify-center items-center h-full text-white">
       <div className=" flex w-5/5 h-5/5 md:w-4/5 md:h-4/5 gap-[5%] ">
-           <div className="w-[40%] h-full hidden md:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
+           <div className="w-1.5/5 h-full hidden lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
 
             <div className="flex flex-col ">
-              <div><h1 className=' text-[50px] p-[5px]'>Chats</h1></div>
+              <div><h1 className='italic text-[70px] p-[5px]'>Chats</h1></div>
               <div className="flex justify-around self-center w-[90%] rounded-[2rem] border-2 border-solid">
-                  <input className="text-light w-4/5 h-[4.5rem] pl-4 outline-none" placeholder='Search for a friend' />
-                  <button className='button cursor-pointer pr-2 '><FaSearch  className="text-[rgb(179,173,173)]" size={24}/></button>
+                  <input className="text-[25px] w-4/5 h-[4.5rem] pl-4 outline-none" placeholder='Search for a friend' />
+                  <button className='button'><FaSearch  className="text-[rgb(179,173,173)]" size={24}/></button>
               </div>
             </div>
 
-              <div className="body-of-chat   p-1 mt-1 flex flex-col  overflow-scroll bg-black rounded-[40px] scrollbar-hide">
+              <div className="body-of-chat flex flex-col  overflow-scroll bg-black rounded-[40px] scrollbar-hide">
 
                   {array.map((friend , index) => (
                   <div key={index} >
@@ -165,7 +166,6 @@ export default function chatPage() {
                       setConversation={setMessages}
                       setroom={setRoom}
                       setimg={setImg}
-                    
                       />
                   </div>
                   ))}
@@ -175,9 +175,9 @@ export default function chatPage() {
 
 
 
-           <div className="flex w-12/12 md:w-9/12  flex-col border rounded-[35px] border-solid">    {/*chat div converation*/}
+           <div className="flex w-12/12 lg:w-9/12  flex-col border rounded-[35px] border-solid">    {/*chat div converation*/}
             {messages.length > 0 && 
-            <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-blue-950 justify-between">       
+            <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
               <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5">
                 <img className="rounded-[50%]" src={profile_img}/>
                 <p className="self-center   text-[1rem]  sm:text-[1.5rem] pl-[1rem]">{room}</p>
