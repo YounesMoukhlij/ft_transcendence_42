@@ -71,7 +71,7 @@ CREATE TABLE message (
 
 
 INSERT INTO users (username, fullname, profile_img ,email, password) 
-VALUES ('zalksya', 'Zalksya User', 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png','zalksya@example.com', 'hashed_password_123');
+VALUES ('ziko', 'ziko User', 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png','ziko@example.com', 'hashed_password_123');
 
 
 INSERT INTO users (username, fullname, profile_img ,email, password) 
@@ -81,12 +81,17 @@ INSERT INTO users (username, fullname, profile_img ,email, password)
 VALUES ('aaaaaaaaa', 'aaaaaaaa User', 'https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740' ,'aaaaaaaaaaaaaaaaaaaaaaaa@example.com', 'hashed_password_456');
 
 
+
+
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('abechcha', 'abechcha User', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCMDKvDLrPdTJtG5O4y3W61Wdqg20GwOOpUA&s' ,'abechcha@example.com', 'hashed_password_456');
+
 INSERT INTO room (members, room_name, iconPad)
-VALUES (',abechcha,zalksya,', 'Friends Chat', 'default_icon.png');
+VALUES (',abechcha,ziko,', 'Friends Chat', 'default_icon.png');
 
 
 INSERT INTO message (conv_id, message, sender)
-VALUES (1, 'Hello, how are you iam zakariya ?', 'Zalksya');
+VALUES (1, 'Hello, how are you iam zakariya ?', 'ziko');
 
 
 -- INSERT INTO users (username, fullname, profile_img ,email, password) 

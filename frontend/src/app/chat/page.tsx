@@ -58,7 +58,7 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setroo
   
   
   return (
-    <div onClick={Get_Conversation}  className="flex w-full h-full hover:flex hover:cursor-pointer hover:bg-[#515151] hover:backdrop-blur-[10px] hover:rounded-[20px]">
+    <div onClick={Get_Conversation}  className="flex w-full h-full hover:flex hover:cursor-pointer hover:bg-[#515151] hover:backdrop-blur-[10px] hover:rounded-[20px]x">
       <div className="flex-col pl-2 pt-4">
         <div className='flex w-15 h-15 2xl:w-20 2xl:h-20 '>
           <img className="w-15 h-15 2xl:h-20 2xl:w-20 rounded-[50%]" src={photo}/>
@@ -90,9 +90,9 @@ export default function chatPage() {
   const [room , setRoom] = useState('');
   const [profile_img , setImg] = useState('');
 
-  useEffect(() => {
-    localStorage.setItem('name', 'abechcha');
-  }, []);
+  // useEffect(() => {
+  //   localStorage.setItem('name', 'abechcha');
+  // }, []);
 
   
   useEffect(() => {
@@ -161,7 +161,7 @@ export default function chatPage() {
   return (
     <div className="flex justify-center items-center h-full text-white">
       <div className=" flex w-5/5 h-5/5 md:w-4/5 md:h-4/5 gap-[5%] ">
-           <div className="w-1.5/5 h-full hidden lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
+           <div className="w-1.5/5 h-full hidden lg:bg-amber-300 lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
 
             <div className="flex flex-col ">
               <div><h1 className='italic text-[70px] p-[5px]'>Chats</h1></div>
@@ -192,7 +192,7 @@ export default function chatPage() {
 
 
 
-           <div className="flex w-12/12 lg:w-9/12  flex-col border rounded-[35px] border-solid">    {/*chat div converation*/}
+           <div className="flex w-12/12 lg:w-9/12  flex-col border rounded-[35px] border-solid " >    {/*chat div converation*/}
             {messages.length > 0 && 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
               <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5">
@@ -217,7 +217,7 @@ export default function chatPage() {
               {
                 messages.map((item , index)=>(
                   <div key={index} 
-                  className="flex flex-col flex-wrap pt-8"><p className={item.sender != 'abechcha' ? "flex self-start bg-[#B0C4DE] text-[black] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all text-wrap" : "flex self-end bg-[#2E372E] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all" }>{item.message}</p></div>
+                  className="flex flex-col flex-wrap pt-8"><p className={item.sender != localStorage.getItem('name') ? "flex self-start bg-[#B0C4DE] text-[black] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all text-wrap" : "flex self-end bg-[#2E372E] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all" }>{item.message}</p></div>
                 ))
               }
               </div>
