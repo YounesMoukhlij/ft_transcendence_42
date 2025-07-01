@@ -10,6 +10,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { BsEmojiSmile } from "react-icons/bs";
 import { IoSend } from "react-icons/io5";
 import { IoGameController } from "react-icons/io5";
+import { FaArrowRight } from "react-icons/fa";
 
 
 
@@ -25,9 +26,9 @@ const fetchData = async (title:string) => {
     const user = localStorage.getItem('name');
     const result = await axios.post('http://localhost:4444/getConversationId', { user, friend: title });
     localStorage.setItem('conversationId' , result.data.conversation_id);
-
+    
     const res = await axios.post('http://localhost:4444/getMsgs', { id :result.data.conversation_id });
-
+    
     return (res.data);
   } catch (err) {
     console.error(err);
@@ -40,17 +41,17 @@ type FreindsListProps = {
   message: string,
   status: number,
   setConversation: any
-  setroom: any
+  setRoom: any
   setimg: any
 };
 
-const FreindsList = ({ photo ,title , message , status, setConversation , setroom , setimg}:FreindsListProps) =>{
+const FreindsList = ({ photo ,title , message , status, setConversation , setRoom , setimg}:FreindsListProps) =>{
   
   const Get_Conversation = async () => {
     localStorage.setItem('room_select', title);
-    setroom(title);
+    setRoom(title);
     setimg(photo);
-
+    
     const conversation = await fetchData(title);
     console.log(conversation);
     setConversation(conversation);
@@ -78,9 +79,42 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setroo
 };
 
 
+function Test1({ array  , setMessages , setRoom , setImg}) {
+
+  return (
+    <div className="flex flex-col">
+      <div>
+        <h1 className="italic text-[70px] p-[5px]">Chats</h1>
+      </div>
+      <div className="flex justify-around self-center w-[90%] rounded-[2rem] border-2 border-solid">
+        <input className="text-[25px] w-4/5 h-[4.5rem] pl-4 outline-none" placeholder="Search for a friend" />
+        <button className="button">
+          <FaSearch className="text-[rgb(179,173,173)]" size={24} />
+        </button>
+      </div>
+
+      <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide">
+        {array.map((friend, index) => (
+          <div key={index}>
+            <FreindsList
+              photo={friend.profile_img}
+              title={friend.username}
+              message={friend.fullname}
+              status={friend.status}
+              setConversation={setMessages}
+              setRoom={setRoom}  // Now it's consistent
+              setimg={setImg}
+              />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 
 export default function chatPage() {
-
+  
   const [array, setFriend] = useState([]);
   const [messages, setMessages] = useState([]);
   const [show , setShow] = useState(false);
@@ -89,11 +123,10 @@ export default function chatPage() {
   const [confirm_invite , setConfirm] = useState(false);
   const [room , setRoom] = useState('');
   const [profile_img , setImg] = useState('');
-
-  // useEffect(() => {
-  //   localStorage.setItem('name', 'abechcha');
-  // }, []);
-
+  const [display_chats , set_chats] = useState(false);
+  
+  
+  
   
   useEffect(() => {
     const fetchData = async () => {
@@ -106,92 +139,84 @@ export default function chatPage() {
     };
     fetchData();
   }, []);
-
-
-    function handleEnterKey(event: any){
+  
+  
+  function handleEnterKey(event: any){
     if (event.key === 'Enter') {
       handleSend();
     }
   }
-
+  
   const  handleSend = async () =>{
     if (input.length == 0)
       return ;
     const user = localStorage.getItem('name');
     setMessages(prev => [...prev, {sender: user, message: input}]);
     
-  try {
-    const room_select = localStorage.getItem('room_select');
-    const id = localStorage.getItem('conversationId');
-    const res = await axios.post('http://localhost:4444/sendMsg', { user, input , id });
-  } catch (err) {
-    console.error(err);
+    try {
+      const room_select = localStorage.getItem('room_select');
+      const id = localStorage.getItem('conversationId');
+      const res = await axios.post('http://localhost:4444/sendMsg', { user, input , id });
+    } catch (err) {
+      console.error(err);
+    }
+    setEmoji('');
   }
-  setEmoji('');
+  
+  
+  function handle_chats_display(){
+    set_chats(!display_chats);
   }
-
-
-
-
+  
   function handle_confirm_button(){
     setConfirm(false);
   }
   function handle_cancel_invite(){
     setConfirm(false);
   }
-
+  
   function handle_dropmenu(){
     setdropmenu(!dropmenu);
   }
-
+  
   function handle_confirm_invite(){
     setConfirm(true);
   }
-
-
+  
+  
   type objectOfEmoji = {
     emoji: string;
   };
-
+  
   function move_emoji_to_input(object: objectOfEmoji){
     setShow(false);
     setEmoji(prevValue => prevValue + object.emoji);
   }
-
+  
   return (
     <div className="flex justify-center items-center h-full text-white">
       <div className=" flex w-5/5 h-5/5 md:w-4/5 md:h-4/5 gap-[5%] ">
-           <div className="w-1.5/5 h-full hidden lg:bg-amber-300 lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
-
-            <div className="flex flex-col ">
-              <div><h1 className='italic text-[70px] p-[5px]'>Chats</h1></div>
-              <div className="flex justify-around self-center w-[90%] rounded-[2rem] border-2 border-solid">
-                  <input className="text-[25px] w-4/5 h-[4.5rem] pl-4 outline-none" placeholder='Search for a friend' />
-                  <button className='button'><FaSearch  className="text-[rgb(179,173,173)]" size={24}/></button>
-              </div>
-            </div>
-
-              <div className="body-of-chat flex flex-col  overflow-scroll bg-black rounded-[40px] scrollbar-hide">
-
-                  {array.map((friend , index) => (
-                  <div key={index} >
-                      <FreindsList
-                      photo={friend.profile_img}
-                      title={friend.username}
-                      message={friend.fullname}
-                      status={friend.status}
-                      setConversation={setMessages}
-                      setroom={setRoom}
-                      setimg={setImg}
-                      />
-                  </div>
-                  ))}
-              </div>
+           <div className="w-1.5/5 h-full hidden  lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
+             <Test1 
+                 array={array} 
+                 setMessages={setMessages} 
+                 setRoom={setRoom} 
+                 setImg={setImg}
+                />
           </div>
 
 
 
 
+          <div className="flex self-start lg:hidden"><button><FaArrowRight onClick={handle_chats_display}/></button></div>
+          {display_chats &&  <div className=" ml-[7%] absolute h-[70%]   flex-col border bg-[black] p-2 rounded-[35px] border-solid  ">
+                <Test1 
+                 array={array} 
+                 setMessages={setMessages} 
+                 setRoom={setRoom} 
+                 setImg={setImg}
+                />
+          </div>}
            <div className="flex w-12/12 lg:w-9/12  flex-col border rounded-[35px] border-solid " >    {/*chat div converation*/}
             {messages.length > 0 && 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
