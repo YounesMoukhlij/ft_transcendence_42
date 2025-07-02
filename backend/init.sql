@@ -94,39 +94,39 @@ INSERT INTO message (conv_id, message, sender)
 VALUES (1, 'Hello, how are you iam zakariya ?', 'ziko');
 
 
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test1', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'teset@example.com', 'hashed_password_456');
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test1', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'teset@example.com', 'hashed_password_456');
 
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test2', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'teedst@example.com', 'hashed_password_456');
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test2', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'teedst@example.com', 'hashed_password_456');
 
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test3', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'tedst@example.com', 'hashed_password_456');
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test3', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'tedst@example.com', 'hashed_password_456');
 
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test4', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'tesast@example.com', 'hashed_password_456');
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test4', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'tesast@example.com', 'hashed_password_456');
 
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test5', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'teacst@example.com', 'hashed_password_456');
-
-
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test6', 'test  User', 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg' ,'tesact@example.com', 'hashed_password_456');
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test5', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'teacst@example.com', 'hashed_password_456');
 
 
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test7', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'tes zxt@example.com', 'hashed_password_456');
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test6', 'test  User', 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg' ,'tesact@example.com', 'hashed_password_456');
 
 
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test8', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'teszxt@example.com', 'hashed_password_456');
-
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test9', 'test User', 'https://cdn.intra.42.fr/users/806ad2f231069b86aff6a24a34070d1b/zalaksya.jpg' ,'tasest@example.com', 'hashed_password_456');
-
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('test12', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'test@eqexample.com', 'hashed_password_456');
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test7', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'tes zxt@example.com', 'hashed_password_456');
 
 
--- INSERT INTO users (username, fullname, profile_img ,email, password) 
--- VALUES ('tesdt12', 'tedst User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'tesdt@eqexample.com', 'hashed_password_456');
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test8', 'test  User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'teszxt@example.com', 'hashed_password_456');
+
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test9', 'test User', 'https://cdn.intra.42.fr/users/806ad2f231069b86aff6a24a34070d1b/zalaksya.jpg' ,'tasest@example.com', 'hashed_password_456');
+
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('test12', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'test@eqexample.com', 'hashed_password_456');
+
+
+INSERT INTO users (username, fullname, profile_img ,email, password) 
+VALUES ('tesdt12', 'tedst User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg' ,'tesdt@eqexample.com', 'hashed_password_456');
