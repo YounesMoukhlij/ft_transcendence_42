@@ -42,6 +42,7 @@ const start = async () => {
     await app.listen({ port: 4444 });
     console.log('Server running at http://localhost:4444');
   } catch (err) {
+    console.log("here");
     app.log.error(err);
     process.exit(1);
   }

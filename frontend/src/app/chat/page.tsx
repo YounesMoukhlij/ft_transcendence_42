@@ -93,7 +93,7 @@ function Test1({ array  , setMessages , setRoom , setImg}) {
         </button>
       </div>
 
-      <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide">
+      <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[52vh]">
         {array.map((friend, index) => (
           <div key={index}>
             <FreindsList
@@ -196,7 +196,7 @@ export default function chatPage() {
   return (
     <div className="flex justify-center items-center h-full text-white">
       <div className=" flex w-5/5 h-5/5 md:w-4/5 md:h-4/5 gap-[5%] ">
-           <div className="w-1.5/5 h-full hidden  lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
+           <div className="w-1.5/5 h-full hidden  lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid  ">
              <Test1 
                  array={array} 
                  setMessages={setMessages} 
