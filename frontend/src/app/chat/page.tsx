@@ -93,7 +93,7 @@ function Test1({ array  , setMessages , setRoom , setImg}) {
         </button>
       </div>
 
-      <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[52vh]">
+      <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[48vh]">
         {array.map((friend, index) => (
           <div key={index}>
             <FreindsList
@@ -102,7 +102,7 @@ function Test1({ array  , setMessages , setRoom , setImg}) {
               message={friend.fullname}
               status={friend.status}
               setConversation={setMessages}
-              setRoom={setRoom}  // Now it's consistent
+              setRoom={setRoom}
               setimg={setImg}
               />
           </div>
@@ -124,9 +124,31 @@ export default function chatPage() {
   const [room , setRoom] = useState('');
   const [profile_img , setImg] = useState('');
   const [display_chats , set_chats] = useState(false);
+  const [socket , setsocket] = useState<WebSocket | null>(null);
   
-  
-  
+
+    useEffect(() => {
+    const name = localStorage.getItem('name');
+    if (!name)
+      return ;
+    const ws = new WebSocket('ws://localhost:4444/ws');
+    setsocket(ws);
+    ws.onmessage = (event) => {
+        setMessages(prev => [...prev, {sender: "name", message: event.data}]);
+    };
+
+    ws.onopen = () => {
+      ws.send(name);
+    };
+
+    ws.onclose = () => {
+      console.log(' Disconnected');
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -146,6 +168,7 @@ export default function chatPage() {
       handleSend();
     }
   }
+
   
   const  handleSend = async () =>{
     if (input.length == 0)
@@ -153,12 +176,20 @@ export default function chatPage() {
     const user = localStorage.getItem('name');
     setMessages(prev => [...prev, {sender: user, message: input}]);
     
+    const room_select = localStorage.getItem('room_select');
+    const id = localStorage.getItem('conversationId');
     try {
-      const room_select = localStorage.getItem('room_select');
-      const id = localStorage.getItem('conversationId');
       const res = await axios.post('http://localhost:4444/sendMsg', { user, input , id });
     } catch (err) {
       console.error(err);
+    }
+    if (socket && socket.readyState === WebSocket.OPEN && input.trim()) {
+      const data ={
+        user: user,
+        message: input,
+        conv_id: id,
+      };
+      socket.send(JSON.stringify(data));
     }
     setEmoji('');
   }
@@ -192,6 +223,13 @@ export default function chatPage() {
     setShow(false);
     setEmoji(prevValue => prevValue + object.emoji);
   }
+
+    useEffect(() => {
+    const chatContainer = document.querySelector('.chat-body');
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }, [messages]);
   
   return (
     <div className="flex justify-center items-center h-full text-white">
@@ -276,3 +314,13 @@ export default function chatPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
