@@ -73,8 +73,6 @@ wss.on('connection', (socket) => {
     users_socket.set(username, socket);
     console.log(`User ${username} registered`);
 
-    socket.send(`Hello ${username}, you are connected!`);
-
     socket.on('message', async (msg) => {
       const data = JSON.parse(msg);
       const {user , message , conv_id} = data;
@@ -82,7 +80,7 @@ wss.on('connection', (socket) => {
       for (const user of res) {
         const socket = users_socket.get(user);
         socket.send(message);
-        console.log("end to " , user , "===>" ,message)
+        console.log("send to " , user , "===>" ,message)
       }
     });
 
