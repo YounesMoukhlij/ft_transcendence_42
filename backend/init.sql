@@ -12,11 +12,29 @@ CREATE TABLE users (
     password TEXT,
     langue TEXT,
     status TEXT,
-    google_auth TEXT,
-    friends TEXT,
-    friends_request TEXT,
-    blocked_users TEXT
+    google_auth TEXT
 );
+
+
+CREATE TABLE user_friends (
+    id_user INTEGER NOT NULL,
+    friend_id INTEGER NOT NULL,
+    is_bloked BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (id_user) REFERENCES users(id_user),
+    FOREIGN KEY (friend_id) REFERENCES users(id_user),
+    PRIMARY KEY (id_user, friend_id)
+);
+
+
+CREATE TABLE user_friend_requests (
+    id_user INTEGER NOT NULL,
+    requested_user_id INTEGER NOT NULL,
+    status TEXT CHECK(status IN ('pending', 'accepted', 'rejected')) NOT NULL,
+    FOREIGN KEY (id_user) REFERENCES users(id_user),
+    FOREIGN KEY (requested_user_id) REFERENCES users(id_user),
+    PRIMARY KEY (id_user, requested_user_id)
+);
+
 
 CREATE TABLE game_history (
     game_history_id INTEGER PRIMARY KEY AUTOINCREMENT,
