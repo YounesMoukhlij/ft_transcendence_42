@@ -5,45 +5,54 @@ import axios from 'axios';
 import "../chat/page.css"
 
 
-const LeaderBord = () =>{
+const LeaderBord = ({users}) =>{
+  function handleAddFriend(username){
+    console.log(username)
+  }
+
+
+  const newObject = users.slice(3);
   return (
-    <div className="text-black  w-full h-[100%] bg-white ">
+    <div className="text-black  w-full h-full  ">
 
-        <div className=" flex w-full h-[50%] justify-center items-end  bg-white gap-[0.5rem] pb-[20px]">
+        <div className="flex w-full h-[50%] justify-center items-end  bg-white gap-[0.5rem] pb-[20px]">
 
-          <div className=" w-[25%] h-[70%]  flex flex-col items-center  rounded-[10px]  bg-gray-100">
-            <img className="w-[60%] rounded-[50%] border-[4px] border-amber-900 mt-[0.4rem]" src="https://cdn.intra.42.fr/users/850b847e468af56ad89bba61d7918cb8/zlaksyar.jpg"/>
-            <h1 className="pt-[0.5rem]">zalaksya</h1>
-            <h1 className="pt-[0.4rem]">524</h1>
-          </div>
-          <div className=" w-[25%] h-[80%]  flex flex-col items-center  rounded-[10px] bg-gray-100">
-            <img className="w-[60%] rounded-[50%] border-[4px] border-amber-400 mt-[0.4rem]" src="https://cdn.intra.42.fr/users/850b847e468af56ad89bba61d7918cb8/zlaksyar.jpg"/>
-            <h1 className="pt-[0.5rem]">zalaksya</h1>
-            <h1 className="pt-[0.4rem]">524</h1>
-          </div>
-          <div className=" w-[25%] h-[70%]  flex flex-col items-center  rounded-[10px] bg-gray-100">
-            <img className="w-[60%] rounded-[50%] border-[4px] border-gray-400 mt-[0.4rem]" src="https://cdn.intra.42.fr/users/850b847e468af56ad89bba61d7918cb8/zlaksyar.jpg"/>
-            <h1 className="pt-[0.5rem]">zalaksya</h1>
-            <h1 className="pt-[0.4rem]">524</h1>
-          </div>
+          { users.length >= 2 && <div className=" w-[25%]  h-[70%] lg:h-[80%]  flex flex-col items-center  rounded-[10px]  bg-gray-100 ">
+            <img className="w-[60%] rounded-[50%] border-[4px] border-amber-900 mt-[0.4rem]" src={users[1].profile_img}/>
+            <h1 className="pt-[0.5rem]">{users[1].username}</h1>
+            <h1 className="pt-[0.4rem]">{users[1].xp}</h1>
+          </div>}
+          {users.length >= 1 &&  <div className=" w-[25%] h-[80%] lg:h-[90%] flex flex-col items-center  rounded-[10px] bg-gray-100 ">
+            <img className="w-[60%] rounded-[50%] border-[4px] border-amber-400 mt-[0.4rem]" src={users[0].profile_img}/>
+            <h1 className="pt-[0.5rem]">{users[0].username}</h1>
+            <h1 className="pt-[0.4rem]">{users[0].xp}</h1>
+          </div>}
+          {users.length >= 3 &&  <div className=" w-[25%] h-[70%] lg:h-[80%] flex flex-col items-center  rounded-[10px] bg-gray-100 ">
+            <img className="w-[60%] rounded-[50%] border-[4px] border-gray-400 mt-[0.4rem]" src={users[2].profile_img}/>
+            <h1 className="pt-[0.5rem]">{users[2].username}</h1>
+            <h1 className="pt-[0.4rem]">{users[2].xp}</h1>
+          </div>}
 
         </div>
-
-        <div className="w-full h-[50%] ">
-            <div className="flex">
-              <div className="w-full flex full h-[6rem] bg-gray-100 justify-between">
-                <div className="flex h-full">
-                  <div className="flex items-center w-[1rem] ml-1"><p className="text-2xl">3</p></div>
-                  <div className="flex w-[70px] items-center ml-[0.5rem]"><img className="rounded-[50%]" src="https://cdn.intra.42.fr/users/850b847e468af56ad89bba61d7918cb8/zlaksyar.jpg"/></div>
-                  <div className="flex w-[70px] items-center ml-[0.5rem]"><p>Avatar</p></div>
-                </div>
-                <div className="flex w-[30%] h-full">
-                  <div className="w-[22%] flex items-center"><p className="text-2xl">256</p></div>
-                  <div className="flex  w-[77%] items-center ml-[0.5rem] mr-[0.5rem]"><button className="bg-blue-500 w-full h-[40%] rounded-[10px]">Add friend</button></div>
-                </div>
+        {
+          newObject.map((item , index)=>(
+              <div className="w-full mt-0.5 ">
+                  <div className="flex">
+                    <div className="w-full flex full h-[6rem] bg-gray-100 justify-between">
+                      <div className="flex h-full">
+                        <div className="flex items-center w-[1rem] ml-1"><p className="text-2xl">{index + 4}</p></div>
+                        <div className="flex w-[70px] items-center ml-[0.5rem]"><img className="rounded-[50%]" src={item.profile_img}/></div>
+                        <div className="flex w-[70px] items-center ml-[0.5rem]"><p>{item.username}</p></div>
+                      </div>
+                      <div className="flex w-[40%] h-full ">
+                        <div className="w-[40%] flex items-center"><p className="text-2xl">{item.xp}</p></div>
+                        <div className="flex  w-[77%] items-center "><button onClick={()=>handleAddFriend(item.username)} className="bg-blue-500 w-full h-[40%] rounded-[10px]">Add friend</button></div>
+                      </div>
+                    </div>
+                  </div>
               </div>
-            </div>
-        </div>
+          ))
+        }
    </div>
 
   );
@@ -60,7 +69,7 @@ export default function SettingsPage() {
     useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get('http://localhost:4444/');
+        const res = await axios.get('http://localhost:4444/Xprank');
         setLeadr(res.data);
       } catch (err) {
         console.log(err);
@@ -68,11 +77,13 @@ export default function SettingsPage() {
     };
     fetchData();
   }, []);
-
+  
 
   return (
-    <div className="text-white w-[25%] h-[40%]">
-      <LeaderBord />
+    <div className="text-white bg-white w-[25%] h-[40%] overflow-scroll">
+      <LeaderBord 
+        users={LeaderBord_users}
+      />
     </div>
   );
 }

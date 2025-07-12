@@ -71,7 +71,6 @@ export async function getMsgs (request , reply){
 
 
 export async function sendMsg (request , reply){
-  console.log(request.body);
 
   const {user , input , id} = request.body;
 
@@ -85,4 +84,15 @@ export async function sendMsg (request , reply){
   }
 
 
+}
+
+
+export async function Xprank(request , reply){
+  try {
+    const users = request.server.db.prepare("SELECT * FROM users ORDER BY xp DESC").all();
+
+    reply.send(users);
+  } catch (err) {
+    reply.code(500).send({ error: 'Database query failed' });
+  }
 }
