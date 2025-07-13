@@ -6,8 +6,14 @@ import "../chat/page.css"
 
 
 const LeaderBord = ({users}) =>{
-  function handleAddFriend(username){
-    console.log(username)
+  
+  async function  handleAddFriend (username){
+    const sender = localStorage.getItem('name');
+    try {
+        await axios.post('http://localhost:4444/sendNotification' , { sender, friend: username });
+      } catch (err) {
+        console.log(err);
+      }
   }
 
 

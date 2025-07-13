@@ -96,3 +96,11 @@ export async function Xprank(request , reply){
     reply.code(500).send({ error: 'Database query failed' });
   }
 }
+
+
+
+export async function sendNotification(request , replay){
+  const {sender , friend } = request.body;
+  console.log(sender , "===================> " , friend);
+
+}

@@ -13,10 +13,32 @@ CREATE TABLE users (
     langue TEXT,
     status TEXT,
     google_auth TEXT,
-    -- friends TEXT,
-    -- friends_request TEXT,
-    -- blocked_users TEXT
+
 );
+
+CREATE TABLE friends (
+    id_friendship INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    friend_id INTEGER NOT NULL,
+    is_blocked BOOLEAN DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id_user),
+    FOREIGN KEY (friend_id) REFERENCES users(id_user),
+    UNIQUE(user_id, friend_id)  -- prevent duplicates
+);
+
+-- Table to store friend requests (unidirectional)
+CREATE TABLE friend_requests (
+    id_request INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL,
+    receiver_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'pending', -- e.g., pending, accepted, rejected
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id_user),
+    FOREIGN KEY (receiver_id) REFERENCES users(id_user),
+    UNIQUE(sender_id, receiver_id)  -- prevent duplicate requests
+);
+
 
 -- Game history
 CREATE TABLE game_history (
@@ -50,7 +72,7 @@ CREATE TABLE notification (
     notify_id INTEGER PRIMARY KEY AUTOINCREMENT,
     getter_user INTEGER NOT NULL,
     title TEXT NOT NULL,
-    text TEXT NOT NULL,
+    notifyBody TEXT NOT NULL,
     is_seen BOOLEAN DEFAULT FALSE,
     is_game_invite BOOLEAN DEFAULT FALSE,
     deadline DATETIME,
