@@ -72,6 +72,11 @@ wss.on('connection', (socket) => {
     username = msg.toString();
     users_socket.set(username, socket);
     console.log(`User ${username} registered`);
+    
+      // socket.send(JSON.stringify({
+      //     type: "notify",
+      //     data: 'You sxxccaid: '
+      //   }));
 
     socket.on('message', async (msg) => {
       const data = JSON.parse(msg);
@@ -80,6 +85,10 @@ wss.on('connection', (socket) => {
       for (const user of res) {
         const socket = users_socket.get(user);
         socket.send(message);
+           socket.send(JSON.stringify({
+          type: "message",
+          data: `${message}`
+        }));
         console.log("send to " , user , "===>" ,message)
       }
     });
