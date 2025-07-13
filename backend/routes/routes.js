@@ -1,7 +1,7 @@
-import {  getUsers  , getConversationId  , sendMsg , getMsgs , Xprank , sendNotification} from '../modules/user.module.js';
+import {  aaa  , getConversationId  , sendMsg , getMsgs , Xprank , sendNotification} from '../modules/user.module.js';
 
 export default async function routes(fastify, options) {
-  fastify.get('/users', getUsers);
+  fastify.get('/', aaa);
   fastify.post('/getConversationId', getConversationId);
   
   fastify.post('/sendMsg' , sendMsg);

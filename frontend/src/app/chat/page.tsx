@@ -134,7 +134,11 @@ export default function chatPage() {
     const ws = new WebSocket('ws://localhost:4444/ws');
     setsocket(ws);
     ws.onmessage = (event) => {
-        setMessages(prev => [...prev, {sender: "name", message: event.data}]);
+      const { type, data } = JSON.parse(event.data);
+      if (type == "message")
+        setMessages(prev => [...prev, {sender: "name", message: data}]);
+      else if (type == "notify")
+        alert("hhhhhh");
     };
 
     ws.onopen = () => {
