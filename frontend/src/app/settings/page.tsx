@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from 'axios';
 import "../chat/page.css"
+import { title } from "process";
 
 
 const LeaderBord = ({users}) =>{
@@ -10,7 +11,7 @@ const LeaderBord = ({users}) =>{
   async function  handleAddFriend (username){
     const sender = localStorage.getItem('name');
     try {
-        await axios.post('http://localhost:4444/sendNotification' , { sender, friend: username });
+        await axios.post('http://localhost:4444/sendNotification' , { sender, friend: username , title:"request friend"});
       } catch (err) {
         console.log(err);
       }
@@ -42,7 +43,7 @@ const LeaderBord = ({users}) =>{
         </div>
         {
           newObject.map((item , index)=>(
-              <div className="w-full mt-0.5 ">
+              <div className="index w-full mt-0.5 ">
                   <div className="flex">
                     <div className="w-full flex full h-[6rem] bg-gray-100 justify-between">
                       <div className="flex h-full">
