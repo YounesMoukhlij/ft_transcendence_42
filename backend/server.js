@@ -73,10 +73,16 @@ wss.on('connection', (socket) => {
     users_socket.set(username, socket);
     console.log(`User ${username} registered`);
     
-      // socket.send(JSON.stringify({
-      //     type: "notify",
-      //     data: 'You sxxccaid: '
-      //   }));
+
+    const objet ={
+      title: "test",
+      getter_user: "sssssssssss",
+      notifyBody : "wwwwwwwwwww",
+    };
+      socket.send(JSON.stringify({
+          type: "notify",
+          data: objet
+        }));
 
     socket.on('message', async (msg) => {
       const data = JSON.parse(msg);

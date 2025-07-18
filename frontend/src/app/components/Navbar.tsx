@@ -6,6 +6,11 @@ import { GiPingPongBat } from 'react-icons/gi';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
 import Link from 'next/link';
 
+function showNotification(){
+  console.log("here");
+  <div className='absolute h-[100px] w-[100px] bg-red-500'></div>
+}
+
 export default function Navbar()
 {
   const [isOpen, setIsOpen] = useState(false);
@@ -170,7 +175,7 @@ export default function Navbar()
                         animationDelay: '700ms'
                       }}
                     >
-                      <IoNotificationsOutline className="text-white text-xl" />
+                      <IoNotificationsOutline   className="text-white text-xl " />
                       <span className="text-white">Notifications</span>
                     </div>
                     <div
