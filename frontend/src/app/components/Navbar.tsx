@@ -6,7 +6,7 @@ import { GiPingPongBat } from 'react-icons/gi';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
 import Link from 'next/link';
 import axios from 'axios';
-
+import { globalStore } from '../components/globalStore';
 
 
 
@@ -20,10 +20,17 @@ export default function Navbar()
   const profileIconRef = useRef<HTMLSpanElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
   
+  const {connect , username ,socket } = globalStore();
+
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
   
+  async function AcceptFriendRequest(username){
+    const loginUsername  = globalStore.getState().username;
+    await axios.post("http://localhost:4444/AddFriend",{user1: username , user2: loginUsername});
+  };
+
   function showNotification(){
     setNotificationIndex(!notificationIndex);
   }
@@ -44,6 +51,22 @@ export default function Navbar()
     get_notify();
   },[])
 
+  useEffect( ()=>{
+    connect();
+  }, [])
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.onmessage = (event) => {
+      const { type, data } = JSON.parse(event.data);
+      
+      if (type === "notify") {
+        setNotification(prev => [...prev, {sender_user: data.sender_user, sender_profile_img: data.sender_profile_img}]);
+        // alert("woooooow");
+      }
+    };
+  }, [socket]);
 
   // Close mobile menu when clicking outside the list
   useEffect(() => {
@@ -116,7 +139,7 @@ export default function Navbar()
                       </div>
                     </div>
                   <div className='flex w-[70%] h-[3rem] ml-[25%] mt-[-14%] items-center justify-between'>
-                   <button   className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
+                   <button  onClick={()=> AcceptFriendRequest(item.sender_user)} className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
                    <button   className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
                   </div>
                 </div>

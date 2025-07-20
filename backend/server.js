@@ -85,12 +85,14 @@ wss.on('connection', (socket) => {
       const res = await test_function(conv_id , user);
       for (const user of res) {
         const socket = users_socket.get(user);
-        socket.send(message);
-           socket.send(JSON.stringify({
-          type: "message",
-          data: `${message}`
-        }));
-        console.log("send to " , user , "===>" ,message)
+        if (socket){
+          socket.send(message);
+          socket.send(JSON.stringify({
+            type: "message",
+            data: `${message}`
+          }));
+          console.log("send to " , user , "===>" ,message)
+        }
       }
     });
 
