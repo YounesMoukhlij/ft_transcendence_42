@@ -98,9 +98,3 @@ export async function Xprank(request , reply){
 }
 
 
-
-export async function sendNotification(request , replay){
-  const {sender , friend } = request.body;
-  console.log(sender , "===================> " , friend);
-
-}

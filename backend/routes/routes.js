@@ -1,4 +1,5 @@
-import {  aaa  , getConversationId  , sendMsg , getMsgs , Xprank , sendNotification} from '../modules/user.module.js';
+import {  aaa  , getConversationId  , sendMsg , getMsgs , Xprank } from '../modules/user.module.js';
+import { GetNotification , sendRequestFriend } from '../modules/nofitication.moudle.js';
 
 export default async function routes(fastify, options) {
   fastify.get('/', aaa);
@@ -9,7 +10,7 @@ export default async function routes(fastify, options) {
 
   fastify.get('/Xprank' , Xprank);
 
-  fastify.post('/sendNotification' , sendNotification);
-  // fastify.get('/getNotification' , getNotification);
+  fastify.get('/GetNotification' , GetNotification);
+  fastify.post('/sendRequestFriend' , sendRequestFriend);
 
 }
