@@ -12,7 +12,7 @@ CREATE TABLE users (
     password TEXT,
     langue TEXT,
     status TEXT,
-    google_auth TEXT,
+    google_auth TEXT
 
 );
 
@@ -70,13 +70,13 @@ CREATE TABLE room (
 -- Notification
 CREATE TABLE notification (
     notify_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    getter_user INTEGER NOT NULL,
+    getter_user TEXT NOT NULL,
+    sender_user TEXT NOT NULL,
     title TEXT NOT NULL,
     notifyBody TEXT NOT NULL,
     is_seen BOOLEAN DEFAULT FALSE,
     is_game_invite BOOLEAN DEFAULT FALSE,
-    deadline DATETIME,
-    FOREIGN KEY (getter_user) REFERENCES users(id_user)
+    deadline DATETIME
 );
 
 -- Message

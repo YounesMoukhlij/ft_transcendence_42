@@ -5,27 +5,45 @@ import { IoSearchOutline, IoNotificationsOutline, IoPersonCircleOutline, IoMenuO
 import { GiPingPongBat } from 'react-icons/gi';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
 import Link from 'next/link';
+import axios from 'axios';
 
-function showNotification(){
-  console.log("here");
-  <div className='absolute h-[100px] w-[100px] bg-red-500'></div>
-}
+
+
 
 export default function Navbar()
 {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationIndex, setNotificationIndex] = useState(false);
+  const [notificatiion, setNotification] = useState([]);
   const dropdownRef = useRef(null);
   const profileIconRef = useRef<HTMLSpanElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
-
+  
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
-
+  
+  function showNotification(){
+    setNotificationIndex(!notificationIndex);
+  }
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
+
+
+  useEffect(()=>{
+    async function get_notify(){
+      const user  = localStorage.getItem('name');
+      const result = await axios.get('http://localhost:4444/GetNotification', {
+        params: { user }
+      });
+      setNotification(result.data);
+      console.log(result.data);
+    }
+    get_notify();
+  },[])
+
 
   // Close mobile menu when clicking outside the list
   useEffect(() => {
@@ -68,6 +86,7 @@ export default function Navbar()
           }
         }
       `}</style>
+
       <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[10vh] bg-transparent">
         <div className="flex justify-between items-center">
           <div className="flex flex-row items-center gap-1 md:gap-2">
@@ -84,8 +103,30 @@ export default function Navbar()
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
+          {notificationIndex && 
+            <div className='absolute flex flex-col top-[10%] right-[10%] h-[300px] w-[350px]  bg-black text-white border-2 border-white overflow-scroll gap-2 '>
+             {
+               notificatiion.map((item , index)=>(
+                   <div className='flex flex-col border-t border-gray-300 '>
+                    <div className='flex '>
+                      <div className='h-[4.5rem] w-[4.5rem] pl-0.5 pt-2 '> <img  className='rounded-[50%] h-full w-full 'src={item.sender_profile_img} alt="profile" /></div>
+                      <div className='flex w-full justify-between'>
+                        <div className='ml-[0.5rem] '> <p className='text-2xl'>{item.sender_user}</p></div>
+                        <div className=''> <p className='text-1.5xl'>1d</p></div>
+                      </div>
+                    </div>
+                  <div className='flex w-[70%] h-[3rem] ml-[25%] mt-[-14%] items-center justify-between'>
+                   <button   className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
+                   <button   className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
+                  </div>
+                </div>
+               ))
+             }
+            </div>
+          }
+
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
-              <IoNotificationsOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
+              <IoNotificationsOutline  onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
             <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>
               <span ref={profileIconRef}>

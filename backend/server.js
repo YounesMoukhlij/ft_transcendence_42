@@ -20,8 +20,9 @@ app.register(cors, {
 });
 
 
-app.decorate('db', db);
 app.register(routes);
+app.decorate('db', db);
+
 
 try {
   const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
@@ -29,9 +30,10 @@ try {
     const init = fs.readFileSync(path.join(__dirname, 'init.sql'), 'utf8');
     db.exec(init);
     app.log.info('Database initialized');
+    console.log("here1");
   }
 } catch (err) {
-  app.log.error('Database initialization error:', err);
+  console.log('Database initialization error:', err);
   process.exit(1);
 }
 
@@ -39,6 +41,10 @@ try {
 
 const wss = new WebSocketServer({ server: app.server, path: '/ws' });
 const users_socket = new Map();
+
+
+app.decorate('users_socket', users_socket);
+
 
 
 async function test_function( conversationId , sender) {
@@ -73,17 +79,6 @@ wss.on('connection', (socket) => {
     users_socket.set(username, socket);
     console.log(`User ${username} registered`);
     
-
-    const objet ={
-      title: "test",
-      getter_user: "sssssssssss",
-      notifyBody : "wwwwwwwwwww",
-    };
-      socket.send(JSON.stringify({
-          type: "notify",
-          data: objet
-        }));
-
     socket.on('message', async (msg) => {
       const data = JSON.parse(msg);
       const {user , message , conv_id} = data;
