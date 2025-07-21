@@ -81,6 +81,31 @@ export default function Navbar()
     { path: '/settings', icon: <IoSettingsOutline className="text-white text-2xl" />, alt: 'Settings' },
   ];
 
+  const [isProfileOpen, setProfileOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  const profileclicked = () => setProfileOpen((prev) => !prev);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node) &&
+        profileIconRef.current &&
+        !profileIconRef.current.contains(event.target as Node)
+      ) {
+        setProfileOpen(false);
+      }
+    }
+    if (isProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileOpen]);
   return (
     <>
       <style jsx>{`
@@ -142,13 +167,14 @@ export default function Navbar()
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
-              <IoNotificationsOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
+              <IoNotificationsOutline  className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
             <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>
               <span ref={profileIconRef}>
                 <IoPersonCircleOutline
                   className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400"
                   style={{ cursor: 'pointer' }}
+                  onClick={profileclicked}
                 />
               </span>
             </div>
@@ -271,6 +297,15 @@ export default function Navbar()
           </div>
         </div>
       </nav>
+      {isProfileOpen && (
+        <div ref={profileDropdownRef} className="absolute top-25 right-6 mt-2 w-48 bg-black border-2 border-white rounded-lg shadow-lg z-50">
+          <ul className="py-2">
+            <li className="px-4 py-2 text-white hover:bg-gray-700 cursor-pointer">Profile</li>
+            <li className="px-4 py-2 text-white hover:bg-gray-700 cursor-pointer">Settings</li>
+            <li className="px-4 py-2 text-white hover:bg-gray-700 cursor-pointer">Logout</li>
+          </ul>
+        </div>
+      )}
     </>
   );
 }

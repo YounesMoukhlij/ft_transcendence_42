@@ -1,6 +1,6 @@
 
 'use client';
-import ModeSwiper from "../components/ModeSwiper";
+import ModeSwiper from "../../components/ModeSwiper";
 
 
 export default function GamePage() {

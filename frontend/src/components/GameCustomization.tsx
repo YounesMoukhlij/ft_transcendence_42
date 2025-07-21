@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../contexts/GameContext';
+import { useGameContext } from './GameContext';
 
 const tableBackgrounds = [
   { name: 'Classic Green', value: '#15803d', type: 'color' },

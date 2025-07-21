@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../../../contexts/GameContext';
+import { useGameContext } from '../../../components/GameContext';
 
 export default function RemoteGamePage() {
   const router = useRouter();
