@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../../../contexts/GameContext';
+import { useGameContext } from '../../../components/GameContext';
 import PingPongGame from '../../../components/PingPongGame';
 
 export default function LocalGamePage() {

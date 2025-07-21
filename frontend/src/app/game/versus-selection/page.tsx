@@ -2,8 +2,9 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../../../contexts/GameContext';
+import { useGameContext } from '../../../components/GameContext';
 import Image from 'next/image';
+import { FaUserFriends, FaGlobe } from 'react-icons/fa';
 
 export default function VersusSelectionPage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function VersusSelectionPage() {
     document.title = '1 Versus 1 - Choose Game Type';
   }, []);
 
-  const handleModeSelection = (mode: 'local' | 'remote') => {
+  const handleModeSelection = (mode: 'local') => {
     setGameMode(mode);
     if (mode === 'local') {
       router.push('/game/player2');
@@ -35,7 +36,6 @@ export default function VersusSelectionPage() {
       </div>
 
       <div className="flex gap-8 justify-center items-center w-[80%] max-w-4xl">
-        {/* Local Mode Card */}
         <div className="flex-1 max-w-md">
           <div
             className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 cursor-pointer transform hover:scale-105 transition-all duration-300 border-2 border-blue-400 hover:border-blue-300"
@@ -48,30 +48,23 @@ export default function VersusSelectionPage() {
               `
             }}
           >
-            <div className="text-center">
-              <div className="w-24 h-24 mx-auto mb-4 bg-white rounded-full flex items-center justify-center">
-                <Image
-                  src="/1vs1.png"
-                  alt="Local Game"
-                  width={64}
-                  height={64}
-                  className="rounded-full"
-                />
-              </div>
+            <div className="text-center flex flex-col items-center justify-center">
+
+              <FaUserFriends className="w-16 h-16 mx-auto mb-4 text-blue-300 bg-white rounded-full p-3 border-2 border-blue-400" />
               <h2 className="text-2xl font-bold text-white mb-2">Local Game</h2>
               <p className="text-blue-100 mb-4">Play with a friend on the same device</p>
-              <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                <p className="text-white text-sm font-semibold">Controls:</p>
-                <p className="text-blue-100 text-xs">Left: W/S | Right: ↑/↓</p>
+              <div className="bg-white bg-opacity-20 rounded-lg p-3 w-[80%] h-15">
+                <p className="text-black text-s font-semibold">Controls:</p>
+                <p className="text-black text-xs">Left: W/S | Right: ↑/↓</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Remote Mode Card */}
-        <div className="flex-1 max-w-md">
+        <div className="flex-1 max-w-md min-w-[320px] min-h-[370px] flex flex-col justify-center">
           <div
-            className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-2xl p-6 cursor-pointer transform hover:scale-105 transition-all duration-300 border-2 border-purple-400 hover:border-purple-300"
+            className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-2xl p-6 cursor-pointer transform hover:scale-105 transition-all duration-300 border-2 border-purple-400 hover:border-purple-300 h-full flex flex-col justify-center"
             onClick={() => handleModeSelection('remote')}
             style={{
               boxShadow: `
@@ -81,21 +74,13 @@ export default function VersusSelectionPage() {
               `
             }}
           >
-            <div className="text-center">
-              <div className="w-24 h-24 mx-auto mb-4 bg-white rounded-full flex items-center justify-center">
-                <Image
-                  src="/globe.svg"
-                  alt="Remote Game"
-                  width={64}
-                  height={64}
-                  className="rounded-full"
-                />
-              </div>
+
+            <div className="flex flex-col items-center justify-center h-full ">
+              <FaGlobe className="w-16 h-16 mx-auto mb-4 text-purple-300 bg-white rounded-full p-3 border-2 border-purple-400" />
               <h2 className="text-2xl font-bold text-white mb-2">Online Game</h2>
               <p className="text-purple-100 mb-4">Play with friends over the internet</p>
-              <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                <p className="text-white text-sm font-semibold">Features:</p>
-                <p className="text-purple-100 text-xs">Room codes • Matchmaking • Global leaderboards</p>
+              <div className="bg-white bg-opacity-20 rounded-lg p-3 w-[80%] h-15 flex items-center justify-center">
+                <p className="text-black text-m">Matchmaking • Global leaderboards</p>
               </div>
             </div>
           </div>

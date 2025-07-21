@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../../../contexts/GameContext';
+import { useGameContext } from '../../../components/GameContext';
 import GameCustomization from '../../../components/GameCustomization';
 
 export default function CustomizePage() {
@@ -13,12 +13,22 @@ export default function CustomizePage() {
   useEffect(() => {
     const title = gameState.mode === 'ai' ? 'AI Game Customization' :
                  gameState.mode === 'local' ? 'Local Game Customization' :
-                 gameState.mode === 'remote' ? 'Online Game Customization' : 'Game Customization';
+                 gameState.mode === 'tournament' ? 'Online Game Customization' : 'Game Customization';
     document.title = title;
   }, [gameState.mode]);
 
+  useEffect(() => {
+    if (!gameState.mode) {
+      router.push('/game');
+    }
+  }, [gameState.mode, router]);
+
+  if (!gameState.mode) {
+    return null;
+  }
+
   const handleBack = () => {
-    if (gameState.mode === 'local' || gameState.mode === 'remote') {
+    if (gameState.mode === 'local' || gameState.mode === 'tournament') {
       router.push('/game/versus-selection');
     } else {
       router.push('/game');
@@ -30,18 +40,12 @@ export default function CustomizePage() {
       router.push('/game/ai');
     } else if (gameState.mode === 'local') {
       router.push('/game/local');
-    } else if (gameState.mode === 'remote') {
-      router.push('/game/remote');
+    } else if (gameState.mode === 'tournament') {
+      router.push('/game/tournament');
     } else {
       router.push('/game/play');
     }
   };
-
-  // If no mode is selected, redirect back to game page
-  if (!gameState.mode) {
-    router.push('/game');
-    return null;
-  }
 
   return (
     <div className="h-full w-full  flex items-center justify-center p-4">

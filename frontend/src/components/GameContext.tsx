@@ -16,7 +16,7 @@ export interface GameCustomisation {
 }
 
 export interface GameState {
-  mode: 'ai' | 'local' | 'remote' | null;
+  mode: 'ai' | 'local' | 'tournament' | null;
   players: Player[];
   customisation: GameCustomisation;
   roomCode?: string;
@@ -57,7 +57,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   });
 
   const setGameMode = (mode: GameState['mode']) => {
-    setGameState(prev => ({ ...prev, mode }));
+    setGameState(prev => {
+      const newState = { ...prev, mode };
+      return newState;
+    });
   };
 
   const setPlayers = (players: Player[]) => {

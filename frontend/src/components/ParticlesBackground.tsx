@@ -13,15 +13,12 @@ const ParticlesBackground = (props) => {
   useEffect(() => {
     initParticlesEngine(async (engine) => {
       await loadSlim(engine);
-    //   await loadBasic(engine);
+
     }).then(() => {
       setInit(true);
     });
   }, []);
 
-  const particlesLoaded = (container) => {
-    console.log(container);
-  };
 
 
   const options = useMemo(
@@ -97,7 +94,7 @@ const ParticlesBackground = (props) => {
   );
 
 
-  return <Particles init={particlesLoaded} options={options} />;
+  return <Particles  options={options} />;
 };
 
 export default ParticlesBackground;

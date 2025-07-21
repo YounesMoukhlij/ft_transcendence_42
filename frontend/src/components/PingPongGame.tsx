@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useGameContext } from '../contexts/GameContext';
+import { useGameContext } from '../components/GameContext';
 import { FaUserCircle } from 'react-icons/fa';
 import { FaRobot } from 'react-icons/fa';
+import { FaPause, FaPlay } from 'react-icons/fa';
 
 interface GameState {
   ball: {
@@ -36,6 +37,7 @@ interface GameState {
 const PingPongGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { gameState } = useGameContext();
+  const { tableBg, paddleColor, ballColor } = gameState.customisation || {};
   const [localGameState, setLocalGameState] = useState<GameState>({
     ball: {
       x: 400,
@@ -63,6 +65,7 @@ const PingPongGame: React.FC = () => {
     gameStarted: false,
     winner: null,
   });
+  const [paused, setPaused] = useState(false);
 
   // Set canvas size to match the table size
   const tableW = 900;
@@ -83,7 +86,7 @@ const PingPongGame: React.FC = () => {
   const gameY = 0;
 
   const paddleSpeed = 8;
-  const aiPaddleSpeed = 7; // Slightly slower than human for fairness
+  const aiPaddleSpeed = 5; // Reduced from 7 to 5 to make AI slower
   const paddleRadius = 8; // Radius for rounded corners
   const keysPressed = useRef<Set<string>>(new Set());
 
@@ -117,9 +120,20 @@ const PingPongGame: React.FC = () => {
     };
   }, []);
 
+  // Keyboard shortcut for pause/unpause (P)
+  useEffect(() => {
+    const handlePauseKey = (e: KeyboardEvent) => {
+      if (e.key === 'p' || e.key === 'P') {
+        setPaused(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handlePauseKey);
+    return () => window.removeEventListener('keydown', handlePauseKey);
+  }, []);
+
   // Game loop
   const gameLoop = useCallback(() => {
-    if (!localGameState.gameStarted || localGameState.winner) return;
+    if (paused || !localGameState.gameStarted || localGameState.winner) return;
     setLocalGameState(prev => {
       let newState = { ...prev };
 
@@ -133,18 +147,50 @@ const PingPongGame: React.FC = () => {
       }
       // Right paddle (AI or Arrow keys)
       if (gameState.mode === 'ai') {
-        // Simple AI: follow the ball with some randomness
+        // AI: Make it smoother and easier to beat
         const paddleCenter = newState.rightPaddle.y + paddleHeight / 2;
         const target = newState.ball.y;
-        if (paddleCenter < target - 10) {
-          newState.rightPaddle.y = Math.min(gameHeight - paddleHeight, newState.rightPaddle.y + aiPaddleSpeed);
-        } else if (paddleCenter > target + 10) {
-          newState.rightPaddle.y = Math.max(0, newState.rightPaddle.y - aiPaddleSpeed);
+
+        // 70% of the time, AI makes mistakes
+        if (Math.random() < 0.7) {
+          // Add prediction error and delayed reaction
+          const error = (Math.random() - 0.5) * 100; // Increased error range
+          const reactionDelay = 30; // Add delay to AI reactions
+
+          if (paddleCenter < target + error - reactionDelay) {
+            newState.rightPaddle.y = Math.min(
+              gameHeight - paddleHeight,
+              newState.rightPaddle.y + (aiPaddleSpeed * 0.7) // 70% of normal speed
+            );
+          } else if (paddleCenter > target + error + reactionDelay) {
+            newState.rightPaddle.y = Math.max(
+              0,
+              newState.rightPaddle.y - (aiPaddleSpeed * 0.7)
+            );
+          }
+        } else {
+          // 30% of the time, AI plays normally but still not perfect
+          if (paddleCenter < target - 15) {
+            newState.rightPaddle.y = Math.min(
+              gameHeight - paddleHeight,
+              newState.rightPaddle.y + aiPaddleSpeed
+            );
+          } else if (paddleCenter > target + 15) {
+            newState.rightPaddle.y = Math.max(
+              0,
+              newState.rightPaddle.y - aiPaddleSpeed
+            );
+          }
         }
-        // Add a little randomness
+
+        // Add slight randomness less frequently (reduced from 0.2 to 0.1)
         if (Math.random() < 0.1) {
+          // Reduced random movement magnitude (from 16 to 8)
           newState.rightPaddle.y += (Math.random() - 0.5) * 8;
-          newState.rightPaddle.y = Math.max(0, Math.min(gameHeight - paddleHeight, newState.rightPaddle.y));
+          newState.rightPaddle.y = Math.max(
+            0,
+            Math.min(gameHeight - paddleHeight, newState.rightPaddle.y)
+          );
         }
       } else {
         if (keysPressed.current.has('ArrowUp')) {
@@ -219,9 +265,9 @@ const PingPongGame: React.FC = () => {
       }
 
       // --- Win condition ---
-      if (newState.score.left >= 11) {
+      if (newState.score.left >= 20) {
         newState.winner = gameState.players[0]?.name || 'Player 1';
-      } else if (newState.score.right >= 11) {
+      } else if (newState.score.right >= 20) {
         newState.winner = gameState.mode === 'ai' ? 'AI Opponent' : (gameState.players[1]?.name || 'Player 2');
       }
 
@@ -234,7 +280,7 @@ const PingPongGame: React.FC = () => {
 
       return newState;
     });
-  }, [localGameState.gameStarted, localGameState.winner, gameState.mode, gameState.players]);
+  }, [paused, localGameState.gameStarted, localGameState.winner, gameState.mode, gameState.players]);
 
   // Render game
   const renderGame = useCallback(() => {
@@ -243,9 +289,27 @@ const PingPongGame: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // --- 1. Draw gray background with 90% opacity ---
+    // --- 1. Draw table background (custom or default) ---
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.fillStyle = 'rgba(75, 85, 99, 0.9)'; // gray-600, 90% opacity
+    const customBg = gameState.customisation?.tableBg;
+    if (customBg) {
+      if (customBg.startsWith('linear-gradient')) {
+        const match = customBg.match(/linear-gradient\(135deg,\s*([^,]+),\s*([^,]+)(?:,\s*([^,]+))?\)/);
+        if (match) {
+          const grad = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+          grad.addColorStop(0, match[1].trim());
+          grad.addColorStop(0.5, match[3] ? match[2].trim() : match[2].trim());
+          grad.addColorStop(1, match[3] ? match[3].trim() : match[2].trim());
+          ctx.fillStyle = grad;
+        } else {
+          ctx.fillStyle = customBg;
+        }
+      } else {
+        ctx.fillStyle = customBg;
+      }
+    } else {
+      ctx.fillStyle = 'rgba(75, 85, 99, 0.9)'; // default gray-600
+    }
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
     // --- 2. Draw white rounded table border only (no background fill) ---
@@ -269,7 +333,7 @@ const PingPongGame: React.FC = () => {
     ctx.setLineDash([]);
     ctx.restore();
 
-    // --- 4. Draw 3D paddles ---
+    // --- 4. Draw 3D paddles (custom color) ---
     ctx.save();
     // Left paddle
     const leftPaddleX = gameX + paddlePadding;
@@ -281,11 +345,7 @@ const PingPongGame: React.FC = () => {
     ctx.shadowOffsetY = 4;
     ctx.beginPath();
     ctx.roundRect(leftPaddleX, leftPaddleY, paddleWidth, paddleHeight, 8);
-    const leftGrad = ctx.createLinearGradient(leftPaddleX, leftPaddleY, leftPaddleX + paddleWidth, leftPaddleY + paddleHeight);
-    leftGrad.addColorStop(0, '#fff');
-    leftGrad.addColorStop(0.5, '#e0e0e0');
-    leftGrad.addColorStop(1, '#bdbdbd');
-    ctx.fillStyle = leftGrad;
+    ctx.fillStyle = gameState.customisation?.paddleColor || '#f87171';
     ctx.fill();
     ctx.restore();
     // Right paddle
@@ -298,16 +358,12 @@ const PingPongGame: React.FC = () => {
     ctx.shadowOffsetY = 4;
     ctx.beginPath();
     ctx.roundRect(rightPaddleX, rightPaddleY, paddleWidth, paddleHeight, 8);
-    const rightGrad = ctx.createLinearGradient(rightPaddleX, rightPaddleY, rightPaddleX + paddleWidth, rightPaddleY + paddleHeight);
-    rightGrad.addColorStop(0, '#fff');
-    rightGrad.addColorStop(0.5, '#e0e0e0');
-    rightGrad.addColorStop(1, '#bdbdbd');
-    ctx.fillStyle = rightGrad;
+    ctx.fillStyle = gameState.customisation?.paddleColor || '#60a5fa';
     ctx.fill();
     ctx.restore();
     ctx.restore();
 
-    // --- 5. Draw 3D ball ---
+    // --- 5. Draw 3D ball (custom color) ---
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.4)';
     ctx.shadowBlur = 8;
@@ -316,13 +372,9 @@ const PingPongGame: React.FC = () => {
     const ballX = gameX + localGameState.ball.x;
     const ballY = gameY + localGameState.ball.y;
     const ballR = ballRadius;
-    const ballGrad = ctx.createRadialGradient(ballX - 3, ballY - 3, 2, ballX, ballY, ballR);
-    ballGrad.addColorStop(0, '#fff');
-    ballGrad.addColorStop(0.5, '#e0e0e0');
-    ballGrad.addColorStop(1, '#bdbdbd');
     ctx.beginPath();
     ctx.arc(ballX, ballY, ballR, 0, Math.PI * 2);
-    ctx.fillStyle = ballGrad;
+    ctx.fillStyle = gameState.customisation?.ballColor || '#fff';
     ctx.fill();
     ctx.restore();
 
@@ -401,9 +453,10 @@ const PingPongGame: React.FC = () => {
             left: 0,
             right: 0,
           },
-          gameStarted: false,
+          gameStarted: true,
           winner: null,
         });
+        setPaused(false);
       }
     };
     window.addEventListener('keypress', handleKeyPress);
@@ -411,38 +464,64 @@ const PingPongGame: React.FC = () => {
   }, [localGameState.winner]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full  relative">
+    <div className="flex flex-col items-center justify-center h-full w-full relative">
+      {/* Pause Button (centered above playground, only when not paused) */}
+      {!paused && (
+        <div className="absolute left-1/2 -translate-x-1/2 top-18 z-40 flex justify-center">
+          <button
+            onClick={() => setPaused(true)}
+            className="px-6 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 transition text-lg font-bold flex items-center justify-center"
+          >
+            <FaPause className="w-6 h-6" />
+          </button>
+        </div>
+      )}
+      {/* Paused Overlay with Resume Button */}
+      {paused && (
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center z-30"
+          style={{ background: "rgba(0,0,0,0.6)" }}
+        >
+          <span className="text-4xl text-white font-bold mb-8">Paused</span>
+          <button
+            onClick={() => setPaused(false)}
+            className="px-8 py-4 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 transition text-2xl font-bold z-40 flex items-center justify-center"
+          >
+            <FaPlay className="w-8 h-8" />
+          </button>
+        </div>
+      )}
       {/* Player Avatars and Names */}
-      <div className="absolute left-0 right-0 flex flex-row justify-between items-center px-22" style={{top: 0, height: '70px', pointerEvents: 'none', zIndex: 10}}>
+      <div className="absolute left-0 right-0 flex flex-row justify-between items-center px-22" style={{top: 0, height: '90px', pointerEvents: 'none', zIndex: 10}}>
         {/* Left Player */}
         <div className="flex flex-row items-center gap-2 ">
           {/* Avatar */}
           {gameState.players && gameState.players[0]?.avatar ? (
-            <img src={gameState.players[0].avatar} alt="Player 1" className="w-16 h-16 rounded-full border-2 border-white bg-gray-700 object-cover" />
+            <img src={gameState.players[0].avatar} alt="Player 1" className="w-20 h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
           ) : (
-            <FaUserCircle className="w-16 h-16 text-white bg-gray-700 rounded-full border-2 border-white" />
+            <FaUserCircle className="w-20 h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
           )}
           {/* Name */}
-          <span className="text-white text-lg font-semibold drop-shadow-md">
-            {gameState.players && gameState.players[0]?.name ? gameState.players[0].name : 'Player 1'}
+          <span className="text-white text-2xl pl-7 font-bold drop-shadow-md">
+            {gameState.players && gameState.players[0]?.name ? gameState.players[0].name : 'PLAYER 1'}
           </span>
         </div>
         {/* Right Player */}
         <div className="flex flex-row items-center gap-2">
           {/* Name */}
-          <span className="text-white text-lg font-semibold drop-shadow-md">
+          <span className="text-white text-2xl pr-7 font-bold drop-shadow-md">
             {gameState.mode === 'ai'
-              ? 'AI'
-              : (gameState.players && gameState.players[1]?.name ? gameState.players[1].name : 'Player 2')}
+              ? 'THE MACHINIST (AI)'
+              : (gameState.players && gameState.players[1]?.name ? gameState.players[1].name : 'PLAYER 2')}
           </span>
           {/* Avatar */}
           {gameState.mode === 'ai' ? (
-            <FaRobot className="w-16 h-16 text-blue-300 bg-gray-700 rounded-full border-2 border-white" />
+            <FaRobot className="w-20 h-20 text-blue-300 bg-gray-700 rounded-full border-2 border-white" />
           ) : (
             gameState.players && gameState.players[1]?.avatar ? (
-              <img src={gameState.players[1].avatar} alt="Player 2" className="w-16 h-16 rounded-full border-2 border-white bg-gray-700 object-cover" />
+              <img src={gameState.players[1].avatar} alt="Player 2" className="w-20 h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
             ) : (
-              <FaUserCircle className="w-16 h-16 text-white bg-gray-700 rounded-full border-2 border-white" />
+              <FaUserCircle className="w-20 h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
             )
           )}
         </div>
@@ -461,7 +540,8 @@ const PingPongGame: React.FC = () => {
           {gameState.mode === 'ai' ? 'Use W/S to control your paddle' :
            'Left: W/S | Right: ↑/↓'}
         </p>
-        <p className="text-sm mt-1">First to 11 points wins!</p>
+        <p className="text-sm mt-1">Click on P to pause / resume the game</p>
+        <p className="text-sm mt-3">First to 20 points wins!</p>
       </div>
     </div>
   );

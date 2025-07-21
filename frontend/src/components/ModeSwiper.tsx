@@ -9,7 +9,7 @@ import 'swiper/css/autoplay';
 import Image from 'next/image';
 import styles from './modeswiper.module.css';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../contexts/GameContext';
+import { useGameContext } from './GameContext';
 
 export default function ModeSwiper()
 {
@@ -17,17 +17,20 @@ export default function ModeSwiper()
     const { setGameMode } = useGameContext();
 
     const modes = [
-      { id: 1, title: "Game vs AI", description: "Play against computer", buttonname: "AI", image: "/robot.png", mode: 'ai' as const },
-      { id: 2, title: "Game vs Human", description: "Play with a friend", buttonname: "1 Versus 1", image: "/1vs1.png", mode: 'local' as const },
+      { id: 1, title: "Game vs Human", description: "Play with a friend", buttonname: "1 Versus 1", image: "/1v1.png", mode: 'local' as const },
+      { id: 2, title: "Game vs AI", description: "Play against computer", buttonname: "AI", image: "/robot.png", mode: 'ai' as const },
+      { id: 3, title: "Game vs Human", description: "Play online", buttonname: "Tournament", image: "/tournament.png", mode: 'tournament' as const },
     ];
 
-    const handleClick = (mode: 'ai' | 'local') => {
+    const handleClick = (mode: 'ai' | 'local' | 'tournament') => {
       if (mode === 'ai') {
         setGameMode(mode);
         router.push('/game/customize');
-      } else {
-        // For 1 vs 1, go to sub-selection page
+      } else if (mode === 'local') {
         router.push('/game/versus-selection');
+      } else if (mode === 'tournament') {
+        setGameMode(mode);
+        router.push('/game/tournament');
       }
     };
 
@@ -39,11 +42,11 @@ export default function ModeSwiper()
           effect="fade"
           slidesPerView={1}
           navigation
-          speed={800}
+          speed={2000}
           className="h-full"
           loop={true}
           autoplay={{
-              delay: 5000,
+              delay: 5500,
               disableOnInteraction: false,
               pauseOnMouseEnter: true,
           }}
@@ -59,13 +62,13 @@ export default function ModeSwiper()
                   alt={mode.title}
                   width={840}
                   height={450}
-                  className="absolute z-10 w-full h-full object-cover rounded-3xl opacity-90 border-2 border-white"
+                  className="absolute z-10 w-full h-full object-cover rounded-3xl opacity-70 border-2 border-white"
                   priority
                 />
               </div>
               <div className="absolute inset-1 top-80 flex justify-center items-center bg-transparent z-50">
                 <button
-                  className="opacity-95 bg-black border-2 border-white rounded-lg w-[40%] h-[30%] md:w-[30%] md:h-[40%] hover:bg-white hover:text-black bg-black text-white text-xl font-bold cursor-pointer hover:scale-110 transition-all duration-300"
+                  className="opacity-95 bg-black border-2 border-white rounded-lg w-[40%] h-[30%] md:w-[30%] md:h-[40%] hover:bg-white hover:text-black bg-black text-white text-xl font-bold cursor-pointer hover:scale-120 transition-all duration-900 animate-pulse hover:animate-none focus:scale-105 focus:ring-8 focus:ring-white/40"
                   onClick={() => handleClick(mode.mode)}
                 >
                   {mode.buttonname}
