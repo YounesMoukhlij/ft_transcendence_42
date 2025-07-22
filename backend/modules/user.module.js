@@ -25,12 +25,75 @@ export async function aaa(request, reply) {
 }
 
 
-export async function getConversation(request , reply){
- console.log('Route params:', request.body);
-  reply.send([
-    {id: 1 , ms:'hello brother are you fine ', sender:'avatar'},
-    {id: 2 , ms:'hello brother are you fine ', sender:'savatae'},
-    {id: 2 , ms:'hello brother are you fine ', sender:'abechcha'},
-    {id: 2 , ms:'hello brother are you fine ', sender:'savatar'}
-]);
+
+
+export async function getConversationId(request, reply) {
+  const user = request.body.user;
+  const friend = request.body.friend;
+
+  const searchUser = `%,${user},%`;
+  const searchFriend = `%,${friend},%`;
+
+  try {
+    const query = request.server.db.prepare(
+      "SELECT conversation_id FROM room WHERE members LIKE ? AND members LIKE ?"
+    );
+    const result = query.get(searchUser, searchFriend);
+
+    if (result) {
+      return reply.send(result);
+
+    } else {
+      reply.code(200).send([]);
+    }
+  } catch (err) {
+    console.error("Database error:", err);
+    reply.code(500).send({ error: "Internal server error" });
+  }
 }
+
+
+
+export async function getMsgs (request , reply){
+  const id = request.body.id;
+  try{
+      const query = request.server.db.prepare("SELECT * FROM message WHERE conv_id = ? ORDER BY created_at ASC");
+      const messages = query.all(id);
+      return reply.send(messages);
+
+  }catch(err){
+    console.log(err)
+    reply.code(500).send({ error: "Internal server error" });
+  }
+
+}
+
+
+export async function sendMsg (request , reply){
+
+  const {user , input , id} = request.body;
+
+  try{
+      const query = request.server.db.prepare("INSERT INTO message (conv_id, message, sender) VALUES (?, ?, ?)");
+      query.run(id, input, user);
+      reply.code(200);
+  }catch(err){
+    console.log(err)
+    reply.code(500).send({ error: "Internal server error" });
+  }
+
+
+}
+
+
+export async function Xprank(request , reply){
+  try {
+    const users = request.server.db.prepare("SELECT * FROM users ORDER BY xp DESC").all();
+
+    reply.send(users);
+  } catch (err) {
+    reply.code(500).send({ error: 'Database query failed' });
+  }
+}
+
+
