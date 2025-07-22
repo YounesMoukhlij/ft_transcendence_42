@@ -465,14 +465,15 @@ const PingPongGame: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full relative">
-      {/* Pause Button (centered above playground, only when not paused) */}
+      {/* Pause Button (responsive position and size) */}
       {!paused && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-18 z-40 flex justify-center">
+        <div>
           <button
             onClick={() => setPaused(true)}
-            className="px-6 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 transition text-lg font-bold flex items-center justify-center"
+            className="z-40 flex items-center justify-center fixed left-1/2 -translate-x-1/2 bottom-25 md:absolute md:left-1/2 md:-translate-x-1/2 md:top-10 md:bottom-auto px-3 py-2 md:px-6 md:py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 transition text-base md:text-lg font-bold"
+            style={{ minWidth: '36px', minHeight: '36px' }}
           >
-            <FaPause className="w-6 h-6" />
+            <FaPause className="w-4 h-4 md:w-6 md:h-6" />
           </button>
         </div>
       )}
@@ -491,50 +492,51 @@ const PingPongGame: React.FC = () => {
           </button>
         </div>
       )}
-      {/* Player Avatars and Names */}
-      <div className="absolute left-0 right-0 flex flex-row justify-between items-center px-22" style={{top: 0, height: '90px', pointerEvents: 'none', zIndex: 10}}>
+      {/* Responsive player bar */}
+      <div className="absolute left-0 right-0 flex flex-wrap justify-between items-center px-2 md:px-10 lg:px-22" style={{top: 0, minHeight: '70px', pointerEvents: 'none', zIndex: 10}}>
         {/* Left Player */}
-        <div className="flex flex-row items-center gap-2 ">
-          {/* Avatar */}
+        <div className="flex flex-row items-center gap-2 min-w-[120px]">
           {gameState.players && gameState.players[0]?.avatar ? (
-            <img src={gameState.players[0].avatar} alt="Player 1" className="w-20 h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
+            <img src={gameState.players[0].avatar} alt="Player 1" className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
           ) : (
-            <FaUserCircle className="w-20 h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
+            <FaUserCircle className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
           )}
-          {/* Name */}
-          <span className="text-white text-2xl pl-7 font-bold drop-shadow-md">
+          <span className="text-white text-base xs:text-lg sm:text-xl md:text-2xl pl-2 sm:pl-5 md:pl-7 font-bold drop-shadow-md truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[180px] md:max-w-[220px]">
             {gameState.players && gameState.players[0]?.name ? gameState.players[0].name : 'PLAYER 1'}
           </span>
         </div>
         {/* Right Player */}
-        <div className="flex flex-row items-center gap-2">
-          {/* Name */}
-          <span className="text-white text-2xl pr-7 font-bold drop-shadow-md">
+        <div className="flex flex-row items-center gap-2 min-w-[120px]">
+          <span className="text-white text-base xs:text-lg sm:text-xl md:text-2xl pr-2 sm:pr-5 md:pr-7 font-bold drop-shadow-md truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[180px] md:max-w-[220px]">
             {gameState.mode === 'ai'
               ? 'THE MACHINIST (AI)'
               : (gameState.players && gameState.players[1]?.name ? gameState.players[1].name : 'PLAYER 2')}
           </span>
-          {/* Avatar */}
           {gameState.mode === 'ai' ? (
-            <FaRobot className="w-20 h-20 text-blue-300 bg-gray-700 rounded-full border-2 border-white" />
+            <FaRobot className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-blue-300 bg-gray-700 rounded-full border-2 border-white" />
           ) : (
             gameState.players && gameState.players[1]?.avatar ? (
-              <img src={gameState.players[1].avatar} alt="Player 2" className="w-20 h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
+              <img src={gameState.players[1].avatar} alt="Player 2" className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
             ) : (
-              <FaUserCircle className="w-20 h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
+              <FaUserCircle className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
             )
           )}
         </div>
       </div>
-      {/* Game Title and Description removed */}
-      <div className="mt-[70px]" />
-      <canvas
-        ref={canvasRef}
-        width={canvasWidth}
-        height={canvasHeight}
-        className="rounded-lg shadow-lg"
-        style={{ background: 'transparent' }}
-      />
+      {/* Responsive canvas with aspect ratio */}
+      <div className="mt-[90px] w-full flex justify-center">
+        <div className="w-full max-w-full flex justify-center">
+          <div className="w-full max-w-[900px] aspect-[16/6] relative">
+            <canvas
+              ref={canvasRef}
+              width={canvasWidth}
+              height={canvasHeight}
+              className="rounded-lg shadow-lg bg-transparent absolute top-0 left-0 w-full h-full min-w-[220px]"
+              style={{ background: 'transparent', maxWidth: '100%' }}
+            />
+          </div>
+        </div>
+      </div>
       <div className="mt-4 text-center text-white">
         <p className="text-sm">
           {gameState.mode === 'ai' ? 'Use W/S to control your paddle' :
