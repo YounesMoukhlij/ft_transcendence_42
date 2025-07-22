@@ -5,12 +5,18 @@ import { IoSearchOutline, IoNotificationsOutline, IoPersonCircleOutline, IoMenuO
 import { GiPingPongBat } from 'react-icons/gi';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
 import Link from 'next/link';
+import axios from 'axios';
+import { globalStore } from './globalStore';
+
+
 import { usePathname } from 'next/navigation';
 
 export default function Navbar()
 {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationIndex, setNotificationIndex] = useState(false);
+  const [notificatiion, setNotification] = useState([]);
   const [pageTitle, setPageTitle] = useState('Ping Pong Game');
   const dropdownRef = useRef(null);
   const profileIconRef = useRef<HTMLSpanElement>(null);
@@ -53,6 +59,44 @@ export default function Navbar()
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
+
+    async function AcceptFriendRequest(username){
+    const loginUsername  = globalStore.getState().username;
+    await axios.post("http://localhost:4444/AddFriend",{user1: username , user2: loginUsername});
+  };
+
+  function showNotification(){
+    setNotificationIndex(!notificationIndex);
+  }
+
+   useEffect(()=>{
+    async function get_notify(){
+      const user  = localStorage.getItem('name');
+      const result = await axios.get('http://localhost:4444/GetNotification', {
+        params: { user }
+      });
+      setNotification(result.data);
+      console.log(result.data);
+    }
+    get_notify();
+  },[])
+
+  useEffect( ()=>{
+    connect();
+  }, [])
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.onmessage = (event) => {
+      const { type, data } = JSON.parse(event.data);
+
+      if (type === "notify") {
+        setNotification(prev => [...prev, {sender_user: data.sender_user, sender_profile_img: data.sender_profile_img}]);
+        // alert("woooooow");
+      }
+    };
+  }, [socket]);
 
   // Close mobile menu when clicking outside the list
   useEffect(() => {
@@ -131,6 +175,7 @@ export default function Navbar()
           100% { background-position: 100% 60%; }
         }
       `}</style>
+
       <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[10vh] bg-transparent">
         <div className="flex justify-between items-center">
           {/* Left Section - Logo */}
@@ -167,6 +212,7 @@ export default function Navbar()
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
+              <IoNotificationsOutline  onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
               <IoNotificationsOutline  className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
             <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>
@@ -276,7 +322,7 @@ export default function Navbar()
                         animationDelay: '700ms'
                       }}
                     >
-                      <IoNotificationsOutline className="text-white text-xl" />
+                      <IoNotificationsOutline   className="text-white text-xl " />
                       <span className="text-white">Notifications</span>
                     </div>
                     <div
