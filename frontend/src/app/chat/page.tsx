@@ -26,11 +26,12 @@ const fetchData = async (title:string) => {
   try {
     const user = localStorage.getItem('name');
     const result = await axios.post('http://localhost:4444/getConversationId', { user, friend: title });
+
     localStorage.setItem('conversationId' , result.data.conversation_id);
     
     const res = await axios.post('http://localhost:4444/getMsgs', { id :result.data.conversation_id });
-    
     return (res.data);
+    
   } catch (err) {
     console.error(err);
   }
@@ -140,9 +141,9 @@ export default function chatPage() {
 
     socket.onmessage = (event) => {
       const { type, data } = JSON.parse(event.data);
-      
+      console.log(data);
       if (type === "message") {
-        setMessages(prev => [...prev, {sender: "name", message: data}]);
+        setMessages(prev => [...prev, {sender: data.user, message: data.message}]);
       }
     };
   }, [socket]);
@@ -175,23 +176,24 @@ export default function chatPage() {
     if (input.length == 0)
       return ;
     const user = localStorage.getItem('name');
+    const friend = localStorage.getItem('room_select');
     setMessages(prev => [...prev, {sender: user, message: input}]);
     
     const room_select = localStorage.getItem('room_select');
     const id = localStorage.getItem('conversationId');
     try {
-      const res = await axios.post('http://localhost:4444/sendMsg', { user, input , id });
+      const res = await axios.post('http://localhost:4444/sendMsg', { user, input , id ,friend});
     } catch (err) {
       console.error(err);
     }
-    if (socket && socket.readyState === WebSocket.OPEN && input.trim()) {
-      const data ={
-        user: user,
-        message: input,
-        conv_id: id,
-      };
-      socket.send(JSON.stringify(data));
-    }
+    // if (socket && socket.readyState === WebSocket.OPEN && input.trim()) {
+    //   const data ={
+    //     user: user,
+    //     message: input,
+    //     conv_id: id,
+    //   };
+    //   socket.send(JSON.stringify(data));
+    // }
     setEmoji('');
   }
   
@@ -257,7 +259,7 @@ export default function chatPage() {
                 />
           </div>}
            <div className="flex w-12/12 lg:w-9/12  flex-col border rounded-[35px] border-solid " >    {/*chat div converation*/}
-            {messages.length > 0 && 
+            {messages.length > -1 && 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
               <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5">
                 <img className="rounded-[50%]" src={profile_img}/>
@@ -277,7 +279,7 @@ export default function chatPage() {
             
 
              <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-[40px] h-[85%] px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
-                { messages.length > 0 && <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]"><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
+                { messages.length > -1 && <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]"><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
               {
                 messages.map((item , index)=>(
                   <div key={index} 
@@ -285,7 +287,7 @@ export default function chatPage() {
                 ))
               }
               </div>
-            {messages.length > 0 && 
+            {messages.length > -1 && 
             <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
                 <div className="pl-4">
                     <button  onClick={()=> handle_Emojis(setShow , show)}><BsEmojiSmile className="sm:w-10 sm:h-10  w-5 h-5"/></button>

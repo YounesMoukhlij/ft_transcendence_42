@@ -3,7 +3,7 @@ import { GetNotification , sendRequestFriend , AddFriend , GetFriends } from '..
 
 export default async function routes(fastify, options) {
   fastify.get('/', aaa);
-  // fastify.post('/getConversation', getConversation);
+  fastify.post('/getConversationId', getConversationId);
 
   fastify.get('/Xprank' , Xprank);
 
@@ -11,5 +11,7 @@ export default async function routes(fastify, options) {
   fastify.post('/sendRequestFriend' , sendRequestFriend);
   fastify.post('/AddFriend' , AddFriend);
   fastify.get('/GetFriends' , GetFriends);
+  fastify.post('/getMsgs' , getMsgs);
+  fastify.post('/sendMsg' , sendMsg);
 
 }

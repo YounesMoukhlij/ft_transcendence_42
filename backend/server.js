@@ -79,22 +79,22 @@ wss.on('connection', (socket) => {
     users_socket.set(username, socket);
     console.log(`User ${username} registered`);
     
-    socket.on('message', async (msg) => {
-      const data = JSON.parse(msg);
-      const {user , message , conv_id} = data;
-      const res = await test_function(conv_id , user);
-      for (const user of res) {
-        const socket = users_socket.get(user);
-        if (socket){
-          socket.send(message);
-          socket.send(JSON.stringify({
-            type: "message",
-            data: `${message}`
-          }));
-          console.log("send to " , user , "===>" ,message)
-        }
-      }
-    });
+    // socket.on('message', async (msg) => {
+    //   const data = JSON.parse(msg);
+    //   const {user , message , conv_id} = data;
+    //   const res = await test_function(conv_id , user);
+    //   for (const user of res) {
+    //     const socket = users_socket.get(user);
+    //     if (socket){
+    //       socket.send(message);
+    //       socket.send(JSON.stringify({
+    //         type: "message",
+    //         data: `${message}`
+    //       }));
+    //       console.log("send to " , user , "===>" ,message)
+    //     }
+    //   }
+    // });
 
     socket.on('close', () => {
       console.log(`Client ${username} disconnected`);

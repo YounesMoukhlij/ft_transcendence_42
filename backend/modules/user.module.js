@@ -31,33 +31,30 @@ export async function getConversationId(request, reply) {
   const user = request.body.user;
   const friend = request.body.friend;
 
-
-  console.log(user);
-  console.log(friend);
-
-  const searchUser = `%,${user},%`;
-  const searchFriend = `%,${friend},%`;
+  const caseOne = user + ',' + friend;
+  const caseTwo = friend + ',' + user;
 
 
-  console.log(searchFriend);
-  console.log(searchUser);
   try {
-    const query = request.server.db.prepare(
-      "SELECT conversation_id FROM room WHERE members LIKE ? AND members LIKE ?"
-    );
-    const result = query.get(searchFriend, searchUser);
+    const query = request.server.db.prepare("SELECT conversation_id FROM room WHERE members = ?");
+
+    let result = query.get(caseOne);
+
+    if (!result) {
+      result = query.get(caseTwo);
+    }
 
     if (result) {
       return reply.send(result);
-
     } else {
-      reply.code(200).send([]);
+      reply.code(404).send({ error: "Conversation not found" });
     }
   } catch (err) {
     console.error("Database error:", err);
     reply.code(500).send({ error: "Internal server error" });
   }
 }
+
 
 
 
@@ -78,11 +75,26 @@ export async function getMsgs (request , reply){
 
 export async function sendMsg (request , reply){
 
-  const {user , input , id} = request.body;
+  const {user , input , id , friend} = request.body;
+
+  const socket = request.server.users_socket.get(friend);
 
   try{
       const query = request.server.db.prepare("INSERT INTO message (conv_id, message, sender) VALUES (?, ?, ?)");
       query.run(id, input, user);
+
+      if (socket){
+        console.log("here");
+        const data ={
+          user:user,
+          message:input,
+          conv_id: id,
+        };
+          socket.send(JSON.stringify({
+          type: "message",
+          data: data
+        }));
+      }
       reply.code(200);
   }catch(err){
     console.log(err)
