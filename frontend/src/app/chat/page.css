@@ -1,0 +1,42 @@
+.debug {
+  border: 2px solid red;
+}
+
+.debug > * {
+  border: 2px solid green;
+}
+
+.debug > * > * {
+  border: 2px solid blue;
+}
+
+
+
+.body-of-chat{
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap:0.5rem;
+    overflow: scroll;
+    scrollbar-width: none;
+}
+
+
+
+
+
+.chat-body{
+    scrollbar-width: none;
+
+}
+
+
+
+
+
+.test{
+  display: flex;
+  position: relative;
+  margin-top: -25%;
+  margin-left: 80%;
+}

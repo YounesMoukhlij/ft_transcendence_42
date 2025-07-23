@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///Users/mac/ft_transcendence_42/frontend/src/app/page.tsx"],"sourcesContent":["'use client';\n\nimport type { Metadata } from \"next\";\n\n\n\n\nexport default function Home()\n{\n  return (\n\n    <div className=\"text-white border\">\n      <h1>This is the opening Page</h1>\n      <p>Welcome to the dashboard page!</p>\n      <p>Click on the sidebar to navigate.</p>\n      <p>Use the navbar for additional options.</p>\n      <p>Enjoy your stay!</p>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;AAAA;;AAOe,SAAS;IAEtB,qBAEE,8OAAC;QAAI,WAAU;;0BACb,8OAAC;0BAAG;;;;;;0BACJ,8OAAC;0BAAE;;;;;;0BACH,8OAAC;0BAAE;;;;;;0BACH,8OAAC;0BAAE;;;;;;0BACH,8OAAC;0BAAE;;;;;;;;;;;;AAGT","debugId":null}}]
+}
