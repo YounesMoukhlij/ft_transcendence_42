@@ -6,10 +6,9 @@ import { GiPingPongBat } from 'react-icons/gi';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
 import Link from 'next/link';
 import axios from 'axios';
-import { globalStore } from './globalStore';
+import { globalStore } from '../components/globalStore';
 
 
-import { usePathname } from 'next/navigation';
 
 export default function Navbar()
 {
@@ -17,7 +16,6 @@ export default function Navbar()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationIndex, setNotificationIndex] = useState(false);
   const [notificatiion, setNotification] = useState([]);
-  const [pageTitle, setPageTitle] = useState('Ping Pong Game');
   const dropdownRef = useRef(null);
   const profileIconRef = useRef<HTMLSpanElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
@@ -36,12 +34,8 @@ export default function Navbar()
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
-    async function AcceptFriendRequest(username){
+  
+  async function AcceptFriendRequest(username){
     const loginUsername  = globalStore.getState().username;
     await axios.post("http://localhost:4444/AddFriend",{user1: username , user2: loginUsername});
   };
@@ -49,8 +43,12 @@ export default function Navbar()
   function showNotification(){
     setNotificationIndex(!notificationIndex);
   }
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
 
-   useEffect(()=>{
+
+  useEffect(()=>{
     async function get_notify(){
       const user  = localStorage.getItem('name');
       const result = await axios.get('http://localhost:4444/GetNotification', {
@@ -71,7 +69,7 @@ export default function Navbar()
 
     socket.onmessage = (event) => {
       const { type, data } = JSON.parse(event.data);
-
+      
       if (type === "notify") {
         setNotification(prev => [...prev, {sender_user: data.sender_user, sender_profile_img: data.sender_profile_img}]);
         // alert("woooooow");
@@ -106,61 +104,24 @@ export default function Navbar()
     { path: '/settings', icon: <IoSettingsOutline className="text-white text-2xl" />, alt: 'Settings' },
   ];
 
-  const [isProfileOpen, setProfileOpen] = useState(false);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
-
-  const profileclicked = () => setProfileOpen((prev) => !prev);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(event.target as Node) &&
-        profileIconRef.current &&
-        !profileIconRef.current.contains(event.target as Node)
-      ) {
-        setProfileOpen(false);
-      }
-    }
-    if (isProfileOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isProfileOpen]);
   return (
     <>
       <style jsx>{`
         @keyframes slideInFromTop {
           0% {
             opacity: 0;
-            transform: translateY(-20px);
+            transform: translateY(-10px);
           }
           100% {
             opacity: 1;
             transform: translateY(0);
           }
         }
-        @keyframes floatX {
-          0% { transform: translateX(0); }
-          25% { transform: translateX(50px); }
-          50% { transform: translateX(0); }
-          75% { transform: translateX(-50px); }
-          100% { transform: translateX(0); }
-        }
-        @keyframes gradientMove {
-          0% { background-position: 0% 60%; }
-          100% { background-position: 100% 60%; }
-        }
       `}</style>
 
       <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[10vh] bg-transparent">
         <div className="flex justify-between items-center">
-          {/* Left Section - Logo */}
-          <div className="flex flex-row justify-center items-center gap-1 md:gap-2">
+          <div className="flex flex-row items-center gap-1 md:gap-2">
             <GiPingPongBat
               className="text-white w-15 h-15  cursor-pointer animate-spin"
               style={{
@@ -169,39 +130,41 @@ export default function Navbar()
             />
           </div>
 
-          {/* Center Section - Page Title */}
-          <div className="hidden md:flex items-center justify-center">
-            <h1
-              className="text-xl md:text-2xl font-bold text-center text-transparent bg-clip-text select-none"
-              style={{
-                backgroundImage: 'linear-gradient(90deg, #fff 0%,rgb(169, 207, 255) 25%, #a78bfa 50%,rgb(53, 53, 53) 75%, #fff 100%)',
-                backgroundSize: '200% 100%',
-                animation: 'floatX 6s ease-in-out infinite, gradientMove 5s linear infinite',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundPosition: '0% 50%'
-              }}
-            >
-              {pageTitle}
-            </h1>
-          </div>
-
           {/* Desktop Right Section */}
           <div className="hidden md:flex flex-row items-center justify-center gap-2 md:gap-5">
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
+          {notificationIndex && 
+            <div className='absolute flex flex-col top-[10%] right-[10%] h-[300px] w-[350px]  bg-black text-white border-2 border-white overflow-scroll gap-2 '>
+             {
+               notificatiion.map((item , index)=>(
+                   <div className='flex flex-col border-t border-gray-300 '>
+                    <div className='flex '>
+                      <div className='h-[4.5rem] w-[4.5rem] pl-0.5 pt-2 '> <img  className='rounded-[50%] h-full w-full 'src={item.sender_profile_img} alt="profile" /></div>
+                      <div className='flex w-full justify-between'>
+                        <div className='ml-[0.5rem] '> <p className='text-2xl'>{item.sender_user}</p></div>
+                        <div className=''> <p className='text-1.5xl'>1d</p></div>
+                      </div>
+                    </div>
+                  <div className='flex w-[70%] h-[3rem] ml-[25%] mt-[-14%] items-center justify-between'>
+                   <button  onClick={()=> AcceptFriendRequest(item.sender_user)} className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
+                   <button   className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
+                  </div>
+                </div>
+               ))
+             }
+            </div>
+          }
+
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
               <IoNotificationsOutline  onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
-              <IoNotificationsOutline  className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
             <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>
               <span ref={profileIconRef}>
                 <IoPersonCircleOutline
                   className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400"
                   style={{ cursor: 'pointer' }}
-                  onClick={profileclicked}
                 />
               </span>
             </div>
@@ -229,24 +192,6 @@ export default function Navbar()
               }`}
             >
               <div className="flex flex-col gap-4">
-                {/* Page Title for Mobile */}
-                <div className="border-b border-gray-600 pb-4">
-                  <h2
-                    className="text-lg font-bold text-center text-transparent bg-clip-text select-none"
-                    style={{
-                      backgroundImage: 'linear-gradient(90deg, #fff 0%, #60a5fa 25%, #a78bfa 50%, #f472b6 75%, #fff 100%)',
-                      backgroundSize: '200% 100%',
-                      animation: 'floatX 3.5s ease-in-out infinite, gradientMove 2.5s linear infinite',
-                      WebkitBackgroundClip: 'text',
-                      backgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundPosition: '0% 50%'
-                    }}
-                  >
-                    {pageTitle}
-                  </h2>
-                </div>
-
                 {/* Sidebar Items */}
                 <div className="border-b border-gray-600 pb-4">
                   <h3 className="text-white text-sm font-semibold mb-3">Navigation</h3>
@@ -324,15 +269,6 @@ export default function Navbar()
           </div>
         </div>
       </nav>
-      {isProfileOpen && (
-        <div ref={profileDropdownRef} className="absolute top-25 right-6 mt-2 w-48 bg-black border-2 border-white rounded-lg shadow-lg z-50">
-          <ul className="py-2">
-            <li className="px-4 py-2 text-white hover:bg-gray-700 cursor-pointer">Profile</li>
-            <li className="px-4 py-2 text-white hover:bg-gray-700 cursor-pointer">Settings</li>
-            <li className="px-4 py-2 text-white hover:bg-gray-700 cursor-pointer">Logout</li>
-          </ul>
-        </div>
-      )}
     </>
   );
 }
