@@ -1,8 +1,9 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
   "/chat/page": "app/chat/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/page": "app/page.js",
-  "/profile/page": "app/profile/page.js",
-  "/settings/page": "app/settings/page.js"
+  "/game/customize/page": "app/game/customize/page.js",
+  "/game/local/page": "app/game/local/page.js",
+  "/game/page": "app/game/page.js",
+  "/game/player2/page": "app/game/player2/page.js",
+  "/game/versus-selection/page": "app/game/versus-selection/page.js"
 }
