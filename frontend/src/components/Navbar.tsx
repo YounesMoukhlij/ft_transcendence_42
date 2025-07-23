@@ -21,36 +21,17 @@ export default function Navbar()
   const dropdownRef = useRef(null);
   const profileIconRef = useRef<HTMLSpanElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
+  const setUsername = globalStore.setState; ///////
+  const {connect  ,socket ,username , init} = globalStore();
 
-  // Update page title based on current route
+
   useEffect(() => {
-    const getPageTitle = () => {
-      if (pathname === '/game') {
-        return 'Select Game Mode';
-      } else if (pathname === '/game/versus-selection') {
-        return '1 Versus 1';
-      } else if (pathname === '/game/customize') {
-        return 'Customize Game';
-      } else if (pathname === '/game/ai') {
-        return 'AI Ping Pong';
-      } else if (pathname === '/game/local') {
-        return 'Local Multiplayer';
-      } else if (pathname === '/game/remote') {
-        return 'Online Multiplayer';
-      } else if (pathname === '/chat') {
-        return 'Chat';
-      } else if (pathname === '/profile') {
-        return 'Profile';
-      } else if (pathname === '/settings') {
-        return 'Settings';
-      } else {
-        return 'Ping Pong Game';
-      }
-    };
+    const name = localStorage.getItem('name');
+    setUsername({username: name});
+    
+  }, []);
 
-    setPageTitle(getPageTitle());
-  }, [pathname]);
+
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
