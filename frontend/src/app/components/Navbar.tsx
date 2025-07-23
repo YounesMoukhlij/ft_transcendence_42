@@ -19,8 +19,17 @@ export default function Navbar()
   const dropdownRef = useRef(null);
   const profileIconRef = useRef<HTMLSpanElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
-  
-  const {connect , username ,socket } = globalStore();
+  const setUsername = globalStore.setState; ///////
+  const {connect  ,socket ,username , init} = globalStore();
+
+
+  useEffect(() => {
+    const name = localStorage.getItem('name');
+    setUsername({username: name});
+    
+  }, []);
+
+
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);

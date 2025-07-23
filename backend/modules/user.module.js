@@ -32,14 +32,21 @@ export async function getConversationId(request, reply) {
   const user = request.body.user;
   const friend = request.body.friend;
 
+
+  console.log(user);
+  console.log(friend);
+
   const searchUser = `%,${user},%`;
   const searchFriend = `%,${friend},%`;
 
+
+  console.log(searchFriend);
+  console.log(searchUser);
   try {
     const query = request.server.db.prepare(
       "SELECT conversation_id FROM room WHERE members LIKE ? AND members LIKE ?"
     );
-    const result = query.get(searchUser, searchFriend);
+    const result = query.get(searchFriend, searchUser);
 
     if (result) {
       return reply.send(result);

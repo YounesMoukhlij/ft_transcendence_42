@@ -125,14 +125,15 @@ export default function chatPage() {
   const [room , setRoom] = useState('');
   const [profile_img , setImg] = useState('');
   const [display_chats , set_chats] = useState(false);
-  // const [socket , setsocket] = useState<WebSocket | null>(null);
-  // const [notify , setNotify] = useState([]);
+
   
   const {connect , username ,socket } = globalStore();
+
 
   useEffect(() => {
     connect();
   }, []);
+
 
   useEffect(() => {
     if (!socket) return;
@@ -147,54 +148,20 @@ export default function chatPage() {
   }, [socket]);
 
 
-  //   useEffect(() => {
-
-  //   const name = localStorage.getItem('name');
-  //   if (!name)
-  //     return ;
-  //   // const ws = getWebSocket();
-  //   setsocket(ws);
-  //   ws.onmessage = (event) => {
-  //     const { type, data } = JSON.parse(event.data);
-  //     if (type == "message")
-  //       setMessages(prev => [...prev, {sender: "name", message: data}]);
-  //     else if (type == "notify"){
-  //       setNotify(prev => [...prev, {getter_user: data.getter_user , title: data.title , notifyBody: data.notifyBody}]);
-  //     }
-  //   };
-
-  //   ws.onopen = () => {
-  //     console.log("here is connect ");
-  //     ws.send(name);
-  //   };
-
-  //   ws.onclose = () => {
-  //     console.log(' Disconnected');
-  //   };
-
-  //   return () => {
-  //     ws.close();
-  //   };
-  // }, []);
-
-
-  // useEffect(() => {
-  //   console.log("Updated notify state:", notify);
-  // }, [notify]);
-
-  
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get('http://localhost:4444/');
+        const res = await axios.get('http://localhost:4444/GetFriends',{
+          params: { username }
+        });
         setFriend(res.data);
       } catch (err) {
         console.log(err);
       }
     };
     fetchData();
-  }, []);
+  }, [username]);
   
   
   function handleEnterKey(event: any){
