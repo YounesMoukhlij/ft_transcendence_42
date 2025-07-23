@@ -78,8 +78,67 @@ export async function AddFriend( request  , reply){
 
 
       const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
+      const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
+      const members = [user1, user2].join(',');
+      conversationquery.run(members);
+
+
+
       Fquery.run(user2Id , user1Id);
   }catch(err){
 
+  }
+}
+
+
+export async function GetFriends(request, reply) {
+  const username = request.query.username;
+
+  if (!username) {
+    return reply.code(400).send({ error: "Username is required" });
+  }
+
+  try {
+    const getUserIdStmt = request.server.db.prepare(`
+      SELECT id_user FROM users WHERE username = ?
+    `);
+    const user = getUserIdStmt.get(username);
+
+    if (!user) {
+      return reply.code(404).send({ error: "User not found" });
+    }
+
+    const userId = user.id_user;
+
+    const getFriendsStmt1 = request.server.db.prepare(`
+      SELECT user_id FROM friends WHERE friend_id = ?
+    `);
+    const getFriendsStmt2 = request.server.db.prepare(`
+      SELECT friend_id FROM friends WHERE user_id = ?
+    `);
+
+    const friends1 = getFriendsStmt1.all(userId).map(row => row.user_id);
+    const friends2 = getFriendsStmt2.all(userId).map(row => row.friend_id);
+
+    const allFriendIds = [...new Set([...friends1, ...friends2])];
+
+    if (allFriendIds.length === 0) {
+      return reply.send([]); 
+    }
+
+    const placeholders = allFriendIds.map(() => '?').join(', ');
+    const getFriendDetailsStmt = request.server.db.prepare(`
+      SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token
+      FROM users
+      WHERE id_user IN (${placeholders})
+    `);
+
+    const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
+
+    return reply.send(friendDetails);
+
+  } catch (err) {
+    console.error(err);
+    return reply.code(500).send({ error: "Internal Server Error" });
   }
 }
