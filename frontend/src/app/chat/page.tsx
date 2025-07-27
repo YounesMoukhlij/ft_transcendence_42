@@ -12,7 +12,12 @@ import { IoSend } from "react-icons/io5";
 import { IoGameController } from "react-icons/io5";
 import { FaArrowRight } from "react-icons/fa";
 // import { getWebSocket } from './globalSocket';
+import { FaCheck, FaCheckDouble } from 'react-icons/fa';
+
+
+import { useRef } from 'react';
 import { globalStore } from '../../components/globalStore';
+
 
 
 
@@ -126,9 +131,31 @@ export default function chatPage() {
   const [room , setRoom] = useState('');
   const [profile_img , setImg] = useState('');
   const [display_chats , set_chats] = useState(false);
-
-  
   const {connect , username ,socket } = globalStore();
+  
+  
+const getFormattedDate = () => {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+};  
+  
+function MessageDateComponent({ date }) {
+  const currentDate = date?.split(' ')[0];
+  return (
+    <div className="flex items-center justify-center my-2">
+      <div className="flex-grow border-t border-gray-300" />
+      <span className="mx-3 text-xs text-gray-500">{currentDate}</span>
+      <div className="flex-grow border-t border-gray-300" />
+    </div>
+  );
+}
 
 
   useEffect(() => {
@@ -143,7 +170,7 @@ export default function chatPage() {
       const { type, data } = JSON.parse(event.data);
       console.log(data);
       if (type === "message") {
-        setMessages(prev => [...prev, {sender: data.user, message: data.message}]);
+        setMessages(prev => [...prev, {sender: data.user, message: data.message , created_at : getFormattedDate()}]);
       }
     };
   }, [socket]);
@@ -177,7 +204,7 @@ export default function chatPage() {
       return ;
     const user = localStorage.getItem('name');
     const friend = localStorage.getItem('room_select');
-    setMessages(prev => [...prev, {sender: user, message: input}]);
+    setMessages(prev => [...prev, {sender: user, message: input , created_at : getFormattedDate()}]);
     
     const room_select = localStorage.getItem('room_select');
     const id = localStorage.getItem('conversationId');
@@ -186,14 +213,6 @@ export default function chatPage() {
     } catch (err) {
       console.error(err);
     }
-    // if (socket && socket.readyState === WebSocket.OPEN && input.trim()) {
-    //   const data ={
-    //     user: user,
-    //     message: input,
-    //     conv_id: id,
-    //   };
-    //   socket.send(JSON.stringify(data));
-    // }
     setEmoji('');
   }
   
@@ -262,7 +281,7 @@ export default function chatPage() {
             {messages.length > -1 && 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
               <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5">
-                <img className="rounded-[50%]" src={profile_img}/>
+                <img className="rounded-[50%]" src={profile_img || null} alt='image'/>
                 <p className="self-center   text-[1rem]  sm:text-[1.5rem] pl-[1rem]">{room}</p>
               </div>
               <div className=" mr-[2rem] w-21 h-5 sm:h-10">
@@ -280,12 +299,25 @@ export default function chatPage() {
 
              <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-[40px] h-[85%] px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
                 { messages.length > -1 && <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]"><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
-              {
-                messages.map((item , index)=>(
-                  <div key={index} 
-                  className="flex flex-col flex-wrap pt-8"><p className={item.sender != localStorage.getItem('name') ? "flex self-start bg-[#B0C4DE] text-[black] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all text-wrap" : "flex self-end bg-[#2E372E] w-fit max-w-[600px] pl-2 p-2.5 rounded-[10px] break-all" }>{item.message}</p></div>
-                ))
-              }
+                  {messages.map((item, index) => {
+                    const currentDate = item.created_at.split(' ')[0];
+                    const prevDate = index > 0 ? messages[index - 1].created_at.split(' ')[0] : null;             
+
+                    return (
+                      <div key={index} className="flex flex-col">{currentDate !== prevDate && <MessageDateComponent date={item.created_at} />}
+                      <div className={`flex ${item.sender === localStorage.getItem('name') ? 'justify-end' : 'justify-start'} mb-2`}>
+
+                      <div className={`relative p-3 rounded-lg ${item.sender === localStorage.getItem('name')? 'bg-[#2E372E] text-white rounded-br-none': 'bg-[#B0C4DE] text-black rounded-bl-none'}`}style={{ maxWidth: '80%', minWidth: '120px' }}>
+                        <p className="break-words pb-4">{item.message}</p>
+                        <div className='absolute bottom-1 inset-x-2 flex justify-between items-center  '>
+                          <span className="text-xs whitespace-nowrap">{new Date(item.created_at).toTimeString().slice(0, 5)}</span>
+                          {item.sender === localStorage.getItem('name') && <FaCheckDouble />}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
               </div>
             {messages.length > -1 && 
             <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">

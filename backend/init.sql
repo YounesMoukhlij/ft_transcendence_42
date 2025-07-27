@@ -107,11 +107,3 @@ VALUES
 ('test9', 'test User', 'https://cdn.intra.42.fr/users/806ad2f231069b86aff6a24a34070d1b/zalaksya.jpg', 'test9@example.com', 'hashed_password_456', 13),
 ('test12', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test12@example.com', 'hashed_password_456', 0),
 ('tesdt12', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'tesdt12@example.com', 'hashed_password_456', 4564);
-
--- Insert a room
--- INSERT INTO room (members, room_name, iconPad)
--- VALUES (',abechcha,ziko,', 'Friends Chat', 'default_icon.png');
-
--- -- Insert a message linked to the existing room (id 1)
--- INSERT INTO message (conv_id, message, sender)
--- VALUES (1, 'Hello, how are you? I am Zakariya.', 'ziko');
