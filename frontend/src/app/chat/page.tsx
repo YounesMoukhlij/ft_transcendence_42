@@ -14,7 +14,6 @@ import { FaArrowRight } from "react-icons/fa";
 import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 
 
-import { useRef } from 'react';
 import { globalStore } from '../../components/globalStore';
 
 
@@ -165,11 +164,10 @@ function MessageDateComponent({ date }) {
   useEffect(() => {
     if (!socket) return;
 
-    socket.onmessage = (event) => {
+    socket.onmessage = (event : any ) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "message") {
         setMessages(prev => [...prev, {sender: data.user, message: data.message , created_at : getFormattedDate()}]);
-        
       }
     };
   }, [socket]);

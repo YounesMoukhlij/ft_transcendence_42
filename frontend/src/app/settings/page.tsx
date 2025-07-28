@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import axios from 'axios';
 import "../chat/page.css"
 import { title } from "process";
+import { globalStore } from '../../components/globalStore';
+
 
 
 const LeaderBord = ({users}) =>{
@@ -11,14 +13,15 @@ const LeaderBord = ({users}) =>{
   async function  handleAddFriend (username){
     const sender = localStorage.getItem('name');
     try {
-        await axios.post('http://localhost:4444/sendRequestFriend' , { sender, friend: username , title:"request friend"});
-      } catch (err) {
-        console.log(err);
-      }
+      await axios.post('http://localhost:4444/sendRequestFriend' , { sender, friend: username , title:"request friend"});
+    } catch (err) {
+      console.log(err);
+    }
   }
-
-
+  
+  
   const newObject = users.slice(3);
+  
   return (
     <div className="text-black  w-full h-full  ">
 
@@ -43,7 +46,7 @@ const LeaderBord = ({users}) =>{
         </div>
         {
           newObject.map((item , index)=>(
-              <div className="index w-full mt-0.5 ">
+            <div key={index} className="index w-full mt-0.5 ">
                   <div className="flex">
                     <div className="w-full flex full h-[6rem] bg-gray-100 justify-between">
                       <div className="flex h-full">
@@ -53,7 +56,14 @@ const LeaderBord = ({users}) =>{
                       </div>
                       <div className="flex w-[40%] h-full ">
                         <div className="w-[40%] flex items-center"><p className="text-2xl">{item.xp}</p></div>
-                        <div className="flex  w-[77%] items-center "><button onClick={()=>handleAddFriend(item.username)} className="bg-blue-500 w-full h-[40%] rounded-[10px]">Add friend</button></div>
+                        {
+                          item.friend_status != "friend" && 
+                          <div className="flex  w-[77%] items-center "><button onClick={()=>handleAddFriend(item.username)} className="bg-blue-500 w-full h-[40%] rounded-[10px]">Add friend</button></div>
+                        }
+                        {
+                          item.friend_status == "friend" && 
+                          <div className="flex  w-[77%] items-center "><button  className="bg-blue-300 w-full h-[40%] rounded-[10px]">friend</button></div>
+                        }
                       </div>
                     </div>
                   </div>
@@ -62,7 +72,7 @@ const LeaderBord = ({users}) =>{
         }
    </div>
 
-  );
+);
 };
 
 
@@ -73,11 +83,18 @@ const LeaderBord = ({users}) =>{
 
 export default function SettingsPage() {
   const [LeaderBord_users , setLeadr] = useState([]);
-    useEffect(() => {
+  const username = localStorage.getItem('name');
+  
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get('http://localhost:4444/Xprank');
-        setLeadr(res.data);
+        const data = await axios.get('http://localhost:4444/Xprank', {
+          params:{
+            user:username
+          }
+        })
+        console.log(data.data);
+        setLeadr(data.data);
       } catch (err) {
         console.log(err);
       }

@@ -73,14 +73,15 @@ export default function Navbar()
 
     if (!socket) return;
     socket.onmessage = (event : any) => {
-      alert("hhhhh");
-      const { type, data } = JSON.parse(event.data);
 
+      const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
         setNotification(prev => [...prev, {sender_user: data.sender_user, sender_profile_img: data.sender_profile_img}]);
       }
     };
   }, [socket]);
+
+
 
   // Close mobile menu when clicking outside the list
   useEffect(() => {
