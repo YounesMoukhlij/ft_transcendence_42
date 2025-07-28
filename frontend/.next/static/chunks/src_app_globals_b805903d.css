@@ -1281,6 +1281,10 @@
     background-color: var(--color-black);
   }
 
+  .bg-blue-300 {
+    background-color: var(--color-blue-300);
+  }
+
   .bg-blue-500 {
     background-color: var(--color-blue-500);
   }

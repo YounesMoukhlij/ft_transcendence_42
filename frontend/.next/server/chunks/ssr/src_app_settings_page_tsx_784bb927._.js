@@ -44,7 +44,7 @@ const LeaderBord = ({ users })=>{
                                 src: users[1].profile_img
                             }, void 0, false, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 28,
+                                lineNumber: 31,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -52,7 +52,7 @@ const LeaderBord = ({ users })=>{
                                 children: users[1].username
                             }, void 0, false, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 29,
+                                lineNumber: 32,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -60,13 +60,13 @@ const LeaderBord = ({ users })=>{
                                 children: users[1].xp
                             }, void 0, false, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 30,
+                                lineNumber: 33,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/settings/page.tsx",
-                        lineNumber: 27,
+                        lineNumber: 30,
                         columnNumber: 34
                     }, this),
                     users.length >= 1 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -77,7 +77,7 @@ const LeaderBord = ({ users })=>{
                                 src: users[0].profile_img
                             }, void 0, false, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 33,
+                                lineNumber: 36,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -85,7 +85,7 @@ const LeaderBord = ({ users })=>{
                                 children: users[0].username
                             }, void 0, false, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 34,
+                                lineNumber: 37,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -93,13 +93,13 @@ const LeaderBord = ({ users })=>{
                                 children: users[0].xp
                             }, void 0, false, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 35,
+                                lineNumber: 38,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/settings/page.tsx",
-                        lineNumber: 32,
+                        lineNumber: 35,
                         columnNumber: 34
                     }, this),
                     users.length >= 3 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -110,7 +110,7 @@ const LeaderBord = ({ users })=>{
                                 src: users[2].profile_img
                             }, void 0, false, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 38,
+                                lineNumber: 41,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -118,7 +118,7 @@ const LeaderBord = ({ users })=>{
                                 children: users[2].username
                             }, void 0, false, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 39,
+                                lineNumber: 42,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -126,19 +126,19 @@ const LeaderBord = ({ users })=>{
                                 children: users[2].xp
                             }, void 0, false, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 40,
+                                lineNumber: 43,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/settings/page.tsx",
-                        lineNumber: 37,
+                        lineNumber: 40,
                         columnNumber: 34
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/settings/page.tsx",
-                lineNumber: 25,
+                lineNumber: 28,
                 columnNumber: 9
             }, this),
             newObject.map((item, index)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -158,12 +158,12 @@ const LeaderBord = ({ users })=>{
                                                 children: index + 4
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/settings/page.tsx",
-                                                lineNumber: 50,
+                                                lineNumber: 53,
                                                 columnNumber: 74
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 50,
+                                            lineNumber: 53,
                                             columnNumber: 25
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -173,12 +173,12 @@ const LeaderBord = ({ users })=>{
                                                 src: item.profile_img
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/settings/page.tsx",
-                                                lineNumber: 51,
+                                                lineNumber: 54,
                                                 columnNumber: 81
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 51,
+                                            lineNumber: 54,
                                             columnNumber: 25
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -187,18 +187,18 @@ const LeaderBord = ({ users })=>{
                                                 children: item.username
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/settings/page.tsx",
-                                                lineNumber: 52,
+                                                lineNumber: 55,
                                                 columnNumber: 81
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 52,
+                                            lineNumber: 55,
                                             columnNumber: 25
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/settings/page.tsx",
-                                    lineNumber: 49,
+                                    lineNumber: 52,
                                     columnNumber: 23
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -211,15 +211,15 @@ const LeaderBord = ({ users })=>{
                                                 children: item.xp
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/settings/page.tsx",
-                                                lineNumber: 55,
+                                                lineNumber: 58,
                                                 columnNumber: 68
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 55,
+                                            lineNumber: 58,
                                             columnNumber: 25
                                         }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        item.friend_status != "friend" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             className: "flex  w-[77%] items-center ",
                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                 onClick: ()=>handleAddFriend(item.username),
@@ -227,50 +227,71 @@ const LeaderBord = ({ users })=>{
                                                 children: "Add friend"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/settings/page.tsx",
-                                                lineNumber: 56,
-                                                columnNumber: 70
+                                                lineNumber: 61,
+                                                columnNumber: 72
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 56,
-                                            columnNumber: 25
+                                            lineNumber: 61,
+                                            columnNumber: 27
+                                        }, this),
+                                        item.friend_status == "friend" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "flex  w-[77%] items-center ",
+                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                className: "bg-blue-300 w-full h-[40%] rounded-[10px]",
+                                                children: "friend"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/settings/page.tsx",
+                                                lineNumber: 65,
+                                                columnNumber: 72
+                                            }, this)
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/settings/page.tsx",
+                                            lineNumber: 65,
+                                            columnNumber: 27
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/settings/page.tsx",
-                                    lineNumber: 54,
+                                    lineNumber: 57,
                                     columnNumber: 23
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/settings/page.tsx",
-                            lineNumber: 48,
+                            lineNumber: 51,
                             columnNumber: 21
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/settings/page.tsx",
-                        lineNumber: 47,
+                        lineNumber: 50,
                         columnNumber: 19
                     }, this)
-                }, void 0, false, {
+                }, index, false, {
                     fileName: "[project]/src/app/settings/page.tsx",
-                    lineNumber: 46,
-                    columnNumber: 15
+                    lineNumber: 49,
+                    columnNumber: 13
                 }, this))
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/settings/page.tsx",
-        lineNumber: 23,
+        lineNumber: 26,
         columnNumber: 5
     }, this);
 };
 function SettingsPage() {
     const [LeaderBord_users, setLeadr] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
+    const username = localStorage.getItem('name');
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const fetchData = async ()=>{
             try {
-                const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get('http://localhost:4444/Xprank');
-                setLeadr(res.data);
+                const data = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get('http://localhost:4444/Xprank', {
+                    params: {
+                        user: username
+                    }
+                });
+                console.log(data.data);
+                setLeadr(data.data);
             } catch (err) {
                 console.log(err);
             }
@@ -283,12 +304,12 @@ function SettingsPage() {
             users: LeaderBord_users
         }, void 0, false, {
             fileName: "[project]/src/app/settings/page.tsx",
-            lineNumber: 91,
+            lineNumber: 108,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/settings/page.tsx",
-        lineNumber: 90,
+        lineNumber: 107,
         columnNumber: 5
     }, this);
 }

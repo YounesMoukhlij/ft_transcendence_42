@@ -82,15 +82,53 @@ export async function sendMsg (request , reply){
 }
 
 
-export async function Xprank(request , reply){
-  try {
-    const users = request.server.db.prepare("SELECT * FROM users ORDER BY xp DESC").all();
 
-    reply.send(users);
+export async function Xprank(request, reply) {
+  try {
+    const username = request.query.user;
+    const idQuery = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
+    const res = idQuery.get(username);
+
+    if (!res) {
+      return reply.code(404).send({ error: 'User not found' });
+    }
+
+    const currentUserId = res.id_user;
+    console.log(`Current User ID: ${currentUserId}`);
+
+    const users = request.server.db.prepare("SELECT * FROM users ORDER BY xp DESC").all();
+    console.log("Users:", users);
+
+    const friendsQuery = request.server.db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ? UNION SELECT user_id FROM friends WHERE friend_id = ?`);
+    const friendsResult = friendsQuery.all(currentUserId, currentUserId);
+    
+    console.log("Friends Query Result:", friendsResult);
+
+    const friends = [...new Set(friendsResult.map((entry) => entry.friend_id))];
+
+
+    const usersWithStatus = users.map((user) => {
+
+
+      let friendStatus = 'not friend'; 
+
+      if (friends.includes(user.id_user)) {
+        friendStatus = 'friend';
+      }
+
+      console.log(`User ID: ${user.id_user}, Status: ${friendStatus}`);
+      return { ...user, friend_status: friendStatus };
+    });
+
+    reply.send(usersWithStatus);
   } catch (err) {
-    reply.code(500).send({ error: 'Database query failed' });
+    console.error('Error in Xprank endpoint:', err);
+    reply.code(500).send({ error: 'Database query failed', details: err.message });
   }
 }
+
+
+
 
 
 export async function IsOnline(request , reply){
