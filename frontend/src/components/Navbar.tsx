@@ -35,6 +35,11 @@ export default function Navbar()
     setIsOpen(!isOpen);
   };
   
+  async function DelteFriendRequest(notify_id){
+    setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
+    await axios.post('http://localhost:4444/DeleteFriendRequest' , {notify_id});
+  }
+
   async function AcceptFriendRequest(username){
     const loginUsername  = globalStore.getState().username;
     await axios.post("http://localhost:4444/AddFriend",{user1: username , user2: loginUsername});
@@ -55,7 +60,6 @@ export default function Navbar()
         params: { user }
       });
       setNotification(result.data);
-      console.log(result.data);
     }
     get_notify();
   },[])
@@ -64,15 +68,16 @@ export default function Navbar()
     connect();
   }, [])
 
+  
   useEffect(() => {
-    if (!socket) return;
 
-    socket.onmessage = (event) => {
+    if (!socket) return;
+    socket.onmessage = (event : any) => {
+      alert("hhhhh");
       const { type, data } = JSON.parse(event.data);
-      
+
       if (type === "notify") {
         setNotification(prev => [...prev, {sender_user: data.sender_user, sender_profile_img: data.sender_profile_img}]);
-        // alert("woooooow");
       }
     };
   }, [socket]);
@@ -149,7 +154,7 @@ export default function Navbar()
                     </div>
                   <div className='flex w-[70%] h-[3rem] ml-[25%] mt-[-14%] items-center justify-between'>
                    <button  onClick={()=> AcceptFriendRequest(item.sender_user)} className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
-                   <button   className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
+                   <button  onClick={() =>DelteFriendRequest(item.notify_id)}  className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
                   </div>
                 </div>
                ))
