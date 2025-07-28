@@ -11,7 +11,6 @@ import { BsEmojiSmile } from "react-icons/bs";
 import { IoSend } from "react-icons/io5";
 import { IoGameController } from "react-icons/io5";
 import { FaArrowRight } from "react-icons/fa";
-// import { getWebSocket } from './globalSocket';
 import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 
 
@@ -168,9 +167,9 @@ function MessageDateComponent({ date }) {
 
     socket.onmessage = (event) => {
       const { type, data } = JSON.parse(event.data);
-      console.log(data);
       if (type === "message") {
         setMessages(prev => [...prev, {sender: data.user, message: data.message , created_at : getFormattedDate()}]);
+        
       }
     };
   }, [socket]);
@@ -204,12 +203,18 @@ function MessageDateComponent({ date }) {
       return ;
     const user = localStorage.getItem('name');
     const friend = localStorage.getItem('room_select');
-    setMessages(prev => [...prev, {sender: user, message: input , created_at : getFormattedDate()}]);
+
     
     const room_select = localStorage.getItem('room_select');
     const id = localStorage.getItem('conversationId');
     try {
+      const data = await axios.get('http://localhost:4444/IsOnline', {
+        params:{
+          username:friend
+        }
+      })
       const res = await axios.post('http://localhost:4444/sendMsg', { user, input , id ,friend});
+      setMessages(prev => [...prev, {sender: user, message: input , created_at : getFormattedDate() , isSeen: data.data}]);
     } catch (err) {
       console.error(err);
     }
@@ -311,7 +316,11 @@ function MessageDateComponent({ date }) {
                         <p className="break-words pb-4">{item.message}</p>
                         <div className='absolute bottom-1 inset-x-2 flex justify-between items-center  '>
                           <span className="text-xs whitespace-nowrap">{new Date(item.created_at).toTimeString().slice(0, 5)}</span>
-                          {item.sender === localStorage.getItem('name') && <FaCheckDouble />}
+                          {
+                              item.sender === localStorage.getItem('name') ? (
+                              item.isSeen ? <FaCheckDouble /> : <FaCheck />
+                              ) : null
+                          }
                         </div>
                       </div>
                     </div>
