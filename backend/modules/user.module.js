@@ -1,31 +1,3 @@
-import fastify from "fastify";
-
-export async function createUser(request, reply) {
-  return {
-    message: `User created`,
-  };
-}
-
-
-
-export async function getUsers(request, reply) {
-  return {
-    message: `User hhhhhhh khdam `,
-  };
-}
-
-
-export async function aaa(request, reply) {
-  try {
-    const users = request.server.db.prepare("SELECT * FROM users").all();
-    reply.send(users);
-  } catch (err) {
-    reply.code(500).send({ error: 'Database query failed' });
-  }
-}
-
-
-
 
 export async function getConversationId(request, reply) {
   const user = request.body.user;
@@ -80,12 +52,15 @@ export async function sendMsg (request , reply){
   const socket = request.server.users_socket.get(friend);
 
   try{
-      const query = request.server.db.prepare("INSERT INTO message (conv_id, message, sender) VALUES (?, ?, ?)");
-      query.run(id, input, user);
+      const query = request.server.db.prepare("INSERT INTO message (conv_id, message, sender , isSeen) VALUES (?, ?, ? , ?)");
+      if (socket){
+        query.run(id, input, user , 1);
+      }
+      else 
+        query.run(id, input, user , 0);
 
       if (socket){
-        console.log("here");
-        const data ={
+        const data = {
           user:user,
           message:input,
           conv_id: id,
@@ -95,12 +70,14 @@ export async function sendMsg (request , reply){
           data: data
         }));
       }
+      else{
+        request.server.waitingMessages.add(friend);
+      }
       reply.code(200);
   }catch(err){
     console.log(err)
     reply.code(500).send({ error: "Internal server error" });
   }
-
 
 }
 
@@ -115,4 +92,18 @@ export async function Xprank(request , reply){
   }
 }
 
+
+export async function IsOnline(request , reply){
+  const username = request.query.username;
+  const socket = request.server.users_socket.get(username);
+  try {
+    if(socket)
+      reply.send(true);
+    else
+      reply.send(false);
+
+  } catch (err) {
+    reply.code(500).send(err);
+  }
+}
 

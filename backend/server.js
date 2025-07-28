@@ -41,9 +41,11 @@ try {
 
 const wss = new WebSocketServer({ server: app.server, path: '/ws' });
 const users_socket = new Map();
+const waitingMessages = new Set();
 
 
 app.decorate('users_socket', users_socket);
+app.decorate('waitingMessages', waitingMessages);
 
 
 
@@ -77,28 +79,20 @@ wss.on('connection', (socket) => {
   socket.once('message', (msg) => {
     username = msg.toString();
     users_socket.set(username, socket);
+    const status = waitingMessages.has(username);
+    if (status){
+      const query =  db.prepare("UPDATE message SET isSeen = ?");
+      query.run(1);
+    }
+    const query = db.prepare('UPDATE users SET status = ? WHERE username = ?');
+    query.run(1, username);
     console.log(`User ${username} registered`);
     
-    // socket.on('message', async (msg) => {
-    //   const data = JSON.parse(msg);
-    //   const {user , message , conv_id} = data;
-    //   const res = await test_function(conv_id , user);
-    //   for (const user of res) {
-    //     const socket = users_socket.get(user);
-    //     if (socket){
-    //       socket.send(message);
-    //       socket.send(JSON.stringify({
-    //         type: "message",
-    //         data: `${message}`
-    //       }));
-    //       console.log("send to " , user , "===>" ,message)
-    //     }
-    //   }
-    // });
-
     socket.on('close', () => {
       console.log(`Client ${username} disconnected`);
       users_socket.delete(username);
+      db.prepare('UPDATE users SET status = ? WHERE username = ?');
+      query.run(0 , username);
     });
   });
 });

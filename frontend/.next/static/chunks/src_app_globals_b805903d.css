@@ -662,10 +662,6 @@
     height: 10%;
   }
 
-  .h-\[10px\] {
-    height: 10px;
-  }
-
   .h-\[10vh\] {
     height: 10vh;
   }
@@ -806,10 +802,6 @@
     width: 4.5rem;
   }
 
-  .w-\[10px\] {
-    width: 10px;
-  }
-
   .w-\[14vw\] {
     width: 14vw;
   }
@@ -874,16 +866,8 @@
     width: 350px;
   }
 
-  .w-\[fit\] {
-    width: fit;
-  }
-
   .w-full {
     width: 100%;
-  }
-
-  .w-max {
-    width: max-content;
   }
 
   .max-w-2xl {
@@ -1293,10 +1277,6 @@
     background-color: #c93126;
   }
 
-  .bg-amber-400 {
-    background-color: var(--color-amber-400);
-  }
-
   .bg-black {
     background-color: var(--color-black);
   }
@@ -1671,10 +1651,6 @@
 
   .text-gray-500 {
     color: var(--color-gray-500);
-  }
-
-  .text-gray-600 {
-    color: var(--color-gray-600);
   }
 
   .text-purple-100 {
