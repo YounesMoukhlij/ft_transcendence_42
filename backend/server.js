@@ -85,7 +85,7 @@ wss.on('connection', (socket) => {
       query.run(1);
     }
     const query = db.prepare('UPDATE users SET status = ? WHERE username = ?');
-    query.run(1, username);
+    query.run(1 , username);
     console.log(`User ${username} registered`);
     
     socket.on('close', () => {
