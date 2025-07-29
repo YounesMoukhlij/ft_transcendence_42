@@ -11,7 +11,7 @@ CREATE TABLE users (
     email TEXT UNIQUE,
     password TEXT,
     langue TEXT,
-    status TEXT,
+    status BOOLEAN DEFAULT FALSE,
     google_auth TEXT
 
 );

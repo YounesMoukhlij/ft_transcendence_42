@@ -150,7 +150,7 @@ export async function GetFriends(request, reply) {
 
     const placeholders = allFriendIds.map(() => '?').join(', ');
     const getFriendDetailsStmt = request.server.db.prepare(`
-      SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token
+      SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token , status 
       FROM users
       WHERE id_user IN (${placeholders})
     `);

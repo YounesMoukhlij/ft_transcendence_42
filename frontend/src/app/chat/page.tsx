@@ -44,7 +44,7 @@ type FreindsListProps = {
   photo: string,
   title: string,
   message: string,
-  status: number,
+  status: boolean,
   setConversation: any
   setRoom: any
   setimg: any
@@ -69,7 +69,7 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setRoo
         <div className='flex w-15 h-15 2xl:w-20 2xl:h-20 '>
           <img className="w-15 h-15 2xl:h-20 2xl:w-20 rounded-[50%]" src={photo}/>
         </div>
-        <div className={status === 1 ? "test w-5 h-5 bg-[green] rounded-[50%] " : "test w-5 h-5 bg-[red] rounded-[50%] "} ></div>
+        <div className={status ? "test w-5 h-5 bg-[green] rounded-[50%] " : "test w-5 h-5 bg-[red] rounded-[50%] "} ></div>
       </div>
       
       <div className="flex flex-col justify-center gap-2 pl-[10%]">
@@ -86,6 +86,7 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setRoo
 
 function Test1({ array  , setMessages , setRoom , setImg}) {
 
+  console.log(array);
   return (
     <div className="flex flex-col">
       <div>
@@ -144,7 +145,7 @@ const getFormattedDate = () => {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 };  
   
-function MessageDateComponent({ date }) {
+function MessageDateComponent({ date}) {
   const currentDate = date?.split(' ')[0];
   return (
     <div className="flex items-center justify-center my-2">
