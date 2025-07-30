@@ -12,7 +12,8 @@ export const globalStore = create((set, get) => ({
   connect: () => {
     if (get().socket) return;
 
-    const ws = new WebSocket('ws://localhost:4444/ws');
+
+    const ws = new WebSocket(`ws://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/ws`);
 
     ws.onopen = () => {
       console.log("Connected");

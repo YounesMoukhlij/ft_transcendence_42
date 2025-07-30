@@ -28,11 +28,11 @@ function handle_Emojis(setShow: any , show: boolean ){
 const fetchData = async (title:string) => {
   try {
     const user = localStorage.getItem('name');
-    const result = await axios.post('http://localhost:4444/getConversationId', { user, friend: title });
+    const result = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`, { user, friend: title });
 
     localStorage.setItem('conversationId' , result.data.conversation_id);
     
-    const res = await axios.post('http://localhost:4444/getMsgs', { id :result.data.conversation_id });
+    const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`, { id :result.data.conversation_id });
     return (res.data);
     
   } catch (err) {
@@ -132,23 +132,22 @@ export default function chatPage() {
   const [display_chats , set_chats] = useState(false);
   const {connect , username ,socket } = globalStore();
   
+  const getFormattedDate = () => {
+    const now = new Date();
+    
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  };  
   
-const getFormattedDate = () => {
-  const now = new Date();
-
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-};  
-  
-function MessageDateComponent({ date}) {
-  const currentDate = date?.split(' ')[0];
-  return (
-    <div className="flex items-center justify-center my-2">
+  function MessageDateComponent({ date}) {
+    const currentDate = date?.split(' ')[0];
+    return (
+      <div className="flex items-center justify-center my-2">
       <div className="flex-grow border-t border-gray-300" />
       <span className="mx-3 text-xs text-gray-500">{currentDate}</span>
       <div className="flex-grow border-t border-gray-300" />
@@ -157,28 +156,28 @@ function MessageDateComponent({ date}) {
 }
 
 
-  useEffect(() => {
-    connect();
-  }, []);
+useEffect(() => {
+  connect();
+}, []);
 
 
-  useEffect(() => {
-    if (!socket) return;
+useEffect(() => {
+  if (!socket) return;
+  
+  socket.onmessage = (event : any ) => {
+    const { type, data } = JSON.parse(event.data);
+    if (type === "message") {
+      setMessages(prev => [...prev, {sender: data.user, message: data.message , created_at : getFormattedDate()}]);
+    }
+  };
+}, [socket]);
 
-    socket.onmessage = (event : any ) => {
-      const { type, data } = JSON.parse(event.data);
-      if (type === "message") {
-        setMessages(prev => [...prev, {sender: data.user, message: data.message , created_at : getFormattedDate()}]);
-      }
-    };
-  }, [socket]);
 
 
-
-  useEffect(() => {
-    const fetchData = async () => {
+useEffect(() => {
+  const fetchData = async () => {
       try {
-        const res = await axios.get('http://localhost:4444/GetFriends',{
+        const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`,{
           params: { username }
         });
         setFriend(res.data);
@@ -202,17 +201,17 @@ function MessageDateComponent({ date}) {
       return ;
     const user = localStorage.getItem('name');
     const friend = localStorage.getItem('room_select');
+    const room_select = localStorage.getItem('room_select');
 
     
-    const room_select = localStorage.getItem('room_select');
     const id = localStorage.getItem('conversationId');
     try {
-      const data = await axios.get('http://localhost:4444/IsOnline', {
+      const data = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/IsOnline`, {
         params:{
           username:friend
         }
       })
-      const res = await axios.post('http://localhost:4444/sendMsg', { user, input , id ,friend});
+      const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, { user, input , id ,friend});
       setMessages(prev => [...prev, {sender: user, message: input , created_at : getFormattedDate() , isSeen: data.data}]);
     } catch (err) {
       console.error(err);

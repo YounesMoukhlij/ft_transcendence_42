@@ -37,12 +37,12 @@ export default function Navbar()
   
   async function DelteFriendRequest(notify_id){
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
-    await axios.post('http://localhost:4444/DeleteFriendRequest' , {notify_id});
+    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {notify_id});
   }
 
   async function AcceptFriendRequest(username){
     const loginUsername  = globalStore.getState().username;
-    await axios.post("http://localhost:4444/AddFriend",{user1: username , user2: loginUsername});
+    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: username , user2: loginUsername});
   };
 
   function showNotification(){
@@ -56,7 +56,7 @@ export default function Navbar()
   useEffect(()=>{
     async function get_notify(){
       const user  = localStorage.getItem('name');
-      const result = await axios.get('http://localhost:4444/GetNotification', {
+      const result = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetNotification`, {
         params: { user }
       });
       setNotification(result.data);
