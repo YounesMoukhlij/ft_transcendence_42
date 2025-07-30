@@ -8,6 +8,7 @@ var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_
 __turbopack_context__.s({
     "globalStore": (()=>globalStore)
 });
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/react.mjs [app-client] (ecmascript)");
 "use client";
 ;
@@ -18,7 +19,7 @@ const globalStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mod
         token: null,
         connect: ()=>{
             if (get().socket) return;
-            const ws = new WebSocket('ws://localhost:4444/ws');
+            const ws = new WebSocket(`ws://${("TURBOPACK compile-time value", "10.13.10.16")}:${("TURBOPACK compile-time value", "4444")}/ws`);
             ws.onopen = ()=>{
                 console.log("Connected");
                 ws.send(get().username || '');
@@ -43,6 +44,7 @@ var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_
 __turbopack_context__.s({
     "default": (()=>Navbar)
 });
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$styled$2d$jsx$2f$style$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/styled-jsx/style.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
@@ -86,13 +88,13 @@ function Navbar() {
     };
     async function DelteFriendRequest(notify_id) {
         setNotification((notificatiion)=>notificatiion.filter((item)=>item.notify_id !== notify_id));
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post('http://localhost:4444/DeleteFriendRequest', {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.13.10.16")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
             notify_id
         });
     }
     async function AcceptFriendRequest(username) {
         const loginUsername = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$globalStore$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["globalStore"].getState().username;
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post("http://localhost:4444/AddFriend", {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.13.10.16")}:${("TURBOPACK compile-time value", "4444")}/AddFriend`, {
             user1: username,
             user2: loginUsername
         });
@@ -108,7 +110,7 @@ function Navbar() {
         "Navbar.useEffect": ()=>{
             async function get_notify() {
                 const user = localStorage.getItem('name');
-                const result = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get('http://localhost:4444/GetNotification', {
+                const result = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "10.13.10.16")}:${("TURBOPACK compile-time value", "4444")}/GetNotification`, {
                     params: {
                         user
                     }
