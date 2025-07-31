@@ -3,16 +3,16 @@ import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFr
 
 export default async function routes(fastify, options) {
   fastify.post('/getConversationId', getConversationId);
-
   fastify.get('/Xprank' , Xprank);
 
-  fastify.get('/GetNotification' , GetNotification);
+  fastify.get('/GetFriends' , GetFriends);
+
   fastify.post('/sendRequestFriend' , sendRequestFriend);
   fastify.post('/AddFriend' , AddFriend);
-  fastify.get('/GetFriends' , GetFriends);
   fastify.post('/getMsgs' , getMsgs);
   fastify.post('/sendMsg' , sendMsg);
   fastify.get('/IsOnline' , IsOnline);
+  fastify.get('/GetNotification' , GetNotification);
 
 
 

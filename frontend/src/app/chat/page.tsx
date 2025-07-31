@@ -281,7 +281,7 @@ useEffect(() => {
                 />
           </div>}
            <div className="flex w-12/12 lg:w-9/12  flex-col border rounded-[35px] border-solid " >    {/*chat div converation*/}
-            {messages.length > -1 && 
+            {messages.length > 0 && 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
               <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5">
                 <img className="rounded-[50%]" src={profile_img || null} alt='image'/>
@@ -301,32 +301,48 @@ useEffect(() => {
             
 
              <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-[40px] h-[85%] px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
-                { messages.length > -1 && <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]"><p>The messages are end to end encrypted only people in this chat can read this conversation so enjoy with you friend</p></div>}
-                  {messages.map((item, index) => {
-                    const currentDate = item.created_at.split(' ')[0];
-                    const prevDate = index > 0 ? messages[index - 1].created_at.split(' ')[0] : null;             
+             {
+                messages.length == 0 && <div className='flex  flex-col items-center justify-center w-full h-full'>
+                  <h3> Please select an item to see your conversations. </h3>
+                  <img  className="" src="/animation.gif"/>
+                </div>
+             }
+             {messages.length > 0 && (
+              <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]">
+                <p>The messages are end to end encrypted. Only people in this chat can read this conversation,so enjoy with your friend.</p>
+              </div>
+                )}
+                {messages.map((item, index) => {
+                  const currentDate = item.created_at.split(' ')[0];
+                  const prevDate = index > 0 ? messages[index - 1].created_at.split(' ')[0] : null;
+                
+                  return (
+                    <div key={index} className="flex flex-col">
+                      {currentDate !== prevDate && <MessageDateComponent date={item.created_at} />}
 
-                    return (
-                      <div key={index} className="flex flex-col">{currentDate !== prevDate && <MessageDateComponent date={item.created_at} />}
                       <div className={`flex ${item.sender === localStorage.getItem('name') ? 'justify-end' : 'justify-start'} mb-2`}>
-
-                      <div className={`relative p-3 rounded-lg ${item.sender === localStorage.getItem('name')? 'bg-[#2E372E] text-white rounded-br-none': 'bg-[#B0C4DE] text-black rounded-bl-none'}`}style={{ maxWidth: '80%', minWidth: '120px' }}>
-                        <p className="break-words pb-4">{item.message}</p>
-                        <div className='absolute bottom-1 inset-x-2 flex justify-between items-center  '>
-                          <span className="text-xs whitespace-nowrap">{new Date(item.created_at).toTimeString().slice(0, 5)}</span>
-                          {
-                              item.sender === localStorage.getItem('name') ? (
+                        <div
+                          className={`p-3 rounded-lg flex flex-col ${item.sender === localStorage.getItem('name') ? 'bg-[#2E372E] text-white rounded-br-none' : 'bg-[#B0C4DE] text-black rounded-bl-none'}`}
+                          style={{ maxWidth: '80%', minWidth: '120px' }}
+                        >
+                          <p className="break-words">{item.message}</p>
+                  
+                          <div className="flex justify-between items-center mt-2 text-xs">
+                            <span className="whitespace-nowrap">
+                              {new Date(item.created_at).toTimeString().slice(0, 5)}
+                            </span>
+                            {item.sender === localStorage.getItem('name') && (
                               item.isSeen ? <FaCheckDouble /> : <FaCheck />
-                              ) : null
-                          }
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+
               </div>
-            {messages.length > -1 && 
+            {messages.length > 0 && 
             <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
                 <div className="pl-4">
                     <button  onClick={()=> handle_Emojis(setShow , show)}><BsEmojiSmile className="sm:w-10 sm:h-10  w-5 h-5"/></button>
