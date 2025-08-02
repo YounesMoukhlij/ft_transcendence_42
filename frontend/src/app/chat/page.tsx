@@ -45,18 +45,21 @@ type FreindsListProps = {
   title: string,
   message: string,
   status: boolean,
-  setConversation: any
-  setRoom: any
-  setimg: any
+  setConversation: any,
+  setRoom: any,
+  setimg: any,
+  SetSelectContact: any,
 };
 
-const FreindsList = ({ photo ,title , message , status, setConversation , setRoom , setimg}:FreindsListProps) =>{
+const FreindsList = ({ photo ,title , message , status, setConversation , setRoom , setimg , SetSelectContact }:FreindsListProps) =>{
   
   const Get_Conversation = async () => {
     localStorage.setItem('room_select', title);
     setRoom(title);
     setimg(photo);
-    
+    SetSelectContact(true);
+
+
     const conversation = await fetchData(title);
     console.log(conversation);
     setConversation(conversation);
@@ -84,7 +87,7 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setRoo
 };
 
 
-function Test1({ array  , setMessages , setRoom , setImg}) {
+function Test1({ array  , setMessages , setRoom , setImg , SetSelectContact}) {
 
   console.log(array);
   return (
@@ -110,6 +113,7 @@ function Test1({ array  , setMessages , setRoom , setImg}) {
               setConversation={setMessages}
               setRoom={setRoom}
               setimg={setImg}
+              SetSelectContact={SetSelectContact}
               />
           </div>
         ))}
@@ -130,6 +134,10 @@ export default function chatPage() {
   const [room , setRoom] = useState('');
   const [profile_img , setImg] = useState('');
   const [display_chats , set_chats] = useState(false);
+
+
+  const [SelectContact , SetSelectContact] = useState(false);
+
   const {connect , username ,socket } = globalStore();
   
   const getFormattedDate = () => {
@@ -177,6 +185,8 @@ useEffect(() => {
 useEffect(() => {
   const fetchData = async () => {
       try {
+
+
         const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`,{
           params: { username }
         });
@@ -265,6 +275,7 @@ useEffect(() => {
                  setMessages={setMessages} 
                  setRoom={setRoom} 
                  setImg={setImg}
+                 SetSelectContact={SetSelectContact}
                 />
           </div>
 
@@ -281,7 +292,7 @@ useEffect(() => {
                 />
           </div>}
            <div className="flex w-12/12 lg:w-9/12  flex-col border rounded-[35px] border-solid " >    {/*chat div converation*/}
-            {messages.length > 0 && 
+            {SelectContact && 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
               <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5">
                 <img className="rounded-[50%]" src={profile_img || null} alt='image'/>
@@ -302,7 +313,7 @@ useEffect(() => {
 
              <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-[40px] h-[85%] px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
              {
-                messages.length == 0 && <div className='flex  flex-col items-center justify-center w-full h-full'>
+                messages.length == 0 && !SelectContact &&  <div className='flex  flex-col items-center justify-center w-full h-full'>
                   <h3> Please select an item to see your conversations. </h3>
                   <img  className="" src="/animation.gif"/>
                 </div>
@@ -342,7 +353,7 @@ useEffect(() => {
                 })}
 
               </div>
-            {messages.length > 0 && 
+            {SelectContact && 
             <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
                 <div className="pl-4">
                     <button  onClick={()=> handle_Emojis(setShow , show)}><BsEmojiSmile className="sm:w-10 sm:h-10  w-5 h-5"/></button>
