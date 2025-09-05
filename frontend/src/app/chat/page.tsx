@@ -267,9 +267,9 @@ useEffect(() => {
   }, [messages]);
   
   return (
-    <div className="flex justify-center items-center h-full text-white">
+    <div className="flex justify-center items-center h-full text-white ">
       <div className=" flex w-5/5 h-5/5 md:w-4/5 md:h-4/5 gap-[5%] ">
-           <div className="w-1.5/5 h-full hidden  lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid  ">
+           <div className="w-1.5/5 h-full hidden  lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
              <Test1 
                  array={array} 
                  setMessages={setMessages} 
@@ -291,7 +291,7 @@ useEffect(() => {
                  setImg={setImg}
                 />
           </div>}
-           <div className="flex w-12/12 lg:w-9/12  flex-col border rounded-[35px] border-solid " >    {/*chat div converation*/}
+           <div className="flex w-[full] lg:w-9/12  flex-col border rounded-[35px] border-solid " >    {/*chat div converation*/}
             {SelectContact && 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
               <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5">
@@ -299,7 +299,7 @@ useEffect(() => {
                 <p className="self-center   text-[1rem]  sm:text-[1.5rem] pl-[1rem]">{room}</p>
               </div>
               <div className=" mr-[2rem] w-21 h-5 sm:h-10">
-                <button className="flex pr-[4%]" onClick={handle_dropmenu}><SlOptions className="sm:w-10 sm:h-10  w-5 h-5"/></button>
+                <button className="flex pr-[4%]" onClick={handle_dropmenu}><SlOptions className="sm:w-10 sm:h-10  w-5 h-5 "/></button>
                 { dropmenu &&
                   <div className="fixed flex flex-col w-28 self-">
                     <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button className="">Block</button></div>
@@ -310,7 +310,6 @@ useEffect(() => {
             </div>
           }
             
-
              <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-[40px] h-[85%] px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
              {
                 messages.length == 0 && !SelectContact &&  <div className='flex  flex-col items-center justify-center w-full h-full'>
@@ -353,6 +352,7 @@ useEffect(() => {
                 })}
 
               </div>
+            
             {SelectContact && 
             <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
                 <div className="pl-4">
@@ -365,7 +365,7 @@ useEffect(() => {
                   <div className="pr-4"><button onClick={handle_confirm_invite}><IoGameController className="sm:w-10 sm:h-10  w-5 h-5"/></button></div>
                   <div className="flex px-6 py-0"><IoSend onClick={handleSend} className="sm:w-10 sm:h-10  w-5 h-5"/></div>
                   {confirm_invite && 
-                    <div className="flex flex-col justify-between absolute w-[22rem] h-36 bg-[gray] text-center border p-2 rounded-2xl border-solid left-[calc(50%)] top-[calc(50%)]">
+                    <div className="flex flex-col justify-between absolute w-[22rem] h-36 bg-[gray] text-center border p-2 rounded-2xl border-solid left-[calc(50%)] top-[calc(50%)] ">
                       <p>You are about to request a game sesstion with zalaksya</p>
                       <div className="flex items-end justify-between h-3/6 px-2 py-0">
                         <div className="text-center w-[48%] h-[70%] border bg-[rgb(201,49,38)] p-2 rounded-2xl border-solid"><button onClick={handle_cancel_invite} > Cancel</button></div>

@@ -20,7 +20,8 @@ export default function Navbar()
   const profileIconRef = useRef<HTMLSpanElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
   const setUsername = globalStore.setState; ///////
-  const {connect  ,socket ,username , init} = globalStore();
+  const {connect   ,username , init } = globalStore();
+  const socket = globalStore((state) => state.socket);
 
 
   useEffect(() => {
@@ -69,18 +70,25 @@ export default function Navbar()
   }, [])
 
   
+
   useEffect(() => {
 
     if (!socket) return;
-    socket.onmessage = (event : any) => {
-
+  
+    const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
-        setNotification(prev => [...prev, {sender_user: data.sender_user, sender_profile_img: data.sender_profile_img}]);
+        setNotification(prev => [...prev, {sender_user: data.sender_user, sender_profile_img: data.sender_profile_img}]); 
       }
     };
+  
+    socket.addEventListener("message", handleNotify);
+  
+    return () => {
+      socket.removeEventListener("message", handleNotify);
+    };
   }, [socket]);
-
+  
 
 
   // Close mobile menu when clicking outside the list

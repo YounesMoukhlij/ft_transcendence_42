@@ -93,7 +93,6 @@ export default function SettingsPage() {
             user:username
           }
         })
-        console.log(data.data);
         setLeadr(data.data);
       } catch (err) {
         console.log(err);

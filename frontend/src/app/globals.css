@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+
+
+
+.debug {
+    border: 2px solid red;
+}
+
+.debug > *  {
+    border: 2px solid green;
+}
+
+.debug * {
+    border: 2px solid blue;
+}
