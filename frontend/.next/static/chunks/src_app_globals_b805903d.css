@@ -762,10 +762,6 @@
     width: calc(var(--spacing) * 12);
   }
 
-  .w-12\/12 {
-    width: 100%;
-  }
-
   .w-15 {
     width: calc(var(--spacing) * 15);
   }
@@ -856,6 +852,10 @@
 
   .w-\[350px\] {
     width: 350px;
+  }
+
+  .w-\[full\] {
+    width: full;
   }
 
   .w-full {
@@ -2303,6 +2303,18 @@
       width: calc(var(--spacing) * 20);
     }
   }
+}
+
+.debug {
+  border: 2px solid red;
+}
+
+.debug > * {
+  border: 2px solid green;
+}
+
+.debug * {
+  border: 2px solid #00f;
 }
 
 @property --tw-translate-x {

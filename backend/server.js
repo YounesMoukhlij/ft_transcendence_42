@@ -30,7 +30,6 @@ try {
     const init = fs.readFileSync(path.join(__dirname, 'init.sql'), 'utf8');
     db.exec(init);
     app.log.info('Database initialized');
-    console.log("here1");
   }
 } catch (err) {
   console.log('Database initialization error:', err);
@@ -72,14 +71,17 @@ return(new_res);
 
 
 wss.on('connection', (socket) => {
-  console.log('Client connected');
 
   let username = null;
 
   socket.once('message', (msg) => {
     username = msg.toString();
     users_socket.set(username, socket);
+
     const status = waitingMessages.has(username);
+
+    console.log("here in registary =======> " , users_socket.size);
+
     if (status){
       const query =  db.prepare("UPDATE message SET isSeen = ?");
       query.run(1);

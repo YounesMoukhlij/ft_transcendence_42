@@ -94,15 +94,15 @@ export async function Xprank(request, reply) {
     }
 
     const currentUserId = res.id_user;
-    console.log(`Current User ID: ${currentUserId}`);
+    // console.log(`Current User ID: ${currentUserId}`);
 
     const users = request.server.db.prepare("SELECT * FROM users ORDER BY xp DESC").all();
-    console.log("Users:", users);
+    // console.log("Users:", users);
 
     const friendsQuery = request.server.db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ? UNION SELECT user_id FROM friends WHERE friend_id = ?`);
     const friendsResult = friendsQuery.all(currentUserId, currentUserId);
     
-    console.log("Friends Query Result:", friendsResult);
+    // console.log("Friends Query Result:", friendsResult);
 
     const friends = [...new Set(friendsResult.map((entry) => entry.friend_id))];
 
@@ -116,7 +116,7 @@ export async function Xprank(request, reply) {
         friendStatus = 'friend';
       }
 
-      console.log(`User ID: ${user.id_user}, Status: ${friendStatus}`);
+      // console.log(`User ID: ${user.id_user}, Status: ${friendStatus}`);
       return { ...user, friend_status: friendStatus };
     });
 

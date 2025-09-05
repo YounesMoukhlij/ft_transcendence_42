@@ -30,7 +30,6 @@ export async function GetNotification(request, reply) {
 
 export async function DeleteFriendRequest(request , reply){
   const notify_id = request.body.notify_id;
-  console.log(notify_id);
   try{
       const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ?');
       query.run(notify_id);
@@ -47,14 +46,24 @@ export async function sendRequestFriend(request, reply) {
   if (!title || !sender || !friend) {
     return reply.code(400).send({ error: 'Title, sender, and friend are required fields.' });
   }
+  
 
   const socket = request.server.users_socket.get(friend);
 
+
+
   try {
-    const query = request.server.db.prepare("INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)");
-    query.run(friend, title, sender, "test");
+    const existsNotify = request.server.db.prepare(`SELECT 1 FROM notification  WHERE getter_user = ? AND title = ? AND sender_user = ? AND notifyBody = ? LIMIT 1`);
+    const exists = existsNotify.get(friend, title, sender, "test");
+
+  if (exists)
+    return reply.code(200);
+  const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
+  insertQuery.run(friend, title, sender, "test");
 
     if (socket) {
+
+
       const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE username = ?");
       const result = query1.get(sender);
 
@@ -68,7 +77,6 @@ export async function sendRequestFriend(request, reply) {
         sender_profile_img: result.profile_img,
         notify_id: res.notify_id
       };
-
       socket.send(JSON.stringify({
         type: "notify",
         data: object

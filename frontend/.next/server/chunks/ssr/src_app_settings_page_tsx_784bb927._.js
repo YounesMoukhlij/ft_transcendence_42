@@ -20,7 +20,7 @@ const LeaderBord = ({ users })=>{
     async function handleAddFriend(username) {
         const sender = localStorage.getItem('name');
         try {
-            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.13.6.2")}:${("TURBOPACK compile-time value", "4444")}/sendRequestFriend`, {
+            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "127.0.0.1")}:${("TURBOPACK compile-time value", "4444")}/sendRequestFriend`, {
                 sender,
                 friend: username,
                 title: "request friend"
@@ -285,12 +285,11 @@ function SettingsPage() {
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const fetchData = async ()=>{
             try {
-                const data = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "10.13.6.2")}:${("TURBOPACK compile-time value", "4444")}/Xprank`, {
+                const data = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "127.0.0.1")}:${("TURBOPACK compile-time value", "4444")}/Xprank`, {
                     params: {
                         user: username
                     }
                 });
-                console.log(data.data);
                 setLeadr(data.data);
             } catch (err) {
                 console.log(err);
@@ -304,12 +303,12 @@ function SettingsPage() {
             users: LeaderBord_users
         }, void 0, false, {
             fileName: "[project]/src/app/settings/page.tsx",
-            lineNumber: 108,
+            lineNumber: 107,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/settings/page.tsx",
-        lineNumber: 107,
+        lineNumber: 106,
         columnNumber: 5
     }, this);
 }
