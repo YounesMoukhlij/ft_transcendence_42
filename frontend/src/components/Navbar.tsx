@@ -38,7 +38,11 @@ export default function Navbar()
   
   async function DelteFriendRequest(notify_id){
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {notify_id});
+    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
+      params:{
+        id: notify_id,
+      }
+    });
   }
 
   async function AcceptFriendRequest(username){

@@ -29,7 +29,9 @@ export async function GetNotification(request, reply) {
 }
 
 export async function DeleteFriendRequest(request , reply){
-  const notify_id = request.body.notify_id;
+
+  const notify_id = request.query.id;
+
   try{
       const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ?');
       query.run(notify_id);

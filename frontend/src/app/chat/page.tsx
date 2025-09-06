@@ -175,7 +175,7 @@ useEffect(() => {
   socket.onmessage = (event : any ) => {
     const { type, data } = JSON.parse(event.data);
     if (type === "message") {
-      setMessages(prev => [...prev, {sender: data.user, message: data.message , created_at : getFormattedDate()}]);
+      setMessages(prev => [...prev, {sender: data.user,conv_id: data.conv_id , message: data.message , created_at : getFormattedDate()}]);
     }
   };
 }, [socket]);
@@ -212,7 +212,6 @@ useEffect(() => {
     const user = localStorage.getItem('name');
     const friend = localStorage.getItem('room_select');
     const room_select = localStorage.getItem('room_select');
-
     
     const id = localStorage.getItem('conversationId');
     try {
@@ -222,7 +221,7 @@ useEffect(() => {
         }
       })
       const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, { user, input , id ,friend});
-      setMessages(prev => [...prev, {sender: user, message: input , created_at : getFormattedDate() , isSeen: data.data}]);
+      setMessages(prev => [...prev, {sender: user , message: input ,conv_id: id  ,created_at : getFormattedDate() , isSeen: data.data}]);
     } catch (err) {
       console.error(err);
     }
@@ -312,17 +311,19 @@ useEffect(() => {
             
              <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-[40px] h-[85%] px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
              {
-                messages.length == 0 && !SelectContact &&  <div className='flex  flex-col items-center justify-center w-full h-full'>
+                !SelectContact &&  <div className='flex  flex-col items-center justify-center w-full h-full'>
                   <h3> Please select an item to see your conversations. </h3>
                   <img  className="" src="/animation.gif"/>
                 </div>
              }
-             {messages.length > 0 && (
+             {messages.length > 0 && SelectContact && (
               <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]">
                 <p>The messages are end to end encrypted. Only people in this chat can read this conversation,so enjoy with your friend.</p>
               </div>
                 )}
-                {messages.map((item, index) => {
+                {SelectContact && messages.map((item, index) => {
+
+                  if(item.conv_id == localStorage.getItem('conversationId') ){
                   const currentDate = item.created_at.split(' ')[0];
                   const prevDate = index > 0 ? messages[index - 1].created_at.split(' ')[0] : null;
                 
@@ -349,6 +350,7 @@ useEffect(() => {
                       </div>
                     </div>
                   );
+                }
                 })}
 
               </div>
