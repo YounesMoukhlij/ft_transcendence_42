@@ -19,6 +19,6 @@ export default async function routes(fastify, options) {
 
 
 
-  fastify.post('/DeleteFriendRequest' , DeleteFriendRequest);
+  fastify.delete('/DeleteFriendRequest' , DeleteFriendRequest);
 
 }
