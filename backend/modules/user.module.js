@@ -145,3 +145,16 @@ export async function IsOnline(request , reply){
   }
 }
 
+
+
+
+export async function block(request , reply){
+  
+  const { user , friend} = request.server.body;
+  console.log(user , friend);
+  return reply.status(200);
+  try{
+  }catch(err){
+    console.log(err);
+  }
+}
