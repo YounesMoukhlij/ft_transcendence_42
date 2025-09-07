@@ -45,9 +45,10 @@ export default function Navbar()
     });
   }
 
-  async function AcceptFriendRequest(username){
+  async function AcceptFriendRequest(username , notification_id){
     const loginUsername  = globalStore.getState().username;
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: username , user2: loginUsername});
+    await DelteFriendRequest(notification_id);
   };
 
   function showNotification(){
@@ -166,7 +167,7 @@ export default function Navbar()
                       </div>
                     </div>
                   <div className='flex w-[70%] h-[3rem] ml-[25%] mt-[-14%] items-center justify-between'>
-                   <button  onClick={()=> AcceptFriendRequest(item.sender_user)} className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
+                   <button  onClick={()=> AcceptFriendRequest(item.sender_user , item.notify_id)} className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
                    <button  onClick={() =>DelteFriendRequest(item.notify_id)}  className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
                   </div>
                 </div>

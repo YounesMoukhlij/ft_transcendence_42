@@ -23,8 +23,6 @@ function handle_Emojis(setShow: any , show: boolean ){
   setShow(!show)
 }
 
-
-
 const fetchData = async (title:string) => {
   try {
     const user = localStorage.getItem('name');
@@ -163,7 +161,6 @@ export default function chatPage() {
   );
 }
 
-
 useEffect(() => {
   connect();
 }, []);
@@ -205,7 +202,20 @@ useEffect(() => {
     }
   }
 
-  
+  async function handleBlock(friend){
+    const username  = globalStore.getState().username;
+    alert(friend);
+    // await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Block` ,{
+    //     user: username,
+    //     friend: friend
+    // });
+  }
+
+  function handleUnfriend(){
+    alert("unfirended ")
+  }
+
+
   const  handleSend = async () =>{
     if (input.length == 0)
       return ;
@@ -301,8 +311,8 @@ useEffect(() => {
                 <button className="flex pr-[4%]" onClick={handle_dropmenu}><SlOptions className="sm:w-10 sm:h-10  w-5 h-5 "/></button>
                 { dropmenu &&
                   <div className="fixed flex flex-col w-28 self-">
-                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button className="">Block</button></div>
-                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button className="">Unfriend</button></div>
+                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button  className="" onClick={()=>handleBlock(room)}>Block</button></div>
+                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button className="" onClick={handleUnfriend} >Unfriend</button></div>
                   </div>
                 }
               </div>
