@@ -1,4 +1,7 @@
 {
-  "/chat/page": "app/chat/page.js",
+  "/Auth/page": "app/Auth/page.js",
+  "/Auth/signIn/page": "app/Auth/signIn/page.js",
+  "/Auth/signUp/page": "app/Auth/signUp/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js"
 }

@@ -12,4 +12,20 @@ export default async function routes(fastify, options) {
   fastify.post('/AddFriend' , AddFriend);
   fastify.get('/GetFriends' , GetFriends);
 
+
+  // user management
+  // createuser
+  // login
+  // logout
+  // update user info
+  // delete user
+  fastify.post('/AddUser', AddUser);
+  fastify.post('/Login', Login);
+  fastify.post('/Logout', Logout);
+  fastify.put('/UpdateUser', UpdateUser);
+  fastify.delete('/DeleteUser', DeleteUser);
+  fastify.get('/GetUsers', GetUsers);
+  fastify.get('/GetUserById/:id', GetUserById);
+
+
 }

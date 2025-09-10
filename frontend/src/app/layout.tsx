@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import ParticlesBackground from "../components/ParticlesBackground";
 import { GameProvider } from "../components/GameContext";
+import SignInUp from "./Auth/page";
 
 import React  from "react";
 import "./globals.css";
@@ -18,8 +19,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <title>Ping Pong Game</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="h-[100%] flex flex-col border-5 border-white">
-        <GameProvider>
+      <body className="h-[100%] bg-black">
+        {/* <GameProvider>
           <Navbar />
           <div className="flex h-[90%] rounded-3xl gap-[10px] p-[10px] z-10 ">
             <Sidebar />
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </div>
           </div>
           <ParticlesBackground id="particles" />
-        </GameProvider>
+        </GameProvider> */}
+
+        {/* <SignInUp /> */}
+        {children}
       </body>
     </html>
   );
