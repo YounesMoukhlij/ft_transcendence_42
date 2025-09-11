@@ -148,12 +148,30 @@ export async function IsOnline(request , reply){
 
 
 
-export async function block(request , reply){
-  
-  const { user , friend} = request.server.body;
-  console.log(user , friend);
-  return reply.status(200);
+export async function blockFunction(request , reply){
+
+  const { user , friend} = request.body;
+
   try{
+
+    const queryIds = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
+    const userId = queryIds.get(user);
+    const friendId = queryIds.get(friend);
+
+    if (!userId || !friendId)
+      return reply.send("friend not found ");
+
+
+    const query = request.server.db.prepare("UPDATE friends  SET is_blocked = ?  WHERE  user_id = ? AND friend_id = ?");
+    const res = query.run(1 , userId.id_user , friendId.id_user);
+    if (res.changes === 0)
+        res = query.run(friendId , userId);
+    if (res.changes === 0)
+      return reply.send("frinedcheap not Found ");
+
+
+    console.log("blocked");
+    reply.send(true);
   }catch(err){
     console.log(err);
   }

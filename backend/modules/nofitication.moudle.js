@@ -131,9 +131,7 @@ export async function GetFriends(request, reply) {
   }
 
   try {
-    const getUserIdStmt = request.server.db.prepare(`
-      SELECT id_user FROM users WHERE username = ?
-    `);
+    const getUserIdStmt = request.server.db.prepare(`SELECT id_user FROM users WHERE username = ?`);
     const user = getUserIdStmt.get(username);
 
     if (!user) {
@@ -142,12 +140,8 @@ export async function GetFriends(request, reply) {
 
     const userId = user.id_user;
 
-    const getFriendsStmt1 = request.server.db.prepare(`
-      SELECT user_id FROM friends WHERE friend_id = ?
-    `);
-    const getFriendsStmt2 = request.server.db.prepare(`
-      SELECT friend_id FROM friends WHERE user_id = ?
-    `);
+    const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id , is_blocked FROM friends WHERE friend_id = ?`);
+    const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id , is_blocked FROM friends WHERE user_id = ?`);
 
     const friends1 = getFriendsStmt1.all(userId).map(row => row.user_id);
     const friends2 = getFriendsStmt2.all(userId).map(row => row.friend_id);
@@ -163,7 +157,7 @@ export async function GetFriends(request, reply) {
       SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token , status 
       FROM users
       WHERE id_user IN (${placeholders})
-    `);
+      `);
 
     const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
 
