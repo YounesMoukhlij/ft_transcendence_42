@@ -1,96 +1,108 @@
+'use client'
+import React, { useState } from 'react'
+import { Camera } from 'lucide-react'
 
-"use client";
-import { useEffect, useState } from "react";
-import axios from 'axios';
-import "../chat/page.css"
-import { title } from "process";
+const ProfileSettingsPage = () => {
+  const [user, setUser] = useState({
+    idUser: 1,
+    username: 'li kwak',
+    email: 'likwak@9alwa.com',
+    password: '',
+    confirmPassword: '',
+    bio: 'Li 3waj ngado zaml boh',
+    profile: 'avatar'
+  });
 
-
-const LeaderBord = ({users}) =>{
   
-  async function  handleAddFriend (username){
-    const sender = localStorage.getItem('name');
-    try {
-        await axios.post('http://localhost:4444/sendRequestFriend' , { sender, friend: username , title:"request friend"});
-      } catch (err) {
-        console.log(err);
-      }
-  }
 
+  const handleSaveChanges = () => {
+    // Add your save logic here
+    console.log('Saving user data:', user);
+  };
 
-  const newObject = users.slice(3);
   return (
-    <div className="text-black  w-full h-full  ">
-
-        <div className="flex w-full h-[50%] justify-center items-end  bg-white gap-[0.5rem] pb-[20px]">
-
-          { users.length >= 2 && <div className=" w-[25%]  h-[70%] lg:h-[80%]  flex flex-col items-center  rounded-[10px]  bg-gray-100 ">
-            <img className="w-[60%] rounded-[50%] border-[4px] border-amber-900 mt-[0.4rem]" src={users[1].profile_img}/>
-            <h1 className="pt-[0.5rem]">{users[1].username}</h1>
-            <h1 className="pt-[0.4rem]">{users[1].xp}</h1>
-          </div>}
-          {users.length >= 1 &&  <div className=" w-[25%] h-[80%] lg:h-[90%] flex flex-col items-center  rounded-[10px] bg-gray-100 ">
-            <img className="w-[60%] rounded-[50%] border-[4px] border-amber-400 mt-[0.4rem]" src={users[0].profile_img}/>
-            <h1 className="pt-[0.5rem]">{users[0].username}</h1>
-            <h1 className="pt-[0.4rem]">{users[0].xp}</h1>
-          </div>}
-          {users.length >= 3 &&  <div className=" w-[25%] h-[70%] lg:h-[80%] flex flex-col items-center  rounded-[10px] bg-gray-100 ">
-            <img className="w-[60%] rounded-[50%] border-[4px] border-gray-400 mt-[0.4rem]" src={users[2].profile_img}/>
-            <h1 className="pt-[0.5rem]">{users[2].username}</h1>
-            <h1 className="pt-[0.4rem]">{users[2].xp}</h1>
-          </div>}
-
+    <div className='p-4 w-full h-full flex flex-col gap-4 justify-center items-center'>
+      <div className='w-full max-w-2xl p-6 bg-gray-400 rounded-lg shadow-md flex flex-col items-center'>
+        <div className='text-center'>
+          <h1 className='text-4xl font-bold text-black'>Settings</h1>
+          <p className='text-black'>Manage your account settings here.</p>
         </div>
-        {
-          newObject.map((item , index)=>(
-              <div className="index w-full mt-0.5 ">
-                  <div className="flex">
-                    <div className="w-full flex full h-[6rem] bg-gray-100 justify-between">
-                      <div className="flex h-full">
-                        <div className="flex items-center w-[1rem] ml-1"><p className="text-2xl">{index + 4}</p></div>
-                        <div className="flex w-[70px] items-center ml-[0.5rem]"><img className="rounded-[50%]" src={item.profile_img}/></div>
-                        <div className="flex w-[70px] items-center ml-[0.5rem]"><p>{item.username}</p></div>
-                      </div>
-                      <div className="flex w-[40%] h-full ">
-                        <div className="w-[40%] flex items-center"><p className="text-2xl">{item.xp}</p></div>
-                        <div className="flex  w-[77%] items-center "><button onClick={()=>handleAddFriend(item.username)} className="bg-blue-500 w-full h-[40%] rounded-[10px]">Add friend</button></div>
-                      </div>
-                    </div>
-                  </div>
-              </div>
-          ))
-        }
-   </div>
+        
 
-  );
-};
+        <div className='flex flex-col gap-2 bg-red-500 rounded-md w-1/2'>
+        <div className=''>
+          {/* Clickable Avatar with Camera Overlay */}
+          <div 
+            className='relative w-24 h-24 mb-4 cursor-pointer'
+            // onClick={}
+          >
+            <img 
+              src={user.profile} 
+              alt="Profile" 
+              className='w-24 h-24 rounded-full object-cover border-2 group-hover:opacity-75 transition-opacity duration-200'
+            />
+            {/* Camera Overlay */}
+            <div className='absolute inset-0 flex items-center justify-center bg-opacity-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
+              <input type="file" className="absolute inset-0 rounded-full opacity-0" />
+              <Camera size={24} className='text-black' />
+            </div>
+          </div>
+        </div>
 
+          <label htmlFor="username" className='block text-sm font-medium text-black'>Username</label>
+          <input 
+            type="text" 
+            id="username" 
+            className='mt-1 p-2 w-full border rounded-md text-black'
+            value={user.username}
+            onChange={(e) => setUser(prev => ({ ...prev, username: e.target.value }))}
+          />
+          
+          <label htmlFor="email" className='block text-sm font-medium text-black'>Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            className='mt-1 p-2 w-full border rounded-md text-black'
+            value={user.email}
+            onChange={(e) => setUser(prev => ({ ...prev, email: e.target.value }))}
+          />
 
+          <label htmlFor="bio" className='block text-sm font-medium text-black'>Bio</label>
+          <textarea
+            id="bio"
+            className='mt-1 p-2 w-full border rounded-md text-black'
+            value={user.bio}
+            onChange={(e) => setUser(prev => ({ ...prev, bio: e.target.value }))}
+          />
 
-
-
-
-
-export default function SettingsPage() {
-  const [LeaderBord_users , setLeadr] = useState([]);
-    useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get('http://localhost:4444/Xprank');
-        setLeadr(res.data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    fetchData();
-  }, []);
-  
-
-  return (
-    <div className="text-white bg-white w-[25%] h-[40%] overflow-scroll">
-      <LeaderBord 
-        users={LeaderBord_users}
-      />
+          <label htmlFor="password" className='block text-sm font-medium text-black'>Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            className='mt-1 p-2 w-full border rounded-md text-black'
+            value={user.password}
+            onChange={(e) => setUser(prev => ({ ...prev, password: e.target.value }))}
+          />
+          
+          <label htmlFor="confirm-password" className='block text-sm font-medium text-black'>Confirm Password</label>
+          <input 
+            type="password" 
+            id="confirm-password" 
+            className='mt-1 p-2 w-full border rounded-md text-black'
+            value={user.confirmPassword}
+            onChange={(e) => setUser(prev => ({ ...prev, confirmPassword: e.target.value }))}
+          />
+        </div>
+        
+        <div className='mt-6 text-center'>
+          <button 
+          className='px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800'
+          onClick={handleSaveChanges}
+          >Save Changes</button>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
+
+export default ProfileSettingsPage
