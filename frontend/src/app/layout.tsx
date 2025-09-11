@@ -8,6 +8,7 @@ import { GameProvider } from "../components/GameContext";
 import React  from "react";
 import "./globals.css";
 
+import { Toaster, toast } from 'sonner';
 
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>)
@@ -27,7 +28,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               {children}
             </div>
           </div>
-          <ParticlesBackground id="particles" />
+          {/* <ParticlesBackground id="particles" /> */}
+          <Toaster position='top-right' richColors={true} />
         </GameProvider>
       </body>
     </html>
