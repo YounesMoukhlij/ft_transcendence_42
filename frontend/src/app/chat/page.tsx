@@ -87,7 +87,6 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setRoo
 
 function Test1({ array  , setMessages , setRoom , setImg , SetSelectContact}) {
 
-  console.log(array);
   return (
     <div className="flex flex-col">
       <div>
@@ -188,6 +187,7 @@ useEffect(() => {
           params: { username }
         });
         setFriend(res.data);
+        console.log("hererere" , res.data);
       } catch (err) {
         console.log(err);
       }
@@ -204,11 +204,10 @@ useEffect(() => {
 
   async function handleBlock(friend){
     const username  = globalStore.getState().username;
-    alert(friend);
-    // await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Block` ,{
-    //     user: username,
-    //     friend: friend
-    // });
+    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block` ,{
+        user: username,
+        friend: friend
+    });
   }
 
   function handleUnfriend(){
