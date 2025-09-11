@@ -1269,6 +1269,10 @@
     background-color: #c93126;
   }
 
+  .bg-amber-400 {
+    background-color: var(--color-amber-400);
+  }
+
   .bg-black {
     background-color: var(--color-black);
   }

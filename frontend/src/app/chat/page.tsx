@@ -13,8 +13,10 @@ import { IoGameController } from "react-icons/io5";
 import { FaArrowRight } from "react-icons/fa";
 import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 
-
 import { globalStore } from '../../components/globalStore';
+
+import { Toaster, toast } from 'sonner';
+
 
 
 
@@ -187,7 +189,7 @@ useEffect(() => {
           params: { username }
         });
         setFriend(res.data);
-        console.log("hererere" , res.data);
+
       } catch (err) {
         console.log(err);
       }
@@ -299,7 +301,7 @@ useEffect(() => {
                  setImg={setImg}
                 />
           </div>}
-           <div className="flex w-[full] lg:w-9/12  flex-col border rounded-[35px] border-solid " >    {/*chat div converation*/}
+           <div className="flex w-[full] lg:w-9/12  flex-col border rounded-[35px] border-solid bg-black " >    {/*chat div converation*/}
             {SelectContact && 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
               <div className="flex h-3/5 sm:h-3/5 self-center sm:pl-[2%] ml-1.5">
@@ -382,7 +384,7 @@ useEffect(() => {
                         <div className="text-center w-[48%] h-[70%] border bg-[rgb(201,49,38)] p-2 rounded-2xl border-solid"><button onClick={handle_cancel_invite} > Cancel</button></div>
                         
                           <div className="text-center border h-[70%] w-[48%] bg-[rgb(14,154,54)] p-2 rounded-2xl border-solid">
-                          <Link href="/game" key="/game"><button>Confirm</button></Link>
+                          <Link href="/game" key="/game"><button> Confirm</button></Link>
                           </div>
                       </div>
                     </div>

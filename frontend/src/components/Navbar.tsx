@@ -8,6 +8,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { globalStore } from '../components/globalStore';
 
+import { Toaster, toast } from 'sonner';
 
 
 export default function Navbar()
@@ -37,23 +38,35 @@ export default function Navbar()
   };
   
   async function DelteFriendRequest(notify_id){
+    toast.error('Deleted');
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
     await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: notify_id,
       }
     });
+
   }
 
   async function AcceptFriendRequest(username , notification_id){
+    toast.success('Accepted');
     const loginUsername  = globalStore.getState().username;
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: username , user2: loginUsername});
-    await DelteFriendRequest(notification_id);
+    setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notification_id));
+    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
+      params:{
+        id: notification_id,
+      }
+    });
   };
+
 
   function showNotification(){
     setNotificationIndex(!notificationIndex);
   }
+
+
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
