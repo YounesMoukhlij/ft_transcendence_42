@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import FlyingSaucer from './flyingsaucer'
 import '../globals.css'
+import { toast } from 'react-toastify';
+import { log } from 'console'
 
 export default function AuthLayout() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -226,19 +228,59 @@ function SignUpForm({ onToggle }: { onToggle: () => void }) {
   const [error, setError] = useState('');
 
   const handleSignUp = (e: React.FormEvent) => {
+    toast.info('Signing up...');
+    return;
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
+    // console.log('Signing up with', { username, email, password, confirmPassword });
     // Perform sign up logic here
-    console.log('Signing up with', { username, email, password, confirmPassword });
+    // return;
     // Reset form fields
     // setUsername('');
     // setEmail('');
     // setPassword('');
     // setConfirmPassword('');
     // setError(''); // Clear any previous errors
-  }
+
+    fetch('http://localhost:4444/AddUser', {
+      method: 'POST',
+      headers: {
+    'Content-Type': 'application/json',   // 👈 tell server JSON is coming
+  },
+
+      body: JSON.stringify({ 
+        username: username, 
+        email: email,
+        password: password 
+      })
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 409) {
+            toast.error('Username or email already exists');
+            setError('Username or email already exists');
+            return;
+          }
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        toast.success('User added successfully!');
+        // Reset form fields
+        // setUsername('');
+        // setEmail('');
+        // setPassword('');
+        // setConfirmPassword('');
+        // setError(''); // Clear any previous errors
+      })
+      .catch((error) => {
+        console.error('Error adding user:', error);
+        setError('Error adding user');
+      });
+  };
   return (
     <div className="flex flex-col gap-6 items-center justify-center">
       <div className='flex flex-col gap-2 sm:gap-3 items-center justify-center text-center'>
@@ -287,6 +329,7 @@ function SignUpForm({ onToggle }: { onToggle: () => void }) {
 
         <div className='w-full'>
           <button 
+            type="button" 
             className='w-full p-3 sm:p-4 rounded-2xl border border-transparent bg-gray-500 text-white text-sm sm:text-base font-semibold hover:bg-gray-400 transition-all duration-300 ease-in-out hover:cursor-pointer'
             onClick={handleSignUp}
           >

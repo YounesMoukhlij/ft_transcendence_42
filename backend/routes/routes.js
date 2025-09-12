@@ -1,5 +1,6 @@
 import {  aaa  , getConversationId  , sendMsg , getMsgs , Xprank } from '../modules/user.module.js';
 import { GetNotification , sendRequestFriend , AddFriend , GetFriends } from '../modules/nofitication.moudle.js';
+import { AddUser, getAllUsers} from '../modules/userAuth.module.js';
 
 export default async function routes(fastify, options) {
   fastify.get('/', aaa);
@@ -19,13 +20,13 @@ export default async function routes(fastify, options) {
   // logout
   // update user info
   // delete user
+
   fastify.post('/AddUser', AddUser);
-  fastify.post('/Login', Login);
-  fastify.post('/Logout', Logout);
-  fastify.put('/UpdateUser', UpdateUser);
-  fastify.delete('/DeleteUser', DeleteUser);
-  fastify.get('/GetUsers', GetUsers);
-  fastify.get('/GetUserById/:id', GetUserById);
-
-
+  fastify.get('/getAllUsers', getAllUsers);
+  // fastify.post('/register', Register);
+  // fastify.post('/Logout', Logout);
+  // fastify.put('/UpdateUser', UpdateUser);
+  // fastify.delete('/DeleteUser', DeleteUser);
+  // fastify.get('/GetUsers', GetUsers);
+  // fastify.get('/GetUserById/:id', GetUserById);
 }
