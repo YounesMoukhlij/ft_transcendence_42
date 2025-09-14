@@ -8,7 +8,7 @@ export async function getConversationId(request, reply) {
 
 
   try {
-    const query = request.server.db.prepare("SELECT conversation_id FROM room WHERE members = ?");
+    const query = request.server.db.prepare("SELECT * FROM room WHERE members = ?");
 
     let result = query.get(caseOne);
 
@@ -94,15 +94,15 @@ export async function Xprank(request, reply) {
     }
 
     const currentUserId = res.id_user;
-    // console.log(`Current User ID: ${currentUserId}`);
+
 
     const users = request.server.db.prepare("SELECT * FROM users ORDER BY xp DESC").all();
-    // console.log("Users:", users);
+;
 
     const friendsQuery = request.server.db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ? UNION SELECT user_id FROM friends WHERE friend_id = ?`);
     const friendsResult = friendsQuery.all(currentUserId, currentUserId);
     
-    // console.log("Friends Query Result:", friendsResult);
+
 
     const friends = [...new Set(friendsResult.map((entry) => entry.friend_id))];
 
@@ -116,7 +116,6 @@ export async function Xprank(request, reply) {
         friendStatus = 'friend';
       }
 
-      // console.log(`User ID: ${user.id_user}, Status: ${friendStatus}`);
       return { ...user, friend_status: friendStatus };
     });
 
@@ -150,29 +149,17 @@ export async function IsOnline(request , reply){
 
 export async function blockFunction(request , reply){
 
-  const { user , friend} = request.body;
+  const { user , conv_id} = request.body;
 
   try{
-
-    const queryIds = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
-    const userId = queryIds.get(user);
-    const friendId = queryIds.get(friend);
-
-    if (!userId || !friendId)
-      return reply.send("friend not found ");
-
-
-    const query = request.server.db.prepare("UPDATE friends  SET is_blocked = ?  WHERE  user_id = ? AND friend_id = ?");
-    const res = query.run(1 , userId.id_user , friendId.id_user);
-    if (res.changes === 0)
-        res = query.run(friendId , userId);
-    if (res.changes === 0)
-      return reply.send("frinedcheap not Found ");
-
-
-    console.log("blocked");
+    const query = request.server.db.prepare("UPDATE room SET block_user = ?, is_double_block = is_double_block + 1 WHERE conversation_id= ?");
+    query.run(user , conv_id);
     reply.send(true);
+    
   }catch(err){
+    reply.code(500);
     console.log(err);
   }
 }
+
+
