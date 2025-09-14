@@ -20,7 +20,6 @@ CREATE TABLE friends (
     id_friendship INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     friend_id INTEGER NOT NULL,
-    is_blocked BOOLEAN DEFAULT FALSE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id_user),
     FOREIGN KEY (friend_id) REFERENCES users(id_user),
@@ -64,6 +63,8 @@ CREATE TABLE room (
     conversation_id INTEGER PRIMARY KEY AUTOINCREMENT,
     members TEXT NOT NULL,
     room_name TEXT,
+    block_user TEXT,
+    is_double_block INTEGER DEFAULT 0,
     iconPad TEXT
 );
 

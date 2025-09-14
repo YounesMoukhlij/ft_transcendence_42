@@ -56,7 +56,7 @@ async function test_function( conversationId , sender) {
 
 
   const usernames = result.members
-  .replace(/^,|,$/g, '') // remove leading/trailing commas
+  .replace(/^,|,$/g, '')
   .split(',')           
   .filter(Boolean);     
 

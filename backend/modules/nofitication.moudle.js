@@ -140,8 +140,8 @@ export async function GetFriends(request, reply) {
 
     const userId = user.id_user;
 
-    const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id , is_blocked FROM friends WHERE friend_id = ?`);
-    const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id , is_blocked FROM friends WHERE user_id = ?`);
+    const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id  FROM friends WHERE friend_id = ?`);
+    const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ?`);
 
     const friends1 = getFriendsStmt1.all(userId).map(row => row.user_id);
     const friends2 = getFriendsStmt2.all(userId).map(row => row.friend_id);

@@ -154,7 +154,7 @@ const globalStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mod
         token: null,
         connect: ()=>{
             if (get().socket) return;
-            const ws = new WebSocket(`ws://${("TURBOPACK compile-time value", "192.168.1.14")}:${("TURBOPACK compile-time value", "4444")}/ws`);
+            const ws = new WebSocket(`ws://${("TURBOPACK compile-time value", "127.0.0.1")}:${("TURBOPACK compile-time value", "4444")}/ws`);
             ws.onopen = ()=>{
                 console.log("Connected");
                 ws.send(get().username || '');
@@ -219,7 +219,7 @@ function Navbar() {
     async function DelteFriendRequest(notify_id) {
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$sonner$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toast"].error('Deleted');
         setNotification((notificatiion)=>notificatiion.filter((item)=>item.notify_id !== notify_id));
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "192.168.1.14")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "127.0.0.1")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
             params: {
                 id: notify_id
             }
@@ -228,12 +228,12 @@ function Navbar() {
     async function AcceptFriendRequest(username, notification_id) {
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$sonner$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toast"].success('Accepted');
         const loginUsername = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$globalStore$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["globalStore"].getState().username;
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "192.168.1.14")}:${("TURBOPACK compile-time value", "4444")}/AddFriend`, {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "127.0.0.1")}:${("TURBOPACK compile-time value", "4444")}/AddFriend`, {
             user1: username,
             user2: loginUsername
         });
         setNotification((notificatiion)=>notificatiion.filter((item)=>item.notify_id !== notification_id));
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "192.168.1.14")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "127.0.0.1")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
             params: {
                 id: notification_id
             }
@@ -249,7 +249,7 @@ function Navbar() {
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         async function get_notify() {
             const user = localStorage.getItem('name');
-            const result = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "192.168.1.14")}:${("TURBOPACK compile-time value", "4444")}/GetNotification`, {
+            const result = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "127.0.0.1")}:${("TURBOPACK compile-time value", "4444")}/GetNotification`, {
                 params: {
                     user
                 }
@@ -1037,7 +1037,7 @@ function RootLayout({ children }) {
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("body", {
-                className: "h-[100%] flex flex-col border-5 border-white",
+                className: "h-[100%] flex flex-col  bg-black",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$GameContext$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["GameProvider"], {
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$Navbar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
@@ -1072,7 +1072,7 @@ function RootLayout({ children }) {
                             richColors: true
                         }, void 0, false, {
                             fileName: "[project]/src/app/layout.tsx",
-                            lineNumber: 32,
+                            lineNumber: 33,
                             columnNumber: 11
                         }, this)
                     ]
