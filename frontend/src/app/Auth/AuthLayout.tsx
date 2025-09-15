@@ -115,45 +115,148 @@ export default function AuthLayout() {
   )
 }
 
-// Sign In Form Component
-function SignInForm({ onToggle }: { onToggle: () => void }) {
+
+interface SignInFormProps {
+  onToggle: () => void;
+}
+
+interface LoginFormData {
+  username: string;
+  password: string;
+}
+
+function SignInForm({ onToggle }: SignInFormProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    // Perform sign in logic here
-    console.log('Signing in with', { username, password });
-    // Reset form fields
+  // Validation function
+  const validateForm = () => {
+    if (!username.trim() || !password) {
+      const errorMessage = 'Both username and password are required';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
+    }
+    return true;
+  };
+
+  // Clear form function
+  const clearForm = () => {
     setUsername('');
     setPassword('');
-    setError(''); // Clear any previous errors
+    setError('');
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e : React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('http://localhost:4444/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          username: username.trim(), 
+          password: password 
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Login failed. Please try again later.';
+        
+        if (response.status === 401) {
+          errorMessage = 'Invalid username or password';
+        } else if (response.status === 400) {
+          errorMessage = 'Please check your login details';
+        } else if (response.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+        
+        setError(errorMessage);
+        toast.error(errorMessage);
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Login successful:', data);
+      
+      // Success
+      toast.success('Login successful!');
+      clearForm();
+      
+      // Optionally, redirect or update UI after successful login
+      window.location.href = '/dashboard'; // Example redirect
+      
+    } catch (error) {
+      console.error('Error during login:', error);
+      
+      const errorMessage = 'Network error. Please check your connection and try again.';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle input changes
+  const handleUsernameChange = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+    if (error) setError('');
+  };
+
+  const handlePasswordChange = (field : keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (error) setError('');
   };
 
   return (
     <div className="flex flex-col gap-6 items-center justify-center">
       <div className='flex flex-col gap-2 sm:gap-3 items-center justify-center text-center'>
-        <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold'>Hey there, space champ! 🚀</h1>
-        <h2 className='text-sm sm:text-base md:text-lg text-center max-w-md lg:max-w-lg'>Join GalaxyPong to smash, chat, and climb the leaderboard.</h2>
-        <h2 className='text-sm sm:text-base md:text-lg text-center max-w-md lg:max-w-lg'>Sign in and let the games begin!</h2>
+        <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold'>
+          Hey there, space champ! 🚀
+        </h1>
+        <h2 className='text-sm sm:text-base md:text-lg text-center max-w-md lg:max-w-lg'>
+          Join GalaxyPong to smash, chat, and climb the leaderboard.
+        </h2>
+        <h2 className='text-sm sm:text-base md:text-lg text-center max-w-md lg:max-w-lg'>
+          Sign in and let the games begin!
+        </h2>
       </div>
       
-      <div className='w-full gap-4 sm:gap-6 flex flex-col items-center justify-center'>
+      <form 
+        className='w-full gap-4 sm:gap-6 flex flex-col items-center justify-center'
+        onSubmit={handleSubmit}
+      >
         <input 
           type="text" 
           name="username"
           placeholder='Username' 
           className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          disabled={isLoading}
+          onChange={handleUsernameChange('username')}
         />
+        
         <input 
           type="password" 
           name="password"
           placeholder='Password' 
           className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
+          onChange={handlePasswordChange('password')}
         />
         
         <div className='flex items-start w-full'>
@@ -162,19 +265,30 @@ function SignInForm({ onToggle }: { onToggle: () => void }) {
           </h3>
         </div>
         
+        {error && (
+          <div className="w-full text-center text-red-500 text-sm bg-red-50 p-2 rounded-lg">
+            {error}
+          </div>
+        )}
+
         <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 items-center justify-center w-full'>
           <button 
             type="submit"
-            className='w-full p-3 sm:p-4 rounded-2xl bg-gray-100 transition-all duration-300 ease-in-out text-black hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer text-sm sm:text-base'
-            onClick={handleSubmit}
+            disabled={isLoading}
+            className={`w-full p-3 sm:p-4 rounded-2xl transition-all duration-300 ease-in-out text-sm sm:text-base ${
+              isLoading 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-gray-100 text-black hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer'
+            }`}
           >
-            Login
+            {isLoading ? 'Signing In...' : 'Login'}
           </button>
           
           <div className='flex gap-2 w-full sm:w-auto'>
             <button 
               type="button"
-              className='w-1/2 sm:w-12 lg:w-16 p-3 sm:p-4 rounded-2xl bg-gray-100 transition-all duration-300 ease-in-out text-black flex items-center justify-center gap-2 hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer'
+              disabled={isLoading}
+              className='w-1/2 sm:w-12 lg:w-16 p-3 sm:p-4 rounded-2xl bg-gray-100 transition-all duration-300 ease-in-out text-black flex items-center justify-center gap-2 hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
             >
               <svg width="20" height="20" className="sm:w-6 sm:h-6" viewBox="-3 0 262 262" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
                 <path d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.90 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027" fill="#4285F4"/>
@@ -186,7 +300,8 @@ function SignInForm({ onToggle }: { onToggle: () => void }) {
             
             <button 
               type="button"
-              className="w-1/2 sm:w-12 lg:w-16 p-3 sm:p-4 rounded-2xl bg-gray-100 transition-all duration-300 ease-in-out text-black flex items-center justify-center gap-2 hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer group"
+              disabled={isLoading}
+              className="w-1/2 sm:w-12 lg:w-16 p-3 sm:p-4 rounded-2xl bg-gray-100 transition-all duration-300 ease-in-out text-black flex items-center justify-center gap-2 hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
                 viewBox="0 -200 960 960"
@@ -204,9 +319,10 @@ function SignInForm({ onToggle }: { onToggle: () => void }) {
           </div>
         </div>
         
-        
         <div className='flex gap-2 items-center justify-center'>
-          <h3 className='text-xs sm:text-sm text-gray-500'>Don&apos;t have an account?</h3>
+          <h3 className='text-xs sm:text-sm text-gray-500'>
+            Don&apos;t have an account?
+          </h3>
           <h3 
             className='text-xs sm:text-sm hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'
             onClick={onToggle}
@@ -214,131 +330,243 @@ function SignInForm({ onToggle }: { onToggle: () => void }) {
             Sign up
           </h3>
         </div>
-      </div>
+      </form>
     </div>
-  )
+  );
 }
 
+
 // Sign Up Form Component
-function SignUpForm({ onToggle }: { onToggle: () => void }) {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
 
-  const handleSignUp = (e: React.FormEvent) => {
-    toast.info('Signing up...');
-    return;
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
+
+interface SignUpFormProps {
+  onToggle: () => void;
+}
+
+interface FormData {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+
+function SignUpForm({ onToggle }: SignUpFormProps) {
+  const [formData, setFormData] = useState<FormData>({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const handleInputChange = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+    if (error) setError('');
+  };
+
+  const validateForm = () => {
+    const { username, email, password, confirmPassword } = formData;
+    
+    if (!username.trim() || !email.trim() || !password || !confirmPassword) {
+      const errorMessage = 'All fields are required';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
     }
-    // console.log('Signing up with', { username, email, password, confirmPassword });
-    // Perform sign up logic here
-    // return;
-    // Reset form fields
-    // setUsername('');
-    // setEmail('');
-    // setPassword('');
-    // setConfirmPassword('');
-    // setError(''); // Clear any previous errors
 
-    fetch('http://localhost:4444/AddUser', {
+    if (password !== confirmPassword) {
+      const errorMessage = 'Passwords do not match';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
+    }
+
+    // Additional validation
+    if (password.length < 8) {
+      const errorMessage = 'Password must be at least 8 characters long';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      const errorMessage = 'Please enter a valid email address';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
+    }
+
+    return true;
+  };
+
+  const createUser = async (userData: Omit<FormData, 'confirmPassword'>): Promise<void> => {
+    const response = await fetch('http://localhost:4444/AddUser', {
       method: 'POST',
       headers: {
-    'Content-Type': 'application/json',   // 👈 tell server JSON is coming
-  },
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData)
+    });
 
-      body: JSON.stringify({ 
-        username: username, 
-        email: email,
-        password: password 
-      })
-    })
-      .then((response) => {
-        if (!response.ok) {
-          if (response.status === 409) {
-            toast.error('Username or email already exists');
-            setError('Username or email already exists');
-            return;
-          }
-          throw new Error('Network response was not ok');
+    if (!response.ok) {
+
+      if (response.status === 409) {
+        setError('Username or email already exists');
+        toast.error('Username or email already exists');
+      } else {
+
+        try {
+          const errorData = await response.json();
+
+          setError(errorData || 'Failed to create user');
+          toast.error(errorData || 'Failed to create user');
+        } catch {
+          setError('Failed to create user');
+          toast.error('Failed to create user');
+          
         }
-        return response.json();
-      })
-      .then((data) => {
-        toast.success('User added successfully!');
-        // Reset form fields
-        // setUsername('');
-        // setEmail('');
-        // setPassword('');
-        // setConfirmPassword('');
-        // setError(''); // Clear any previous errors
-      })
-      .catch((error) => {
-        console.error('Error adding user:', error);
-        setError('Error adding user');
-      });
+      }  
+      throw new Error('Failed to create user');
+    }
+
+    return response.json();
   };
+
+  const clearForm = () => {
+    setFormData({
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
+    });
+    setError('');
+  };
+
+  // Main form submission handler
+const handleSignUp = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { confirmPassword, ...userData } = formData;
+      
+      const cleanedUserData = {
+        username: userData.username.trim(),
+        email: userData.email.trim(),
+        password: userData.password
+      };
+
+      await createUser(cleanedUserData);
+      
+      toast.success('Account created successfully!');
+      clearForm();
+      
+    } catch (error) {
+      console.error('Error during sign up:', error);
+      toast.error('An unexpected error occurred. Please try again later.');
+      
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 items-center justify-center">
       <div className='flex flex-col gap-2 sm:gap-3 items-center justify-center text-center'>
-        <h2 className='text-2xl sm:text-3xl md:text-4xl font-bold'>Welcome to the Sign Up Page</h2>
-        <p className='text-sm sm:text-base md:text-lg'>Please fill in the details below to create an account.</p>
+        <h2 className='text-2xl sm:text-3xl md:text-4xl font-bold'>
+          Welcome to the Sign Up Page
+        </h2>
+        <p className='text-sm sm:text-base md:text-lg'>
+          Please fill in the details below to create an account.
+        </p>
       </div>
       
-      <form className='w-full gap-4 sm:gap-6 flex flex-col items-center justify-center'>
+      <form 
+        className='w-full gap-4 sm:gap-6 flex flex-col items-center justify-center'
+        onSubmit={handleSignUp}
+      >
         <input 
           type="text" 
           name='username'
           placeholder='Username'
           className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
           required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          disabled={isLoading}
+          value={formData.username}
+          onChange={handleInputChange('username')}
         />
+        
         <input 
           type="email" 
           name='email'
           placeholder='Email'
           required
-          pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
           className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          disabled={isLoading}
+          value={formData.email}
+          onChange={handleInputChange('email')}
         />
+        
         <input 
           type="password" 
           name='password'
           placeholder='Password'
           className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
           required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
+          minLength={8}
+          value={formData.password}
+          onChange={handleInputChange('password')}
         />
+        
         <input
           type='password'
           name='confirmPassword'
           placeholder='Confirm Password'
           className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out'
           required
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={isLoading}
+          value={formData.confirmPassword}
+          onChange={handleInputChange('confirmPassword')}
         />
+
+        {error && (
+          <div className="w-full text-center text-red-500 text-sm bg-red-50 p-2 rounded-lg">
+            {error}
+          </div>
+        )}
 
         <div className='w-full'>
           <button 
-            type="button" 
-            className='w-full p-3 sm:p-4 rounded-2xl border border-transparent bg-gray-500 text-white text-sm sm:text-base font-semibold hover:bg-gray-400 transition-all duration-300 ease-in-out hover:cursor-pointer'
-            onClick={handleSignUp}
+            type="submit" 
+            disabled={isLoading}
+            className={`w-full p-3 sm:p-4 rounded-2xl border border-transparent text-white text-sm sm:text-base font-semibold transition-all duration-300 ease-in-out ${
+              isLoading 
+                ? 'bg-gray-300 cursor-not-allowed' 
+                : 'bg-gray-500 hover:bg-gray-400 hover:cursor-pointer'
+            }`}
           >
-            Sign Up
+            {isLoading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </div>
         
         <div className='flex gap-2 items-center justify-center'>
-          <h3 className='text-xs sm:text-sm text-gray-500'>Already have an account? </h3>
+          <h3 className='text-xs sm:text-sm text-gray-500'>
+            Already have an account? 
+          </h3>
           <h3 
             className='text-xs sm:text-sm hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'
             onClick={onToggle}
@@ -348,6 +576,7 @@ function SignUpForm({ onToggle }: { onToggle: () => void }) {
         </div>
       </form>
     </div>
-  )
+  );
 }
+
 

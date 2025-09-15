@@ -4,7 +4,9 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import ParticlesBackground from "../components/ParticlesBackground";
 import { GameProvider } from "../components/GameContext";
-import SignInUp from "./Auth/page";
+// import SignInUp from "./Auth/page";
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 import React  from "react";
 import "./globals.css";
@@ -33,6 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
         {/* <SignInUp /> */}
         {children}
+        <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="dark"/>
       </body>
     </html>
   );
