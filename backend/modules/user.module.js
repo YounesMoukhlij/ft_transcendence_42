@@ -152,7 +152,8 @@ export async function blockFunction(request , reply){
   const { user , conv_id} = request.body;
 
   try{
-    const query = request.server.db.prepare("UPDATE room SET block_user = ?, is_double_block = is_double_block + 1 WHERE conversation_id= ?");
+    const query = request.server.db.prepare(`UPDATE room SET block_user = ?, is_double_block = CASE  WHEN is_double_block < 2 THEN is_double_block + 1 ELSE is_double_block END WHERE conversation_id = ?`);
+
     query.run(user , conv_id);
     reply.send(true);
     
@@ -162,4 +163,31 @@ export async function blockFunction(request , reply){
   }
 }
 
+
+export async function DeblockFunction(request , reply){
+
+  const { user , conv_id} = request.body;
+
+  try{
+    const query = request.server.db.prepare(`SELECT * FROM  room WHERE conversation_id = ?`);
+    const result = query.all(conv_id);
+
+    // if (result.is_double_block === 2){
+
+    // }
+    if (result[0].is_double_block === 1){
+      console.log("=======================>im here");
+      const query = request.server.db.prepare(`UPDATE room SET is_double_block = ? WHERE conversation_id = ?`);
+      query.run( 0, conv_id);
+    }
+
+    console.log(result[0].is_double_block);
+
+    reply.send(true);
+    
+  }catch(err){
+    reply.code(500);
+    console.log(err);
+  }
+}
 

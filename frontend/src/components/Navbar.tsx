@@ -8,7 +8,12 @@ import Link from 'next/link';
 import axios from 'axios';
 import { globalStore } from '../components/globalStore';
 
+
+
 import { Toaster, toast } from 'sonner';
+import setFriend from '../app/chat/page'
+
+
 
 
 export default function Navbar()
@@ -48,11 +53,13 @@ export default function Navbar()
 
   }
 
-  async function AcceptFriendRequest(username , notification_id){
+  async function AcceptFriendRequest(item){
     toast.success('Accepted');
     const loginUsername  = globalStore.getState().username;
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: username , user2: loginUsername});
-    setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notification_id));
+
+    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: item.sender_user , user2: loginUsername});
+    setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== item.notify_id));
+
     await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: notification_id,
@@ -180,7 +187,7 @@ export default function Navbar()
                       </div>
                     </div>
                   <div className='flex w-[70%] h-[3rem] ml-[25%] mt-[-14%] items-center justify-between'>
-                   <button  onClick={()=> AcceptFriendRequest(item.sender_user , item.notify_id)} className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
+                   <button  onClick={()=> AcceptFriendRequest(item)} className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
                    <button  onClick={() =>DelteFriendRequest(item.notify_id)}  className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
                   </div>
                 </div>

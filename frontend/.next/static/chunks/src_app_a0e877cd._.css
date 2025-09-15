@@ -1,3 +1,37 @@
+/* [project]/src/app/chat/page.css [app-client] (css) */
+.debug {
+  border: 2px solid red;
+}
+
+.debug > * {
+  border: 2px solid green;
+}
+
+.debug > * > * {
+  border: 2px solid #00f;
+}
+
+.body-of-chat {
+  scrollbar-width: none;
+  flex-direction: column;
+  gap: .5rem;
+  padding: 1rem;
+  display: flex;
+  overflow: scroll;
+}
+
+.chat-body {
+  scrollbar-width: none;
+}
+
+.test {
+  margin-top: -25%;
+  margin-left: 80%;
+  display: flex;
+  position: relative;
+}
+
+
 /* [project]/src/app/globals.css [app-client] (css) */
 @layer properties {
   @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
@@ -2670,4 +2704,5 @@
   }
 }
 
-/*# sourceMappingURL=src_app_globals_css_f9ee138c._.single.css.map*/
+
+/*# sourceMappingURL=src_app_a0e877cd._.css.map*/

@@ -15,8 +15,6 @@ import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 
 import { globalStore } from '../../components/globalStore';
 
-import { Toaster, toast } from 'sonner';
-
 
 
 
@@ -90,7 +88,13 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setRoo
 };
 
 
-function Test1({ array  , setMessages , setRoom , setImg , SetSelectContact}) {
+
+function Test1({ array, setMessages, setRoom, setImg, SetSelectContact }) {
+  const [localArray, setLocalArray] = useState(array);
+
+  useEffect(() => {
+    setLocalArray(array);
+  }, [array]);
 
   return (
     <div className="flex flex-col">
@@ -98,14 +102,17 @@ function Test1({ array  , setMessages , setRoom , setImg , SetSelectContact}) {
         <h1 className="italic text-[70px] p-[5px]">Chats</h1>
       </div>
       <div className="flex justify-around self-center w-[90%] rounded-[2rem] border-2 border-solid">
-        <input className="text-[25px] w-4/5 h-[4.5rem] pl-4 outline-none" placeholder="Search for a friend" />
+        <input
+          className="text-[25px] w-4/5 h-[4.5rem] pl-4 outline-none"
+          placeholder="Search for a friend"
+        />
         <button className="button">
           <FaSearch className="text-[rgb(179,173,173)]" size={24} />
         </button>
       </div>
 
       <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[48vh]">
-        {array.map((friend, index) => (
+        {localArray.map((friend, index) => (
           <div key={index}>
             <FreindsList
               photo={friend.profile_img}
@@ -116,13 +123,14 @@ function Test1({ array  , setMessages , setRoom , setImg , SetSelectContact}) {
               setRoom={setRoom}
               setimg={setImg}
               SetSelectContact={SetSelectContact}
-              />
+            />
           </div>
         ))}
       </div>
     </div>
   );
 }
+
 
 
 export default function chatPage() {
@@ -140,8 +148,11 @@ export default function chatPage() {
 
   const [SelectContact , SetSelectContact] = useState(false);
 
-  const {connect , username ,socket } = globalStore();
-  
+  const {connect , username ,socket} = globalStore();
+  const [refresh, setRefresh] = useState(false);
+
+
+
   const getFormattedDate = () => {
     const now = new Date();
     
@@ -216,8 +227,17 @@ useEffect(() => {
     });
   }
 
+  async function Deblock(friend){
+    const username  = globalStore.getState().username;
+    const id = localStorage.getItem('conversationId');
+    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock` ,{
+        user: username,
+        conv_id: id
+    });
+  }
+
   function handleUnfriend(){
-    alert("unfirended ")
+    alert("unfirended ");
   }
 
 
@@ -273,6 +293,8 @@ useEffect(() => {
     setEmoji(prevValue => prevValue + object.emoji);
   }
 
+
+
     useEffect(() => {
     const chatContainer = document.querySelector('.chat-body');
     if (chatContainer) {
@@ -280,6 +302,8 @@ useEffect(() => {
     }
   }, [messages]);
   
+
+
   return (
     <div className="flex justify-center items-center h-full text-white ">
       <div className=" flex w-5/5 h-5/5 md:w-4/5 md:h-4/5 gap-[5%] ">
@@ -298,13 +322,14 @@ useEffect(() => {
 
           <div className="flex self-start lg:hidden"><button><FaArrowRight onClick={handle_chats_display}/></button></div>
           {display_chats &&  <div className=" ml-[7%] absolute h-[70%]   flex-col border bg-[black] p-2 rounded-[35px] border-solid  ">
-                <Test1 
+                {/* <Test1 
                  array={array} 
                  setMessages={setMessages} 
                  setRoom={setRoom} 
                  setImg={setImg}
-                />
-          </div>}
+                /> */}
+          </div>
+          }
            <div className="flex w-[full] lg:w-9/12  flex-col border rounded-[35px] border-solid bg-black " >    {/*chat div converation*/}
             {SelectContact && 
             <div className="flex items-center h-[9%] rounded-[40px] ml-0.5 bg-[#3a3638] justify-between">       
@@ -371,103 +396,74 @@ useEffect(() => {
               </div>
                 {SelectContact && (
                         localStorage.getItem("double_block") === "2" ? (
-                          <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
-                            <div className="pl-4">
-                              <button onClick={() => handle_Emojis(setShow, show)}>
-                                <BsEmojiSmile className="sm:w-10 sm:h-10 w-5 h-5" />
-                              </button>
-                              {show && (
-                                <div className="absolute left-[34%] top-[60%]">
-                                  <EmojiPicker onEmojiClick={move_emoji_to_input} />
-                                </div>
-                              )}
-                            </div>
-                            <div className="w-[90%] h-10 sm:h-16 px-4 py-0">
-                              <input
-                                className="w-full h-full bg-black p-4 rounded-[50px] outline-none"
-                                placeholder="Message"
-                                onKeyDown={handleEnterKey}
-                                value={input}
-                                onChange={(e) => setEmoji(e.target.value)}
-                              />
-                            </div>
-                            <div className="pr-4">
-                              <button onClick={handle_confirm_invite}>
-                                <IoGameController className="sm:w-10 sm:h-10 w-5 h-5" />
-                              </button>
-                            </div>
-                            <div className="flex px-6 py-0">
-                              <IoSend onClick={handleSend} className="sm:w-10 sm:h-10 w-5 h-5" />
-                            </div>
-                            {confirm_invite && (
-                              <div className="flex flex-col justify-between absolute w-[22rem] h-36 bg-gray-500 text-center border p-2 rounded-2xl border-solid left-[calc(50%)] top-[calc(50%)]">
-                                <p>You are about to request a game session with zalaksya</p>
-                                <div className="flex items-end justify-between h-3/6 px-2 py-0">
-                                  <div className="text-center w-[48%] h-[70%] border bg-[rgb(201,49,38)] p-2 rounded-2xl border-solid">
-                                    <button onClick={handle_cancel_invite}>Cancel</button>
-                                  </div>
-                                  <div className="text-center border h-[70%] w-[48%] bg-[rgb(14,154,54)] p-2 rounded-2xl border-solid">
-                                    <Link href="/game" key="/game">
-                                      <button>Confirm</button>
-                                    </Link>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ) : localStorage.getItem("name") === SelectContact?.name ? (
-                          <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
-                            <div className="pl-4">
-                              <button onClick={() => handle_Emojis(setShow, show)}>
-                                <BsEmojiSmile className="sm:w-10 sm:h-10 w-5 h-5" />
-                              </button>
-                              {show && (
-                                <div className="absolute left-[34%] top-[60%]">
-                                  <EmojiPicker onEmojiClick={move_emoji_to_input} />
-                                </div>
-                              )}
-                            </div>
-                            <div className="w-[90%] h-10 sm:h-16 px-4 py-0">
-                              <input
-                                className="w-full h-full bg-black p-4 rounded-[50px] outline-none"
-                                placeholder="Message"
-                                onKeyDown={handleEnterKey}
-                                value={input}
-                                onChange={(e) => setEmoji(e.target.value)}
-                              />
-                            </div>
-                            <div className="pr-4">
-                              <button onClick={handle_confirm_invite}>
-                                <IoGameController className="sm:w-10 sm:h-10 w-5 h-5" />
-                              </button>
-                            </div>
-                            <div className="flex px-6 py-0">
-                              <IoSend onClick={handleSend} className="sm:w-10 sm:h-10 w-5 h-5" />
-                            </div>
-                            {confirm_invite && (
-                              <div className="flex flex-col justify-between absolute w-[22rem] h-36 bg-gray-500 text-center border p-2 rounded-2xl border-solid left-[calc(50%)] top-[calc(50%)]">
-                                <p>You are about to request a game session with zalaksya</p>
-                                <div className="flex items-end justify-between h-3/6 px-2 py-0">
-                                  <div className="text-center w-[48%] h-[70%] border bg-[rgb(201,49,38)] p-2 rounded-2xl border-solid">
-                                    <button onClick={handle_cancel_invite}>Cancel</button>
-                                  </div>
-                                  <div className="text-center border h-[70%] w-[48%] bg-[rgb(14,154,54)] p-2 rounded-2xl border-solid">
-                                    <Link href="/game" key="/game">
-                                      <button>Confirm</button>
-                                    </Link>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
+                           <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
                             <div className="flex justify-around w-full h-full items-center">
                               <p>You can't send to this contact. Please deblock first.</p>
-                              <button className="h-[2rem] w-[7rem] bg-white text-black rounded-[8px]">
+                              <button onClick={() =>Deblock(room)} className="h-[2rem] w-[7rem] bg-white text-black rounded-[8px]">
                                 Deblock
                               </button>
                             </div>
+                          </div>
+                        ) :localStorage.getItem("double_block") === "1" &&  localStorage.getItem("user_block") === localStorage.getItem("name")? (
+                            <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
+                            <div className="flex justify-around w-full h-full items-center">
+                              <p>You can't send to this contact. Please deblock first.</p>
+                              <button onClick={() =>Deblock(room)} className="h-[2rem] w-[7rem] bg-white text-black rounded-[8px]">
+                                Deblock
+                              </button>
+                            </div>
+                          </div>
+                        ) : localStorage.getItem("double_block") === "1" && localStorage.getItem("name") !== localStorage.getItem("user_block") ?(
+          
+                          <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
+                            <div className="flex justify-around w-full h-full items-center">
+                              <p> Sorry You can't send message to this contact </p>
+                            </div>
+                          </div>
+                        ): (
+                            <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
+                            <div className="pl-4">
+                              <button onClick={() => handle_Emojis(setShow, show)}>
+                                <BsEmojiSmile className="sm:w-10 sm:h-10 w-5 h-5" />
+                              </button>
+                              {show && (
+                                <div className="absolute left-[34%] top-[60%]">
+                                  <EmojiPicker onEmojiClick={move_emoji_to_input} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="w-[90%] h-10 sm:h-16 px-4 py-0">
+                              <input
+                                className="w-full h-full bg-black p-4 rounded-[50px] outline-none"
+                                placeholder="Message"
+                                onKeyDown={handleEnterKey}
+                                value={input}
+                                onChange={(e) => setEmoji(e.target.value)}
+                              />
+                            </div>
+                            <div className="pr-4">
+                              <button onClick={handle_confirm_invite}>
+                                <IoGameController className="sm:w-10 sm:h-10 w-5 h-5" />
+                              </button>
+                            </div>
+                            <div className="flex px-6 py-0">
+                              <IoSend onClick={handleSend} className="sm:w-10 sm:h-10 w-5 h-5" />
+                            </div>
+                            {confirm_invite && (
+                              <div className="flex flex-col justify-between absolute w-[22rem] h-36 bg-gray-500 text-center border p-2 rounded-2xl border-solid left-[calc(50%)] top-[calc(50%)]">
+                                <p>You are about to request a game session with zalaksya</p>
+                                <div className="flex items-end justify-between h-3/6 px-2 py-0">
+                                  <div className="text-center w-[48%] h-[70%] border bg-[rgb(201,49,38)] p-2 rounded-2xl border-solid">
+                                    <button onClick={handle_cancel_invite}>Cancel</button>
+                                  </div>
+                                  <div className="text-center border h-[70%] w-[48%] bg-[rgb(14,154,54)] p-2 rounded-2xl border-solid">
+                                    <Link href="/game" key="/game">
+                                      <button>Confirm</button>
+                                    </Link>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )
                       )}

@@ -1,4 +1,4 @@
-import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction } from '../modules/user.module.js';
+import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction ,DeblockFunction } from '../modules/user.module.js';
 import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest } from '../modules/nofitication.moudle.js';
 
 export default async function routes(fastify, options) {
@@ -13,7 +13,9 @@ export default async function routes(fastify, options) {
   fastify.post('/sendMsg' , sendMsg);
   fastify.get('/IsOnline' , IsOnline);
   fastify.get('/GetNotification' , GetNotification);
+  
   fastify.post('/block' , blockFunction);
+  fastify.post('/Deblock' , DeblockFunction);
   
   
   
