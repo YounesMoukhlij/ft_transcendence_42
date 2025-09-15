@@ -6,14 +6,14 @@ import { GiPingPongBat } from 'react-icons/gi';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
 import Link from 'next/link';
 import axios from 'axios';
+import { Toaster, toast } from 'sonner';
 import { globalStore } from '../components/globalStore';
 
 
 
-import { Toaster, toast } from 'sonner';
-import setFriend from '../app/chat/page'
 
 
+  
 
 
 export default function Navbar()
@@ -25,9 +25,11 @@ export default function Navbar()
   const dropdownRef = useRef(null);
   const profileIconRef = useRef<HTMLSpanElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
-  const setUsername = globalStore.setState; ///////
   const {connect   ,username , init } = globalStore();
+  
+  const setUsername = globalStore.setState; ///////
   const socket = globalStore((state) => state.socket);
+  const {addFriend, removeFriend , setFriends} = globalStore();
 
 
   useEffect(() => {
@@ -54,8 +56,19 @@ export default function Navbar()
   }
 
   async function AcceptFriendRequest(item){
+
+
+    console.log(item);
     toast.success('Accepted');
     const loginUsername  = globalStore.getState().username;
+
+    const object = {
+      profile_img: item.sender_profile_img,
+      username: item.sender_user,
+      fullname:"say hello",
+      status:0,
+    }
+    addFriend(object);
 
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: item.sender_user , user2: loginUsername});
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== item.notify_id));

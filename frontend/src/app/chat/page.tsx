@@ -62,7 +62,7 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setRoo
 
 
     const conversation = await fetchData(title);
-    console.log(conversation);
+
     setConversation(conversation);
   };
   
@@ -89,12 +89,7 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setRoo
 
 
 
-function Test1({ array, setMessages, setRoom, setImg, SetSelectContact }) {
-  const [localArray, setLocalArray] = useState(array);
-
-  useEffect(() => {
-    setLocalArray(array);
-  }, [array]);
+function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact  }) {
 
   return (
     <div className="flex flex-col">
@@ -112,7 +107,7 @@ function Test1({ array, setMessages, setRoom, setImg, SetSelectContact }) {
       </div>
 
       <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[48vh]">
-        {localArray.map((friend, index) => (
+        {friends.map((friend, index) => (
           <div key={index}>
             <FreindsList
               photo={friend.profile_img}
@@ -135,21 +130,25 @@ function Test1({ array, setMessages, setRoom, setImg, SetSelectContact }) {
 
 export default function chatPage() {
   
-  const [array, setFriend] = useState([]);
-  const [messages, setMessages] = useState([]);
+  const { friends, addFriend, removeFriend , setFriends} = globalStore();
+
+  const { messages , setMessages,  addMessage, room, setRoom, profile_img, setImg } = globalStore();
+
+
+  
+  
   const [show , setShow] = useState(false);
   const [input , setEmoji] = useState('');
   const [dropmenu , setdropmenu] = useState(false);
   const [confirm_invite , setConfirm] = useState(false);
-  const [room , setRoom] = useState('');
-  const [profile_img , setImg] = useState('');
+  
+
   const [display_chats , set_chats] = useState(false);
 
 
   const [SelectContact , SetSelectContact] = useState(false);
 
   const {connect , username ,socket} = globalStore();
-  const [refresh, setRefresh] = useState(false);
 
 
 
@@ -187,7 +186,7 @@ useEffect(() => {
   socket.onmessage = (event : any ) => {
     const { type, data } = JSON.parse(event.data);
     if (type === "message") {
-      setMessages(prev => [...prev, {sender: data.user,conv_id: data.conv_id , message: data.message , created_at : getFormattedDate()}]);
+      addMessage(data);
     }
   };
 }, [socket]);
@@ -202,7 +201,9 @@ useEffect(() => {
         const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`,{
           params: { username }
         });
-        setFriend(res.data);
+
+        console.log("data. ", res.data);
+        setFriends(res.data);
 
       } catch (err) {
         console.log(err);
@@ -246,7 +247,6 @@ useEffect(() => {
       return ;
     const user = localStorage.getItem('name');
     const friend = localStorage.getItem('room_select');
-    const room_select = localStorage.getItem('room_select');
     
     const id = localStorage.getItem('conversationId');
     try {
@@ -256,7 +256,15 @@ useEffect(() => {
         }
       })
       const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, { user, input , id ,friend});
-      setMessages(prev => [...prev, {sender: user , message: input ,conv_id: id  ,created_at : getFormattedDate() , isSeen: data.data}]);
+      const object = {
+        sender:user , 
+        message: input ,
+        conv_id: id ,
+        created_at : getFormattedDate() , 
+        isSeen: data.data
+      };
+      addMessage(object);
+
     } catch (err) {
       console.error(err);
     }
@@ -309,7 +317,7 @@ useEffect(() => {
       <div className=" flex w-5/5 h-5/5 md:w-4/5 md:h-4/5 gap-[5%] ">
            <div className="w-1.5/5 h-full hidden  lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
              <Test1 
-                 array={array} 
+                 friends={friends} 
                  setMessages={setMessages} 
                  setRoom={setRoom} 
                  setImg={setImg}
@@ -318,16 +326,15 @@ useEffect(() => {
           </div>
 
 
-
-
           <div className="flex self-start lg:hidden"><button><FaArrowRight onClick={handle_chats_display}/></button></div>
           {display_chats &&  <div className=" ml-[7%] absolute h-[70%]   flex-col border bg-[black] p-2 rounded-[35px] border-solid  ">
-                {/* <Test1 
-                 array={array} 
+                <Test1
+                 friends={friends} 
                  setMessages={setMessages} 
                  setRoom={setRoom} 
                  setImg={setImg}
-                /> */}
+                 SetSelectContact={SetSelectContact}
+                />
           </div>
           }
            <div className="flex w-[full] lg:w-9/12  flex-col border rounded-[35px] border-solid bg-black " >    {/*chat div converation*/}
@@ -356,12 +363,12 @@ useEffect(() => {
                   <img  className="" src="/animation.gif"/>
                 </div>
              }
-             {messages.length > 0 && SelectContact && (
+             {messages?.length > 0 && SelectContact && (
               <div className="flex w-[80%] sm:w-[25rem] bg-[rgb(168,147,104)] self-center mt-8 p-4 rounded-[10px]">
                 <p>The messages are end to end encrypted. Only people in this chat can read this conversation,so enjoy with your friend.</p>
               </div>
                 )}
-                {SelectContact && messages.map((item, index) => {
+                { SelectContact && messages.map((item, index) => {
 
                   if(item.conv_id == localStorage.getItem('conversationId') ){
                   const currentDate = item.created_at.split(' ')[0];
@@ -382,6 +389,7 @@ useEffect(() => {
                             <span className="whitespace-nowrap">
                               {new Date(item.created_at).toTimeString().slice(0, 5)}
                             </span>
+                            
                             {item.sender === localStorage.getItem('name') && (
                               item.isSeen ? <FaCheckDouble /> : <FaCheck />
                             )}
