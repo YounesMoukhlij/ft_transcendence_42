@@ -185,6 +185,10 @@ useEffect(() => {
     if (type === "message") {
       addMessage(data);
     }
+    else if (type == "block"){
+      setDboubleBlock(data.is_double_block);
+      Setuser_block(data.block_user);
+    }
   };
 }, [socket]);
 
@@ -224,7 +228,8 @@ async function handleBlock(friend , setDboubleBlock , double_block , Setuser_blo
     const id = localStorage.getItem('conversationId');
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block` ,{
         user: username,
-        conv_id: id
+        conv_id: id,
+        friend: friend
     });
 
     Setuser_block(username);
@@ -251,10 +256,6 @@ async function handleBlock(friend , setDboubleBlock , double_block , Setuser_blo
         Setuser_block('');
       }
     }
-
-   console.log("test ===============> " , user_block);
-   console.log("test ===============> " , double_block);
-
   }
 
   function handleUnfriend(){

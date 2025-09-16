@@ -149,12 +149,24 @@ export async function IsOnline(request , reply){
 
 export async function blockFunction(request , reply){
 
-  const { user , conv_id} = request.body;
-
+  const { user , conv_id , friend } = request.body;
+  const socket = request.server.users_socket.get(friend);
   try{
     const query = request.server.db.prepare(`UPDATE room SET block_user = ?, is_double_block = CASE  WHEN is_double_block < 2 THEN is_double_block + 1 ELSE is_double_block END WHERE conversation_id = ?`);
-
     query.run(user , conv_id);
+
+    
+    
+    if (socket){
+        const querydata = request.server.db.prepare(`SELECT * from room WHERE conversation_id = ?`);
+        const data = querydata.get(conv_id);
+
+        console.log("here00000000000000");
+        socket.send(JSON.stringify({
+          type: "block",
+          data: data
+      }));
+    }
     reply.send(true);
     
   }catch(err){
@@ -175,8 +187,7 @@ export async function DeblockFunction(request , reply){
     // if (result.is_double_block === 2){
 
     // }
-    if (result[0].is_double_block === 1){
-      console.log("=======================>im here");
+    if (result[0].is_double_block === 1) {
       const query = request.server.db.prepare(`UPDATE room SET is_double_block = ? WHERE conversation_id = ?`);
       query.run( 0, conv_id);
     }
