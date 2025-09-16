@@ -4,7 +4,7 @@ import { create } from "zustand";
 import getFormattedDate from "../app/chat/tools";
 
 
-// alert(getFormattedDate());
+
 export const globalStore = create((set, get) => ({
 
   socket: null,
@@ -18,6 +18,17 @@ export const globalStore = create((set, get) => ({
   profile_img: "",
 
 
+  double_block: 0,
+  user_block: "",
+
+
+
+
+
+
+
+  setDboubleBlock : (num) => set ({double_block: num}),
+  Setuser_block : (UserBlock) => set ({user_block: UserBlock}),
 
 setMessages: (messagesArray) => set({ messages: messagesArray }),
 
