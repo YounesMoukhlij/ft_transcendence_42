@@ -5,6 +5,39 @@ import FlyingSaucer from './flyingsaucer'
 import '../globals.css'
 import { toast } from 'react-toastify';
 import { log } from 'console'
+import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { asyncWrapProviders } from 'async_hooks'
+
+// function twoFactorAuth() {
+
+//   return
+//   {
+//     <div className='w-full h-full flex items-center justify-center'>
+//       <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold'>
+//         Two Factor Authentication
+//       </h1>
+
+//       <form className='w-full max-w-md flex flex-col gap-4 sm:gap-6 items-center justify-center'>
+//        {/* 8 numbers input  */}
+//         <input 
+//           type="text" 
+//           name="2fa"
+//           placeholder='Enter 2FA Code' 
+//           className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
+//         />
+
+//         <button 
+//           type="submit"
+//           className='w-full p-3 sm:p-4 rounded-2xl bg-gray-100 transition-all duration-300 ease-in-out text-black hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer'
+//         >
+//           Verify
+//         </button>
+//       </form>
+
+//     </div>
+//   }
+// }
 
 export default function AuthLayout() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -116,6 +149,8 @@ export default function AuthLayout() {
 }
 
 
+// http://10.11.9.5:4444/GoogleAuth
+
 interface SignInFormProps {
   onToggle: () => void;
 }
@@ -130,6 +165,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
 
   // Validation function
   const validateForm = () => {
@@ -161,7 +197,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:4444/login', {
+      const response = await fetch('http://10.11.9.5:4444/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -172,34 +208,48 @@ function SignInForm({ onToggle }: SignInFormProps) {
         }),
       });
 
+      // Parse response data first
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      let errorMessage = 'Login failed. Please try again later.';
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (!response.ok) {
-        let errorMessage = 'Login failed. Please try again later.';
-        
+        // Handle different error status codes
         if (response.status === 401) {
-          errorMessage = 'Invalid username or password';
+          errorMessage = data.message || 'Invalid username or password';
         } else if (response.status === 400) {
-          errorMessage = 'Please check your login details';
+          errorMessage = data.message || 'Please check your login details';
         } else if (response.status >= 500) {
-          errorMessage = 'Server error. Please try again later.';
+          errorMessage = data.message || 'Server error. Please try again later.';
         }
         
         setError(errorMessage);
-        toast.error(errorMessage);
+        // toast.error(errorMessage);
         return;
       }
 
-      const data = await response.json();
+      // Success case
       console.log('Login successful:', data);
-      
-      // Success
       toast.success('Login successful!');
       clearForm();
       
-      // Optionally, redirect or update UI after successful login
-      window.location.href = '/dashboard'; // Example redirect
+      // Store user data or token if needed
+      if (data.user) {
+        // Example: store in localStorage or context
+        // localStorage.setItem('user', JSON.stringify(data.user));
+        // Or update your app's user state
+      }
+      
+      // Redirect after successful login
+      // window.location.href = '/dashboard';
+      window.location.href = 'https://www.youtube.com/watch?v=XXl20VmOnXs&list=RDXXl20VmOnXs&start_radio=1';
       
     } catch (error) {
-      console.error('Error during login:', error);
+      console.error('Network error during login:', error);
       
       const errorMessage = 'Network error. Please check your connection and try again.';
       setError(errorMessage);
@@ -207,6 +257,8 @@ function SignInForm({ onToggle }: SignInFormProps) {
       
     } finally {
       setIsLoading(false);
+      // redirect to google.com for testing
+      window.location.href = 'https://www.xnxx.com';
     }
   };
 
@@ -220,6 +272,12 @@ function SignInForm({ onToggle }: SignInFormProps) {
     setPassword(e.target.value);
     if (error) setError('');
   };
+
+  const googleAuth = () => {
+    const clientId = '629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com';
+    // window.location.href = 'http://
+
+  }
 
   return (
     <div className="flex flex-col gap-6 items-center justify-center">
@@ -289,6 +347,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
               type="button"
               disabled={isLoading}
               className='w-1/2 sm:w-12 lg:w-16 p-3 sm:p-4 rounded-2xl bg-gray-100 transition-all duration-300 ease-in-out text-black flex items-center justify-center gap-2 hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
+              onClick={googleAuth}
             >
               <svg width="20" height="20" className="sm:w-6 sm:h-6" viewBox="-3 0 262 262" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
                 <path d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.90 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027" fill="#4285F4"/>
@@ -331,6 +390,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
           </h3>
         </div>
       </form>
+      
     </div>
   );
 }
@@ -406,7 +466,7 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
   };
 
   const createUser = async (userData: Omit<FormData, 'confirmPassword'>): Promise<void> => {
-    const response = await fetch('http://localhost:4444/AddUser', {
+    const response = await fetch('http://10.11.9.5:4444/AddUser', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -480,6 +540,7 @@ const handleSignUp = async (e: React.FormEvent) => {
       
     } finally {
       setIsLoading(false);
+      window.location.href = '/Auth/signIn';
     }
   };
 
