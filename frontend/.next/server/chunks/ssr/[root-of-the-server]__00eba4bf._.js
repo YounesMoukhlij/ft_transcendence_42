@@ -178,6 +178,14 @@ const globalStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mod
         messages: [],
         room: "",
         profile_img: "",
+        double_block: 0,
+        user_block: "",
+        setDboubleBlock: (num)=>set({
+                double_block: num
+            }),
+        Setuser_block: (UserBlock)=>set({
+                user_block: UserBlock
+            }),
         setMessages: (messagesArray)=>set({
                 messages: messagesArray
             }),

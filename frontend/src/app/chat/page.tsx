@@ -23,23 +23,29 @@ function handle_Emojis(setShow: any , show: boolean ){
   setShow(!show)
 }
 
-const fetchData = async (title:string) => {
-  try {
-    const user = localStorage.getItem('name');
-    const result = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`, { user, friend: title });
-    
-    localStorage.setItem('conversationId' , result.data.conversation_id);
-    localStorage.setItem('double_block' , result.data.is_double_block);
-    localStorage.setItem('user_block' , result.data.block_user);
 
 
-    const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`, { id :result.data.conversation_id });
-    return (res.data);
-    
-  } catch (err) {
-    console.error(err);
+async function fetchData(title: string , setDboubleBlock , Setuser_block) {
+    try {
+      const user = localStorage.getItem('name');
+      const result = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`, { user, friend: title });
+
+      localStorage.setItem('conversationId', result.data.conversation_id);
+
+      setDboubleBlock(result.data.is_double_block);
+      Setuser_block(result.data.block_user);
+
+
+
+      const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`, { id: result.data.conversation_id });
+      return res.data;
+    } catch (err) {
+      console.error(err);
+    }
   }
-};
+
+
+
 
 type FreindsListProps = {
   photo: string,
@@ -53,7 +59,10 @@ type FreindsListProps = {
 };
 
 const FreindsList = ({ photo ,title , message , status, setConversation , setRoom , setimg , SetSelectContact }:FreindsListProps) =>{
-  
+
+  const { setDboubleBlock , double_block , Setuser_block ,  user_block} = globalStore();
+
+
   const Get_Conversation = async () => {
     localStorage.setItem('room_select', title);
     setRoom(title);
@@ -61,7 +70,7 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setRoo
     SetSelectContact(true);
 
 
-    const conversation = await fetchData(title);
+    const conversation = await fetchData(title , setDboubleBlock, Setuser_block);
 
     setConversation(conversation);
   };
@@ -134,7 +143,9 @@ export default function chatPage() {
 
   const { messages , setMessages,  addMessage, room, setRoom, profile_img, setImg } = globalStore();
 
-
+  const { setDboubleBlock , double_block , Setuser_block ,  user_block} = globalStore();
+  
+  const {connect , username ,socket} = globalStore();
   
   
   const [show , setShow] = useState(false);
@@ -148,7 +159,6 @@ export default function chatPage() {
 
   const [SelectContact , SetSelectContact] = useState(false);
 
-  const {connect , username ,socket} = globalStore();
 
 
   function MessageDateComponent({date}) {
@@ -206,22 +216,45 @@ useEffect(() => {
     }
   }
 
-  async function handleBlock(friend){
+
+async function handleBlock(friend , setDboubleBlock , double_block , Setuser_block , user_block){
+
     const username  = globalStore.getState().username;
+
     const id = localStorage.getItem('conversationId');
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block` ,{
         user: username,
         conv_id: id
     });
+
+    Setuser_block(username);
+    if (double_block < 2)
+      setDboubleBlock(double_block + 1);
   }
 
-  async function Deblock(friend){
+  async function Deblock(friend , setDboubleBlock , double_block , Setuser_block , user_block){
     const username  = globalStore.getState().username;
     const id = localStorage.getItem('conversationId');
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock` ,{
         user: username,
         conv_id: id
     });
+
+    if (double_block > 0)
+    {
+      if (double_block === 2){
+        setDboubleBlock(1);
+        Setuser_block(friend);
+      }
+      else if (double_block === 1){
+        setDboubleBlock(0);
+        Setuser_block('');
+      }
+    }
+
+   console.log("test ===============> " , user_block);
+   console.log("test ===============> " , double_block);
+
   }
 
   function handleUnfriend(){
@@ -335,7 +368,7 @@ useEffect(() => {
                 <button className="flex pr-[4%]" onClick={handle_dropmenu}><SlOptions className="sm:w-10 sm:h-10  w-5 h-5 "/></button>
                 { dropmenu &&
                   <div className="fixed flex flex-col w-28 self-">
-                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button  className="" onClick={()=>handleBlock(room)}>Block</button></div>
+                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button  className="" onClick={()=>handleBlock(room ,setDboubleBlock , double_block , Setuser_block , user_block )}>Block</button></div>
                     <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button className="" onClick={handleUnfriend} >Unfriend</button></div>
                   </div>
                 }
@@ -389,26 +422,27 @@ useEffect(() => {
                 })}
 
               </div>
-                {SelectContact && (
-                        localStorage.getItem("double_block") === "2" ? (
+                {SelectContact
+                && (
+                        double_block === 2 ? (
                            <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
                             <div className="flex justify-around w-full h-full items-center">
                               <p>You can't send to this contact. Please deblock first.</p>
-                              <button onClick={() =>Deblock(room)} className="h-[2rem] w-[7rem] bg-white text-black rounded-[8px]">
+                              <button onClick={() =>Deblock(room , setDboubleBlock , double_block , Setuser_block , user_block)} className="h-[2rem] w-[7rem] bg-white text-black rounded-[8px]">
                                 Deblock
                               </button>
                             </div>
                           </div>
-                        ) :localStorage.getItem("double_block") === "1" &&  localStorage.getItem("user_block") === localStorage.getItem("name")? (
+                        ) :double_block === 1 &&  user_block === localStorage.getItem("name")? (
                             <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
                             <div className="flex justify-around w-full h-full items-center">
                               <p>You can't send to this contact. Please deblock first.</p>
-                              <button onClick={() =>Deblock(room)} className="h-[2rem] w-[7rem] bg-white text-black rounded-[8px]">
+                              <button onClick={() =>Deblock(room , setDboubleBlock , double_block , Setuser_block , user_block)} className="h-[2rem] w-[7rem] bg-white text-black rounded-[8px]">
                                 Deblock
                               </button>
                             </div>
                           </div>
-                        ) : localStorage.getItem("double_block") === "1" && localStorage.getItem("name") !== localStorage.getItem("user_block") ?(
+                        ) : double_block === 1 && localStorage.getItem("name") !== user_block ?(
           
                           <div className="flex items-center h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-4 rounded-[40px]">
                             <div className="flex justify-around w-full h-full items-center">
@@ -461,7 +495,8 @@ useEffect(() => {
                             )}
                           </div>
                         )
-                      )}
+                      )
+                      }
           </div>
       </div>
     </div>
