@@ -161,7 +161,6 @@ export async function blockFunction(request , reply){
         const querydata = request.server.db.prepare(`SELECT * from room WHERE conversation_id = ?`);
         const data = querydata.get(conv_id);
 
-        console.log("here00000000000000");
         socket.send(JSON.stringify({
           type: "block",
           data: data
@@ -178,20 +177,35 @@ export async function blockFunction(request , reply){
 
 export async function DeblockFunction(request , reply){
 
-  const { user , conv_id} = request.body;
+  const { user , conv_id , friend} = request.body;
+  const socket = request.server.users_socket.get(friend);
 
   try{
     const query = request.server.db.prepare(`SELECT * FROM  room WHERE conversation_id = ?`);
     const result = query.all(conv_id);
 
-    // if (result.is_double_block === 2){
-
-    // }
-    if (result[0].is_double_block === 1) {
+    if (result[0].is_double_block === 2){
+      const query = request.server.db.prepare(`UPDATE room SET is_double_block = ? AND block_user = ?  WHERE conversation_id = ?`);
+      query.run( 1 , friend, conv_id);
+    }
+    else if (result[0].is_double_block === 1) {
       const query = request.server.db.prepare(`UPDATE room SET is_double_block = ? WHERE conversation_id = ?`);
-      query.run( 0, conv_id);
+      query.run( 0 ,conv_id);
     }
 
+    if (socket){
+      const querydata = request.server.db.prepare(`SELECT * from room WHERE conversation_id = ?`);
+      const data = querydata.get(conv_id);
+      socket.send(JSON.stringify({
+        type: "block",
+        data: data
+      }));
+    }
+
+
+
+
+    
     console.log(result[0].is_double_block);
 
     reply.send(true);
