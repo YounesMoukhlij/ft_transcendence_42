@@ -14,7 +14,7 @@ import { FaArrowRight } from "react-icons/fa";
 import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 
 import { globalStore } from '../../components/globalStore';
-
+import getFormattedDate from './tools'
 
 
 
@@ -151,19 +151,6 @@ export default function chatPage() {
   const {connect , username ,socket} = globalStore();
 
 
-
-  const getFormattedDate = () => {
-    const now = new Date();
-    
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };  
-  
   function MessageDateComponent({date}) {
     const currentDate = date?.split(' ')[0];
     return (
@@ -260,7 +247,7 @@ useEffect(() => {
         sender:user , 
         message: input ,
         conv_id: id ,
-        created_at : getFormattedDate() , 
+        created_at : getFormattedDate(), 
         isSeen: data.data
       };
       addMessage(object);
