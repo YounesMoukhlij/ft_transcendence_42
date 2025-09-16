@@ -242,7 +242,8 @@ async function handleBlock(friend , setDboubleBlock , double_block , Setuser_blo
     const id = localStorage.getItem('conversationId');
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock` ,{
         user: username,
-        conv_id: id
+        conv_id: id,
+        friend: friend
     });
 
     if (double_block > 0)
