@@ -1,8 +1,12 @@
 "use client";
 
 import { create } from "zustand";
+import getFormattedDate from "../app/chat/tools";
 
+
+// alert(getFormattedDate());
 export const globalStore = create((set, get) => ({
+
   socket: null,
   isConnect: false,
   username: null,
@@ -15,27 +19,30 @@ export const globalStore = create((set, get) => ({
 
 
 
-
 setMessages: (messagesArray) => set({ messages: messagesArray }),
 
-addMessage: (data) =>
-    set((state) => ({
-      messages: [
-        ...state.messages,
-        {
-          sender: data.sender,
-          conv_id: data.conv_id,
-          message: data.message,
-          created_at: data.created_at || new Date().toISOString(),
-          isSeen: data.isSeen
-        },
-      ],
-    })),
 
+addMessage: (data) => set((state) => {
+  const time = getFormattedDate();
+  return {
+    messages: [
+      ...state.messages,
+      {
+        sender: data.sender,
+        conv_id: data.conv_id,
+        message: data.message,
+        created_at: time,
+        isSeen: data.isSeen,
+      },
+    ],
+  };
+}),
+
+  
   setRoom: (room) => set({ room }),
-
+  
   setImg: (img) => set({ profile_img: img }),
-
+  
 
 
   addFriend: (friend) =>

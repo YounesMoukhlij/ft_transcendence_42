@@ -27,7 +27,7 @@ export default function Navbar()
   const hamburgerRef = useRef<HTMLDivElement>(null);
   const {connect   ,username , init } = globalStore();
   
-  const setUsername = globalStore.setState; ///////
+  const setUsername = globalStore.setState;
   const socket = globalStore((state) => state.socket);
   const {addFriend, removeFriend , setFriends} = globalStore();
 
