@@ -25,12 +25,22 @@ export const globalStore = create((set, get) => ({
 
 
 
+ removeFriend: (usernameToRemove) => set((state) => {
 
+    const index = state.friends.findIndex(user => user.username === usernameToRemove);
+
+    console.log(state.friends);
+    if (index !== -1)
+      state.friends.splice(index, 1);
+    
+    console.log(state.friends);
+    return state.friends;
+  }),
 
   setDboubleBlock : (num) => set ({double_block: num}),
   Setuser_block : (UserBlock) => set ({user_block: UserBlock}),
 
-setMessages: (messagesArray) => set({ messages: messagesArray }),
+  setMessages: (messagesArray) => set({ messages: messagesArray }),
 
 
 addMessage: (data) => set((state) => {
@@ -63,10 +73,10 @@ addMessage: (data) => set((state) => {
 
   setFriends: (friends) => set({ friends }),
 
-  removeFriend: (id) =>
-    set((state) => ({
-      friends: state.friends.filter((f) => f.id !== id),
-    })),
+  // removeFriend: (id) =>
+  //   set((state) => ({
+  //     friends: state.friends.filter((f) => f.id !== id),
+  //   })),
 
   connect: () => {
     if (get().socket) return;

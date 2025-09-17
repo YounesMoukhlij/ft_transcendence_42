@@ -185,9 +185,11 @@ useEffect(() => {
     if (type === "message") {
       addMessage(data);
     }
-    else if (type == "block"){
+    else if (type === "block"){
       setDboubleBlock(data.is_double_block);
       Setuser_block(data.block_user);
+    }else if (type === "unfriend"){
+      removeFriend(data.username);
     }
   };
 }, [socket]);
@@ -259,8 +261,16 @@ async function handleBlock(friend , setDboubleBlock , double_block , Setuser_blo
     }
   }
 
-  function handleUnfriend(){
-    alert("unfirended ");
+async function handleUnfriend(friend){
+    const id = localStorage.getItem('conversationId');
+    const username  = globalStore.getState().username;
+
+    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend` ,{
+      user: username,
+      conv_id: id,
+      friend: friend
+    });
+
   }
 
 
@@ -371,7 +381,7 @@ async function handleBlock(friend , setDboubleBlock , double_block , Setuser_blo
                 { dropmenu &&
                   <div className="fixed flex flex-col w-28 self-">
                     <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button  className="" onClick={()=>handleBlock(room ,setDboubleBlock , double_block , Setuser_block , user_block )}>Block</button></div>
-                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button className="" onClick={handleUnfriend} >Unfriend</button></div>
+                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button className="" onClick={()=> handleUnfriend(room)} >Unfriend</button></div>
                   </div>
                 }
               </div>

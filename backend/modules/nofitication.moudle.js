@@ -106,7 +106,6 @@ export async function AddFriend( request  , reply){
       const query1 = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
       const result = query1.get(user2);
       const user2Id = result.id_user;
-      console.log(user2Id , user1Id);
 
 
       const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");

@@ -202,9 +202,6 @@ export async function DeblockFunction(request , reply){
       }));
     }
 
-
-
-
     
     console.log(result[0].is_double_block);
 
@@ -216,3 +213,49 @@ export async function DeblockFunction(request , reply){
   }
 }
 
+
+
+export async function unfriend(request, reply) {
+
+  const { user, friend, conv_id } = request.body;
+  
+  try {
+    const socket = request.server.users_socket.get(friend);
+
+    const query = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
+    const userresult = query.get(user);
+    const user1Id = userresult.id_user;
+    const query1 = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
+    const result = query1.get(friend);
+    const user2Id = result.id_user;
+
+    const msg = request.server.db.prepare("DELETE FROM message WHERE conv_id = ?");
+    msg.run(conv_id);
+
+    const Roomquery = request.server.db.prepare("DELETE FROM room WHERE conversation_id = ?");
+    Roomquery.run(conv_id);
+
+    const Friendquery = request.server.db.prepare("DELETE FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)");
+    Friendquery.run(user1Id, user2Id, user2Id, user1Id);
+
+
+
+
+    if (socket){
+
+      const data = {
+        username: user
+      };
+
+      socket.send(JSON.stringify({
+        type: "unfriend",
+        data: data
+      }));
+    }
+
+    reply.code(200);
+  } catch (err) {
+    console.log(err);
+    reply.code(500).send({ error: 'Failed to unfriend' });
+  }
+}

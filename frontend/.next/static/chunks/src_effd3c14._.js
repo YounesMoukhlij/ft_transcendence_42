@@ -48,6 +48,13 @@ const globalStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mod
         profile_img: "",
         double_block: 0,
         user_block: "",
+        removeFriend: (usernameToRemove)=>set((state)=>{
+                const index = state.friends.findIndex((user)=>user.username === usernameToRemove);
+                console.log(state.friends);
+                if (index !== -1) state.friends.splice(index, 1);
+                console.log(state.friends);
+                return state.friends;
+            }),
         setDboubleBlock: (num)=>set({
                 double_block: num
             }),
@@ -87,9 +94,10 @@ const globalStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mod
         setFriends: (friends)=>set({
                 friends
             }),
-        removeFriend: (id)=>set((state)=>({
-                    friends: state.friends.filter((f)=>f.id !== id)
-                })),
+        // removeFriend: (id) =>
+        //   set((state) => ({
+        //     friends: state.friends.filter((f) => f.id !== id),
+        //   })),
         connect: ()=>{
             if (get().socket) return;
             const ws = new WebSocket(`ws://${("TURBOPACK compile-time value", "127.0.0.1")}:${("TURBOPACK compile-time value", "4444")}/ws`);
