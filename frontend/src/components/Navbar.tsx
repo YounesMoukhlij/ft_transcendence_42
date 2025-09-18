@@ -57,8 +57,6 @@ export default function Navbar()
 
   async function AcceptFriendRequest(item){
 
-
-    console.log(item);
     toast.success('Accepted');
     const loginUsername  = globalStore.getState().username;
 
@@ -75,7 +73,7 @@ export default function Navbar()
 
     await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
-        id: notification_id,
+        id: item.notify_id,
       }
     });
   };
