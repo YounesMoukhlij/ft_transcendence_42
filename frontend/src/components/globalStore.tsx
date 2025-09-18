@@ -29,11 +29,9 @@ export const globalStore = create((set, get) => ({
 
     const index = state.friends.findIndex(user => user.username === usernameToRemove);
 
-    console.log(state.friends);
     if (index !== -1)
       state.friends.splice(index, 1);
     
-    console.log(state.friends);
     return state.friends;
   }),
 
@@ -70,13 +68,35 @@ addMessage: (data) => set((state) => {
     set((state) => ({
       friends: [...state.friends, friend],
     })),
+  
 
+
+
+  // updateFriendStatus: (status, friend) => 
+  // set((state) => {
+  //   console.log(state.friends);
+  //   console.log("status ====> " , status);
+  //   return {
+  //     friends: state.friends.map(f =>
+  //       f.username === friend ? { ...f, status } : f
+  //     ),
+  //   };
+  // }),
+
+
+
+  updateFriendStatus: (status, friend) => 
+  set((state) => {
+    console.log("status ====>", friend , "            " ,  status);
+    return {
+      friends: state.friends.map(f =>
+        f.username === friend ? { ...f, status: status } : f // Corrected: updating the status
+      ),
+    };
+  }),
+
+  
   setFriends: (friends) => set({ friends }),
-
-  // removeFriend: (id) =>
-  //   set((state) => ({
-  //     friends: state.friends.filter((f) => f.id !== id),
-  //   })),
 
   connect: () => {
     if (get().socket) return;

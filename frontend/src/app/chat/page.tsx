@@ -139,7 +139,7 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact  }) {
 
 export default function chatPage() {
   
-  const { friends, addFriend, removeFriend , setFriends} = globalStore();
+  const { friends, addFriend, removeFriend , setFriends , updateFriendStatus} = globalStore();
 
   const { messages , setMessages,  addMessage, room, setRoom, profile_img, setImg } = globalStore();
 
@@ -190,6 +190,8 @@ useEffect(() => {
       Setuser_block(data.block_user);
     }else if (type === "unfriend"){
       removeFriend(data.username);
+    }else if (type === "status"){
+      updateFriendStatus( data.status , data.friend);
     }
   };
 }, [socket]);
@@ -261,7 +263,7 @@ async function handleBlock(friend , setDboubleBlock , double_block , Setuser_blo
     }
   }
 
-async function handleUnfriend(friend){
+async function handleUnfriend(friend , removeFriend){
     const id = localStorage.getItem('conversationId');
     const username  = globalStore.getState().username;
 
@@ -271,6 +273,7 @@ async function handleUnfriend(friend){
       friend: friend
     });
 
+    removeFriend(friend);
   }
 
 
@@ -381,7 +384,7 @@ async function handleUnfriend(friend){
                 { dropmenu &&
                   <div className="fixed flex flex-col w-28 self-">
                     <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button  className="" onClick={()=>handleBlock(room ,setDboubleBlock , double_block , Setuser_block , user_block )}>Block</button></div>
-                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button className="" onClick={()=> handleUnfriend(room)} >Unfriend</button></div>
+                    <div className="w-[70%] h-[50%] sm:w-full sm:h-full border p-[0.7rem]  border-solid sm:text-center bg-black hover:bg-amber-400"><button className="" onClick={()=> handleUnfriend(room , removeFriend )} >Unfriend</button></div>
                   </div>
                 }
               </div>

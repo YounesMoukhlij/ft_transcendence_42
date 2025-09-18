@@ -67,6 +67,62 @@ return(new_res);
 }
 
 
+function getmyFreind(username){
+
+    const getUserIdStmt = db.prepare(`SELECT id_user FROM users WHERE username = ?`);
+    const user = getUserIdStmt.get(username);
+
+    if (!user) {
+      return [];
+    }
+
+    const userId = user.id_user;
+
+
+    const getFriendsStmt1 = db.prepare(`SELECT user_id  FROM friends WHERE friend_id = ?`);
+    const getFriendsStmt2 = db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ?`);
+
+    const friends1 = getFriendsStmt1.all(userId).map(row => row.user_id);
+    const friends2 = getFriendsStmt2.all(userId).map(row => row.friend_id);
+
+    const allFriendIds = [...new Set([...friends1, ...friends2])];
+
+    if (allFriendIds.length === 0) {
+      return []; 
+    }
+
+    const placeholders = allFriendIds.map(() => '?').join(', ');
+    const getFriendDetailsStmt = db.prepare(`
+      SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token , status 
+      FROM users
+      WHERE id_user IN (${placeholders})
+      `);
+
+    const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
+
+    return friendDetails;
+
+}
+
+
+
+function statusSahre(username , socket , mode){
+
+  const FreindList = getmyFreind(username);
+  for (let i = 0; i < FreindList.length; i++) {
+    const socket = users_socket.get(FreindList[i].username);
+    if(socket){
+        const data= {
+          status: mode,
+          friend: username
+        }
+        socket.send(JSON.stringify({
+        type: "status",
+        data: data
+      }));
+    }
+  }
+}
 
 
 
@@ -80,21 +136,28 @@ wss.on('connection', (socket) => {
 
     const status = waitingMessages.has(username);
 
-    console.log("here in registary =======> " , users_socket.size);
-
     if (status){
       const query =  db.prepare("UPDATE message SET isSeen = ?");
       query.run(1);
     }
+
+
     const query = db.prepare('UPDATE users SET status = ? WHERE username = ?');
     query.run(1 , username);
-    console.log(`User ${username} registered`);
+
+    statusSahre(username , socket , 1);
     
+
     socket.on('close', () => {
       console.log(`Client ${username} disconnected`);
       users_socket.delete(username);
       db.prepare('UPDATE users SET status = ? WHERE username = ?');
       query.run(0 , username);
+
+
+      statusSahre(username , socket , 0);
+
+
     });
   });
 });
