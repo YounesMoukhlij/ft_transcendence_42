@@ -122,6 +122,53 @@ export async function AddFriend( request  , reply){
 }
 
 
+// export async function GetFriends(request, reply) {
+//   const username = request.query.username;
+
+//   if (!username) {
+//     return reply.code(400).send({ error: "Username is required" });
+//   }
+
+
+//   try {
+//     const getUserIdStmt = request.server.db.prepare(`SELECT id_user FROM users WHERE username = ?`);
+//     const user = getUserIdStmt.get(username);
+
+//     if (!user) {
+//       return reply.code(404).send({ error: "User not found" });
+//     }
+
+//     const userId = user.id_user;
+
+//     const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id  FROM friends WHERE friend_id = ?`);
+//     const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ?`);
+
+//     const friends1 = getFriendsStmt1.all(userId).map(row => row.user_id);
+//     const friends2 = getFriendsStmt2.all(userId).map(row => row.friend_id);
+
+//     const allFriendIds = [...new Set([...friends1, ...friends2])];
+
+//     if (allFriendIds.length === 0) {
+//       return reply.send([]); 
+//     }
+
+//     const placeholders = allFriendIds.map(() => '?').join(', ');
+//     const getFriendDetailsStmt = request.server.db.prepare(`
+//       SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token , status 
+//       FROM users
+//       WHERE id_user IN (${placeholders})
+//       `);
+
+//     const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
+
+//     return reply.send(friendDetails);
+
+//   } catch (err) {
+//     console.error(err);
+//     return reply.code(500).send({ error: "Internal Server Error" });
+//   }
+// }
+
 export async function GetFriends(request, reply) {
   const username = request.query.username;
 
@@ -130,6 +177,7 @@ export async function GetFriends(request, reply) {
   }
 
   try {
+    // Get the user ID based on the username
     const getUserIdStmt = request.server.db.prepare(`SELECT id_user FROM users WHERE username = ?`);
     const user = getUserIdStmt.get(username);
 
@@ -139,8 +187,9 @@ export async function GetFriends(request, reply) {
 
     const userId = user.id_user;
 
-    const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id  FROM friends WHERE friend_id = ?`);
-    const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ?`);
+    // Get the IDs of the user's friends
+    const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id FROM friends WHERE friend_id = ?`);
+    const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id FROM friends WHERE user_id = ?`);
 
     const friends1 = getFriendsStmt1.all(userId).map(row => row.user_id);
     const friends2 = getFriendsStmt2.all(userId).map(row => row.friend_id);
@@ -148,17 +197,47 @@ export async function GetFriends(request, reply) {
     const allFriendIds = [...new Set([...friends1, ...friends2])];
 
     if (allFriendIds.length === 0) {
-      return reply.send([]); 
+      return reply.send([]);
     }
 
+    // Get details for all the friends
     const placeholders = allFriendIds.map(() => '?').join(', ');
     const getFriendDetailsStmt = request.server.db.prepare(`
-      SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token , status 
+      SELECT id_user, username, email, fullname, profile_img, xp, access_token, status 
       FROM users
       WHERE id_user IN (${placeholders})
-      `);
+    `);
 
     const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
+
+    // Prepare statement to get the latest message from the message table
+    const getLastMessageStmt = request.server.db.prepare(`
+      SELECT message, created_at
+      FROM message
+      WHERE conv_id = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+    `);
+
+    for (const friend of friendDetails) {
+      const getConvIdStmt = request.server.db.prepare(`
+        SELECT conversation_id
+        FROM room
+        WHERE (members LIKE ? OR members LIKE ?)
+        LIMIT 1
+      `);
+
+      const case1 = `%${username},${friend.username}%`;
+      const case2 = `%${friend.username},${username}%`;
+
+      const convIdRow = getConvIdStmt.get(case1, case2);
+
+      if (convIdRow) {
+        const lastMessage = getLastMessageStmt.get(convIdRow.conversation_id);
+        friend.LastMessage = lastMessage ? lastMessage.message : "Say Hello";
+        friend.LastMessageTime = lastMessage ? lastMessage.created_at : "0000-01-01 00:00:00"
+      }
+    }
 
     return reply.send(friendDetails);
 
@@ -167,3 +246,5 @@ export async function GetFriends(request, reply) {
     return reply.code(500).send({ error: "Internal Server Error" });
   }
 }
+
+

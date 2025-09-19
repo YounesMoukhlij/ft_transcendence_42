@@ -116,12 +116,28 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact  }) {
       </div>
 
       <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[48vh]">
-        {friends.map((friend, index) => (
+        {/* {friends.map((friend, index) => (
           <div key={index}>
             <FreindsList
               photo={friend.profile_img}
               title={friend.username}
-              message={friend.fullname}
+              message={friend.LastMessage}
+              status={friend.status}
+              setConversation={setMessages}
+              setRoom={setRoom}
+              setimg={setImg}
+              SetSelectContact={SetSelectContact}
+            />
+          </div>
+        ))} */}
+        {friends
+        .sort((a, b) => new Date(b.LastMessageTime) - new Date(a.LastMessageTime))
+        .map((friend, index) => (
+          <div key={index}>
+            <FreindsList
+              photo={friend.profile_img}
+              title={friend.username}
+              message={friend.LastMessage}
               status={friend.status}
               setConversation={setMessages}
               setRoom={setRoom}
@@ -139,7 +155,7 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact  }) {
 
 export default function chatPage() {
   
-  const { friends, addFriend, removeFriend , setFriends , updateFriendStatus} = globalStore();
+  const { friends, addFriend, removeFriend , setFriends , updateFriendStatus , updateLastMessage} = globalStore();
 
   const { messages , setMessages,  addMessage, room, setRoom, profile_img, setImg } = globalStore();
 
@@ -184,6 +200,8 @@ useEffect(() => {
     const { type, data } = JSON.parse(event.data);
     if (type === "message") {
       addMessage(data);
+      updateLastMessage(data.message , data.user);
+
     }
     else if (type === "block"){
       setDboubleBlock(data.is_double_block);
@@ -299,6 +317,7 @@ async function handleUnfriend(friend , removeFriend){
         isSeen: data.data
       };
       addMessage(object);
+      updateLastMessage( input , friend);
 
     } catch (err) {
       console.error(err);

@@ -89,16 +89,13 @@ const globalStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mod
                         friend
                     ]
                 })),
-        // updateFriendStatus: (status, friend) => 
-        // set((state) => {
-        //   console.log(state.friends);
-        //   console.log("status ====> " , status);
-        //   return {
-        //     friends: state.friends.map(f =>
-        //       f.username === friend ? { ...f, status } : f
-        //     ),
-        //   };
-        // }),
+        updateLastMessage: (message, friend)=>set((state)=>({
+                    friends: state.friends.map((f)=>f.username === friend ? {
+                            ...f,
+                            LastMessage: message,
+                            LastMessageTime: new Date().toISOString()
+                        } : f)
+                })),
         updateFriendStatus: (status, friend)=>set((state)=>{
                 console.log("status ====>", friend, "            ", status);
                 return {
