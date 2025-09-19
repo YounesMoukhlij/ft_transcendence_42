@@ -202,8 +202,7 @@ export async function DeblockFunction(request , reply){
       }));
     }
 
-    
-    console.log(result[0].is_double_block);
+  
 
     reply.send(true);
     

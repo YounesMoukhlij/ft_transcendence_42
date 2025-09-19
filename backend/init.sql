@@ -3,6 +3,8 @@ CREATE TABLE users (
     id_user INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     fullname TEXT,
+    lastMessage TEXT,
+    lastMessageTime TEXT,
     profile_img TEXT,
     xp INTEGER DEFAULT 0,
     access_token TEXT,
