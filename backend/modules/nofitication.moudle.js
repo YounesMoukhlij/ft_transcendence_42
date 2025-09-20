@@ -176,6 +176,9 @@ export async function GetFriends(request, reply) {
     return reply.code(400).send({ error: "Username is required" });
   }
 
+
+
+
   try {
     // Get the user ID based on the username
     const getUserIdStmt = request.server.db.prepare(`SELECT id_user FROM users WHERE username = ?`);
