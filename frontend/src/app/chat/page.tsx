@@ -100,6 +100,12 @@ const FreindsList = ({ photo ,title , message , status, setConversation , setRoo
 
 function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact  }) {
 
+   const [searchTerm, setSearchTerm] = useState(''); 
+
+  const handleChange = (e ) => {
+    setSearchTerm(e.target.value);
+  };
+
   return (
     <div className="flex flex-col">
       <div>
@@ -109,44 +115,53 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact  }) {
         <input
           className="text-[25px] w-4/5 h-[4.5rem] pl-4 outline-none"
           placeholder="Search for a friend"
+          value={searchTerm} 
+          onChange={handleChange}
         />
         <button className="button">
           <FaSearch className="text-[rgb(179,173,173)]" size={24} />
         </button>
       </div>
-
       <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[48vh]">
-        {/* {friends.map((friend, index) => (
-          <div key={index}>
-            <FreindsList
-              photo={friend.profile_img}
-              title={friend.username}
-              message={friend.LastMessage}
-              status={friend.status}
-              setConversation={setMessages}
-              setRoom={setRoom}
-              setimg={setImg}
-              SetSelectContact={SetSelectContact}
-            />
-          </div>
-        ))} */}
-        {friends
-        .sort((a, b) => new Date(b.LastMessageTime) - new Date(a.LastMessageTime))
-        .map((friend, index) => (
-          <div key={index}>
-            <FreindsList
-              photo={friend.profile_img}
-              title={friend.username}
-              message={friend.LastMessage}
-              status={friend.status}
-              setConversation={setMessages}
-              setRoom={setRoom}
-              setimg={setImg}
-              SetSelectContact={SetSelectContact}
-            />
-          </div>
-        ))}
-      </div>
+  {
+    searchTerm.length > 0
+      ? friends
+          .filter(friend => 
+            friend.username.toLowerCase().startsWith(searchTerm.toLowerCase())
+          )
+          .sort((a, b) => a.username.localeCompare(b.username))
+          .map((friend, index) => (
+            <div key={index}>
+              <FreindsList
+                photo={friend.profile_img}
+                title={friend.username}
+                message={friend.LastMessage}
+                status={friend.status}
+                setConversation={setMessages}
+                setRoom={setRoom}
+                setimg={setImg}
+                SetSelectContact={SetSelectContact}
+              />
+            </div>
+          ))
+      : friends
+          .sort((a, b) => new Date(b.LastMessageTime) - new Date(a.LastMessageTime))
+          .map((friend, index) => (
+            <div key={index}>
+              <FreindsList
+                photo={friend.profile_img}
+                title={friend.username}
+                message={friend.LastMessage}
+                status={friend.status}
+                setConversation={setMessages}
+                setRoom={setRoom}
+                setimg={setImg}
+                SetSelectContact={SetSelectContact}
+              />
+            </div>
+          ))
+  }
+</div>
     </div>
   );
 }
@@ -156,11 +171,8 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact  }) {
 export default function chatPage() {
   
   const { friends, addFriend, removeFriend , setFriends , updateFriendStatus , updateLastMessage} = globalStore();
-
   const { messages , setMessages,  addMessage, room, setRoom, profile_img, setImg } = globalStore();
-
   const { setDboubleBlock , double_block , Setuser_block ,  user_block} = globalStore();
-  
   const {connect , username ,socket} = globalStore();
   
   
@@ -219,13 +231,9 @@ useEffect(() => {
 useEffect(() => {
   const fetchData = async () => {
       try {
-
-
         const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`,{
           params: { username }
         });
-
-        console.log("data. ", res.data);
         setFriends(res.data);
 
       } catch (err) {
