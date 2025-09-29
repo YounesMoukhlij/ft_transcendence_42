@@ -76,7 +76,9 @@
     --color-red-50: oklch(97.1% .013 17.38);
     --color-red-500: oklch(63.7% .237 25.331);
     --color-orange-500: oklch(70.5% .213 47.604);
+    --color-amber-100: oklch(96.2% .059 95.617);
     --color-amber-400: oklch(82.8% .189 84.429);
+    --color-amber-700: oklch(55.5% .163 48.998);
     --color-yellow-300: oklch(90.5% .182 98.111);
     --color-yellow-400: oklch(85.2% .199 91.936);
     --color-yellow-500: oklch(79.5% .184 86.047);
@@ -340,10 +342,6 @@
 @layer utilities {
   .pointer-events-none {
     pointer-events: none;
-  }
-
-  .visible {
-    visibility: visible;
   }
 
   .absolute {
@@ -1289,6 +1287,14 @@
     background-color: #c93126;
   }
 
+  .bg-amber-100 {
+    background-color: var(--color-amber-100);
+  }
+
+  .bg-amber-700 {
+    background-color: var(--color-amber-700);
+  }
+
   .bg-black {
     background-color: var(--color-black);
   }
@@ -1746,6 +1752,10 @@
 
   .italic {
     font-style: italic;
+  }
+
+  .underline {
+    text-decoration-line: underline;
   }
 
   .opacity-0 {

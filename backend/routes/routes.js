@@ -4,37 +4,36 @@ import {
     AddUser,
     getAllUsers,
     getUserById,
-    login
+    getUserByEmail,
+    login,
+    InitiateGoogleAuth,
+    GoogleAuth,
+    getGoogleAuthUser  // NEW: Endpoint to fetch user data
 } from '../modules/userAuth.module.js';
 
 export default async function routes(fastify, options) {
+    // Existing routes
     fastify.get('/', aaa);
-    // fastify.post('/getConversation', getConversation);
-
     fastify.get('/Xprank', Xprank);
-
     fastify.get('/GetNotification', GetNotification);
     fastify.post('/sendRequestFriend', sendRequestFriend);
     fastify.post('/AddFriend', AddFriend);
     fastify.get('/GetFriends', GetFriends);
-
-
-    // user management
-    // createuser
-    // login
-    // logout
-    // update user info
-    // delete user
-
+   
+    // User management routes
     fastify.post('/AddUser', AddUser);
     fastify.get('/getAllUsers', getAllUsers);
     fastify.get('/getUserById/:id', getUserById);
+    fastify.get('/getUserByEmail/:email', getUserByEmail);
     fastify.post('/login', login);
-
-    // fastify.post('/register', Register);
-    // fastify.post('/Logout', Logout);
-    // fastify.put('/UpdateUser', UpdateUser);
-    // fastify.delete('/DeleteUser', DeleteUser);
-    // fastify.get('/GetUsers', GetUsers);
-    // fastify.get('/GetUserById/:id', GetUserById);
+   
+    // ====== GOOGLE OAUTH ROUTES ======
+    // Step 1: Initiate OAuth flow
+    fastify.get('/auth/google', InitiateGoogleAuth);
+    
+    // Step 2: Google redirects here with code
+    fastify.get('/GoogleAuth', GoogleAuth);
+    
+    // Step 3: Frontend fetches user data
+    fastify.get('/auth/google/user', getGoogleAuthUser);
 }

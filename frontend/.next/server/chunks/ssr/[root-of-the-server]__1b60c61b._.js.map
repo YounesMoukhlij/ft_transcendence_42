@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 15, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/21266/Desktop/loggggin/frontend/src/app/page.tsx"],"sourcesContent":["'use client';\r\n\r\n// import type { Metadata } from \"next\";\r\n\r\nimport {  } from \"module\";\r\n\r\n\r\nexport default function Home()\r\n{\r\n  // get user from localStorage\r\n  const user = typeof window !== 'undefined' ? localStorage.getItem('user') : null;\r\n  console.log('User from localStorage:', user);\r\n  return (\r\n\r\n    <div className=\"text-white border\">\r\n      <h1>This is the opening Page</h1>\r\n      <p>Welcome to the dashboard page!</p>\r\n      <p>Click on the sidebar to navigate.</p>\r\n      <p>Use the navbar for additional options.</p>\r\n      <p>Enjoy your stay!</p>\r\n      <h1 className=\"\"></h1>\r\n    </div>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;AAEA,wCAAwC;AAExC;AAJA;;;AAOe,SAAS;IAEtB,6BAA6B;IAC7B,MAAM,OAAO,6EAA+D;IAC5E,QAAQ,GAAG,CAAC,2BAA2B;IACvC,qBAEE,8OAAC;QAAI,WAAU;;0BACb,8OAAC;0BAAG;;;;;;0BACJ,8OAAC;0BAAE;;;;;;0BACH,8OAAC;0BAAE;;;;;;0BACH,8OAAC;0BAAE;;;;;;0BACH,8OAAC;0BAAE;;;;;;0BACH,8OAAC;gBAAG,WAAU;;;;;;;;;;;;AAGpB","debugId":null}}]
+}

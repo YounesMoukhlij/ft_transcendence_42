@@ -723,7 +723,7 @@ function SignInForm({ onToggle }) {
         setIsLoading(true);
         setError('');
         try {
-            const response = await fetch('http://10.11.9.5:4444/login', {
+            const response = await fetch('http://localhost:4444/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -773,7 +773,7 @@ function SignInForm({ onToggle }) {
         } finally{
             setIsLoading(false);
             // redirect to google.com for testing
-            window.location.href = 'https://www.xnxx.com';
+            window.location.href = 'https://www.youtube.com';
         }
     };
     // Handle input changes
@@ -1093,7 +1093,7 @@ function SignUpForm({ onToggle }) {
         return true;
     };
     const createUser = async (userData)=>{
-        const response = await fetch('http://10.11.9.5:4444/AddUser', {
+        const response = await fetch('http://localhost:4444/AddUser', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
