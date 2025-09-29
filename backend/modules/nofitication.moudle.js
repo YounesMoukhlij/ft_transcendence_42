@@ -11,7 +11,7 @@ export async function GetNotification(request, reply) {
 
   try {
     const query = request.server.db.prepare(`
-      SELECT 
+      SELECT
         n.*,
         u.profile_img AS sender_profile_img
       FROM notification n
@@ -48,7 +48,7 @@ export async function sendRequestFriend(request, reply) {
   if (!title || !sender || !friend) {
     return reply.code(400).send({ error: 'Title, sender, and friend are required fields.' });
   }
-  
+
 
   const socket = request.server.users_socket.get(friend);
 
@@ -149,12 +149,12 @@ export async function AddFriend( request  , reply){
 //     const allFriendIds = [...new Set([...friends1, ...friends2])];
 
 //     if (allFriendIds.length === 0) {
-//       return reply.send([]); 
+//       return reply.send([]);
 //     }
 
 //     const placeholders = allFriendIds.map(() => '?').join(', ');
 //     const getFriendDetailsStmt = request.server.db.prepare(`
-//       SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token , status 
+//       SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token , status
 //       FROM users
 //       WHERE id_user IN (${placeholders})
 //       `);
@@ -175,8 +175,6 @@ export async function GetFriends(request, reply) {
   if (!username) {
     return reply.code(400).send({ error: "Username is required" });
   }
-
-
 
 
   try {
@@ -206,7 +204,7 @@ export async function GetFriends(request, reply) {
     // Get details for all the friends
     const placeholders = allFriendIds.map(() => '?').join(', ');
     const getFriendDetailsStmt = request.server.db.prepare(`
-      SELECT id_user, username, email, fullname, profile_img, xp, access_token, status 
+      SELECT id_user, username, email, fullname, profile_img, xp, access_token, status
       FROM users
       WHERE id_user IN (${placeholders})
     `);
