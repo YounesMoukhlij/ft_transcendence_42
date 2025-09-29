@@ -16,10 +16,33 @@ export interface GameCustomisation {
 }
 
 export interface GameState {
-  mode: 'ai' | 'local' | 'tournament' | null;
+  mode: 'ai' | 'local' | 'tournament' | 'remote' | null;
   players: Player[];
   customisation: GameCustomisation;
   roomCode?: string;
+  isHost?: boolean;
+  gameRoom?: {
+    id: string;
+    status: 'waiting' | 'playing' | 'finished';
+    playerId: string;
+  };
+  tournament?: {
+    type: 'local' | 'remote';
+    playerCount: 4 | 8;
+    status: 'setup' | 'registration' | 'playing' | 'finished';
+    currentMatch: number;
+    bracket: TournamentMatch[];
+    winner?: Player;
+  };
+}
+
+export interface TournamentMatch {
+  id: number;
+  round: number;
+  player1?: Player;
+  player2?: Player;
+  winner?: Player;
+  status: 'pending' | 'playing' | 'finished';
 }
 
 interface GameContextType {
@@ -28,6 +51,10 @@ interface GameContextType {
   setPlayers: (players: Player[]) => void;
   setCustomisation: (customisation: GameCustomisation) => void;
   setRoomCode: (roomCode: string) => void;
+  setGameRoom: (room: GameState['gameRoom']) => void;
+  setIsHost: (isHost: boolean) => void;
+  setTournament: (tournament: GameState['tournament']) => void;
+  updateTournamentMatch: (matchId: number, updates: Partial<TournamentMatch>) => void;
   resetGameState: () => void;
 }
 
@@ -75,6 +102,30 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     setGameState(prev => ({ ...prev, roomCode }));
   };
 
+  const setGameRoom = (gameRoom: GameState['gameRoom']) => {
+    setGameState(prev => ({ ...prev, gameRoom }));
+  };
+
+  const setIsHost = (isHost: boolean) => {
+    setGameState(prev => ({ ...prev, isHost }));
+  };
+
+  const setTournament = (tournament: GameState['tournament']) => {
+    setGameState(prev => ({ ...prev, tournament }));
+  };
+
+  const updateTournamentMatch = (matchId: number, updates: Partial<TournamentMatch>) => {
+    setGameState(prev => ({
+      ...prev,
+      tournament: prev.tournament ? {
+        ...prev.tournament,
+        bracket: prev.tournament.bracket.map(match =>
+          match.id === matchId ? { ...match, ...updates } : match
+        )
+      } : prev.tournament
+    }));
+  };
+
   const resetGameState = () => {
     setGameState({
       mode: null,
@@ -95,6 +146,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         setPlayers,
         setCustomisation,
         setRoomCode,
+        setGameRoom,
+        setIsHost,
+        setTournament,
+        updateTournamentMatch,
         resetGameState,
       }}
     >

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useGameContext } from '../components/GameContext';
+import { useRouter } from 'next/navigation';
+import { useGameContext, Player } from '../components/GameContext';
 import { FaUserCircle } from 'react-icons/fa';
 import { FaRobot } from 'react-icons/fa';
-import { FaPause, FaPlay } from 'react-icons/fa';
+import { FaPause, FaPlay, FaTrophy } from 'react-icons/fa';
 
 interface GameState {
   ball: {
@@ -34,10 +35,26 @@ interface GameState {
   winner: string | null;
 }
 
-const PingPongGame: React.FC = () => {
+interface PingPongGameProps {
+  tournamentMode?: boolean;
+  tournamentPlayers?: Player[];
+  onTournamentMatchEnd?: (winner: Player) => void;
+}
+
+const PingPongGame: React.FC<PingPongGameProps> = ({
+  tournamentMode = false,
+  tournamentPlayers = [],
+  onTournamentMatchEnd
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { gameState } = useGameContext();
   const { tableBg, paddleColor, ballColor } = gameState.customisation || {};
+  const router = useRouter();
+
+  // Use tournament players if provided, otherwise use game state players
+  const currentPlayers = (tournamentMode && tournamentPlayers.length === 2)
+    ? tournamentPlayers
+    : gameState.players;
   const [localGameState, setLocalGameState] = useState<GameState>({
     ball: {
       x: 400,
@@ -66,6 +83,8 @@ const PingPongGame: React.FC = () => {
     winner: null,
   });
   const [paused, setPaused] = useState(false);
+  const [showWinnerMessage, setShowWinnerMessage] = useState(false);
+  const [winnerMessageVisible, setWinnerMessageVisible] = useState(false);
 
   // Set canvas size to match the table size
   const tableW = 900;
@@ -93,16 +112,51 @@ const PingPongGame: React.FC = () => {
   // Add horizontal padding for paddles
   const paddlePadding = 20;
 
-  // Initialize game based on mode
+  // Initialize game based on mode - but don't start automatically
   useEffect(() => {
     const initializeGame = () => {
       setLocalGameState(prev => ({
         ...prev,
-        gameStarted: true,
+        gameStarted: false, // Changed to false - require manual start
       }));
     };
     initializeGame();
   }, [gameState.mode]);
+
+  // Reset game state when tournament players change
+  useEffect(() => {
+    if (tournamentMode && tournamentPlayers.length === 2) {
+      setLocalGameState({
+        ball: {
+          x: 400,
+          y: 300,
+          dx: 3,
+          dy: 2,
+          radius: 8,
+        },
+        leftPaddle: {
+          y: 250,
+          height: 100,
+          width: 16,
+          speed: 0,
+        },
+        rightPaddle: {
+          y: 250,
+          height: 100,
+          width: 16,
+          speed: 0,
+        },
+        score: {
+          left: 0,
+          right: 0,
+        },
+        gameStarted: false,
+        winner: null,
+      });
+      setShowWinnerMessage(false);
+      setWinnerMessageVisible(false);
+    }
+  }, [tournamentMode, tournamentPlayers]);
 
   // Handle keyboard input
   useEffect(() => {
@@ -131,6 +185,29 @@ const PingPongGame: React.FC = () => {
     return () => window.removeEventListener('keydown', handlePauseKey);
   }, []);
 
+  // Toggle winner message visibility
+  const toggleWinnerMessage = useCallback(() => {
+    if (showWinnerMessage) {
+      setWinnerMessageVisible(!winnerMessageVisible);
+    }
+  }, [showWinnerMessage, winnerMessageVisible]);
+
+  // Start the game
+  const startGame = useCallback(() => {
+    setLocalGameState(prev => ({ ...prev, gameStarted: true }));
+  }, []);
+
+  // Keyboard shortcut for winner message toggle (T) - disabled in tournament mode
+  useEffect(() => {
+    const handleToggleKey = (e: KeyboardEvent) => {
+      if ((e.key === 't' || e.key === 'T') && showWinnerMessage && !tournamentMode) {
+        toggleWinnerMessage();
+      }
+    };
+    window.addEventListener('keydown', handleToggleKey);
+    return () => window.removeEventListener('keydown', handleToggleKey);
+  }, [showWinnerMessage, toggleWinnerMessage, tournamentMode]);
+
   // Game loop
   const gameLoop = useCallback(() => {
     if (paused || !localGameState.gameStarted || localGameState.winner) return;
@@ -146,7 +223,7 @@ const PingPongGame: React.FC = () => {
         newState.leftPaddle.y = Math.min(gameHeight - paddleHeight, newState.leftPaddle.y + paddleSpeed);
       }
       // Right paddle (AI or Arrow keys)
-      if (gameState.mode === 'ai') {
+      if (gameState.mode === 'ai' && !tournamentMode) {
         // AI: Make it smoother and easier to beat
         const paddleCenter = newState.rightPaddle.y + paddleHeight / 2;
         const target = newState.ball.y;
@@ -244,31 +321,37 @@ const PingPongGame: React.FC = () => {
       }
 
       // --- Scoring ---
-      if (newState.ball.x + ballRadius < 0) {
+      // Only score once when ball crosses the boundary
+      if (newState.ball.x < 0 && newState.ball.dx < 0) {
         newState.score.right++;
+        // Reset ball to center
         newState.ball = {
           x: gameWidth / 2,
           y: gameHeight / 2,
-          dx: -3 * (Math.random() > 0.5 ? 1 : -1),
+          dx: Math.abs(newState.ball.dx), // Ensure ball moves away from scoring side
           dy: (Math.random() - 0.5) * 4,
           radius: ballRadius,
         };
-      } else if (newState.ball.x - ballRadius > gameWidth) {
+      } else if (newState.ball.x > gameWidth && newState.ball.dx > 0) {
         newState.score.left++;
+        // Reset ball to center
         newState.ball = {
           x: gameWidth / 2,
           y: gameHeight / 2,
-          dx: 3 * (Math.random() > 0.5 ? 1 : -1),
+          dx: -Math.abs(newState.ball.dx), // Ensure ball moves away from scoring side
           dy: (Math.random() - 0.5) * 4,
           radius: ballRadius,
         };
       }
 
       // --- Win condition ---
-      if (newState.score.left >= 20) {
-        newState.winner = gameState.players[0]?.name || 'Player 1';
-      } else if (newState.score.right >= 20) {
-        newState.winner = gameState.mode === 'ai' ? 'AI Opponent' : (gameState.players[1]?.name || 'Player 2');
+      const winningScore = 1; // First to score wins
+      if (newState.score.left >= winningScore) {
+        newState.score.left = winningScore; // Cap the score at 1
+        newState.winner = currentPlayers[0]?.name || 'Player 1';
+      } else if (newState.score.right >= winningScore) {
+        newState.score.right = winningScore; // Cap the score at 1
+        newState.winner = (gameState.mode === 'ai' && !tournamentMode) ? 'AI Opponent' : (currentPlayers[1]?.name || 'Player 2');
       }
 
       // --- Sync paddle/ball state for rendering ---
@@ -280,7 +363,32 @@ const PingPongGame: React.FC = () => {
 
       return newState;
     });
-  }, [paused, localGameState.gameStarted, localGameState.winner, gameState.mode, gameState.players]);
+  }, [paused, localGameState.gameStarted, localGameState.winner, gameState.mode, tournamentMode, currentPlayers]);
+
+  // Removed automatic tournament progression to prevent infinite loops
+
+  // Handle winner message display - manual progression only for tournament mode
+  useEffect(() => {
+    if (localGameState.winner) {
+      if (tournamentMode) {
+        // For tournament mode, show winner message but require manual progression
+        setShowWinnerMessage(true);
+        setWinnerMessageVisible(true);
+        // No auto-progression - user must click "Next Round" button
+      } else {
+        // For non-tournament games, show the winner message
+        setShowWinnerMessage(true);
+        setWinnerMessageVisible(true);
+
+        const hideTimeout = setTimeout(() => {
+          setWinnerMessageVisible(false);
+          setTimeout(() => setShowWinnerMessage(false), 300); // Wait for fade out animation
+        }, 5000);
+
+        return () => clearTimeout(hideTimeout);
+      }
+    }
+  }, [localGameState.winner, tournamentMode]);
 
   // Render game
   const renderGame = useCallback(() => {
@@ -396,10 +504,43 @@ const PingPongGame: React.FC = () => {
       tableX + tableW * 0.82,
       tableY + 18
     );
+
+    // Draw player names with enhanced styling
+    ctx.save();
+
+    // Left player name
+    ctx.font = tournamentMode ? 'bold 18px Arial' : 'bold 16px Arial';
+    ctx.fillStyle = tournamentMode ? '#fbbf24' : '#e5e7eb'; // Gold for tournament, light gray for regular
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeText(
+      currentPlayers[0]?.name || 'Player 1',
+      tableX + tableW * 0.18,
+      tableY + 85
+    );
+    ctx.fillText(
+      currentPlayers[0]?.name || 'Player 1',
+      tableX + tableW * 0.18,
+      tableY + 85
+    );
+
+    // Right player name
+    ctx.fillStyle = tournamentMode ? '#fbbf24' : '#e5e7eb'; // Gold for tournament, light gray for regular
+    ctx.strokeText(
+      (gameState.mode === 'ai' && !tournamentMode) ? 'AI Opponent' : (currentPlayers[1]?.name || 'Player 2'),
+      tableX + tableW * 0.82,
+      tableY + 85
+    );
+    ctx.fillText(
+      (gameState.mode === 'ai' && !tournamentMode) ? 'AI Opponent' : (currentPlayers[1]?.name || 'Player 2'),
+      tableX + tableW * 0.82,
+      tableY + 85
+    );
+
     ctx.restore();
 
-    // --- 7. Draw winner overlay if needed ---
-    if (localGameState.winner) {
+    // --- 7. Draw winner overlay if needed (only for non-tournament games) ---
+    if (localGameState.winner && !tournamentMode) {
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
       ctx.fillRect(tableX, tableY, tableW, tableH);
@@ -407,8 +548,13 @@ const PingPongGame: React.FC = () => {
       ctx.font = '48px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(`${localGameState.winner} Wins!`, canvasWidth / 2, canvasHeight / 2);
-      ctx.font = '24px Arial';
-      ctx.fillText('Press R to restart', canvasWidth / 2, canvasHeight / 2 + 40);
+
+      // Only show restart text in non-tournament mode
+      if (!tournamentMode) {
+        ctx.font = '24px Arial';
+        ctx.fillText('Press R to restart', canvasWidth / 2, canvasHeight / 2 + 40);
+      }
+
       ctx.restore();
     }
   }, [localGameState, gameState.mode]);
@@ -425,10 +571,10 @@ const PingPongGame: React.FC = () => {
     renderGame();
   }, [renderGame]);
 
-  // Handle restart
+  // Handle restart (only for non-tournament games)
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'r' && localGameState.winner) {
+      if (e.key === 'r' && localGameState.winner && !tournamentMode) {
         setLocalGameState({
           ball: {
             x: 400,
@@ -453,15 +599,17 @@ const PingPongGame: React.FC = () => {
             left: 0,
             right: 0,
           },
-          gameStarted: true,
+          gameStarted: false, // Changed to false - require manual start again
           winner: null,
         });
         setPaused(false);
+        setShowWinnerMessage(false);
+        setWinnerMessageVisible(false);
       }
     };
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [localGameState.winner]);
+  }, [localGameState.winner, tournamentMode]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full relative">
@@ -492,31 +640,106 @@ const PingPongGame: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* Winner Message Overlay - show for both tournament and non-tournament modes */}
+      {showWinnerMessage && (
+        <div
+          className={`absolute inset-0 flex flex-col items-center justify-center z-40 transition-all duration-300 ${
+            winnerMessageVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ background: "rgba(0,0,0,0.8)" }}
+        >
+          <div className="bg-gradient-to-r from-yellow-600 to-yellow-700 rounded-3xl shadow-2xl border-4 border-yellow-400 p-8 text-center relative">
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setWinnerMessageVisible(false);
+                setTimeout(() => setShowWinnerMessage(false), 300);
+              }}
+              className="absolute top-4 right-4 text-white hover:text-yellow-200 text-3xl font-bold leading-none transition-colors duration-200"
+              aria-label="Close"
+            >
+              ×
+            </button>
+
+            <FaTrophy className="w-20 h-20 text-yellow-300 mx-auto mb-4" />
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
+              🎉 {localGameState.winner} Wins! 🎉
+            </h2>
+            <p className="text-xl md:text-2xl text-yellow-200 mb-6">
+              {tournamentMode ? 'Match completed!' : 'Congratulations on your victory!'}
+            </p>
+
+            {/* Different buttons for tournament vs regular games */}
+            {tournamentMode ? (
+              <div className="flex justify-center">
+                <button
+                  onClick={() => {
+                    // Call the tournament callback if provided
+                    if (onTournamentMatchEnd && tournamentPlayers.length === 2) {
+                      const winnerPlayer = tournamentPlayers.find(p => p.name === localGameState.winner);
+                      if (winnerPlayer) {
+                        onTournamentMatchEnd(winnerPlayer);
+                      }
+                    }
+
+                    // Close the winner message
+                    setWinnerMessageVisible(false);
+                    setShowWinnerMessage(false);
+                  }}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
+                >
+                  Next Round →
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <button
+                  onClick={toggleWinnerMessage}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
+                >
+                  {winnerMessageVisible ? 'Hide Message' : 'Show Message'}
+                </button>
+                <button
+                  onClick={() => {
+                    const event = new KeyboardEvent('keypress', { key: 'r' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
+                >
+                  Play Again (R)
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Responsive player bar */}
       <div className="absolute left-0 right-0 flex flex-wrap justify-between items-center px-2 md:px-10 lg:px-22" style={{top: 0, minHeight: '70px', pointerEvents: 'none', zIndex: 10}}>
         {/* Left Player */}
         <div className="flex flex-row items-center gap-2 min-w-[120px]">
-          {gameState.players && gameState.players[0]?.avatar ? (
-            <img src={gameState.players[0].avatar} alt="Player 1" className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
+          {currentPlayers && currentPlayers[0]?.avatar ? (
+            <img src={currentPlayers[0].avatar} alt="Player 1" className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
           ) : (
             <FaUserCircle className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
           )}
           <span className="text-white text-base xs:text-lg sm:text-xl md:text-2xl pl-2 sm:pl-5 md:pl-7 font-bold drop-shadow-md truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[180px] md:max-w-[220px]">
-            {gameState.players && gameState.players[0]?.name ? gameState.players[0].name : 'PLAYER 1'}
+            {currentPlayers && currentPlayers[0]?.name ? currentPlayers[0].name : 'PLAYER 1'}
           </span>
         </div>
         {/* Right Player */}
         <div className="flex flex-row items-center gap-2 min-w-[120px]">
           <span className="text-white text-base xs:text-lg sm:text-xl md:text-2xl pr-2 sm:pr-5 md:pr-7 font-bold drop-shadow-md truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[180px] md:max-w-[220px]">
-            {gameState.mode === 'ai'
+            {gameState.mode === 'ai' && !tournamentMode
               ? 'THE MACHINIST (AI)'
-              : (gameState.players && gameState.players[1]?.name ? gameState.players[1].name : 'PLAYER 2')}
+              : (currentPlayers && currentPlayers[1]?.name ? currentPlayers[1].name : 'PLAYER 2')}
           </span>
-          {gameState.mode === 'ai' ? (
+          {gameState.mode === 'ai' && !tournamentMode ? (
             <FaRobot className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-blue-300 bg-gray-700 rounded-full border-2 border-white" />
           ) : (
-            gameState.players && gameState.players[1]?.avatar ? (
-              <img src={gameState.players[1].avatar} alt="Player 2" className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
+            currentPlayers && currentPlayers[1]?.avatar ? (
+              <img src={currentPlayers[1].avatar} alt="Player 2" className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
             ) : (
               <FaUserCircle className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
             )
@@ -534,16 +757,75 @@ const PingPongGame: React.FC = () => {
               className="rounded-lg shadow-lg bg-transparent absolute top-0 left-0 w-full h-full min-w-[220px]"
               style={{ background: 'transparent', maxWidth: '100%' }}
             />
+
+            {/* Start Game Button Overlay */}
+            {!localGameState.gameStarted && !localGameState.winner && (
+              <div className="absolute inset-0 flex items-center justify-center z-50">
+                <button
+                  onClick={startGame}
+                  className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-xl shadow-lg transform hover:scale-105 transition-all duration-200 animate-pulse"
+                >
+                  🚀 START GAME
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
+      {/* Invitation Button for 1v1 Online Mode */}
+      {gameState.mode === 'remote' && !tournamentMode && (
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => {
+              // Create invitation link with room code
+              const roomCode = gameState.gameRoom?.id || gameState.roomCode;
+              const inviteLink = roomCode
+                ? `${window.location.origin}/game/remote?room=${roomCode}`
+                : `${window.location.origin}/game/remote`;
+
+              console.log('Sharing invitation link:', inviteLink); // Debug log
+
+              // Try to use Web Share API if available, otherwise copy to clipboard
+              if (navigator.share) {
+                navigator.share({
+                  title: 'Join my Ping Pong game!',
+                  text: 'Come play Ping Pong with me online!',
+                  url: inviteLink,
+                }).catch((error) => {
+                  console.log('Error sharing:', error);
+                  // Fallback to clipboard
+                  navigator.clipboard.writeText(inviteLink).then(() => {
+                    alert('Game invitation link copied to clipboard!');
+                  });
+                });
+              } else {
+                // Fallback to clipboard
+                navigator.clipboard.writeText(inviteLink).then(() => {
+                  alert('Game invitation link copied to clipboard!\nShare this link with your friend to invite them to play.');
+                }).catch(() => {
+                  // If clipboard API fails, show the link
+                  prompt('Copy this invitation link to share with your friend:', inviteLink);
+                });
+              }
+            }}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105 flex items-center gap-2 shadow-lg"
+          >
+            <span>📤</span>
+            Invite Friend
+          </button>
+        </div>
+      )}
+
       <div className="mt-4 text-center text-white">
         <p className="text-sm">
-          {gameState.mode === 'ai' ? 'Use W/S to control your paddle' :
-           'Left: W/S | Right: ↑/↓'}
+          {gameState.mode === 'ai' && !tournamentMode ? 'Use W/S to control your paddle' :
+           'Left Player: W/S | Right Player: ↑/↓'}
         </p>
-        <p className="text-sm mt-1">Click on P to pause / resume the game</p>
-        <p className="text-sm mt-3">First to 20 points wins!</p>
+        <p className="text-sm mt-1">Press P to pause / resume the game</p>
+        {showWinnerMessage && !tournamentMode && (
+          <p className="text-sm mt-1 text-yellow-300">Press T to toggle winner message</p>
+        )}
+        <p className="text-sm mt-3">First to score wins!</p>
       </div>
     </div>
   );

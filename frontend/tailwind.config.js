@@ -1,4 +1,4 @@
-@type {import('tailwindcss').Config}
+/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -6,6 +6,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',
+      },
       animation: {
         'ripple-1': 'ripple 3s linear infinite 0.3s',
         'ripple-2': 'ripple 3s linear infinite 0.6s',

@@ -10,6 +10,7 @@ __turbopack_context__.s({
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$GameContext$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/GameContext.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$icons$2f$fa$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/react-icons/fa/index.mjs [app-ssr] (ecmascript)");
 'use client';
@@ -19,10 +20,14 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$ico
 ;
 ;
 ;
-const PingPongGame = ()=>{
+;
+const PingPongGame = ({ tournamentMode = false, tournamentPlayers = [], onTournamentMatchEnd })=>{
     const canvasRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
     const { gameState } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$GameContext$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useGameContext"])();
     const { tableBg, paddleColor, ballColor } = gameState.customisation || {};
+    const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
+    // Use tournament players if provided, otherwise use game state players
+    const currentPlayers = tournamentMode && tournamentPlayers.length === 2 ? tournamentPlayers : gameState.players;
     const [localGameState, setLocalGameState] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])({
         ball: {
             x: 400,
@@ -51,6 +56,8 @@ const PingPongGame = ()=>{
         winner: null
     });
     const [paused, setPaused] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [showWinnerMessage, setShowWinnerMessage] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [winnerMessageVisible, setWinnerMessageVisible] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     // Set canvas size to match the table size
     const tableW = 900;
     const tableH = 340;
@@ -74,17 +81,54 @@ const PingPongGame = ()=>{
     const keysPressed = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(new Set());
     // Add horizontal padding for paddles
     const paddlePadding = 20;
-    // Initialize game based on mode
+    // Initialize game based on mode - but don't start automatically
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const initializeGame = ()=>{
             setLocalGameState((prev)=>({
                     ...prev,
-                    gameStarted: true
+                    gameStarted: false
                 }));
         };
         initializeGame();
     }, [
         gameState.mode
+    ]);
+    // Reset game state when tournament players change
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (tournamentMode && tournamentPlayers.length === 2) {
+            setLocalGameState({
+                ball: {
+                    x: 400,
+                    y: 300,
+                    dx: 3,
+                    dy: 2,
+                    radius: 8
+                },
+                leftPaddle: {
+                    y: 250,
+                    height: 100,
+                    width: 16,
+                    speed: 0
+                },
+                rightPaddle: {
+                    y: 250,
+                    height: 100,
+                    width: 16,
+                    speed: 0
+                },
+                score: {
+                    left: 0,
+                    right: 0
+                },
+                gameStarted: false,
+                winner: null
+            });
+            setShowWinnerMessage(false);
+            setWinnerMessageVisible(false);
+        }
+    }, [
+        tournamentMode,
+        tournamentPlayers
     ]);
     // Handle keyboard input
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
@@ -111,6 +155,36 @@ const PingPongGame = ()=>{
         window.addEventListener('keydown', handlePauseKey);
         return ()=>window.removeEventListener('keydown', handlePauseKey);
     }, []);
+    // Toggle winner message visibility
+    const toggleWinnerMessage = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
+        if (showWinnerMessage) {
+            setWinnerMessageVisible(!winnerMessageVisible);
+        }
+    }, [
+        showWinnerMessage,
+        winnerMessageVisible
+    ]);
+    // Start the game
+    const startGame = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
+        setLocalGameState((prev)=>({
+                ...prev,
+                gameStarted: true
+            }));
+    }, []);
+    // Keyboard shortcut for winner message toggle (T) - disabled in tournament mode
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        const handleToggleKey = (e)=>{
+            if ((e.key === 't' || e.key === 'T') && showWinnerMessage && !tournamentMode) {
+                toggleWinnerMessage();
+            }
+        };
+        window.addEventListener('keydown', handleToggleKey);
+        return ()=>window.removeEventListener('keydown', handleToggleKey);
+    }, [
+        showWinnerMessage,
+        toggleWinnerMessage,
+        tournamentMode
+    ]);
     // Game loop
     const gameLoop = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
         if (paused || !localGameState.gameStarted || localGameState.winner) return;
@@ -127,7 +201,7 @@ const PingPongGame = ()=>{
                 newState.leftPaddle.y = Math.min(gameHeight - paddleHeight, newState.leftPaddle.y + paddleSpeed);
             }
             // Right paddle (AI or Arrow keys)
-            if (gameState.mode === 'ai') {
+            if (gameState.mode === 'ai' && !tournamentMode) {
                 // AI: Make it smoother and easier to beat
                 const paddleCenter = newState.rightPaddle.y + paddleHeight / 2;
                 const target = newState.ball.y;
@@ -193,30 +267,36 @@ const PingPongGame = ()=>{
                 newState.ball.dy = 4 * hitPos;
             }
             // --- Scoring ---
-            if (newState.ball.x + ballRadius < 0) {
+            // Only score once when ball crosses the boundary
+            if (newState.ball.x < 0 && newState.ball.dx < 0) {
                 newState.score.right++;
+                // Reset ball to center
                 newState.ball = {
                     x: gameWidth / 2,
                     y: gameHeight / 2,
-                    dx: -3 * (Math.random() > 0.5 ? 1 : -1),
+                    dx: Math.abs(newState.ball.dx),
                     dy: (Math.random() - 0.5) * 4,
                     radius: ballRadius
                 };
-            } else if (newState.ball.x - ballRadius > gameWidth) {
+            } else if (newState.ball.x > gameWidth && newState.ball.dx > 0) {
                 newState.score.left++;
+                // Reset ball to center
                 newState.ball = {
                     x: gameWidth / 2,
                     y: gameHeight / 2,
-                    dx: 3 * (Math.random() > 0.5 ? 1 : -1),
+                    dx: -Math.abs(newState.ball.dx),
                     dy: (Math.random() - 0.5) * 4,
                     radius: ballRadius
                 };
             }
             // --- Win condition ---
-            if (newState.score.left >= 20) {
-                newState.winner = gameState.players[0]?.name || 'Player 1';
-            } else if (newState.score.right >= 20) {
-                newState.winner = gameState.mode === 'ai' ? 'AI Opponent' : gameState.players[1]?.name || 'Player 2';
+            const winningScore = 1; // First to score wins
+            if (newState.score.left >= winningScore) {
+                newState.score.left = winningScore; // Cap the score at 1
+                newState.winner = currentPlayers[0]?.name || 'Player 1';
+            } else if (newState.score.right >= winningScore) {
+                newState.score.right = winningScore; // Cap the score at 1
+                newState.winner = gameState.mode === 'ai' && !tournamentMode ? 'AI Opponent' : currentPlayers[1]?.name || 'Player 2';
             }
             // --- Sync paddle/ball state for rendering ---
             newState.leftPaddle.width = paddleWidth;
@@ -231,7 +311,32 @@ const PingPongGame = ()=>{
         localGameState.gameStarted,
         localGameState.winner,
         gameState.mode,
-        gameState.players
+        tournamentMode,
+        currentPlayers
+    ]);
+    // Removed automatic tournament progression to prevent infinite loops
+    // Handle winner message display - manual progression only for tournament mode
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (localGameState.winner) {
+            if (tournamentMode) {
+                // For tournament mode, show winner message but require manual progression
+                setShowWinnerMessage(true);
+                setWinnerMessageVisible(true);
+            // No auto-progression - user must click "Next Round" button
+            } else {
+                // For non-tournament games, show the winner message
+                setShowWinnerMessage(true);
+                setWinnerMessageVisible(true);
+                const hideTimeout = setTimeout(()=>{
+                    setWinnerMessageVisible(false);
+                    setTimeout(()=>setShowWinnerMessage(false), 300); // Wait for fade out animation
+                }, 5000);
+                return ()=>clearTimeout(hideTimeout);
+            }
+        }
+    }, [
+        localGameState.winner,
+        tournamentMode
     ]);
     // Render game
     const renderGame = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
@@ -336,9 +441,22 @@ const PingPongGame = ()=>{
         ctx.shadowBlur = 2;
         ctx.fillText(localGameState.score.left.toString(), tableX + tableW * 0.18, tableY + 18);
         ctx.fillText(localGameState.score.right.toString(), tableX + tableW * 0.82, tableY + 18);
+        // Draw player names with enhanced styling
+        ctx.save();
+        // Left player name
+        ctx.font = tournamentMode ? 'bold 18px Arial' : 'bold 16px Arial';
+        ctx.fillStyle = tournamentMode ? '#fbbf24' : '#e5e7eb'; // Gold for tournament, light gray for regular
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.strokeText(currentPlayers[0]?.name || 'Player 1', tableX + tableW * 0.18, tableY + 85);
+        ctx.fillText(currentPlayers[0]?.name || 'Player 1', tableX + tableW * 0.18, tableY + 85);
+        // Right player name
+        ctx.fillStyle = tournamentMode ? '#fbbf24' : '#e5e7eb'; // Gold for tournament, light gray for regular
+        ctx.strokeText(gameState.mode === 'ai' && !tournamentMode ? 'AI Opponent' : currentPlayers[1]?.name || 'Player 2', tableX + tableW * 0.82, tableY + 85);
+        ctx.fillText(gameState.mode === 'ai' && !tournamentMode ? 'AI Opponent' : currentPlayers[1]?.name || 'Player 2', tableX + tableW * 0.82, tableY + 85);
         ctx.restore();
-        // --- 7. Draw winner overlay if needed ---
-        if (localGameState.winner) {
+        // --- 7. Draw winner overlay if needed (only for non-tournament games) ---
+        if (localGameState.winner && !tournamentMode) {
             ctx.save();
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
             ctx.fillRect(tableX, tableY, tableW, tableH);
@@ -346,8 +464,11 @@ const PingPongGame = ()=>{
             ctx.font = '48px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(`${localGameState.winner} Wins!`, canvasWidth / 2, canvasHeight / 2);
-            ctx.font = '24px Arial';
-            ctx.fillText('Press R to restart', canvasWidth / 2, canvasHeight / 2 + 40);
+            // Only show restart text in non-tournament mode
+            if (!tournamentMode) {
+                ctx.font = '24px Arial';
+                ctx.fillText('Press R to restart', canvasWidth / 2, canvasHeight / 2 + 40);
+            }
             ctx.restore();
         }
     }, [
@@ -368,10 +489,10 @@ const PingPongGame = ()=>{
     }, [
         renderGame
     ]);
-    // Handle restart
+    // Handle restart (only for non-tournament games)
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const handleKeyPress = (e)=>{
-            if (e.key === 'r' && localGameState.winner) {
+            if (e.key === 'r' && localGameState.winner && !tournamentMode) {
                 setLocalGameState({
                     ball: {
                         x: 400,
@@ -396,16 +517,19 @@ const PingPongGame = ()=>{
                         left: 0,
                         right: 0
                     },
-                    gameStarted: true,
+                    gameStarted: false,
                     winner: null
                 });
                 setPaused(false);
+                setShowWinnerMessage(false);
+                setWinnerMessageVisible(false);
             }
         };
         window.addEventListener('keypress', handleKeyPress);
         return ()=>window.removeEventListener('keypress', handleKeyPress);
     }, [
-        localGameState.winner
+        localGameState.winner,
+        tournamentMode
     ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "flex flex-col items-center justify-center h-full w-full relative",
@@ -422,17 +546,17 @@ const PingPongGame = ()=>{
                         className: "w-4 h-4 md:w-6 md:h-6"
                     }, void 0, false, {
                         fileName: "[project]/src/components/PingPongGame.tsx",
-                        lineNumber: 476,
+                        lineNumber: 624,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/PingPongGame.tsx",
-                    lineNumber: 471,
+                    lineNumber: 619,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/PingPongGame.tsx",
-                lineNumber: 470,
+                lineNumber: 618,
                 columnNumber: 9
             }, this),
             paused && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -446,7 +570,7 @@ const PingPongGame = ()=>{
                         children: "Paused"
                     }, void 0, false, {
                         fileName: "[project]/src/components/PingPongGame.tsx",
-                        lineNumber: 486,
+                        lineNumber: 634,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -456,18 +580,135 @@ const PingPongGame = ()=>{
                             className: "w-8 h-8"
                         }, void 0, false, {
                             fileName: "[project]/src/components/PingPongGame.tsx",
-                            lineNumber: 491,
+                            lineNumber: 639,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/PingPongGame.tsx",
-                        lineNumber: 487,
+                        lineNumber: 635,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/PingPongGame.tsx",
-                lineNumber: 482,
+                lineNumber: 630,
+                columnNumber: 9
+            }, this),
+            showWinnerMessage && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: `absolute inset-0 flex flex-col items-center justify-center z-40 transition-all duration-300 ${winnerMessageVisible ? 'opacity-100' : 'opacity-0'}`,
+                style: {
+                    background: "rgba(0,0,0,0.8)"
+                },
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "bg-gradient-to-r from-yellow-600 to-yellow-700 rounded-3xl shadow-2xl border-4 border-yellow-400 p-8 text-center relative",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                            onClick: ()=>{
+                                setWinnerMessageVisible(false);
+                                setTimeout(()=>setShowWinnerMessage(false), 300);
+                            },
+                            className: "absolute top-4 right-4 text-white hover:text-yellow-200 text-3xl font-bold leading-none transition-colors duration-200",
+                            "aria-label": "Close",
+                            children: "×"
+                        }, void 0, false, {
+                            fileName: "[project]/src/components/PingPongGame.tsx",
+                            lineNumber: 654,
+                            columnNumber: 13
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$icons$2f$fa$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FaTrophy"], {
+                            className: "w-20 h-20 text-yellow-300 mx-auto mb-4"
+                        }, void 0, false, {
+                            fileName: "[project]/src/components/PingPongGame.tsx",
+                            lineNumber: 665,
+                            columnNumber: 13
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                            className: "text-4xl md:text-6xl font-bold text-white mb-4",
+                            children: [
+                                "🎉 ",
+                                localGameState.winner,
+                                " Wins! 🎉"
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/components/PingPongGame.tsx",
+                            lineNumber: 666,
+                            columnNumber: 13
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                            className: "text-xl md:text-2xl text-yellow-200 mb-6",
+                            children: tournamentMode ? 'Match completed!' : 'Congratulations on your victory!'
+                        }, void 0, false, {
+                            fileName: "[project]/src/components/PingPongGame.tsx",
+                            lineNumber: 669,
+                            columnNumber: 13
+                        }, this),
+                        tournamentMode ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "flex justify-center",
+                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                onClick: ()=>{
+                                    // Call the tournament callback if provided
+                                    if (onTournamentMatchEnd && tournamentPlayers.length === 2) {
+                                        const winnerPlayer = tournamentPlayers.find((p)=>p.name === localGameState.winner);
+                                        if (winnerPlayer) {
+                                            onTournamentMatchEnd(winnerPlayer);
+                                        }
+                                    }
+                                    // Close the winner message
+                                    setWinnerMessageVisible(false);
+                                    setShowWinnerMessage(false);
+                                },
+                                className: "px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105",
+                                children: "Next Round →"
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/PingPongGame.tsx",
+                                lineNumber: 676,
+                                columnNumber: 17
+                            }, this)
+                        }, void 0, false, {
+                            fileName: "[project]/src/components/PingPongGame.tsx",
+                            lineNumber: 675,
+                            columnNumber: 15
+                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "flex flex-col sm:flex-row justify-center gap-4",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: toggleWinnerMessage,
+                                    className: "px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105",
+                                    children: winnerMessageVisible ? 'Hide Message' : 'Show Message'
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/PingPongGame.tsx",
+                                    lineNumber: 697,
+                                    columnNumber: 17
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: ()=>{
+                                        const event = new KeyboardEvent('keypress', {
+                                            key: 'r'
+                                        });
+                                        window.dispatchEvent(event);
+                                    },
+                                    className: "px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105",
+                                    children: "Play Again (R)"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/PingPongGame.tsx",
+                                    lineNumber: 703,
+                                    columnNumber: 17
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/components/PingPongGame.tsx",
+                            lineNumber: 696,
+                            columnNumber: 15
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/components/PingPongGame.tsx",
+                    lineNumber: 652,
+                    columnNumber: 11
+                }, this)
+            }, void 0, false, {
+                fileName: "[project]/src/components/PingPongGame.tsx",
+                lineNumber: 646,
                 columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -482,33 +723,33 @@ const PingPongGame = ()=>{
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex flex-row items-center gap-2 min-w-[120px]",
                         children: [
-                            gameState.players && gameState.players[0]?.avatar ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                src: gameState.players[0].avatar,
+                            currentPlayers && currentPlayers[0]?.avatar ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                                src: currentPlayers[0].avatar,
                                 alt: "Player 1",
                                 className: "w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/PingPongGame.tsx",
-                                lineNumber: 500,
+                                lineNumber: 723,
                                 columnNumber: 13
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$icons$2f$fa$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FaUserCircle"], {
                                 className: "w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white bg-gray-700 rounded-full border-2 border-white"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/PingPongGame.tsx",
-                                lineNumber: 502,
+                                lineNumber: 725,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                 className: "text-white text-base xs:text-lg sm:text-xl md:text-2xl pl-2 sm:pl-5 md:pl-7 font-bold drop-shadow-md truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[180px] md:max-w-[220px]",
-                                children: gameState.players && gameState.players[0]?.name ? gameState.players[0].name : 'PLAYER 1'
+                                children: currentPlayers && currentPlayers[0]?.name ? currentPlayers[0].name : 'PLAYER 1'
                             }, void 0, false, {
                                 fileName: "[project]/src/components/PingPongGame.tsx",
-                                lineNumber: 504,
+                                lineNumber: 727,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/PingPongGame.tsx",
-                        lineNumber: 498,
+                        lineNumber: 721,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -516,43 +757,43 @@ const PingPongGame = ()=>{
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                 className: "text-white text-base xs:text-lg sm:text-xl md:text-2xl pr-2 sm:pr-5 md:pr-7 font-bold drop-shadow-md truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[180px] md:max-w-[220px]",
-                                children: gameState.mode === 'ai' ? 'THE MACHINIST (AI)' : gameState.players && gameState.players[1]?.name ? gameState.players[1].name : 'PLAYER 2'
+                                children: gameState.mode === 'ai' && !tournamentMode ? 'THE MACHINIST (AI)' : currentPlayers && currentPlayers[1]?.name ? currentPlayers[1].name : 'PLAYER 2'
                             }, void 0, false, {
                                 fileName: "[project]/src/components/PingPongGame.tsx",
-                                lineNumber: 510,
+                                lineNumber: 733,
                                 columnNumber: 11
                             }, this),
-                            gameState.mode === 'ai' ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$icons$2f$fa$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FaRobot"], {
+                            gameState.mode === 'ai' && !tournamentMode ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$icons$2f$fa$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FaRobot"], {
                                 className: "w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-blue-300 bg-gray-700 rounded-full border-2 border-white"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/PingPongGame.tsx",
-                                lineNumber: 516,
+                                lineNumber: 739,
                                 columnNumber: 13
-                            }, this) : gameState.players && gameState.players[1]?.avatar ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                src: gameState.players[1].avatar,
+                            }, this) : currentPlayers && currentPlayers[1]?.avatar ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                                src: currentPlayers[1].avatar,
                                 alt: "Player 2",
                                 className: "w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/PingPongGame.tsx",
-                                lineNumber: 519,
+                                lineNumber: 742,
                                 columnNumber: 15
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$icons$2f$fa$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FaUserCircle"], {
                                 className: "w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white bg-gray-700 rounded-full border-2 border-white"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/PingPongGame.tsx",
-                                lineNumber: 521,
+                                lineNumber: 744,
                                 columnNumber: 15
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/PingPongGame.tsx",
-                        lineNumber: 509,
+                        lineNumber: 732,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/PingPongGame.tsx",
-                lineNumber: 496,
+                lineNumber: 719,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -561,72 +802,150 @@ const PingPongGame = ()=>{
                     className: "w-full max-w-full flex justify-center",
                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "w-full max-w-[900px] aspect-[16/6] relative",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("canvas", {
-                            ref: canvasRef,
-                            width: canvasWidth,
-                            height: canvasHeight,
-                            className: "rounded-lg shadow-lg bg-transparent absolute top-0 left-0 w-full h-full min-w-[220px]",
-                            style: {
-                                background: 'transparent',
-                                maxWidth: '100%'
-                            }
-                        }, void 0, false, {
-                            fileName: "[project]/src/components/PingPongGame.tsx",
-                            lineNumber: 530,
-                            columnNumber: 13
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("canvas", {
+                                ref: canvasRef,
+                                width: canvasWidth,
+                                height: canvasHeight,
+                                className: "rounded-lg shadow-lg bg-transparent absolute top-0 left-0 w-full h-full min-w-[220px]",
+                                style: {
+                                    background: 'transparent',
+                                    maxWidth: '100%'
+                                }
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/PingPongGame.tsx",
+                                lineNumber: 753,
+                                columnNumber: 13
+                            }, this),
+                            !localGameState.gameStarted && !localGameState.winner && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "absolute inset-0 flex items-center justify-center z-50",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: startGame,
+                                    className: "px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-xl shadow-lg transform hover:scale-105 transition-all duration-200 animate-pulse",
+                                    children: "🚀 START GAME"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/PingPongGame.tsx",
+                                    lineNumber: 764,
+                                    columnNumber: 17
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/PingPongGame.tsx",
+                                lineNumber: 763,
+                                columnNumber: 15
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/components/PingPongGame.tsx",
-                        lineNumber: 529,
+                        lineNumber: 752,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/PingPongGame.tsx",
-                    lineNumber: 528,
+                    lineNumber: 751,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/PingPongGame.tsx",
-                lineNumber: 527,
+                lineNumber: 750,
                 columnNumber: 7
+            }, this),
+            gameState.mode === 'remote' && !tournamentMode && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "mt-4 flex justify-center",
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                    onClick: ()=>{
+                        // Create invitation link with room code
+                        const roomCode = gameState.gameRoom?.id || gameState.roomCode;
+                        const inviteLink = roomCode ? `${window.location.origin}/game/remote?room=${roomCode}` : `${window.location.origin}/game/remote`;
+                        console.log('Sharing invitation link:', inviteLink); // Debug log
+                        // Try to use Web Share API if available, otherwise copy to clipboard
+                        if (navigator.share) {
+                            navigator.share({
+                                title: 'Join my Ping Pong game!',
+                                text: 'Come play Ping Pong with me online!',
+                                url: inviteLink
+                            }).catch((error)=>{
+                                console.log('Error sharing:', error);
+                                // Fallback to clipboard
+                                navigator.clipboard.writeText(inviteLink).then(()=>{
+                                    alert('Game invitation link copied to clipboard!');
+                                });
+                            });
+                        } else {
+                            // Fallback to clipboard
+                            navigator.clipboard.writeText(inviteLink).then(()=>{
+                                alert('Game invitation link copied to clipboard!\nShare this link with your friend to invite them to play.');
+                            }).catch(()=>{
+                                // If clipboard API fails, show the link
+                                prompt('Copy this invitation link to share with your friend:', inviteLink);
+                            });
+                        }
+                    },
+                    className: "px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105 flex items-center gap-2 shadow-lg",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                            children: "📤"
+                        }, void 0, false, {
+                            fileName: "[project]/src/components/PingPongGame.tsx",
+                            lineNumber: 813,
+                            columnNumber: 13
+                        }, this),
+                        "Invite Friend"
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/components/PingPongGame.tsx",
+                    lineNumber: 778,
+                    columnNumber: 11
+                }, this)
+            }, void 0, false, {
+                fileName: "[project]/src/components/PingPongGame.tsx",
+                lineNumber: 777,
+                columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "mt-4 text-center text-white",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-sm",
-                        children: gameState.mode === 'ai' ? 'Use W/S to control your paddle' : 'Left: W/S | Right: ↑/↓'
+                        children: gameState.mode === 'ai' && !tournamentMode ? 'Use W/S to control your paddle' : 'Left Player: W/S | Right Player: ↑/↓'
                     }, void 0, false, {
                         fileName: "[project]/src/components/PingPongGame.tsx",
-                        lineNumber: 541,
+                        lineNumber: 820,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-sm mt-1",
-                        children: "Click on P to pause / resume the game"
+                        children: "Press P to pause / resume the game"
                     }, void 0, false, {
                         fileName: "[project]/src/components/PingPongGame.tsx",
-                        lineNumber: 545,
+                        lineNumber: 824,
                         columnNumber: 9
+                    }, this),
+                    showWinnerMessage && !tournamentMode && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-sm mt-1 text-yellow-300",
+                        children: "Press T to toggle winner message"
+                    }, void 0, false, {
+                        fileName: "[project]/src/components/PingPongGame.tsx",
+                        lineNumber: 826,
+                        columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-sm mt-3",
-                        children: "First to 20 points wins!"
+                        children: "First to score wins!"
                     }, void 0, false, {
                         fileName: "[project]/src/components/PingPongGame.tsx",
-                        lineNumber: 546,
+                        lineNumber: 828,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/PingPongGame.tsx",
-                lineNumber: 540,
+                lineNumber: 819,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/PingPongGame.tsx",
-        lineNumber: 467,
+        lineNumber: 615,
         columnNumber: 5
     }, this);
 };

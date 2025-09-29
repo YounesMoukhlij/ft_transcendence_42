@@ -63,7 +63,7 @@ function Player2Setup() {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "flex flex-col items-center justify-center h-full bg-transparent p-4",
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-700 p-8",
+            className: "w-full max-w-lg bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-700 p-8",
             children: [
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
                     className: "text-2xl font-bold text-white mb-4 text-center",
@@ -178,7 +178,7 @@ function Player2Setup() {
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                             type: "submit",
-                            className: "mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",
+                            className: "mt-4 bg-black hover:bg-white hover:text-black border-2 border-white text-white font-bold py-2 px-4 rounded",
                             disabled: !name && !avatar,
                             children: "Continue"
                         }, void 0, false, {

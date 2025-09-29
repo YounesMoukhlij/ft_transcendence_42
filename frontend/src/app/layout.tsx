@@ -17,8 +17,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <title>Ping Pong Game</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className="h-[100%] flex flex-col border-5 border-white">
+      <body className="h-[100%] flex flex-col bg-black border-5 border-white">
         <GameProvider>
           <Navbar />
           <div className="flex h-[90%] rounded-3xl gap-[10px] p-[10px] z-10 ">
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               {children}
             </div>
           </div>
-          <ParticlesBackground id="particles" />
+          {/* <ParticlesBackground id="particles" /> */}
         </GameProvider>
       </body>
     </html>

@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 
 export const globalStore = create((set, get) => ({
+
   socket: null,
   isConnect: false,
   username: null,
