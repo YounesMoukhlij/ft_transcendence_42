@@ -342,10 +342,6 @@
     pointer-events: none;
   }
 
-  .visible {
-    visibility: visible;
-  }
-
   .absolute {
     position: absolute;
   }
@@ -1237,10 +1233,6 @@
     border-color: var(--color-purple-500);
   }
 
-  .border-transparent {
-    border-color: #0000;
-  }
-
   .border-white {
     border-color: var(--color-white);
   }
@@ -1746,6 +1738,10 @@
 
   .italic {
     font-style: italic;
+  }
+
+  .underline {
+    text-decoration-line: underline;
   }
 
   .opacity-0 {

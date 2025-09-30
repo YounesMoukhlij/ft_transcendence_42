@@ -1,70 +1,60 @@
-import { log } from "console";
 import bcrypt from 'bcrypt';
 import fetch from 'node-fetch';
+
+// Constants
+const DEFAULT_PROFILE_IMAGE = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg";
+const GOOGLE_CLIENT_ID = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com";
+const GOOGLE_CLIENT_SECRET = "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";
+const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
+const FRONTEND_URL = "http://localhost:3000/Auth/signIn";
 
 // Helper function to hash passwords
 async function hashPassword(password) {
     const salt = await bcrypt.genSalt(10);
-    const hashedpass = await bcrypt.hash(password, salt);
-    console.log("Hashed password:", hashedpass);
-    console.log('original password:', password);
-    return hashedpass;
+    return await bcrypt.hash(password, salt);
 }
+
+// ====== USER MANAGEMENT ======
 
 export async function AddUser(request, reply) {
     const { username, email, password } = request.body;
-    const defImage = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg";
 
-    console.log("AddUser called with:", { username, email, password: "***hidden***" });
-    
-    // Validate required fields first
     if (!username || !email || !password) {
-        return reply
-            .code(400)
-            .send({ 
-                success: false, 
-                message: "Missing required fields" 
-            });
+        return reply.code(400).send({ 
+            success: false, 
+            message: "Missing required fields" 
+        });
     }
 
     try {
-        // Check if user already exists
-        const userExists = request.server.db.prepare("SELECT * FROM users WHERE username = ? OR email = ?").get(username, email);
+        const userExists = request.server.db
+            .prepare("SELECT * FROM users WHERE username = ? OR email = ?")
+            .get(username, email);
+
         if (userExists) {
-            return reply
-                .code(409)
-                .send({ 
-                    success: false, 
-                    message: "Username or email already exists" 
-                });
+            return reply.code(409).send({ 
+                success: false, 
+                message: "Username or email already exists" 
+            });
         }
 
-        // Hash the password before storing
         const hashedPassword = await hashPassword(password);
+        const query = request.server.db
+            .prepare("INSERT INTO users (username, email, password, profile_img) VALUES (?, ?, ?, ?)");
+        const result = query.run(username, email, hashedPassword, DEFAULT_PROFILE_IMAGE);
 
-        // Insert user with hashed password
-        const query = request.server.db.prepare("INSERT INTO users (username, email, password, profile_img) VALUES (?, ?, ?, ?)");
-        const result = query.run(username, email, hashedPassword, defImage);
-
-        console.log(`User ${username} added successfully`);
-
-        return reply
-            .code(201)
-            .send({
-                success: true,
-                message: `User ${username} added successfully`,
-                userId: result.lastInsertRowid
-            });
+        return reply.code(201).send({
+            success: true,
+            message: "User created successfully",
+            userId: result.lastInsertRowid
+        });
 
     } catch (error) {
         console.error("Error adding user:", error);
-
-        return reply
-            .code(500)
-            .send({ 
-                success: false,
-                message: "Error adding user",
-            });
+        return reply.code(500).send({ 
+            success: false,
+            message: "Error adding user"
+        });
     }
 }
 
@@ -72,244 +62,256 @@ export async function login(request, reply) {
     const { username, password } = request.body;
     
     if (!username || !password) {
-        return reply
-            .code(400)
-            .send({ 
-                success: false, 
-                message: "Missing required fields" 
-            });
+        return reply.code(400).send({ 
+            success: false, 
+            message: "Missing required fields" 
+        });
     }
 
     try {
-        const query = request.server.db.prepare("SELECT * FROM users WHERE username = ?");
-        const user = query.get(username);
+        const user = request.server.db
+            .prepare("SELECT * FROM users WHERE username = ?")
+            .get(username);
         
         if (!user) {
-            return reply
-                .code(401)
-                .send({ 
-                    success: false, 
-                    message: "Invalid username or password" 
-                });
+            return reply.code(401).send({ 
+                success: false, 
+                message: "Invalid username or password" 
+            });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        console.log("----------------");
-        console.log( password, user.password, isPasswordValid);
-        console.log("----------------");
         
-        if (isPasswordValid) {
-            // Remove password from user object before sending
-            const { password: _, ...userWithoutPassword } = user;
-            
-            return reply
-                .code(200)
-                .send({ 
-                    success: true, 
-                    message: "Login successful",
-                    user: userWithoutPassword 
-                });
-        } else {
-            return reply
-                .code(401)
-                .send({ 
-                    success: false, 
-                    message: "Invalid username or password" ,
-                    code: 401
-                });
+        if (!isPasswordValid) {
+            return reply.code(401).send({ 
+                success: false, 
+                message: "Invalid username or password"
+            });
         }
+
+        const { password: _, ...userWithoutPassword } = user;
+        
+        return reply.code(200).send({ 
+            success: true, 
+            message: "Login successful",
+            user: userWithoutPassword 
+        });
 
     } catch (error) {
         console.error("Error during login:", error);
-        
-        return reply
-            .code(500)
-            .send({ 
-                success: false,
-                message: "Internal server error", 
-                error: process.env.NODE_ENV === 'development' ? error.message : undefined
-            });
+        return reply.code(500).send({ 
+            success: false,
+            message: "Internal server error"
+        });
     }
 }
 
 export async function getAllUsers(request, reply) {
     try {
-        const query = request.server.db.prepare("SELECT * FROM users");
-        const users = await query.all();
-        reply.send(users).code(200);
+        const users = request.server.db
+            .prepare("SELECT id_user, username, email, profile_img FROM users")
+            .all();
+        return reply.code(200).send(users);
     } catch (error) {
         console.error("Error fetching users:", error);
-        reply.send({ message: "Error fetching users", error: error.message }).code(500);
+        return reply.code(500).send({ 
+            message: "Error fetching users" 
+        });
     }
 }
+
 export async function getUserById(request, reply) {
     const { id } = request.params;
+    
     try {
-        const query = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?");
-        const user = query.get(id);
-        if (user) {
-            reply.send(user).code(200);
-        } else {
-            reply.send({ message: "User not found" }).code(404);
+        const user = request.server.db
+            .prepare("SELECT id_user, username, email, profile_img FROM users WHERE id_user = ?")
+            .get(id);
+        
+        if (!user) {
+            return reply.code(404).send({ message: "User not found" });
         }
+        
+        return reply.code(200).send(user);
     } catch (error) {
         console.error("Error fetching user:", error);
-        reply.send({ message: "Error fetching user", error: error.message }).code(500);
+        return reply.code(500).send({ 
+            message: "Error fetching user" 
+        });
     }
 }
 
 export async function getUserByEmail(request, reply) {
     const { email } = request.params;
+    
     try {
-        const query = request.server.db.prepare("SELECT * FROM users WHERE email = ?");
-        const user = query.get(email);
-        if (user) {
-            reply.send(user).code(200);
-        } else {
-            reply.send({ message: "User not found" }).code(404);
+        const user = request.server.db
+            .prepare("SELECT id_user, username, email, profile_img FROM users WHERE email = ?")
+            .get(email);
+        
+        if (!user) {
+            return reply.code(404).send({ message: "User not found" });
         }
+        
+        return reply.code(200).send(user);
     } catch (error) {
         console.error("Error fetching user:", error);
-        reply.send({ message: "Error fetching user", error: error.message }).code(500);
+        return reply.code(500).send({ 
+            message: "Error fetching user" 
+        });
     }
 }
 
-// import fetch from 'node-fetch';  // npm install node-fetch
+export async function DeleteUserById(request, reply) {
+    console.log("DeleteUserById called");
+    const { id } = request.params;
+
+    try {
+        const result = request.server.db
+            .prepare("DELETE FROM users WHERE id_user = ?")
+            .run(id);
+
+        if (result.changes === 0) {
+            return reply.code(404).send({ message: "User not found" });
+        }
+
+        return reply.code(200).send({ message: "User deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        return reply.code(500).send({
+            message: "Error deleting user"
+        });
+    }
+}
+
+
+// ====== GOOGLE OAUTH ======
+
+export async function InitiateGoogleAuth(request, reply) {
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&scope=openid%20email%20profile`;
+    
+    return reply.redirect(googleAuthUrl);
+}
 
 export async function GoogleAuth(request, reply) {
-    console.log("GoogleAuth called with code:", request.query.code);
-    
     const { code } = request.query;
    
     if (!code) {
-      console.log("No code provided");
-      return reply.redirect('http://localhost:3000?error=no_code');
+        return reply.redirect(`${FRONTEND_URL}?error=no_code`);
     }
- 
+
     try {
-      // 1. Exchange code for token
-      console.log("Exchanging code for token...");
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          code: code,
-          client_id: '629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com',
-          client_secret: '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',
-          redirect_uri: 'http://localhost:4444/GoogleAuth',
-          grant_type: 'authorization_code',
-        }),
-      });
- 
-      const tokens = await tokenResponse.json();
-      console.log("Token received:", tokens.access_token ? "✅" : "❌");
- 
-      // 2. Get user info
-      console.log("Getting user info...");
-      const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: { Authorization: `Bearer ${tokens.access_token}` },
-      });
- 
-      const googleUser = await userResponse.json();
- 
-      // 3. Create user object
-      const user = {
-        id: googleUser.id,
-        email: googleUser.email,
-        name: googleUser.name,
-        picture: googleUser.picture,
-        token: tokens.access_token,
-      };
-      
-      console.log("✅ Google user info:", user);
-      
-      // 4. Send user data to frontend
-    //   const userData = encodeURIComponent(JSON.stringify(user));
-    //   return reply.redirect(`http://localhost:3000/dashboard?user=${userData}`);
+        // Exchange authorization code for access token
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                code,
+                client_id: GOOGLE_CLIENT_ID,
+                client_secret: GOOGLE_CLIENT_SECRET,
+                redirect_uri: GOOGLE_REDIRECT_URI,
+                grant_type: 'authorization_code',
+            }),
+        });
 
-      // find function to check if user exists in db, if not create it
-      // add user to db from google info
-      const existingUser = request.server.db.prepare("SELECT * FROM users WHERE email = ?").get(googleUser.email);
-        if (!existingUser) {
-            const insertQuery = request.server.db.prepare("INSERT INTO users (username, email, profile_img) VALUES (?, ?, ?)");
-            insertQuery.run(googleUser.name, googleUser.email, googleUser.picture);
-            console.log(`User ${googleUser.email} added to database`);
-
-        } else {
-            console.log(`User ${googleUser.email} already exists in database`);
-            throw new Error('User already exists');
+        const tokens = await tokenResponse.json();
+        
+        if (!tokens.access_token) {
+            throw new Error('Failed to obtain access token');
         }
-    reply.redirect(`http://localhost:3000?success=auth_successful&email=${googleUser.email}`);
+
+        // Get user info from Google
+        const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+            headers: { Authorization: `Bearer ${tokens.access_token}` },
+        });
+
+        const googleUser = await userResponse.json();
+
+        // Check if user already exists
+        const existingUser = request.server.db
+            .prepare("SELECT * FROM users WHERE email = ?")
+            .get(googleUser.email);
+
+        let userId;
+        let isNewUser = false;
+
+        if (existingUser) {
+            // User exists - log them in
+            userId = existingUser.id_user;
+            isNewUser = false;
+        } else {
+            // Create new user with auth_method = 1 (Google)
+            const insertQuery = request.server.db
+            .prepare("INSERT INTO users (username, email, profile_img, auth_method) VALUES (?, ?, ?, ?)");
+            const result = insertQuery.run(
+            googleUser.name, 
+            googleUser.email, 
+            googleUser.picture,
+            1 // auth_method: 1 for Google
+            );
+            userId = result.lastInsertRowid;
+            isNewUser = true;
+        }
+
+        // Generate unique session ID
+        const sessionId = `google_auth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Initialize global sessions map
+        if (!global.googleAuthSessions) {
+            global.googleAuthSessions = new Map();
+        }
+        
+        // Store session data
+        global.googleAuthSessions.set(sessionId, {
+            id: userId,
+            email: googleUser.email,
+            username: googleUser.name,
+            profile_img: googleUser.picture,
+            isNewUser: isNewUser,
+            timestamp: Date.now()
+        });
+
+        // Clean up expired sessions (older than 5 minutes)
+        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+        for (const [key, value] of global.googleAuthSessions.entries()) {
+            if (value.timestamp < fiveMinutesAgo) {
+                global.googleAuthSessions.delete(key);
+            }
+        }
+
+        // Redirect with session ID
+        return reply.redirect(`${FRONTEND_URL}?googleAuth=success&sessionId=${sessionId}`);
+
     } catch (error) {
-        console.error('❌ Google auth failed:', error);
-        return reply.redirect('http://localhost:3000?error=auth_failed');
+        console.error('Google auth failed:', error);
+        return reply.redirect(`${FRONTEND_URL}?error=auth_failed`);
     }
 }
 
-// export async function googleAuth(request, reply) {
-//     // const id_client = process.env.GOOGLE_CLIENT_ID;
-//     // cosnt secret_client = process.env.GOOGLE_CLIENT_SECRET;
-//     const google_client_id = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com";
-//     const secret_client = "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";
-//     const redirect_uri = "http://localhost:3000/auth/google/callback";
-//     const { code } = request.query;
-//     if (!code) {
-//         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${google_client_id}&redirect_uri=${redirect_uri}&response_type=code&scope=openid%20email%20profile`;
-//         return reply.redirect(authUrl);
-//     } else {
-//         try {
-//             // Exchange code for tokens
-//             const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-//                 method: 'POST',
-//                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-//                 body: new URLSearchParams({
-//                     code,
-//                     client_id: google_client_id,
-//                     client_secret: secret_client,
-//                     redirect_uri,
-//                     grant_type: 'authorization_code'
-//                 })
-//             });
-//             const tokenData = await tokenResponse.json();
-//             const idToken = tokenData.id_token;
+export async function getGoogleAuthUser(request, reply) {
+    const { sessionId } = request.query;
 
-//             // Decode the ID token to get user info
-//             const base64Url = idToken.split('.')[1];
-//             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-//             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-//                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-//             }).join(''));
-//             const userInfo = JSON.parse(jsonPayload);
+    if (!sessionId) {
+        return reply.code(400).send({
+            success: false,
+            message: "Session ID required"
+        });
+    }
 
-//             // Here you would typically find or create the user in your database
-//             console.log("Google user info:", userInfo);
+    if (!global.googleAuthSessions || !global.googleAuthSessions.has(sessionId)) {
+        return reply.code(404).send({
+            success: false,
+            message: "Session not found or expired"
+        });
+    }
 
-//             return reply
-//                 .code(200)
-//                 .send({ 
-//                     success: true, 
-//                     message: "Google authentication successful",
-//                     user: userInfo 
-//                 });
+    const userData = global.googleAuthSessions.get(sessionId);
+    
+    // Delete session after retrieval (one-time use)
+    global.googleAuthSessions.delete(sessionId);
 
-//         } catch (error) {
-//             console.error("Error during Google authentication:", error);
-//             return reply
-//                 .code(500)
-//                 .send({ 
-//                     success: false,
-//                     message: "Internal server error"
-//                 });
-//         }
-//     }
-// }
-
-
-// using middleware for hashing password and validating input would be a good idea
-// also, using environment variables for database connection details is recommended
-
-// Additional user management functions can be added here, such as Login, Logout, UpdateUser, DeleteUser, GetUsers, GetUserById
-// Each function should handle its own database interactions and error handling
-// For example:
-
-// methode schema
+    return reply.code(200).send({
+        success: true,
+        user: userData
+    });
+}
