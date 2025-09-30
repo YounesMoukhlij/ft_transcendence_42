@@ -3,18 +3,20 @@
 // import type { Metadata } from "next";
 
 import './globals.css'
-// import useUserStore from '../store/useUserStore';
+import {useUserStore} from '../store/userStore';
+import { useEffect } from 'react';
 
 
 
 export default function Home()
 {
-  // get user from localStorage
-  // const user = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-  // console.log('User from localStorage:', user);
-  // const parsedUser = user ? JSON.parse(user) : null;
-  // const user = useUserStore((state: { user: string }) => state.user);
-  // console.log('User from Zustand store:', user);
+  const { user } = useUserStore();
+  const data = useUserStore((state) => state.user);
+
+  useEffect(() => {
+    console.log("Home user:", user);
+  }, [data, user]);
+
   return (
 
     <div className="text-white border">
@@ -23,9 +25,15 @@ export default function Home()
       <p>Click on the sidebar to navigate.</p>
       <p>Use the navbar for additional options.</p>
       <p>Enjoy your stay!</p>
-      <h1 className="text-3xl font-bold underline text-red-500">
-        {/* {user} */}
-      </h1>
+      {data ? (
+        <div className='text-center text-red-500 text-3xl'>
+          <p>Username: {data.username}</p>
+          <p>Email: {data.email}</p>
+          <img src={data.profile_img} alt="Profile Image" />
+        </div>
+      ) : (
+        <p>No user is logged in.</p>
+      )}
     </div>
   );
 }

@@ -5,9 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from 'react-toastify'
 import FlyingSaucer from './flyingsaucer'
 import '../globals.css'
-// import useUserStore from '../../store/useUserStore'
+import {useUserStore} from '../../store/userStore'
+import { on } from 'events'
 
 const API_URL = 'http://localhost:4444'
+
+
 
 export default function AuthLayout() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -180,15 +183,16 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
       toast.success('Account created successfully!')
       setFormData({ username: '', email: '', password: '', confirmPassword: '' })
       
-      setTimeout(() => {
-        router.push('/Auth/signIn')
-      }, 1500)
       
     } catch (error) {
       console.error('Error during sign up:', error)
       toast.error('An unexpected error occurred')
     } finally {
       setIsLoading(false)
+      // use onToggle to switch to sign-in form after successful sign-up
+      // onToggle()
+      // Optionally, redirect to sign-in page
+      // router.push('/Auth/signIn')
     }
   }
 
@@ -280,7 +284,6 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
 interface SignInFormProps {
   onToggle: () => void
 }
-
 function SignInForm({ onToggle }: SignInFormProps) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -289,7 +292,9 @@ function SignInForm({ onToggle }: SignInFormProps) {
   const [hasProcessedOAuth, setHasProcessedOAuth] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, setUser, clearUser } = useUserStore()
 
+  // Google OAuth callback handler
   const handleGoogleCallback = useCallback(async () => {
     if (hasProcessedOAuth) return
 
@@ -297,9 +302,9 @@ function SignInForm({ onToggle }: SignInFormProps) {
     const sessionId = searchParams.get('sessionId')
     const authError = searchParams.get('error')
 
-    const hasOAuthParams = googleAuthStatus || sessionId || authError
+    const hasGoogleParams = googleAuthStatus || (sessionId && googleAuthStatus) || authError
 
-    if (!hasOAuthParams) return
+    if (!hasGoogleParams) return
 
     setHasProcessedOAuth(true)
     router.replace('/Auth/signIn')
@@ -316,12 +321,6 @@ function SignInForm({ onToggle }: SignInFormProps) {
     if (googleAuthStatus === 'success' && sessionId) {
       try {
         const response = await fetch(`${API_URL}/auth/google/user?sessionId=${sessionId}`)
-        
-        // if (!response.ok) {
-        //   toast.error('Failed to retrieve user data')
-        //   return
-        // }
-
         const data = await response.json()
 
         if (!data.success || !data.user) {
@@ -331,7 +330,6 @@ function SignInForm({ onToggle }: SignInFormProps) {
 
         const user = data.user
         localStorage.setItem('user', JSON.stringify(user))
-        // useUserStore.getState().setUser(user)
         
         const message = user.isNewUser 
           ? `Welcome ${user.username}! Account created successfully.`
@@ -350,73 +348,66 @@ function SignInForm({ onToggle }: SignInFormProps) {
     }
   }, [searchParams, router, hasProcessedOAuth])
 
+  // 42 OAuth callback handler (NEW)
+  const handle42Callback = useCallback(async () => {
+    if (hasProcessedOAuth) return
+
+    const fortyTwoAuthStatus = searchParams.get('fortyTwoAuth')
+    const sessionId = searchParams.get('sessionId')
+    const authError = searchParams.get('error')
+
+    const has42Params = fortyTwoAuthStatus || (sessionId && fortyTwoAuthStatus) || authError
+
+    if (!has42Params) return
+
+    setHasProcessedOAuth(true)
+    router.replace('/Auth/signIn')
+
+    if (authError) {
+      const errorMessages: Record<string, string> = {
+        'no_code': '42 authentication failed: No authorization code',
+        'auth_failed': '42 authentication failed. Please try again.'
+      }
+      toast.error(errorMessages[authError] || 'An error occurred during authentication')
+      return
+    }
+
+    if (fortyTwoAuthStatus === 'success' && sessionId) {
+      try {
+        const response = await fetch(`${API_URL}/auth/42/user?sessionId=${sessionId}`)
+        const data = await response.json()
+
+        if (!data.success || !data.user) {
+          toast.error('Invalid user data received')
+          return
+        }
+
+        const user = data.user
+        localStorage.setItem('user', JSON.stringify(user))
+        
+        const message = user.isNewUser 
+          ? `Welcome ${user.username}! Account created successfully.`
+          : `Welcome back, ${user.username}!`
+        
+        toast.success(message)
+        
+        setTimeout(() => {
+          router.push('/')
+        }, 1500)
+        
+      } catch (err) {
+        console.error('Failed to fetch user data:', err)
+        toast.error('Failed to complete authentication')
+      }
+    }
+  }, [searchParams, router, hasProcessedOAuth])
+
+  // Run both OAuth callbacks
   useEffect(() => {
     handleGoogleCallback()
-  }, [handleGoogleCallback])
+    handle42Callback()
+  }, [handleGoogleCallback, handle42Callback])
 
-  const validateForm = () => {
-    if (!username.trim() || !password) {
-      const errorMessage = 'Both username and password are required'
-      setError(errorMessage)
-      toast.error(errorMessage)
-      return false
-    }
-    return true
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateForm()) return
-
-    setIsLoading(true)
-    setError('')
-
-    try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: username.trim(), 
-          password: password 
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        const errorMessage = data.message || 'Login failed. Please try again.'
-        setError(errorMessage)
-        toast.error(errorMessage)
-        return
-      }
-
-      if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user))
-      }
-
-      toast.success('Login successful!')
-      setUsername('')
-      setPassword('')
-      setError('')
-      
-      setTimeout(() => {
-        router.push('/')
-      }, 1000)
-      
-    } catch (error) {
-      console.error('Network error during login:', error)
-      const errorMessage = 'Network error. Please check your connection.'
-      setError(errorMessage)
-      toast.error(errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleGoogleAuth = () => {
-    router.push(`${API_URL}/auth/google`)
-  }
 
   return (
     <div className="flex flex-col gap-6 items-center justify-center">
@@ -476,7 +467,8 @@ function SignInForm({ onToggle }: SignInFormProps) {
 
         <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 items-center justify-center w-full'>
           <button 
-            type="submit"
+            type="button"
+            onClick={handleSubmit}
             disabled={isLoading}
             className={`w-full p-3 sm:p-4 rounded-2xl transition-all duration-300 ease-in-out text-sm sm:text-base ${
               isLoading 
@@ -505,6 +497,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
             <button 
               type="button"
               disabled={isLoading}
+              onClick={handle42Auth}
               className="w-1/2 sm:w-12 lg:w-16 p-3 sm:p-4 rounded-2xl bg-gray-100 transition-all duration-300 ease-in-out text-black flex items-center justify-center gap-2 hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg viewBox="0 -200 960 960" width="20" height="20" className="sm:w-6 sm:h-6" xmlns="http://www.w3.org/2000/svg">
