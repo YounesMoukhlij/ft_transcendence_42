@@ -180,7 +180,6 @@ export async function GetFriends(request, reply) {
 
 
   try {
-    // Get the user ID based on the username
     const getUserIdStmt = request.server.db.prepare(`SELECT id_user FROM users WHERE username = ?`);
     const user = getUserIdStmt.get(username);
 
@@ -190,7 +189,6 @@ export async function GetFriends(request, reply) {
 
     const userId = user.id_user;
 
-    // Get the IDs of the user's friends
     const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id FROM friends WHERE friend_id = ?`);
     const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id FROM friends WHERE user_id = ?`);
 
@@ -203,7 +201,6 @@ export async function GetFriends(request, reply) {
       return reply.send([]);
     }
 
-    // Get details for all the friends
     const placeholders = allFriendIds.map(() => '?').join(', ');
     const getFriendDetailsStmt = request.server.db.prepare(`
       SELECT id_user, username, email, fullname, profile_img, xp, access_token, status 
@@ -213,7 +210,6 @@ export async function GetFriends(request, reply) {
 
     const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
 
-    // Prepare statement to get the latest message from the message table
     const getLastMessageStmt = request.server.db.prepare(`
       SELECT message, created_at
       FROM message

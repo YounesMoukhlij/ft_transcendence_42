@@ -20,7 +20,11 @@ function handle_Emojis(setShow: any, show: boolean) {
 
 async function fetchData(title: string, setDboubleBlock, Setuser_block) {
   try {
-    const user = localStorage.getItem('name');
+    // const user = localStorage.getItem('name');
+    const user = window.localStorage.getItem('name');
+    
+    
+
     const result = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`, { user, friend: title });
     localStorage.setItem('conversationId', result.data.conversation_id);
     setDboubleBlock(result.data.is_double_block);
@@ -43,7 +47,7 @@ type FreindsListProps = {
   SetSelectContact: any,
 };
 
-const FreindsList = ({ photo, title, message, status, setConversation, setRoom, setimg, SetSelectContact }: FreindsListProps) => {
+const FreindsList = ({ photo, title, message = "" , status, setConversation, setRoom, setimg, SetSelectContact }: FreindsListProps) => {
   const { setDboubleBlock, double_block, Setuser_block, user_block } = globalStore();
   const Get_Conversation = async () => {
     localStorage.setItem('room_select', title);
@@ -69,7 +73,7 @@ const FreindsList = ({ photo, title, message, status, setConversation, setRoom, 
         </div>
         <div className='last-message'>
           <p className="text-xs sm:text-sm md:text-base">
-            {message.length > 30 ? message.substr(0, 26) + "..." : message}
+            {message?.length > 30 ? message.substr(0, 26) + "..." : message}
           </p>
         </div>
       </div>
@@ -212,26 +216,46 @@ export default function chatPage() {
   }
 
   async function handleBlock(friend, setDboubleBlock, double_block, Setuser_block, user_block) {
+
+
+
+
+
     const username = globalStore.getState().username;
-    const id = localStorage.getItem('conversationId');
+    const id = window.localStorage.getItem('conversationId');
+
+    if (double_block == 2 || (double_block == 1 && user_block === username))
+        return ;
+
+
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`, {
       user: username,
       conv_id: id,
       friend: friend
     });
+
     Setuser_block(username);
     if (double_block < 2)
       setDboubleBlock(double_block + 1);
+
+
+
   }
 
   async function Deblock(friend, setDboubleBlock, double_block, Setuser_block, user_block) {
+
+    
     const username = globalStore.getState().username;
     const id = localStorage.getItem('conversationId');
+
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock`, {
       user: username,
       conv_id: id,
       friend: friend
     });
+    
+      console.log("hererererererer11223");
+    
     if (double_block > 0) {
       if (double_block === 2) {
         setDboubleBlock(1);
@@ -245,7 +269,7 @@ export default function chatPage() {
   }
 
   async function handleUnfriend(friend, removeFriend) {
-    const id = localStorage.getItem('conversationId');
+    const id = window.localStorage.getItem('conversationId');
     const username = globalStore.getState().username;
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`, {
       user: username,
@@ -323,10 +347,9 @@ export default function chatPage() {
 
   return (
     <div className="flex justify-center items-center h-[89vh] text-white px-2 sm:px-4 lg:px-0">
-      <div className="flex w-full h-[90vh] sm:h-[95vh] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%]">
+      <div className="flex w-full h-[90vh] sm:h-[95vh] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
         
-        {/* Sidebar - Hidden on mobile, visible on large screens */}
-        <div className="w-full sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid">
+        <div className="w-full  sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
           <Test1
             friends={friends}
             setMessages={setMessages}
@@ -336,14 +359,12 @@ export default function chatPage() {
           />
         </div>
 
-        {/* Mobile menu toggle */}
         <div className="flex self-start lg:hidden fixed top-4 left-4 z-50">
           <button onClick={handle_chats_display} className="p-2 mt-10 bg-amber-700  rounded-lg">
             <FaArrowRight />
           </button>
         </div>
 
-        {/* Mobile sidebar overlay */}
         {display_chats && (
           <div className="lg:hidden fixed inset-0 z-40">
             <div className="absolute inset-0 bg-black/50" onClick={handle_chats_display}></div>
@@ -359,10 +380,8 @@ export default function chatPage() {
           </div>
         )}
 
-        {/* Main chat area */}
-        <div className="flex w-full lg:w-2/3 xl:w-3/4 flex-col border rounded-[35px] border-solid bg-black">
+        <div className="flex w-full lg:w-2/3 xl:w-3/4 flex-col border rounded-[35px] border-solid bg-black ">
           
-          {/* Chat header */}
           {SelectContact && (
             <div className="flex items-center h-[8%] sm:h-[9%] rounded-t-[35px] ml-0.5 bg-[#3a3638] justify-between px-2 sm:px-4">
               <div className="flex h-3/5 self-center">
@@ -400,7 +419,6 @@ export default function chatPage() {
             </div>
           )}
 
-          {/* Messages area */}
           <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-b-[40px] ${SelectContact ? 'h-[83%] sm:h-[85%]' : 'h-full'} px-2 sm:px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
             {!SelectContact && (
               <div className='flex flex-col items-center justify-center w-full h-full text-center'>
@@ -453,7 +471,6 @@ export default function chatPage() {
             })}
           </div>
 
-          {/* Input area */}
           {SelectContact && (
             <>
               {double_block === 2 ? (
@@ -489,7 +506,6 @@ export default function chatPage() {
               ) : (
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
                   
-                  {/* Emoji button */}
                   <div className="relative">
                     <button onClick={() => handle_Emojis(setShow, show)}>
                       <BsEmojiSmile className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
@@ -501,7 +517,6 @@ export default function chatPage() {
                     )}
                   </div>
 
-                  {/* Input field */}
                   <div className="flex-1 mx-2 sm:mx-4">
                     <input
                       className="w-full h-8 sm:h-10 lg:h-12 bg-black p-2 sm:p-4 rounded-[20px] sm:rounded-[50px] outline-none text-xs sm:text-sm lg:text-base"
@@ -512,19 +527,16 @@ export default function chatPage() {
                     />
                   </div>
 
-                  {/* Game controller button */}
                   <div className="mr-2 sm:mr-4">
                     <button onClick={handle_confirm_invite}>
                       <IoGameController className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
                     </button>
                   </div>
 
-                  {/* Send button */}
                   <div className="mr-2 sm:mr-4">
                     <IoSend onClick={handleSend} className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 cursor-pointer" />
                   </div>
 
-                  {/* Game invite confirmation modal */}
                   {confirm_invite && (
                     <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
                       <div className="absolute inset-0 bg-black/50" onClick={() => setConfirm(false)}></div>

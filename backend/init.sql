@@ -28,7 +28,7 @@ CREATE TABLE friends (
     UNIQUE(user_id, friend_id)  -- prevent duplicates
 );
 
--- Table to store friend requests (unidirectional)
+
 CREATE TABLE friend_requests (
     id_request INTEGER PRIMARY KEY AUTOINCREMENT,
     sender_id INTEGER NOT NULL,

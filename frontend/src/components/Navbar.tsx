@@ -189,8 +189,8 @@ export default function Navbar()
             <div className='absolute flex flex-col top-[10%] right-[10%] h-[300px] w-[350px]  bg-black text-white border-2 border-white overflow-scroll gap-2 '>
              {
                notificatiion.map((item , index)=>(
-                   <div className=' index flex flex-col border-t border-gray-300 '>
-                    <div className='flex '>
+                   <div  key={index} className=' index flex flex-col border-t border-gray-300 '>
+                    <div  className='flex '>
                       <div className='h-[4.5rem] w-[4.5rem] pl-0.5 pt-2 '> <img  className='rounded-[50%] h-full w-full 'src={item.sender_profile_img} alt="profile" /></div>
                       <div className='flex w-full justify-between'>
                         <div className='ml-[0.5rem] '> <p className='text-2xl'>{item.sender_user}</p></div>
