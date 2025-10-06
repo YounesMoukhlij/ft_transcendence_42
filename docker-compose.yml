@@ -1,0 +1,10 @@
+services:
+  Next:
+    build:
+      context: .
+      dockerfile: ./infra/Dockerfile.front
+    container_name: frontfnd
+    image: frontfnd:0.1
+    restart: always
+    ports:
+      - "3000:3000"

@@ -111,7 +111,7 @@ const globalStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mod
             }),
         connect: ()=>{
             if (get().socket) return;
-            const ws = new WebSocket(`ws://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/ws`);
+            const ws = new WebSocket(`ws://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/ws`);
             ws.onopen = ()=>{
                 console.log("Connected");
                 ws.send(get().username || "");
@@ -185,7 +185,7 @@ function Navbar() {
     async function DelteFriendRequest(notify_id) {
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$sonner$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Deleted');
         setNotification((notificatiion)=>notificatiion.filter((item)=>item.notify_id !== notify_id));
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
             params: {
                 id: notify_id
             }
@@ -201,12 +201,12 @@ function Navbar() {
             status: 0
         };
         addFriend(object);
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/AddFriend`, {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/AddFriend`, {
             user1: item.sender_user,
             user2: loginUsername
         });
         setNotification((notificatiion)=>notificatiion.filter((item)=>item.notify_id !== item.notify_id));
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
             params: {
                 id: item.notify_id
             }
@@ -223,7 +223,7 @@ function Navbar() {
         "Navbar.useEffect": ()=>{
             async function get_notify() {
                 const user = localStorage.getItem('name');
-                const result = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/GetNotification`, {
+                const result = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/GetNotification`, {
                     params: {
                         user
                     }

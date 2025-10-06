@@ -42,14 +42,14 @@ async function fetchData(title, setDboubleBlock, Setuser_block) {
     try {
         // const user = localStorage.getItem('name');
         const user = window.localStorage.getItem('name');
-        const result = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/getConversationId`, {
+        const result = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/getConversationId`, {
             user,
             friend: title
         });
         localStorage.setItem('conversationId', result.data.conversation_id);
         setDboubleBlock(result.data.is_double_block);
         Setuser_block(result.data.block_user);
-        const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/getMsgs`, {
+        const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/getMsgs`, {
             id: result.data.conversation_id
         });
         return res.data;
@@ -326,7 +326,7 @@ function chatPage() {
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const fetchData = async ()=>{
             try {
-                const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/GetFriends`, {
+                const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/GetFriends`, {
                     params: {
                         username
                     }
@@ -349,7 +349,7 @@ function chatPage() {
         const username = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$globalStore$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["globalStore"].getState().username;
         const id = window.localStorage.getItem('conversationId');
         if (double_block == 2 || double_block == 1 && user_block === username) return;
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/block`, {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/block`, {
             user: username,
             conv_id: id,
             friend: friend
@@ -360,7 +360,7 @@ function chatPage() {
     async function Deblock(friend, setDboubleBlock, double_block, Setuser_block, user_block) {
         const username = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$globalStore$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["globalStore"].getState().username;
         const id = localStorage.getItem('conversationId');
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/Deblock`, {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/Deblock`, {
             user: username,
             conv_id: id,
             friend: friend
@@ -379,7 +379,7 @@ function chatPage() {
     async function handleUnfriend(friend, removeFriend) {
         const id = window.localStorage.getItem('conversationId');
         const username = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$globalStore$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["globalStore"].getState().username;
-        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/unfriend`, {
+        await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/unfriend`, {
             user: username,
             conv_id: id,
             friend: friend
@@ -392,12 +392,12 @@ function chatPage() {
         const friend = localStorage.getItem('room_select');
         const id = localStorage.getItem('conversationId');
         try {
-            const data = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/IsOnline`, {
+            const data = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/IsOnline`, {
                 params: {
                     username: friend
                 }
             });
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "10.11.8.14")}:${("TURBOPACK compile-time value", "4444")}/sendMsg`, {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/sendMsg`, {
                 user,
                 input,
                 id,
