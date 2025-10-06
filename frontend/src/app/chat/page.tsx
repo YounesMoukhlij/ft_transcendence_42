@@ -347,9 +347,9 @@ export default function chatPage() {
 
   return (
     <div className="flex justify-center items-center h-[89vh] text-white px-2 sm:px-4 lg:px-0">
-      <div className="flex w-full h-[90vh] sm:h-[95vh] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
+      <div className="flex w-[100vh] h-[90vh] sm:h-[95vh] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
         
-        <div className="w-full  sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-[black] p-2 rounded-[35px] border-solid ">
+        <div className="w-full  sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
           <Test1
             friends={friends}
             setMessages={setMessages}
@@ -419,7 +419,7 @@ export default function chatPage() {
             </div>
           )}
 
-          <div className={`chat-body flex flex-col overflow-scroll bg-[black] rounded-b-[40px] ${SelectContact ? 'h-[83%] sm:h-[85%]' : 'h-full'} px-2 sm:px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
+          <div className={`chat-body flex w-full flex-col overflow-scroll bg-[black] rounded-b-[40px] ${SelectContact ? 'h-[83%] sm:h-[85%]' : 'h-full'} px-2 sm:px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
             {!SelectContact && (
               <div className='flex flex-col items-center justify-center w-full h-full text-center'>
                 <h3 className="text-sm sm:text-base lg:text-lg mb-4">
@@ -443,11 +443,11 @@ export default function chatPage() {
                 const prevDate = index > 0 ? messages[index - 1].created_at.split(' ')[0] : null;
 
                 return (
-                  <div key={index} className="flex flex-col">
+                  <div key={index} className="flex flex-col  ">
                     {currentDate !== prevDate && <MessageDateComponent date={item.created_at} />}
                     <div className={`flex ${item.sender === localStorage.getItem('name') ? 'justify-end' : 'justify-start'} mb-2`}>
                       <div
-                        className={`p-2 sm:p-3 rounded-lg flex flex-col ${item.sender === localStorage.getItem('name') ? 'bg-[#2E372E] text-white rounded-br-none' : 'bg-[#B0C4DE] text-black rounded-bl-none'}`}
+                        className={`p-2 sm:p-3 rounded-lg flex flex-col  ${item.sender === localStorage.getItem('name') ? 'bg-[#2E372E] text-white rounded-br-none' : 'bg-[#B0C4DE] text-black rounded-bl-none'}`}
                         style={{ maxWidth: '85%', minWidth: '100px' }}
                       >
                         <p className="break-words text-xs sm:text-sm lg:text-base">{item.message}</p>
