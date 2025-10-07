@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from 'react-toastify'
-import FlyingSaucer from './flyingsaucer'
+// import FlyingSaucer from './flyingsaucer'
 import '../globals.css'
 import {useUserStore} from '../../store/userStore'
 
@@ -46,7 +46,7 @@ export default function AuthLayout() {
           transition={{ type: "spring", stiffness: 150, damping: 20, duration: 1 }}
         >
           <div className="w-full h-full flex items-center justify-center">
-            <FlyingSaucer />
+            {/* <FlyingSaucer /> */}
           </div>
         </motion.div>
 
@@ -576,7 +576,9 @@ function SignInForm({ onToggle }: SignInFormProps) {
         />
         
         <div className='flex items-start w-full'>
-          <h3 className='text-xs sm:text-sm text-gray-500 hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'>
+          <h3 className='text-xs sm:text-sm text-gray-500 hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'
+              onClick={() => router.push('/forgot-password')}
+            >
             Forgot your password?
           </h3>
         </div>
