@@ -1,10 +1,32 @@
 services:
-  Next:
+  Frontend:
     build:
       context: .
       dockerfile: ./infra/Dockerfile.front
-    container_name: frontfnd
-    image: frontfnd:0.1
+    container_name: frontend
+    image: frontend:0.1
     restart: always
     ports:
       - "3000:3000"
+    depends_on:
+      - Backend
+  Backend:
+    build:
+      context: .
+      dockerfile: ./infra/Dockerfile.back
+    container_name: backend
+    image: backend:0.1
+    restart: always
+    ports:  
+      - "4444:4444"
+  nginx:
+    build:
+      context: .
+      dockerfile: ./infra/Dockerfile.nginx
+    container_name: nginx
+    image: nginx:0.1
+    ports:
+    - "8080:8080"
+    depends_on:
+      - Frontend
+    restart: always

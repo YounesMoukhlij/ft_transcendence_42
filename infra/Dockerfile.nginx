@@ -1,0 +1,47 @@
+# FROM debian:bullseye
+
+# RUN apt update -y && apt upgrade -y && apt install nginx -y
+
+# RUN mkdir -p /etc/nginx/ssl
+
+# RUN apt install openssl -y
+
+# RUN openssl req -x509 -nodes -out /etc/nginx/ssl/inception.crt -keyout /etc/nginx/ssl/inception.key -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=e1r9p7/UID=hdhdhddddd"   
+# RUN openssl req -x509 -nodes -out /etc/nginx/ssl/inception.crt -keyout /etc/nginx/ssl/inception.key -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=api.e1r9p7/UID=hdhdhddddd"   
+
+# COPY ./default /etc/nginx/sites-available/.
+
+# CMD [ "nginx", "-g", "daemon off;"]
+
+
+
+
+
+
+
+FROM debian:bullseye
+
+RUN apt update -y && \
+    apt upgrade -y && \
+    apt install -y nginx openssl
+
+
+
+RUN mkdir -p /etc/nginx/ssl /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/frontend.key -out /etc/nginx/ssl/frontend.crt -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=e1r9p7/UID=frontend"
+
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/backend.key -out /etc/nginx/ssl/backend.crt -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=api.e1r9p7/UID=backend"
+
+
+COPY ./frontend.conf /etc/nginx/sites-available/frontend
+COPY ./backend.conf /etc/nginx/sites-available/backend
+
+
+RUN ln -s /etc/nginx/sites-available/frontend /etc/nginx/sites-enabled/
+RUN ln -s /etc/nginx/sites-available/backend /etc/nginx/sites-enabled/
+
+
+RUN rm /etc/nginx/sites-enabled/default
+
+CMD ["nginx", "-g", "daemon off;"]
