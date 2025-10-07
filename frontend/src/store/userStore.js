@@ -21,13 +21,12 @@ export const useUserStore = create(
   persist(
     (set) => ({
       user: null,
-
       setUser: (userObj) => set({ user: userObj }),
       clearUser: () => set({ user: null }),
     }),
     {
-      name: 'user-storage', // key name in localStorage
-      getStorage: () => localStorage, // (optional) by default it's localStorage
+      name: 'user-storage', // localStorage key
+      getStorage: () => localStorage,
     }
   )
 )

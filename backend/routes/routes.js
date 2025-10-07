@@ -9,7 +9,7 @@ import {
     login,
     InitiateGoogleAuth,
     GoogleAuth,
-    getGoogleAuthUser,
+    // getGoogleAuthUser,
     // Initiate42Auth,
     // get42AuthUser
 } from '../modules/userAuth.module.js';
@@ -40,7 +40,7 @@ export default async function routes(fastify, options) {
     fastify.get('/GoogleAuth', GoogleAuth);
     
     // Step 3: Frontend fetches user data
-    fastify.get('/auth/google/user', getGoogleAuthUser);
+    // fastify.get('/auth/google/user', getGoogleAuthUser);
 
 
     // with 42

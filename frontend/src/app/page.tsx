@@ -10,13 +10,9 @@ import { useEffect } from 'react';
 
 export default function Home()
 {
-  const { user } = useUserStore();
-  const data = useUserStore((state) => state.user);
-
-  useEffect(() => {
-    console.log("Home user:", user);
-  }, [data, user]);
-
+ const user = useUserStore((state) => state.user)
+  const clearUser = useUserStore((state) => state.clearUser)
+  
   return (
 
     <div className="text-white border">
@@ -25,11 +21,11 @@ export default function Home()
       <p>Click on the sidebar to navigate.</p>
       <p>Use the navbar for additional options.</p>
       <p>Enjoy your stay!</p>
-      {data ? (
+      {user ? (
         <div className='text-center text-red-500 text-3xl'>
-          <p>Username: {data.username}</p>
-          <p>Email: {data.email}</p>
-          <img src={data.profile_img} alt="Profile Image" />
+          <p>Username: {user.username}</p>
+          <p>Email: {user.email}</p>
+          <img src={user.profile_img} alt="Profile Image" />
         </div>
       ) : (
         <p>No user is logged in.</p>

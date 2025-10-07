@@ -1,566 +1,5 @@
 (globalThis.TURBOPACK = globalThis.TURBOPACK || []).push([typeof document === "object" ? document.currentScript : undefined, {
 
-"[project]/src/app/(auth)/flyingsaucer.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
-"use strict";
-
-var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
-{
-__turbopack_context__.s({
-    "default": (()=>FlyingSaucer)
-});
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/framer-motion/dist/es/render/components/motion/proxy.mjs [app-client] (ecmascript)");
-;
-var _s = __turbopack_context__.k.signature();
-'use client';
-;
-;
-function FlyingSaucer() {
-    _s();
-    const [isClient, setIsClient] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
-        "FlyingSaucer.useEffect": ()=>{
-            setIsClient(true);
-        }
-    }["FlyingSaucer.useEffect"], []);
-    // Generate consistent random values only on client
-    const getParticleAnimation = (index)=>{
-        if (!isClient) {
-            return {
-                initial: {
-                    x: 200,
-                    y: 300,
-                    opacity: 0
-                },
-                animate: {
-                    x: [
-                        200,
-                        250,
-                        200
-                    ],
-                    y: [
-                        300,
-                        250,
-                        300
-                    ],
-                    opacity: [
-                        0,
-                        0.9,
-                        0
-                    ],
-                    scale: [
-                        0.5,
-                        1.5,
-                        0.5
-                    ]
-                }
-            };
-        }
-        // Use index as seed for more predictable but varied results
-        const seed1 = index * 17 % 100;
-        const seed2 = index * 23 % 100;
-        const seed3 = index * 31 % 100;
-        return {
-            initial: {
-                x: seed1 / 100 * 400 + 100,
-                y: seed2 / 100 * 300 + 200,
-                opacity: 0
-            },
-            animate: {
-                x: [
-                    seed1 / 100 * 400 + 100,
-                    seed2 / 100 * 500 + 50,
-                    seed3 / 100 * 400 + 100
-                ],
-                y: [
-                    seed2 / 100 * 300 + 200,
-                    seed3 / 100 * 200 + 150,
-                    seed1 / 100 * 300 + 200
-                ],
-                opacity: [
-                    0,
-                    0.9,
-                    0
-                ],
-                scale: [
-                    0.5,
-                    1.5,
-                    0.5
-                ]
-            }
-        };
-    };
-    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "absolute left-0 top-0 w-full h-full pointer-events-none overflow-hidden",
-        children: [
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                className: "absolute",
-                initial: {
-                    x: "15vw",
-                    y: "50vh",
-                    rotate: 0
-                },
-                animate: {
-                    x: [
-                        "15vw",
-                        "25vw",
-                        "10vw",
-                        "20vw",
-                        "15vw"
-                    ],
-                    y: [
-                        "50vh",
-                        "35vh",
-                        "60vh",
-                        "40vh",
-                        "50vh"
-                    ],
-                    rotate: [
-                        0,
-                        -10,
-                        5,
-                        -5,
-                        0
-                    ]
-                },
-                transition: {
-                    duration: 20,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    times: [
-                        0,
-                        0.25,
-                        0.5,
-                        0.75,
-                        1
-                    ]
-                },
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "relative",
-                    children: [
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                            className: "w-80 h-32 bg-gradient-to-b from-gray-200 via-gray-400 to-gray-700 rounded-full relative shadow-2xl border border-gray-500",
-                            animate: {
-                                scale: [
-                                    1,
-                                    1.02,
-                                    1
-                                ]
-                            },
-                            transition: {
-                                duration: 4,
-                                repeat: Infinity,
-                                ease: "easeInOut"
-                            },
-                            style: {
-                                background: 'linear-gradient(to bottom, #e5e7eb 0%, #9ca3af 30%, #6b7280 70%, #374151 100%)',
-                                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), inset 0 -5px 15px rgba(0, 0, 0, 0.3)'
-                            },
-                            children: [
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "absolute -top-8 left-1/2 transform -translate-x-1/2 w-48 h-24 rounded-full shadow-xl",
-                                    style: {
-                                        background: 'linear-gradient(to bottom, #f3f4f6 0%, #d1d5db 50%, #9ca3af 100%)',
-                                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4), inset 0 -3px 10px rgba(0, 0, 0, 0.2)'
-                                    }
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                    lineNumber: 91,
-                                    columnNumber: 13
-                                }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "absolute top-4 left-1/2 transform -translate-x-1/2 flex space-x-6",
-                                    children: [
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                                            className: "w-6 h-6 bg-cyan-300 rounded-full shadow-lg",
-                                            animate: {
-                                                opacity: [
-                                                    0.4,
-                                                    1,
-                                                    0.4
-                                                ],
-                                                boxShadow: [
-                                                    "0 0 10px rgba(0, 255, 255, 0.4)",
-                                                    "0 0 25px rgba(0, 255, 255, 1)",
-                                                    "0 0 10px rgba(0, 255, 255, 0.4)"
-                                                ]
-                                            },
-                                            transition: {
-                                                duration: 2,
-                                                repeat: Infinity,
-                                                ease: "easeInOut"
-                                            }
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                            lineNumber: 101,
-                                            columnNumber: 15
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                                            className: "w-6 h-6 bg-cyan-300 rounded-full shadow-lg",
-                                            animate: {
-                                                opacity: [
-                                                    1,
-                                                    0.4,
-                                                    1
-                                                ],
-                                                boxShadow: [
-                                                    "0 0 25px rgba(0, 255, 255, 1)",
-                                                    "0 0 10px rgba(0, 255, 255, 0.4)",
-                                                    "0 0 25px rgba(0, 255, 255, 1)"
-                                                ]
-                                            },
-                                            transition: {
-                                                duration: 2,
-                                                repeat: Infinity,
-                                                ease: "easeInOut",
-                                                delay: 0.4
-                                            }
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                            lineNumber: 117,
-                                            columnNumber: 15
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                                            className: "w-6 h-6 bg-cyan-300 rounded-full shadow-lg",
-                                            animate: {
-                                                opacity: [
-                                                    0.4,
-                                                    1,
-                                                    0.4
-                                                ],
-                                                boxShadow: [
-                                                    "0 0 10px rgba(0, 255, 255, 0.4)",
-                                                    "0 0 25px rgba(0, 255, 255, 1)",
-                                                    "0 0 10px rgba(0, 255, 255, 0.4)"
-                                                ]
-                                            },
-                                            transition: {
-                                                duration: 2,
-                                                repeat: Infinity,
-                                                ease: "easeInOut",
-                                                delay: 0.8
-                                            }
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                            lineNumber: 134,
-                                            columnNumber: 15
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                                            className: "w-6 h-6 bg-cyan-300 rounded-full shadow-lg",
-                                            animate: {
-                                                opacity: [
-                                                    1,
-                                                    0.4,
-                                                    1
-                                                ],
-                                                boxShadow: [
-                                                    "0 0 25px rgba(0, 255, 255, 1)",
-                                                    "0 0 10px rgba(0, 255, 255, 0.4)",
-                                                    "0 0 25px rgba(0, 255, 255, 1)"
-                                                ]
-                                            },
-                                            transition: {
-                                                duration: 2,
-                                                repeat: Infinity,
-                                                ease: "easeInOut",
-                                                delay: 1.2
-                                            }
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                            lineNumber: 151,
-                                            columnNumber: 15
-                                        }, this)
-                                    ]
-                                }, void 0, true, {
-                                    fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                    lineNumber: 100,
-                                    columnNumber: 13
-                                }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "absolute -bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-4",
-                                    children: [
-                                        ...Array(8)
-                                    ].map((_, i)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                                            className: "w-3 h-3 bg-yellow-300 rounded-full",
-                                            animate: {
-                                                opacity: [
-                                                    0.2,
-                                                    1,
-                                                    0.2
-                                                ],
-                                                scale: [
-                                                    0.7,
-                                                    1.3,
-                                                    0.7
-                                                ],
-                                                boxShadow: [
-                                                    "0 0 8px rgba(255, 255, 0, 0.3)",
-                                                    "0 0 20px rgba(255, 255, 0, 1)",
-                                                    "0 0 8px rgba(255, 255, 0, 0.3)"
-                                                ]
-                                            },
-                                            transition: {
-                                                duration: 1.2,
-                                                repeat: Infinity,
-                                                ease: "easeInOut",
-                                                delay: i * 0.15
-                                            }
-                                        }, i, false, {
-                                            fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                            lineNumber: 173,
-                                            columnNumber: 17
-                                        }, this))
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                    lineNumber: 171,
-                                    columnNumber: 13
-                                }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "absolute top-1/2 left-4 transform -translate-y-1/2 w-4 h-8 bg-gradient-to-b from-gray-500 to-gray-700 rounded-full opacity-60"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                    lineNumber: 196,
-                                    columnNumber: 13
-                                }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "absolute top-1/2 right-4 transform -translate-y-1/2 w-4 h-8 bg-gradient-to-b from-gray-500 to-gray-700 rounded-full opacity-60"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                                    lineNumber: 197,
-                                    columnNumber: 13
-                                }, this)
-                            ]
-                        }, void 0, true, {
-                            fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                            lineNumber: 75,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                            className: "absolute top-full left-1/2 transform -translate-x-1/2",
-                            style: {
-                                width: 0,
-                                height: 0,
-                                borderLeft: '60px solid transparent',
-                                borderRight: '60px solid transparent',
-                                borderTop: '80px solid rgba(0, 255, 255, 0.08)'
-                            },
-                            animate: {
-                                opacity: [
-                                    0,
-                                    0.7,
-                                    0
-                                ],
-                                scaleY: [
-                                    0.3,
-                                    1,
-                                    0.3
-                                ],
-                                scaleX: [
-                                    0.6,
-                                    1.4,
-                                    0.6
-                                ]
-                            },
-                            transition: {
-                                duration: 3,
-                                repeat: Infinity,
-                                ease: "easeInOut"
-                            }
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                            lineNumber: 201,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                            className: "absolute top-full left-1/2 transform -translate-x-1/2",
-                            style: {
-                                width: 0,
-                                height: 0,
-                                borderLeft: '40px solid transparent',
-                                borderRight: '40px solid transparent',
-                                borderTop: '60px solid rgba(255, 255, 255, 0.05)'
-                            },
-                            animate: {
-                                opacity: [
-                                    0,
-                                    0.5,
-                                    0
-                                ],
-                                scaleY: [
-                                    0.5,
-                                    1.2,
-                                    0.5
-                                ],
-                                scaleX: [
-                                    0.8,
-                                    1.2,
-                                    0.8
-                                ]
-                            },
-                            transition: {
-                                duration: 3,
-                                repeat: Infinity,
-                                ease: "easeInOut",
-                                delay: 0.5
-                            }
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                            lineNumber: 223,
-                            columnNumber: 11
-                        }, this)
-                    ]
-                }, void 0, true, {
-                    fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                    lineNumber: 73,
-                    columnNumber: 9
-                }, this)
-            }, void 0, false, {
-                fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                lineNumber: 53,
-                columnNumber: 7
-            }, this),
-            isClient && [
-                ...Array(12)
-            ].map((_, i)=>{
-                const animation = getParticleAnimation(i);
-                return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                    className: "absolute w-2 h-2 bg-cyan-300 rounded-full",
-                    style: {
-                        boxShadow: '0 0 8px rgba(0, 255, 255, 0.8)'
-                    },
-                    initial: animation.initial,
-                    animate: animation.animate,
-                    transition: {
-                        duration: 8 + i % 6,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: i * 0.5
-                    }
-                }, i, false, {
-                    fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                    lineNumber: 251,
-                    columnNumber: 11
-                }, this);
-            }),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                className: "absolute",
-                initial: {
-                    x: "20vw",
-                    y: "50vh"
-                },
-                animate: {
-                    x: [
-                        "20vw",
-                        "30vw",
-                        "15vw",
-                        "25vw",
-                        "20vw"
-                    ],
-                    y: [
-                        "50vh",
-                        "35vh",
-                        "60vh",
-                        "40vh",
-                        "50vh"
-                    ]
-                },
-                transition: {
-                    duration: 20,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    times: [
-                        0,
-                        0.25,
-                        0.5,
-                        0.75,
-                        1
-                    ]
-                },
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
-                    className: "w-96 h-96 rounded-full",
-                    style: {
-                        background: 'radial-gradient(circle, rgba(0, 255, 255, 0.03) 0%, transparent 70%)'
-                    },
-                    animate: {
-                        scale: [
-                            1,
-                            1.2,
-                            1
-                        ],
-                        opacity: [
-                            0.3,
-                            0.6,
-                            0.3
-                        ]
-                    },
-                    transition: {
-                        duration: 6,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                    }
-                }, void 0, false, {
-                    fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                    lineNumber: 287,
-                    columnNumber: 9
-                }, this)
-            }, void 0, false, {
-                fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-                lineNumber: 270,
-                columnNumber: 7
-            }, this)
-        ]
-    }, void 0, true, {
-        fileName: "[project]/src/app/(auth)/flyingsaucer.tsx",
-        lineNumber: 51,
-        columnNumber: 5
-    }, this);
-}
-_s(FlyingSaucer, "k460N28PNzD7zo1YW47Q9UigQis=");
-_c = FlyingSaucer;
-var _c;
-__turbopack_context__.k.register(_c, "FlyingSaucer");
-if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
-    __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
-}
-}}),
-"[project]/src/store/userStore.js [app-client] (ecmascript)": ((__turbopack_context__) => {
-"use strict";
-
-var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
-{
-// import { create } from 'zustand'
-// export const useUserStore = create((set) => ({
-//   // Initial state
-//   user: null,
-//   // Actions (functions to change state)
-//   setUser: (userObj) => set({ user: userObj }),
-//   // Function to clear user data
-//   clearUser: () => set({ user: null }),
-// }))
-__turbopack_context__.s({
-    "useUserStore": (()=>useUserStore)
-});
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/react.mjs [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/middleware.mjs [app-client] (ecmascript)");
-;
-;
-const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["create"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["persist"])((set)=>({
-        user: null,
-        setUser: (userObj)=>set({
-                user: userObj
-            }),
-        clearUser: ()=>set({
-                user: null
-            })
-    }), {
-    name: 'user-storage',
-    getStorage: ()=>localStorage
-}));
-if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
-    __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
-}
-}}),
 "[project]/src/app/(auth)/authLayout.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
@@ -574,8 +13,6 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/framer-motion/dist/es/render/components/motion/proxy.mjs [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/react-toastify/dist/index.mjs [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$flyingsaucer$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(auth)/flyingsaucer.tsx [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$userStore$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/store/userStore.js [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.signature(), _s2 = __turbopack_context__.k.signature();
 'use client';
@@ -584,8 +21,9 @@ var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.sign
 ;
 ;
 ;
-;
-;
+//components
+// import FlyingSaucer from '@/components/FlyingSaucer'
+// import { cookies } from 'next/headers'
 const API_URL = 'http://localhost:4444';
 function AuthLayout() {
     _s();
@@ -631,20 +69,15 @@ function AuthLayout() {
                         duration: 1
                     },
                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "w-full h-full flex items-center justify-center",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$flyingsaucer$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
-                            fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                            lineNumber: 49,
-                            columnNumber: 13
-                        }, this)
+                        className: "w-full h-full flex items-center justify-center"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 48,
+                        lineNumber: 51,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                    lineNumber: 42,
+                    lineNumber: 45,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
@@ -673,17 +106,17 @@ function AuthLayout() {
                             onToggle: ()=>toggleAuthMode('signUp')
                         }, void 0, false, {
                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                            lineNumber: 65,
+                            lineNumber: 68,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 64,
+                        lineNumber: 67,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                    lineNumber: 53,
+                    lineNumber: 56,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
@@ -712,28 +145,28 @@ function AuthLayout() {
                             onToggle: ()=>toggleAuthMode('signIn')
                         }, void 0, false, {
                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                            lineNumber: 81,
+                            lineNumber: 84,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 80,
+                        lineNumber: 83,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                    lineNumber: 69,
+                    lineNumber: 72,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-            lineNumber: 40,
+            lineNumber: 43,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-        lineNumber: 39,
+        lineNumber: 42,
         columnNumber: 5
     }, this);
 }
@@ -839,7 +272,7 @@ function SignUpForm({ onToggle }) {
                         children: "Welcome to the Sign Up Page"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 198,
+                        lineNumber: 201,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -847,13 +280,13 @@ function SignUpForm({ onToggle }) {
                         children: "Please fill in the details below to create an account."
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 201,
+                        lineNumber: 204,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 197,
+                lineNumber: 200,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -869,7 +302,7 @@ function SignUpForm({ onToggle }) {
                         onChange: handleInputChange('username')
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 210,
+                        lineNumber: 213,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -881,7 +314,7 @@ function SignUpForm({ onToggle }) {
                         onChange: handleInputChange('email')
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 219,
+                        lineNumber: 222,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -893,7 +326,7 @@ function SignUpForm({ onToggle }) {
                         onChange: handleInputChange('password')
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 228,
+                        lineNumber: 231,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -905,7 +338,7 @@ function SignUpForm({ onToggle }) {
                         onChange: handleInputChange('confirmPassword')
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 237,
+                        lineNumber: 240,
                         columnNumber: 9
                     }, this),
                     error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -913,7 +346,7 @@ function SignUpForm({ onToggle }) {
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 247,
+                        lineNumber: 250,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -923,7 +356,7 @@ function SignUpForm({ onToggle }) {
                         children: isLoading ? 'Creating Account...' : 'Sign Up'
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 252,
+                        lineNumber: 255,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -934,7 +367,7 @@ function SignUpForm({ onToggle }) {
                                 children: "Already have an account?"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 265,
+                                lineNumber: 268,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -943,25 +376,25 @@ function SignUpForm({ onToggle }) {
                                 children: "Sign In"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 268,
+                                lineNumber: 271,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 264,
+                        lineNumber: 267,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 206,
+                lineNumber: 209,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-        lineNumber: 196,
+        lineNumber: 199,
         columnNumber: 5
     }, this);
 }
@@ -977,174 +410,78 @@ function SignInForm({ onToggle }) {
     const [password, setPassword] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
     const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
     const [isLoading, setIsLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
-    const [hasProcessedOAuth, setHasProcessedOAuth] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"])();
     const searchParams = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSearchParams"])();
-    const { user, setUser, clearUser } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$userStore$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useUserStore"])();
-    // function to get user from db by id  id_user INTEGER PRIMARY KEY AUTOINCREMENT,
-    const fetchUserById = async (id)=>{
-        try {
-            const response = await fetch(`${API_URL}/GetUserById?id=${id}`);
-            if (!response.ok) {
-                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user from database');
-                return null;
-            }
-            const userData = await response.json();
-            return userData.user;
-        } catch (err) {
-            console.error('Failed to fetch user data:', err);
-            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user from database');
-            return null;
-        }
-    };
-    const handleGoogleAuth = ()=>{
-        router.push(`${API_URL}/auth/google`);
-    };
-    const handle42Auth = ()=>{
-        router.push(`${API_URL}/auth/42`);
-    };
-    // Google OAuth callback handler
-    const handleGoogleCallback = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
-        "SignInForm.useCallback[handleGoogleCallback]": async ()=>{
-            if (hasProcessedOAuth) return;
-            const googleAuthStatus = searchParams.get('googleAuth');
-            const sessionId = searchParams.get('sessionId');
+    // use store zustand or recoil to manage user state globally
+    // const { setUser } = useUserStore()
+    // Handle Google OAuth callback
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "SignInForm.useEffect": ()=>{
+            const userId = searchParams.get('userId');
             const authError = searchParams.get('error');
-            const hasOAuthParams = googleAuthStatus || sessionId || authError;
-            if (!hasOAuthParams) return;
-            setHasProcessedOAuth(true);
-            router.replace('/signIn');
+            const isNewUser = searchParams.get('isNewUser');
+            // Skip if no OAuth parameters present
+            if (!userId && !authError) {
+                return;
+            }
             if (authError) {
                 const errorMessages = {
                     'no_code': 'Google authentication failed: No authorization code',
+                    'token_failed': 'Failed to exchange authorization code',
+                    'user_failed': 'Failed to retrieve user information',
                     'auth_failed': 'Google authentication failed. Please try again.'
                 };
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error(errorMessages[authError] || 'An error occurred during authentication');
+                // Clean URL
+                router.replace('/signIn');
                 return;
             }
-            if (googleAuthStatus === 'success' && sessionId) {
-                try {
-                    const response = await fetch(`${API_URL}/auth/google/user?sessionId=${sessionId}`);
-                    if (!response.ok) {
-                        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user data from Google');
-                        return;
-                    }
-                    const data = await response.json();
-                    console.log('Google OAuth user data:', data);
-                    if (!data.success) {
-                        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Invalid user data received');
-                        return;
-                    }
-                    // get user by id from db
-                    const userResponse = await fetch(`${API_URL}/GetUserById?id=${data.user.id}`);
-                    if (!userResponse.ok) {
-                        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user from database');
-                        return;
-                    }
-                    const userData = await userResponse.json();
-                    if (!userData.user) {
-                        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('User not found in database');
-                        return;
-                    }
-                    localStorage.setItem('user', JSON.stringify(userData.user));
-                    setUser(userData.user) // Update global user state
-                    ;
-                    // Display welcome message
-                    const message = data.user.isNewUser ? `Welcome ${data.user.username}! Account created successfully.` : `Welcome back, ${data.user.username}!`;
-                    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success(message);
-                    setTimeout({
-                        "SignInForm.useCallback[handleGoogleCallback]": ()=>{
-                            router.push('/');
+            if (userId) {
+                // Fetch user data from backend using the ID
+                const fetchUserData = {
+                    "SignInForm.useEffect.fetchUserData": async ()=>{
+                        try {
+                            const response = await fetch(`${API_URL}/getUserById/${userId}`);
+                            if (!response.ok) {
+                                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user data');
+                                router.replace('/signIn');
+                                return;
+                            }
+                            const userData = await response.json();
+                            console.log('Google OAuth user data:', userData);
+                            // Update global user state
+                            setUser(userData);
+                            localStorage.setItem('user', JSON.stringify(userData));
+                            // Display success message based on whether user is new
+                            const message = isNewUser === 'true' ? `Welcome ${userData.username}! Account created successfully.` : `Welcome back, ${userData.username}!`;
+                            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success(message);
+                            // Clean URL first to prevent re-running
+                            router.replace('/signIn');
+                            // Redirect to home after a short delay
+                            setTimeout({
+                                "SignInForm.useEffect.fetchUserData": ()=>{
+                                    router.push('/');
+                                }
+                            }["SignInForm.useEffect.fetchUserData"], 1500);
+                        } catch (err) {
+                            console.error('Failed to fetch user data:', err);
+                            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user information');
+                            router.replace('/signIn');
                         }
-                    }["SignInForm.useCallback[handleGoogleCallback]"], 1500);
-                } catch (err) {
-                    console.error('Failed to fetch user data:', err);
-                    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to complete authentication');
-                }
+                    }
+                }["SignInForm.useEffect.fetchUserData"];
+                fetchUserData();
             }
+        // Run only one time to do not duplicate toasts
         }
-    }["SignInForm.useCallback[handleGoogleCallback]"], [
-        searchParams,
-        router,
-        hasProcessedOAuth
-    ]);
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
-        "SignInForm.useEffect": ()=>{
-            handleGoogleCallback();
-        }
-    }["SignInForm.useEffect"], [
-        handleGoogleCallback
-    ]);
-    // 42 OAuth callback handler (if implemented in the future)
-    const handle42Callback = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
-        "SignInForm.useCallback[handle42Callback]": async ()=>{
-            if (hasProcessedOAuth) return;
-            const authError = searchParams.get('error');
-            const code = searchParams.get('code');
-            const hasOAuthParams = authError || code;
-            if (!hasOAuthParams) return;
-            setHasProcessedOAuth(true);
-            router.replace('/signIn');
-            if (authError) {
-                const errorMessages = {
-                    'no_code': '42 authentication failed: No authorization code',
-                    'auth_failed': '42 authentication failed. Please try again.'
-                };
-                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error(errorMessages[authError] || 'An error occurred during authentication');
-                return;
-            }
-            if (code) {
-                try {
-                    const response = await fetch(`${API_URL}/auth/42/user?code=${code}`);
-                    if (!response.ok) {
-                        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user data from 42');
-                        return;
-                    }
-                    const data = await response.json();
-                    console.log('42 OAuth user data:', data);
-                    if (!data.success) {
-                        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Invalid user data received');
-                        return;
-                    }
-                    // get user by id from db
-                    const userResponse = fetchUserById(data.user.id);
-                    if (!userResponse) {
-                        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user from database');
-                        return;
-                    }
-                    const userData = await userResponse;
-                    if (!userData) {
-                        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('User not found in database');
-                        return;
-                    }
-                    localStorage.setItem('user', JSON.stringify(userData));
-                    setUser(userData.user) // Update global user state
-                    ;
-                    const message = data.user.isNewUser ? `Welcome ${data.user.username}! Account created successfully.` : `Welcome back, ${data.user.username}!`;
-                    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success(message);
-                    setTimeout({
-                        "SignInForm.useCallback[handle42Callback]": ()=>{
-                            router.push('/');
-                        }
-                    }["SignInForm.useCallback[handle42Callback]"], 1500);
-                } catch (err) {
-                    console.error('Failed to fetch user data:', err);
-                    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to complete authentication');
-                }
-            }
-        }
-    }["SignInForm.useCallback[handle42Callback]"], [
-        searchParams,
-        router,
-        hasProcessedOAuth
-    ]);
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
-        "SignInForm.useEffect": ()=>{
-            handle42Callback();
-        }
-    }["SignInForm.useEffect"], [
-        handle42Callback
-    ]);
+    }["SignInForm.useEffect"], []);
+    const handleGoogleAuth = ()=>{
+        // Redirect to backend OAuth initiation
+        window.location.href = `${API_URL}/auth/google`;
+    };
+    const handle42Auth = ()=>{
+        window.location.href = `${API_URL}/auth/42`;
+    };
     const validateForm = ()=>{
         if (!username.trim() || !password) {
             const errorMessage = 'Both username and password are required';
@@ -1207,7 +544,7 @@ function SignInForm({ onToggle }) {
                         children: "Hey there, space champ!"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 537,
+                        lineNumber: 442,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -1215,7 +552,7 @@ function SignInForm({ onToggle }) {
                         children: "Join GalaxyPong to smash, chat, and climb the leaderboard."
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 540,
+                        lineNumber: 445,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -1223,13 +560,13 @@ function SignInForm({ onToggle }) {
                         children: "Sign in and let the games begin!"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 543,
+                        lineNumber: 448,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 536,
+                lineNumber: 441,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -1249,7 +586,7 @@ function SignInForm({ onToggle }) {
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 552,
+                        lineNumber: 457,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -1265,22 +602,23 @@ function SignInForm({ onToggle }) {
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 565,
+                        lineNumber: 470,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex items-start w-full",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
                             className: "text-xs sm:text-sm text-gray-500 hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer",
+                            onClick: ()=>router.push('/forgot-password'),
                             children: "Forgot your password?"
                         }, void 0, false, {
                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                            lineNumber: 579,
+                            lineNumber: 484,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 578,
+                        lineNumber: 483,
                         columnNumber: 9
                     }, this),
                     error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1288,7 +626,7 @@ function SignInForm({ onToggle }) {
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 585,
+                        lineNumber: 492,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1301,7 +639,7 @@ function SignInForm({ onToggle }) {
                                 children: isLoading ? 'Signing In...' : 'Login'
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 591,
+                                lineNumber: 498,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1325,7 +663,7 @@ function SignInForm({ onToggle }) {
                                                     fill: "#4285F4"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 611,
+                                                    lineNumber: 518,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -1333,7 +671,7 @@ function SignInForm({ onToggle }) {
                                                     fill: "#34A853"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 612,
+                                                    lineNumber: 519,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -1341,7 +679,7 @@ function SignInForm({ onToggle }) {
                                                     fill: "#FBBC05"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 613,
+                                                    lineNumber: 520,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -1349,18 +687,18 @@ function SignInForm({ onToggle }) {
                                                     fill: "#EB4335"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 614,
+                                                    lineNumber: 521,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                            lineNumber: 610,
+                                            lineNumber: 517,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                        lineNumber: 604,
+                                        lineNumber: 511,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1379,51 +717,51 @@ function SignInForm({ onToggle }) {
                                                     points: "32,412.6 362.1,412.6 362.1,578 526.8,578 526.8,279.1 197.3,279.1 526.8,-51.1 362.1,-51.1 32,279.1"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 625,
+                                                    lineNumber: 532,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("polygon", {
                                                     points: "597.9,114.2 762.7,-51.1 597.9,-51.1"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 626,
+                                                    lineNumber: 533,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("polygon", {
                                                     points: "762.7,114.2 597.9,279.1 597.9,443.9 762.7,443.9 762.7,279.1 928,114.2 928,-51.1 762.7,-51.1"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 627,
+                                                    lineNumber: 534,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("polygon", {
                                                     points: "928,279.1 762.7,443.9 928,443.9"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 628,
+                                                    lineNumber: 535,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                            lineNumber: 624,
+                                            lineNumber: 531,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                        lineNumber: 618,
+                                        lineNumber: 525,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 603,
+                                lineNumber: 510,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 590,
+                        lineNumber: 497,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1434,7 +772,7 @@ function SignInForm({ onToggle }) {
                                 children: "Don't have an account?"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 635,
+                                lineNumber: 542,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -1443,33 +781,32 @@ function SignInForm({ onToggle }) {
                                 children: "Sign up"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 638,
+                                lineNumber: 545,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 634,
+                        lineNumber: 541,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 548,
+                lineNumber: 453,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-        lineNumber: 535,
+        lineNumber: 440,
         columnNumber: 5
     }, this);
 }
-_s2(SignInForm, "LaGruj8Gf9F97lN8Y7QiqmEtuzM=", false, function() {
+_s2(SignInForm, "nm7+b2Jx9O2eITMIgvWGXXZmGG8=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"],
-        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSearchParams"],
-        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$userStore$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useUserStore"]
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSearchParams"]
     ];
 });
 _c2 = SignInForm;
@@ -1483,4 +820,4 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
 }}),
 }]);
 
-//# sourceMappingURL=src_7eaa68b1._.js.map
+//# sourceMappingURL=src_app_%28auth%29_authLayout_tsx_35fbc6e2._.js.map

@@ -5,26 +5,24 @@ import jwt from 'jsonwebtoken'
 // Constants
 const DEFAULT_PROFILE_IMAGE = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg";
 const GOOGLE_CLIENT_ID = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com";
-const GOOGLE_CLIENT_SECRET = "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";
-const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
-const FRONTEND_URL = "http://localhost:3000/signIn";
 const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
-const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
-const OAUTH42_SECRET = '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';
-const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
+// const GOOGLE_CLIENT_SECRET = "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";
+const GOOGLE_CLIENT_SECRET = "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";
+const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
+const FRONTEND_URL = "http://localhost:3000/";
+// const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
+// const OAUTH42_SECRET = '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';
+// const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
 
-// token function gnerator
+// token function generator
 export function generateToken(username, email) {
-    console.log("Generated secret key:", SECRET);
+    console.log("generateToken");
+    if (!username || !email) {
+        throw new Error("Username and email are required to generate token");
+    }
 
-  if (!username || !email) {
-    throw new Error("Username and email are required to generate token");
-  }
-
-  const payload = { username, email }
-
-  // sign token
-  return jwt.sign(payload, SECRET, { expiresIn: '1h' });
+    const payload = { username, email };
+    return jwt.sign(payload, SECRET, { expiresIn: '1h' });
 }
 
 // Helper function to hash passwords
@@ -150,7 +148,7 @@ export async function getUserById(request, reply) {
     
     try {
         const user = request.server.db
-            .prepare("SELECT id_user, username, email, profile_img FROM users WHERE id_user = ?")
+            .prepare("SELECT * FROM users WHERE id_user = ?")
             .get(id);
         
         if (!user) {
@@ -171,7 +169,7 @@ export async function getUserByEmail(request, reply) {
     
     try {
         const user = request.server.db
-            .prepare("SELECT id_user, username, email, profile_img FROM users WHERE email = ?")
+            .prepare("SELECT * FROM users WHERE email = ?")
             .get(email);
         
         if (!user) {
@@ -264,48 +262,28 @@ export async function GoogleAuth(request, reply) {
             // User exists - log them in
             userId = existingUser.id_user;
             isNewUser = false;
+            // Update access token
+            const token = generateToken(existingUser.username, existingUser.email);
+            request.server.db
+                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+                .run(token, userId);
         } else {
-            // Create new user with auth_method = 1 (Google)
+            const token = generateToken(googleUser.name, googleUser.email);
             const insertQuery = request.server.db
-            .prepare("INSERT INTO users (username, email, profile_img, auth_method) VALUES (?, ?, ?, ?)");
+            .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method, access_token) VALUES (?, ?, ?, ?, ?)");
             const result = insertQuery.run(
-            googleUser.name, 
+            googleUser.name.split(" ")[0], 
+            googleUser.name,
             googleUser.email, 
             googleUser.picture,
-            1 // auth_method: 1 for Google
+            1,
+            token
             );
             userId = result.lastInsertRowid;
             isNewUser = true;
         }
-
-        // Generate unique session ID
-        const sessionId = `google_auth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Initialize global sessions map
-        if (!global.googleAuthSessions) {
-            global.googleAuthSessions = new Map();
-        }
-        
-        // Store session data
-        global.googleAuthSessions.set(sessionId, {
-            id: userId,
-            email: googleUser.email,
-            username: googleUser.name,
-            profile_img: googleUser.picture,
-            isNewUser: isNewUser,
-            timestamp: Date.now()
-        });
-
-        // Clean up expired sessions (older than 5 minutes)
-        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-        for (const [key, value] of global.googleAuthSessions.entries()) {
-            if (value.timestamp < fiveMinutesAgo) {
-                global.googleAuthSessions.delete(key);
-            }
-        }
-
-        // Redirect with session ID
-        return reply.redirect(`${FRONTEND_URL}?googleAuth=success&sessionId=${sessionId}`);
+    
+        return reply.redirect(`${FRONTEND_URL}/signIn/?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}`);
 
     } catch (error) {
         console.error('Google auth failed:', error);
@@ -313,33 +291,33 @@ export async function GoogleAuth(request, reply) {
     }
 }
 
-export async function getGoogleAuthUser(request, reply) {
-    const { sessionId } = request.query;
+// export async function getGoogleAuthUser(request, reply) {
+//     const { userId } = request.query;
 
-    if (!sessionId) {
-        return reply.code(400).send({
-            success: false,
-            message: "Session ID required"
-        });
-    }
+//     if (!userId) {
+//         return reply.code(400).send({
+//             success: false,
+//             message: "User ID required"
+//         });
+//     }
 
-    // if (!global.googleAuthSessions || !global.googleAuthSessions.has(sessionId)) {
-    //     return reply.code(404).send({
-    //         success: false,
-    //         message: "Session not found or expired"
-    //     });
-    // }
+//     // if (!global.googleAuthSessions || !global.googleAuthSessions.has(userId)) {
+//     //     return reply.code(404).send({
+//     //         success: false,
+//     //         message: "Session not found or expired"
+//     //     });
+//     // }
 
-    const userData = global.googleAuthSessions.get(sessionId);
+//     const userData = global.googleAuthSessions.get(sessionId);
     
-    // Delete session after retrieval (one-time use)
-    global.googleAuthSessions.delete(sessionId);
+//     // Delete session after retrieval (one-time use)
+//     global.googleAuthSessions.delete(userId);
 
-    return reply.code(200).send({
-        success: true,
-        user: userData
-    });
-}
+//     return reply.code(200).send({
+//         success: true,
+//         user: userData
+//     });
+// }
 
 // ====== 42 OAUTH ======
 

@@ -1,11 +1,14 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from 'react-toastify'
-// import FlyingSaucer from './flyingsaucer'
 import '../globals.css'
-import {useUserStore} from '../../store/userStore'
+//zustand or recoil
+import { useUserStore } from "../../store/userStore"
+//components
+// import FlyingSaucer from '@/components/FlyingSaucer'
+// import { cookies } from 'next/headers'
 
 const API_URL = 'http://localhost:4444'
 
@@ -107,6 +110,7 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const setUser = useUserStore((state) => state.setUser)
 
   const handleInputChange = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }))
@@ -178,6 +182,7 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
       }
 
       toast.success('Account created successfully!')
+      setUser(userData)
       setFormData({ username: '', email: '', password: '', confirmPassword: '' })
       
       setTimeout(() => {
@@ -286,189 +291,91 @@ function SignInForm({ onToggle }: SignInFormProps) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [hasProcessedOAuth, setHasProcessedOAuth] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, setUser, clearUser } = useUserStore()
+   const setUser = useUserStore((state) => state.setUser)
 
-
-
-    // function to get user from db by id  id_user INTEGER PRIMARY KEY AUTOINCREMENT,
-    const fetchUserById = async (id: number) => {
-      try {
-        const response = await fetch(`${API_URL}/GetUserById?id=${id}`)
-        if (!response.ok) {
-          toast.error('Failed to retrieve user from database')
-          return null
-        }
-        const userData = await response.json()
-        return userData.user
-      } catch (err) {
-        console.error('Failed to fetch user data:', err)
-        toast.error('Failed to retrieve user from database')
-        return null
-      }
-    }
-
-    const handleGoogleAuth = () => {
-      router.push(`${API_URL}/auth/google`)
-    }
-        
-    const handle42Auth = () => {
-      router.push(`${API_URL}/auth/42`)
-    }
-    
-  // Google OAuth callback handler
-  const handleGoogleCallback = useCallback(async () => {
-    if (hasProcessedOAuth) return
-
-    const googleAuthStatus = searchParams.get('googleAuth')
-    const sessionId = searchParams.get('sessionId')
+  // Handle Google OAuth callback
+  useEffect(() => {
+    const userId = searchParams.get('userId')
     const authError = searchParams.get('error')
+    const isNewUser = searchParams.get('isNewUser')
 
-    const hasOAuthParams = googleAuthStatus || sessionId || authError
-
-    if (!hasOAuthParams) return
-
-    setHasProcessedOAuth(true)
-    router.replace('/signIn')
+    // Skip if no OAuth parameters present
+    if (!userId && !authError) {
+      return
+    }
 
     if (authError) {
       const errorMessages: Record<string, string> = {
         'no_code': 'Google authentication failed: No authorization code',
+        'token_failed': 'Failed to exchange authorization code',
+        'user_failed': 'Failed to retrieve user information',
         'auth_failed': 'Google authentication failed. Please try again.'
       }
       toast.error(errorMessages[authError] || 'An error occurred during authentication')
+      // Clean URL
+      router.replace('/signIn')
       return
     }
 
-    if (googleAuthStatus === 'success' && sessionId) {
-      try {
-        const response = await fetch(`${API_URL}/auth/google/user?sessionId=${sessionId}`)
-        if (!response.ok) {
-          toast.error('Failed to retrieve user data from Google')
-          return
+    if (userId) {
+      // Fetch user data from backend using the ID
+      const fetchUserData = async () => {
+        try {
+          const response = await fetch(`${API_URL}/getUserById/${userId}`)
+          
+          if (!response.ok) {
+            toast.error('Failed to retrieve user data')
+            router.replace('/signIn')
+            return
+          }
+
+          const userData = await response.json()
+          
+          console.log('Google OAuth user data:', userData)
+          
+          // Update global user state
+          setUser(userData)
+          // localStorage.setItem('user', JSON.stringify(userData))
+          
+          
+          // Display success message based on whether user is new
+          const message = isNewUser === 'true' 
+            ? `Welcome ${userData.username}! Account created successfully.`
+            : `Welcome back, ${userData.username}!`
+          
+          toast.success(message)
+          
+          // Clean URL first to prevent re-running
+          router.replace('/signIn')
+          
+          // Redirect to home after a short delay
+          setTimeout(() => {
+            router.push('/')
+          }, 1500)
+          
+        } catch (err) {
+          console.error('Failed to fetch user data:', err)
+          toast.error('Failed to retrieve user information')
+          router.replace('/signIn')
         }
-        const data = await response.json()
-        console.log('Google OAuth user data:', data)
-        if (!data.success) {
-          toast.error('Invalid user data received')
-          return
-        }
-
-        // get user by id from db
-        const userResponse = await fetch(`${API_URL}/GetUserById?id=${data.user.id}`)
-        if (!userResponse.ok) {
-          toast.error('Failed to retrieve user from database')
-          return
-        }
-
-        const userData = await userResponse.json()
-        if (!userData.user) {
-          toast.error('User not found in database')
-          return
-        }
-
-        localStorage.setItem('user', JSON.stringify(userData.user))
-
-        setUser(userData.user) // Update global user state
-
-        // Display welcome message
-
-        const message = data.user.isNewUser
-          ? `Welcome ${data.user.username}! Account created successfully.`
-          : `Welcome back, ${data.user.username}!`
-
-
-        toast.success(message)
-        
-        setTimeout(() => {
-          router.push('/')
-        }, 1500)
-        
-      } catch (err) {
-        console.error('Failed to fetch user data:', err)
-        toast.error('Failed to complete authentication')
       }
+
+      fetchUserData()
     }
-  }, [searchParams, router, hasProcessedOAuth])
+    
+    // Run only one time to do not duplicate toasts
+  }, [])
 
-  useEffect(() => {
-    handleGoogleCallback()
-  }, [handleGoogleCallback])
-  
-  // 42 OAuth callback handler (if implemented in the future)
-  const handle42Callback = useCallback(async () => {
-    if (hasProcessedOAuth) return
-
-    const authError = searchParams.get('error')
-    const code = searchParams.get('code')
-
-    const hasOAuthParams = authError || code
-
-    if (!hasOAuthParams) return
-  
-    setHasProcessedOAuth(true)
-    router.replace('/signIn')
-    if (authError) {
-      const errorMessages: Record<string, string> = {
-        'no_code': '42 authentication failed: No authorization code',
-        'auth_failed': '42 authentication failed. Please try again.'
-      }
-      toast.error(errorMessages[authError] || 'An error occurred during authentication')
-      return
-    }
-
-    if (code) {
-      try {
-        const response = await fetch(`${API_URL}/auth/42/user?code=${code}`)
-        if (!response.ok) {
-          toast.error('Failed to retrieve user data from 42')
-          return
-        }
-        const data = await response.json()
-        console.log('42 OAuth user data:', data)
-        if (!data.success) {
-          toast.error('Invalid user data received')
-          return
-        }
-
-        // get user by id from db
-        const userResponse = fetchUserById(data.user.id)
-        if (!userResponse) {
-          toast.error('Failed to retrieve user from database')
-          return
-        }
-
-        const userData = await userResponse
-        if (!userData) {
-          toast.error('User not found in database')
-          return
-        }
-
-        localStorage.setItem('user', JSON.stringify(userData))
-        setUser(userData.user) // Update global user state
-
-        const message = data.user.isNewUser
-          ? `Welcome ${data.user.username}! Account created successfully.`
-          : `Welcome back, ${data.user.username}!`
-
-        toast.success(message)
-        
-        setTimeout(() => {
-          router.push('/')
-        }, 1500)
-        
-      } catch (err) {
-        console.error('Failed to fetch user data:', err)
-        toast.error('Failed to complete authentication')
-      }
-    }
-  }, [searchParams, router, hasProcessedOAuth])
-
-  useEffect(() => {
-    handle42Callback()
-  }, [handle42Callback])  
+  const handleGoogleAuth = () => {
+    // Redirect to backend OAuth initiation
+    window.location.href = `${API_URL}/auth/google`
+  }
+    
+  const handle42Auth = () => {
+    window.location.href = `${API_URL}/auth/42`
+  }
 
   const validateForm = () => {
     if (!username.trim() || !password) {
@@ -529,7 +436,6 @@ function SignInForm({ onToggle }: SignInFormProps) {
       setIsLoading(false)
     }
   }
-
 
   return (
     <div className="flex flex-col gap-6 items-center justify-center">

@@ -44,3 +44,13 @@ my-nextjs-app/
 ├── styles/                       # Global styles
 ├── package.json
 └── tsconfig.json
+
+
+// backend 
+// token >> cookies & Database
+// regenrate token 
+// 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 >> secret
+629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.go
+Allowed redirect URIs
+Use with requests from a web server
+http://localhost:4444/GoogleAuth
