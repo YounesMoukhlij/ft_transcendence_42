@@ -13,7 +13,7 @@ const LeaderBord = ({users}) =>{
   async function  handleAddFriend (username){
     const sender = localStorage.getItem('name');
     try {
-      await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendRequestFriend` , { sender, friend: username , title:"request friend"});
+      await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendRequestFriend` , { sender, friend: username , title:"request friend"});
     } catch (err) {
       console.log(err);
     }
@@ -88,7 +88,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Xprank`, {
+        const data = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Xprank`, {
           params:{
             user:username
           }

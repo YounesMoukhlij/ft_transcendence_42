@@ -89,7 +89,7 @@ addMessage: (data) => set((state) => {
     console.log("status ====>", friend , "            " ,  status);
     return {
       friends: state.friends.map(f =>
-        f.username === friend ? { ...f, status: status } : f // Corrected: updating the status
+        f.username === friend ? { ...f, status: status } : f 
       ),
     };
   }),
@@ -101,7 +101,7 @@ addMessage: (data) => set((state) => {
     if (get().socket) return;
 
     const ws = new WebSocket(
-      `ws://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/ws`
+      `wss://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/ws`
     );
 
     ws.onopen = () => {

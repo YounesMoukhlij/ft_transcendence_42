@@ -20,16 +20,15 @@ function handle_Emojis(setShow: any, show: boolean) {
 
 async function fetchData(title: string, setDboubleBlock, Setuser_block) {
   try {
-    // const user = localStorage.getItem('name');
     const user = window.localStorage.getItem('name');
     
     
 
-    const result = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`, { user, friend: title });
+    const result = await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`, { user, friend: title });
     localStorage.setItem('conversationId', result.data.conversation_id);
     setDboubleBlock(result.data.is_double_block);
     Setuser_block(result.data.block_user);
-    const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`, { id: result.data.conversation_id });
+    const res = await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`, { id: result.data.conversation_id });
     return res.data;
   } catch (err) {
     console.error(err);
@@ -198,7 +197,7 @@ export default function chatPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
+        const res = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
           params: { username }
         });
         setFriends(res.data);
@@ -228,7 +227,7 @@ export default function chatPage() {
         return ;
 
 
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`, {
+    await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`, {
       user: username,
       conv_id: id,
       friend: friend
@@ -248,7 +247,7 @@ export default function chatPage() {
     const username = globalStore.getState().username;
     const id = localStorage.getItem('conversationId');
 
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock`, {
+    await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock`, {
       user: username,
       conv_id: id,
       friend: friend
@@ -271,7 +270,7 @@ export default function chatPage() {
   async function handleUnfriend(friend, removeFriend) {
     const id = window.localStorage.getItem('conversationId');
     const username = globalStore.getState().username;
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`, {
+    await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`, {
       user: username,
       conv_id: id,
       friend: friend
@@ -287,12 +286,12 @@ export default function chatPage() {
 
     const id = localStorage.getItem('conversationId');
     try {
-      const data = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/IsOnline`, {
+      const data = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/IsOnline`, {
         params: {
           username: friend
         }
       })
-      const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, { user, input, id, friend });
+      const res = await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, { user, input, id, friend });
       const object = {
         sender: user,
         message: input,

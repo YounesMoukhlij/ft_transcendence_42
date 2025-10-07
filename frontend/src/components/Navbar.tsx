@@ -47,7 +47,7 @@ export default function Navbar()
   async function DelteFriendRequest(notify_id){
     toast.error('Deleted');
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
-    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
+    await axios.delete(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: notify_id,
       }
@@ -68,10 +68,10 @@ export default function Navbar()
     }
     addFriend(object);
 
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: item.sender_user , user2: loginUsername});
+    await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: item.sender_user , user2: loginUsername});
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== item.notify_id));
 
-    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
+    await axios.delete(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: item.notify_id,
       }
@@ -93,7 +93,7 @@ export default function Navbar()
   useEffect(()=>{
     async function get_notify(){
       const user  = localStorage.getItem('name');
-      const result = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetNotification`, {
+      const result = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetNotification`, {
         params: { user }
       });
       setNotification(result.data);
