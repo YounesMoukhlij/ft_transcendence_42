@@ -10,9 +10,9 @@ const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a4
 const GOOGLE_CLIENT_SECRET = "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";
 const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
-// const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
-// const OAUTH42_SECRET = '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';
-// const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
+const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
+const OAUTH42_SECRET = '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';
+const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
 
 // token function generator
 export function generateToken(username, email) {
@@ -272,7 +272,7 @@ export async function GoogleAuth(request, reply) {
             const insertQuery = request.server.db
             .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method, access_token) VALUES (?, ?, ?, ?, ?)");
             const result = insertQuery.run(
-            googleUser.name.split(" ")[0], 
+            googleUser.name.split(" ")[0] + Math.floor(Math.random() * 1000),
             googleUser.name,
             googleUser.email, 
             googleUser.picture,
@@ -290,165 +290,91 @@ export async function GoogleAuth(request, reply) {
         return reply.redirect(`${FRONTEND_URL}?error=auth_failed`);
     }
 }
-
-// export async function getGoogleAuthUser(request, reply) {
-//     const { userId } = request.query;
-
-//     if (!userId) {
-//         return reply.code(400).send({
-//             success: false,
-//             message: "User ID required"
-//         });
-//     }
-
-//     // if (!global.googleAuthSessions || !global.googleAuthSessions.has(userId)) {
-//     //     return reply.code(404).send({
-//     //         success: false,
-//     //         message: "Session not found or expired"
-//     //     });
-//     // }
-
-//     const userData = global.googleAuthSessions.get(sessionId);
-    
-//     // Delete session after retrieval (one-time use)
-//     global.googleAuthSessions.delete(userId);
-
-//     return reply.code(200).send({
-//         success: true,
-//         user: userData
-//     });
-// }
-
 // ====== 42 OAUTH ======
 
-// export async function Initiate42Auth(request, reply) {
-//     const authUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${OAUTH42_UID}&redirect_uri=${OAUTH42_CALLBACK}&response_type=code`;
-//     return reply.redirect(authUrl);
-// }
+export async function Initiate42Auth(request, reply) {
+    const authUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${OAUTH42_UID}&redirect_uri=${OAUTH42_CALLBACK}&response_type=code`;
+    return reply.redirect(authUrl);
+}
 
-// export async function FortyTwoAuth(request, reply) {
-//     const { code } = request.query;
-
-//     if (!code) {
-//         return reply.redirect(`${FRONTEND_URL}?error=no_code`);
-//     }
-
-//     try {
-//         // Exchange authorization code for access token
-//         const tokenResponse = await fetch('https://api.intra.42.fr/oauth/token', {
-//             method: 'POST',
-//             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-//             body: new URLSearchParams({
-//                 grant_type: 'authorization_code',
-//                 client_id: OAUTH42_UID,
-//                 client_secret: OAUTH42_SECRET,
-//                 code,
-//                 redirect_uri : OAUTH42_CALLBACK,
-//             }),
-//         });
-
-//         const tokens = await tokenResponse.json();
-        
-//         if (!tokens.access_token) {
-//             throw new Error('Failed to obtain access token');
-//         }
-
-//         // Get user info from 42
-//         const userResponse = await fetch('https://api.intra.42.fr/v2/me', {
-//             headers: { Authorization: `Bearer ${tokens.access_token}` },
-//         });
-
-//         const fortyTwoUser = await userResponse.json();
-
-//         // Check if user already exists
-//         const existingUser = request.server.db
-//             .prepare("SELECT * FROM users WHERE email = ?")
-//             .get(fortyTwoUser.email);
-
-//         let userId;
-//         let isNewUser = false;
-
-//         if (existingUser) {
-//             // User exists - log them in
-//             userId = existingUser.id_user;
-//             isNewUser = false;
-//         } else {
-//             // Create new user with auth_method = 2 (42)
-//             const insertQuery = request.server.db
-//             .prepare("INSERT INTO users (username, email, profile_img, auth_method) VALUES (?, ?, ?, ?)");
-            
-//             // Use 42 login as username and a default profile image if none provided
-//             const profileImage = fortyTwoUser.image_url || DEFAULT_PROFILE_IMAGE;
-
-//             const result = insertQuery.run(
-//             fortyTwoUser.login, 
-//             fortyTwoUser.email, 
-//             profileImage,
-//             2 // auth_method: 2 for 42
-//             );
-//             userId = result.lastInsertRowid;
-//             isNewUser = true;
-//         }
-
-//         // Generate unique session ID
-//         const sessionId = `42_auth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-//         // Initialize global sessions map
-//         if (!global.fortyTwoAuthSessions) {
-//             global.fortyTwoAuthSessions = new Map();
-//         }
-        
-//         // Store session data
-//         global.fortyTwoAuthSessions.set(sessionId, {
-//             id: userId,
-//             email: fortyTwoUser.email,
-//             username: fortyTwoUser.login,
-//             profile_img: fortyTwoUser.image_url || DEFAULT_PROFILE_IMAGE,
-//             isNewUser: isNewUser,
-//             timestamp: Date.now()
-//         });
-
-//         // Clean up expired sessions (older than 5 minutes)
-//         const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-//         for (const [key, value] of global.fortyTwoAuthSessions.entries()) {
-//             if (value.timestamp < fiveMinutesAgo) {
-//                 global.fortyTwoAuthSessions.delete(key);
-//             }
-//         }
-
-//         // Redirect with session ID
-//         return reply.redirect(`${FRONTEND_URL}?fortyTwoAuth=success&sessionId=${sessionId}`);
-
-//     } catch (error) {
-//         console.error('42 auth failed:', error);
-//         return reply.redirect(`${FRONTEND_URL}?error=auth_failed`);
-//     }
-// }
-
-// export async function get42AuthUser(request, reply) {
-//     const { sessionId } = request.query;
-
-//     if (!sessionId) {
-//         return reply.code(400).send({
-//             success: false,
-//             message: "Session ID required"
-//         });
-//     }
-
-//     if (!global.fortyTwoAuthSessions || !global.fortyTwoAuthSessions.has(sessionId)) {
-//         return reply.code(404).send({
-//             success: false,
-//             message: "Session not found or expired"
-//         });
-//     }
-
-//     const userData = global.fortyTwoAuthSessions.get(sessionId);
+export async function FortyTwoAuth(request, reply) {
+    const { code } = request.query;
     
-//     // Delete session after retrieval (one-time use)
-//     global.fortyTwoAuthSessions.delete(sessionId);
+    if (!code) {
+        return reply.redirect(`${FRONTEND_URL}?error=no_code`);
+    }
 
-//     return reply.code(200).send({
-//         success: true,
-//         user: userData
-//     });
-// }
+    // Exchange authorization code for access token
+    try {
+        const tokenResponse = await fetch('https://api.intra.42.fr/oauth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                grant_type: 'authorization_code',
+                client_id: OAUTH42_UID,
+                client_secret: OAUTH42_SECRET,
+                code,
+                redirect_uri: OAUTH42_CALLBACK,
+            }),
+        });
+
+        const tokenData = await tokenResponse.json();
+        
+        if (!tokenData.access_token) {
+            throw new Error('Failed to obtain access token');
+        }
+
+        // Get user info from 42 API
+        const userResponse = await fetch('https://api.intra.42.fr/v2/me', {
+            headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        });
+
+        const fortyTwoUser = await userResponse.json();
+        console.log("42 User:", fortyTwoUser.login);
+        console.log("42 User:", fortyTwoUser.email);
+        console.log("42 User:", fortyTwoUser.displayname);
+        console.log("42 User:", fortyTwoUser.image.link);
+        console.log("11111111")
+
+        // Check if user already exists
+        const existingUser = request.server.db
+            .prepare("SELECT * FROM users WHERE email = ?")
+            .get(fortyTwoUser.email);
+
+        let userId;
+        let isNewUser = false;
+
+        if (existingUser) {
+            // User exists - log them in
+            userId = existingUser.id_user;
+            isNewUser = false;
+            // Update access token
+            const token = generateToken(existingUser.username, existingUser.email);
+            request.server.db
+                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+                .run(token, userId);
+        } else {
+            const token = generateToken(fortyTwoUser.login, fortyTwoUser.email);
+            const insertQuery = request.server.db
+                .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method, access_token) VALUES (?, ?, ?, ?, ?, ?)");
+            const result = insertQuery.run(
+                fortyTwoUser.login,
+                fortyTwoUser.displayname,
+                fortyTwoUser.email,
+                fortyTwoUser.image.link,
+                2,
+                token
+            );
+            userId = result.lastInsertRowid;
+            isNewUser = true;
+        }
+
+        return reply.redirect(`${FRONTEND_URL}/signIn/?42Auth=success&userId=${userId}&isNewUser=${isNewUser}`);
+        // return  reply.redirect(`${FRONTEND_URL}/signIn/?42Auth=success&login=${fortyTwoUser.login}`);
+
+    } catch (error) {
+        console.error('42 auth failed:', error);
+        return reply.redirect(`${FRONTEND_URL}?error=auth_failed`);
+    }
+}
+

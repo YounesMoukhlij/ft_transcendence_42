@@ -9,9 +9,8 @@ import {
     login,
     InitiateGoogleAuth,
     GoogleAuth,
-    // getGoogleAuthUser,
-    // Initiate42Auth,
-    // get42AuthUser
+    Initiate42Auth,
+    FortyTwoAuth
 } from '../modules/userAuth.module.js';
 
 export default async function routes(fastify, options) {
@@ -39,12 +38,10 @@ export default async function routes(fastify, options) {
     // Step 2: Google redirects here with code
     fastify.get('/GoogleAuth', GoogleAuth);
     
-    // Step 3: Frontend fetches user data
-    // fastify.get('/auth/google/user', getGoogleAuthUser);
-
-
-    // with 42
-    // fastify.get('/auth/42', Initiate42Auth);           // Step 1: User clicks button
-    // fastify.get('/auth/42/callback', FortyTwoAuth);    // Step 2: 42 redirects here
-    // fastify.get('/auth/42/user', get42AuthUser);       // Step 3: Frontend gets user data
+    // ====== 42 OAUTH ROUTES ======
+    // Step 1: Initiate OAuth flow
+    fastify.get('/auth/42', Initiate42Auth);
+    
+    // Step 2: 42 redirects here with code
+    fastify.get('/42Auth', FortyTwoAuth);
 }

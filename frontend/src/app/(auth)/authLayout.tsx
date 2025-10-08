@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, use } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from 'react-toastify'
@@ -372,7 +372,80 @@ function SignInForm({ onToggle }: SignInFormProps) {
     // Redirect to backend OAuth initiation
     window.location.href = `${API_URL}/auth/google`
   }
+  
+  useEffect(() => {
+    //         return reply.redirect(`${FRONTEND_URL}/signIn/?42Auth=success&userId=${userId}&isNewUser=${isNewUser}`);
+    const fortyTwoAuth = searchParams.get('42Auth')
+    const userId = searchParams.get('userId')
+    const isNewUser = searchParams.get('isNewUser')
+    const authError = searchParams.get('error')
     
+    // Skip if no OAuth parameters present
+    if (!fortyTwoAuth && !authError) {
+      return
+    }
+    if (authError) {
+      const errorMessages: Record<string, string> = {
+        'no_code': '42 authentication failed: No authorization code',
+        'token_failed': 'Failed to exchange authorization code',
+        'user_failed': 'Failed to retrieve user information',
+        'auth_failed': '42 authentication failed. Please try again.'
+      }
+      toast.error(errorMessages[authError] || 'An error occurred during authentication')
+      // Clean URL
+      router.replace('/signIn')
+      return
+    }
+
+    if (fortyTwoAuth === 'success' && userId) {
+      // Fetch user data from backend using the ID
+      const fetchUserData = async () => {
+        try {
+          const response = await fetch(`${API_URL}/getUserById/${userId}`)
+          
+          if (!response.ok) {
+            toast.error('Failed to retrieve user data')
+            router.replace('/signIn')
+            return
+          }
+
+          const userData = await response.json()
+          
+          console.log('42 OAuth user data:', userData)
+          
+          // Update global user state
+          setUser(userData)
+          // localStorage.setItem('user', JSON.stringify(userData))
+          
+          
+          // Display success message based on whether user is new
+          const message = isNewUser === 'true' 
+            ? `Welcome ${userData.username}! Account created successfully.`
+            : `Welcome back, ${userData.username}!`
+          
+          toast.success(message)
+          
+          // Clean URL first to prevent re-running
+          router.replace('/signIn')
+          
+          // Redirect to home after a short delay
+          setTimeout(() => {
+            router.push('/')
+          }, 1500)
+          
+        } catch (err) {
+          console.error('Failed to fetch user data:', err)
+          toast.error('Failed to retrieve user information')
+          router.replace('/signIn')
+        }
+      }
+
+      fetchUserData()
+    }
+    
+    // Run only one time to do not duplicate toasts
+  }, [])
+
   const handle42Auth = () => {
     window.location.href = `${API_URL}/auth/42`
   }
