@@ -101,7 +101,7 @@ addMessage: (data) => set((state) => {
     if (get().socket) return;
 
     const ws = new WebSocket(
-      `wss://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/ws`
+      `ws://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/ws`
     );
 
     ws.onopen = () => {
