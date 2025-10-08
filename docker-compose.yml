@@ -30,3 +30,12 @@ services:
     depends_on:
       - Frontend
     restart: always
+  Grafana:
+    build:
+      context: .
+      dockerfile: ./infra/Dockerfile.grafana
+    container_name: grafana 
+    image: grafana:0.1
+    ports:
+      - "5000:3000"
+    restart: always
