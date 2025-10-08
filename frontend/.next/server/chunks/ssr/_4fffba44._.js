@@ -1,5 +1,39 @@
 module.exports = {
 
+"[project]/src/store/userStore.js [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+// import { create } from 'zustand'
+// export const useUserStore = create((set) => ({
+//   // Initial state
+//   user: null,
+//   // Actions (functions to change state)
+//   setUser: (userObj) => set({ user: userObj }),
+//   // Function to clear user data
+//   clearUser: () => set({ user: null }),
+// }))
+__turbopack_context__.s({
+    "useUserStore": (()=>useUserStore)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/react.mjs [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/middleware.mjs [app-ssr] (ecmascript)");
+;
+;
+const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["create"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["persist"])((set)=>({
+        user: null,
+        setUser: (userObj)=>set({
+                user: userObj
+            }),
+        clearUser: ()=>set({
+                user: null
+            })
+    }), {
+    name: 'user-storage',
+    getStorage: ()=>localStorage
+}));
+}}),
 "[project]/src/app/settings/page.tsx [app-ssr] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
@@ -9,6 +43,7 @@ __turbopack_context__.s({
     "default": (()=>__TURBOPACK__default__export__)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$camera$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Camera$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/camera.js [app-ssr] (ecmascript) <export default as Camera>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__User$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/user.js [app-ssr] (ecmascript) <export default as User>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$mail$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Mail$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/mail.js [app-ssr] (ecmascript) <export default as Mail>");
@@ -16,20 +51,23 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$text$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__FileText$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/file-text.js [app-ssr] (ecmascript) <export default as FileText>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$globe$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Globe$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/globe.js [app-ssr] (ecmascript) <export default as Globe>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevron-down.js [app-ssr] (ecmascript) <export default as ChevronDown>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$userStore$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/store/userStore.js [app-ssr] (ecmascript)");
 'use client';
 ;
 ;
+;
+;
+const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Osama_bin_Laden%2C_portr%C3%A6t.jpg?20231116001654';
 const ProfileSettingsPage = ()=>{
-    const Userdata = {
-        id_user: 15,
-        username: "test",
-        fullname: null,
-        bio: null,
-        profile_img: "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg",
-        email: "tes@mail.m",
-        langue: "en",
-        auth_method: 0
-    };
+    const Userdata = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$userStore$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useUserStore"])((state)=>state.user);
+    const [newdata, setNewdata] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])({
+        profile_img: '',
+        languages: 'en',
+        username: '',
+        full_name: '',
+        email: '',
+        bio: ''
+    });
     const languages = [
         {
             id: 'en',
@@ -52,7 +90,10 @@ const ProfileSettingsPage = ()=>{
             flag: '🇫🇷'
         }
     ];
-    const isPasswordAuth = 0 === Userdata.auth_method;
+    const check = Userdata.auth_method || 0;
+    console.log("auth method:", check);
+    // if Userdata.auth_method is 1 or 2, password change is not allowed if 0 it is allowed
+    const isPasswordAuth = check === 0;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "min-h-screen w-full  p-4 sm:p-6 lg:p-8",
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -66,7 +107,7 @@ const ProfileSettingsPage = ()=>{
                             children: "Account Settings"
                         }, void 0, false, {
                             fileName: "[project]/src/app/settings/page.tsx",
-                            lineNumber: 48,
+                            lineNumber: 41,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -74,30 +115,31 @@ const ProfileSettingsPage = ()=>{
                             children: "Manage your profile and preferences"
                         }, void 0, false, {
                             fileName: "[project]/src/app/settings/page.tsx",
-                            lineNumber: 51,
+                            lineNumber: 44,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/settings/page.tsx",
-                    lineNumber: 47,
+                    lineNumber: 40,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "bg-white rounded-2xl shadow-lg overflow-hidden",
+                    className: "bg-gray-500 rounded-2xl shadow-lg overflow-hidden",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "bg-gray-500 p-6 sm:p-8 flex justify-center",
                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "relative group cursor-pointer",
+                                onClick: ()=>{},
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                        src: Userdata.profile_img,
+                                        src: Userdata.profile_img || defaultProfileImg,
                                         alt: "Profile",
                                         className: "w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-xl group-hover:opacity-75 transition-all duration-300"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/settings/page.tsx",
-                                        lineNumber: 62,
+                                        lineNumber: 55,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -107,12 +149,12 @@ const ProfileSettingsPage = ()=>{
                                             className: "text-white"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 68,
+                                            lineNumber: 61,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/settings/page.tsx",
-                                        lineNumber: 67,
+                                        lineNumber: 60,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -121,18 +163,18 @@ const ProfileSettingsPage = ()=>{
                                         className: "hidden"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/settings/page.tsx",
-                                        lineNumber: 70,
+                                        lineNumber: 63,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/settings/page.tsx",
-                                lineNumber: 58,
+                                lineNumber: 51,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/settings/page.tsx",
-                            lineNumber: 57,
+                            lineNumber: 50,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -145,29 +187,30 @@ const ProfileSettingsPage = ()=>{
                                             className: "lg:col-span-2  ",
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                    className: "flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2",
+                                                    className: "flex items-center gap-2 text-sm font-semibold text-black mb-2",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$globe$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Globe$3e$__["Globe"], {
                                                             size: 18
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/settings/page.tsx",
-                                                            lineNumber: 82,
+                                                            lineNumber: 75,
                                                             columnNumber: 19
                                                         }, this),
                                                         "Preferred Language"
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 81,
+                                                    lineNumber: 74,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     className: "relative",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
-                                                            className: "w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all outline-none text-gray-900 appearance-none bg-white cursor-pointer",
+                                                            className: "w-full p-3 pr-10 border bg-black border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all outline-none text-white appearance-none cursor-pointer",
                                                             children: languages.map((lang)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                                                                     value: lang.id,
+                                                                    className: "flex items-center gap-2 bg-black text-white",
                                                                     children: [
                                                                         lang.flag,
                                                                         " ",
@@ -175,12 +218,12 @@ const ProfileSettingsPage = ()=>{
                                                                     ]
                                                                 }, lang.id, true, {
                                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                                    lineNumber: 91,
+                                                                    lineNumber: 84,
                                                                     columnNumber: 23
                                                                 }, this))
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/settings/page.tsx",
-                                                            lineNumber: 86,
+                                                            lineNumber: 79,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
@@ -188,90 +231,93 @@ const ProfileSettingsPage = ()=>{
                                                             size: 20
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/settings/page.tsx",
-                                                            lineNumber: 96,
+                                                            lineNumber: 89,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 85,
+                                                    lineNumber: 78,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 80,
+                                            lineNumber: 73,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                                     htmlFor: "username",
-                                                    className: "flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2",
+                                                    className: "flex items-center gap-2 text-sm font-semibold text-black mb-2",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__User$3e$__["User"], {
                                                             size: 18
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/settings/page.tsx",
-                                                            lineNumber: 102,
+                                                            lineNumber: 95,
                                                             columnNumber: 19
                                                         }, this),
                                                         "Username"
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 101,
+                                                    lineNumber: 94,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     type: "text",
                                                     id: "username",
-                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
+                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all outline-none text-gray-900",
+                                                    defaultValue: Userdata.username,
+                                                    placeholder: "Enter your username"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 105,
+                                                    lineNumber: 98,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 100,
+                                            lineNumber: 93,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                                     htmlFor: "fullname",
-                                                    className: "flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2",
+                                                    className: "flex items-center gap-2 text-sm font-semibold text-black mb-2",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__User$3e$__["User"], {
                                                             size: 18
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/settings/page.tsx",
-                                                            lineNumber: 115,
+                                                            lineNumber: 109,
                                                             columnNumber: 19
                                                         }, this),
                                                         "Full Name"
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 114,
+                                                    lineNumber: 108,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     type: "text",
                                                     id: "fullname",
-                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900",
+                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all outline-none text-gray-900",
+                                                    defaultValue: Userdata.full_name,
                                                     placeholder: "Enter your full name"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 118,
+                                                    lineNumber: 112,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 113,
+                                            lineNumber: 107,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -279,35 +325,37 @@ const ProfileSettingsPage = ()=>{
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                                     htmlFor: "email",
-                                                    className: "flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2",
+                                                    className: "flex items-center gap-2 text-sm font-semibold text-black mb-2",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$mail$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Mail$3e$__["Mail"], {
                                                             size: 18
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/settings/page.tsx",
-                                                            lineNumber: 129,
+                                                            lineNumber: 123,
                                                             columnNumber: 19
                                                         }, this),
                                                         "Email Address"
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 128,
+                                                    lineNumber: 122,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     type: "email",
                                                     id: "email",
-                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
+                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all outline-none text-gray-900",
+                                                    defaultValue: Userdata.email,
+                                                    placeholder: "Enter your email address"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 132,
+                                                    lineNumber: 126,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 127,
+                                            lineNumber: 121,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -315,153 +363,156 @@ const ProfileSettingsPage = ()=>{
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                                     htmlFor: "bio",
-                                                    className: "flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2",
+                                                    className: "flex items-center gap-2 text-sm font-semibold text-black mb-2",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$text$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__FileText$3e$__["FileText"], {
                                                             size: 18
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/settings/page.tsx",
-                                                            lineNumber: 142,
+                                                            lineNumber: 137,
                                                             columnNumber: 19
                                                         }, this),
                                                         "Bio"
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 141,
+                                                    lineNumber: 136,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
                                                     id: "bio",
                                                     rows: 4,
-                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none text-gray-900",
+                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all outline-none resize-none text-gray-900",
+                                                    defaultValue: Userdata.bio || '',
                                                     placeholder: "Tell us about yourself..."
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 145,
+                                                    lineNumber: 140,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 140,
+                                            lineNumber: 135,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                                     htmlFor: "password",
-                                                    className: "flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2",
+                                                    className: "flex items-center gap-2 text-sm font-semibold text-black mb-2",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$lock$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Lock$3e$__["Lock"], {
                                                             size: 18
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/settings/page.tsx",
-                                                            lineNumber: 157,
+                                                            lineNumber: 152,
                                                             columnNumber: 23
                                                         }, this),
                                                         "New Password"
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 156,
+                                                    lineNumber: 151,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     type: "password",
                                                     id: "password",
-                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900",
-                                                    placeholder: "Password"
+                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all outline-none text-gray-900",
+                                                    disabled: !isPasswordAuth,
+                                                    placeholder: isPasswordAuth ? "Enter new password" : "Password change not available"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 160,
+                                                    lineNumber: 155,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 155,
+                                            lineNumber: 150,
                                             columnNumber: 19
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                                     htmlFor: "confirm-password",
-                                                    className: "flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2",
+                                                    className: "flex items-center gap-2 text-sm font-semibold text-black mb-2",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$lock$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Lock$3e$__["Lock"], {
                                                             size: 18
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/settings/page.tsx",
-                                                            lineNumber: 171,
+                                                            lineNumber: 167,
                                                             columnNumber: 23
                                                         }, this),
                                                         "Confirm Password"
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 170,
+                                                    lineNumber: 166,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     type: "password",
                                                     id: "confirm-password",
-                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900",
-                                                    placeholder: "Confirmed password"
+                                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all outline-none text-gray-900",
+                                                    disabled: !isPasswordAuth,
+                                                    placeholder: isPasswordAuth ? "Confirm new password" : "Password change not available"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/settings/page.tsx",
-                                                    lineNumber: 174,
+                                                    lineNumber: 170,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/settings/page.tsx",
-                                            lineNumber: 169,
+                                            lineNumber: 165,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/settings/page.tsx",
-                                    lineNumber: 79,
+                                    lineNumber: 72,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "mt-6 text-right",
                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                         type: "button",
-                                        className: "inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all",
+                                        className: "inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all",
                                         children: "Save Changes"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/settings/page.tsx",
-                                        lineNumber: 184,
+                                        lineNumber: 180,
                                         columnNumber: 15
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/settings/page.tsx",
-                                    lineNumber: 183,
+                                    lineNumber: 179,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/settings/page.tsx",
-                            lineNumber: 78,
+                            lineNumber: 71,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/settings/page.tsx",
-                    lineNumber: 56,
+                    lineNumber: 49,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/settings/page.tsx",
-            lineNumber: 46,
+            lineNumber: 39,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/settings/page.tsx",
-        lineNumber: 45,
+        lineNumber: 38,
         columnNumber: 5
     }, this);
 };
@@ -960,7 +1011,540 @@ __turbopack_context__.s({
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevron-down.js [app-ssr] (ecmascript)");
 }}),
+"[project]/node_modules/zustand/esm/vanilla.mjs [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "createStore": (()=>createStore)
+});
+const createStoreImpl = (createState)=>{
+    let state;
+    const listeners = /* @__PURE__ */ new Set();
+    const setState = (partial, replace)=>{
+        const nextState = typeof partial === "function" ? partial(state) : partial;
+        if (!Object.is(nextState, state)) {
+            const previousState = state;
+            state = (replace != null ? replace : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
+            listeners.forEach((listener)=>listener(state, previousState));
+        }
+    };
+    const getState = ()=>state;
+    const getInitialState = ()=>initialState;
+    const subscribe = (listener)=>{
+        listeners.add(listener);
+        return ()=>listeners.delete(listener);
+    };
+    const api = {
+        setState,
+        getState,
+        getInitialState,
+        subscribe
+    };
+    const initialState = state = createState(setState, getState, api);
+    return api;
+};
+const createStore = (createState)=>createState ? createStoreImpl(createState) : createStoreImpl;
+;
+}}),
+"[project]/node_modules/zustand/esm/react.mjs [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "create": (()=>create),
+    "useStore": (()=>useStore)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$vanilla$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/vanilla.mjs [app-ssr] (ecmascript)");
+;
+;
+const identity = (arg)=>arg;
+function useStore(api, selector = identity) {
+    const slice = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useSyncExternalStore(api.subscribe, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useCallback(()=>selector(api.getState()), [
+        api,
+        selector
+    ]), __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useCallback(()=>selector(api.getInitialState()), [
+        api,
+        selector
+    ]));
+    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useDebugValue(slice);
+    return slice;
+}
+const createImpl = (createState)=>{
+    const api = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$vanilla$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createStore"])(createState);
+    const useBoundStore = (selector)=>useStore(api, selector);
+    Object.assign(useBoundStore, api);
+    return useBoundStore;
+};
+const create = (createState)=>createState ? createImpl(createState) : createImpl;
+;
+}}),
+"[project]/node_modules/zustand/esm/middleware.mjs [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "combine": (()=>combine),
+    "createJSONStorage": (()=>createJSONStorage),
+    "devtools": (()=>devtools),
+    "persist": (()=>persist),
+    "redux": (()=>redux),
+    "subscribeWithSelector": (()=>subscribeWithSelector)
+});
+const __TURBOPACK__import$2e$meta__ = {
+    get url () {
+        return `file://${__turbopack_context__.P("node_modules/zustand/esm/middleware.mjs")}`;
+    }
+};
+const reduxImpl = (reducer, initial)=>(set, _get, api)=>{
+        api.dispatch = (action)=>{
+            set((state)=>reducer(state, action), false, action);
+            return action;
+        };
+        api.dispatchFromDevtools = true;
+        return {
+            dispatch: (...args)=>api.dispatch(...args),
+            ...initial
+        };
+    };
+const redux = reduxImpl;
+const trackedConnections = /* @__PURE__ */ new Map();
+const getTrackedConnectionState = (name)=>{
+    const api = trackedConnections.get(name);
+    if (!api) return {};
+    return Object.fromEntries(Object.entries(api.stores).map(([key, api2])=>[
+            key,
+            api2.getState()
+        ]));
+};
+const extractConnectionInformation = (store, extensionConnector, options)=>{
+    if (store === void 0) {
+        return {
+            type: "untracked",
+            connection: extensionConnector.connect(options)
+        };
+    }
+    const existingConnection = trackedConnections.get(options.name);
+    if (existingConnection) {
+        return {
+            type: "tracked",
+            store,
+            ...existingConnection
+        };
+    }
+    const newConnection = {
+        connection: extensionConnector.connect(options),
+        stores: {}
+    };
+    trackedConnections.set(options.name, newConnection);
+    return {
+        type: "tracked",
+        store,
+        ...newConnection
+    };
+};
+const removeStoreFromTrackedConnections = (name, store)=>{
+    if (store === void 0) return;
+    const connectionInfo = trackedConnections.get(name);
+    if (!connectionInfo) return;
+    delete connectionInfo.stores[store];
+    if (Object.keys(connectionInfo.stores).length === 0) {
+        trackedConnections.delete(name);
+    }
+};
+const findCallerName = (stack)=>{
+    var _a, _b;
+    if (!stack) return void 0;
+    const traceLines = stack.split("\n");
+    const apiSetStateLineIndex = traceLines.findIndex((traceLine)=>traceLine.includes("api.setState"));
+    if (apiSetStateLineIndex < 0) return void 0;
+    const callerLine = ((_a = traceLines[apiSetStateLineIndex + 1]) == null ? void 0 : _a.trim()) || "";
+    return (_b = /.+ (.+) .+/.exec(callerLine)) == null ? void 0 : _b[1];
+};
+const devtoolsImpl = (fn, devtoolsOptions = {})=>(set, get, api)=>{
+        const { enabled, anonymousActionType, store, ...options } = devtoolsOptions;
+        let extensionConnector;
+        try {
+            extensionConnector = (enabled != null ? enabled : (__TURBOPACK__import$2e$meta__.env ? __TURBOPACK__import$2e$meta__.env.MODE : void 0) !== "production") && window.__REDUX_DEVTOOLS_EXTENSION__;
+        } catch (e) {}
+        if (!extensionConnector) {
+            return fn(set, get, api);
+        }
+        const { connection, ...connectionInformation } = extractConnectionInformation(store, extensionConnector, options);
+        let isRecording = true;
+        api.setState = (state, replace, nameOrAction)=>{
+            const r = set(state, replace);
+            if (!isRecording) return r;
+            const action = nameOrAction === void 0 ? {
+                type: anonymousActionType || findCallerName(new Error().stack) || "anonymous"
+            } : typeof nameOrAction === "string" ? {
+                type: nameOrAction
+            } : nameOrAction;
+            if (store === void 0) {
+                connection == null ? void 0 : connection.send(action, get());
+                return r;
+            }
+            connection == null ? void 0 : connection.send({
+                ...action,
+                type: `${store}/${action.type}`
+            }, {
+                ...getTrackedConnectionState(options.name),
+                [store]: api.getState()
+            });
+            return r;
+        };
+        api.devtools = {
+            cleanup: ()=>{
+                if (connection && typeof connection.unsubscribe === "function") {
+                    connection.unsubscribe();
+                }
+                removeStoreFromTrackedConnections(options.name, store);
+            }
+        };
+        const setStateFromDevtools = (...a)=>{
+            const originalIsRecording = isRecording;
+            isRecording = false;
+            set(...a);
+            isRecording = originalIsRecording;
+        };
+        const initialState = fn(api.setState, get, api);
+        if (connectionInformation.type === "untracked") {
+            connection == null ? void 0 : connection.init(initialState);
+        } else {
+            connectionInformation.stores[connectionInformation.store] = api;
+            connection == null ? void 0 : connection.init(Object.fromEntries(Object.entries(connectionInformation.stores).map(([key, store2])=>[
+                    key,
+                    key === connectionInformation.store ? initialState : store2.getState()
+                ])));
+        }
+        if (api.dispatchFromDevtools && typeof api.dispatch === "function") {
+            let didWarnAboutReservedActionType = false;
+            const originalDispatch = api.dispatch;
+            api.dispatch = (...args)=>{
+                if ((__TURBOPACK__import$2e$meta__.env ? __TURBOPACK__import$2e$meta__.env.MODE : void 0) !== "production" && args[0].type === "__setState" && !didWarnAboutReservedActionType) {
+                    console.warn('[zustand devtools middleware] "__setState" action type is reserved to set state from the devtools. Avoid using it.');
+                    didWarnAboutReservedActionType = true;
+                }
+                originalDispatch(...args);
+            };
+        }
+        connection.subscribe((message)=>{
+            var _a;
+            switch(message.type){
+                case "ACTION":
+                    if (typeof message.payload !== "string") {
+                        console.error("[zustand devtools middleware] Unsupported action format");
+                        return;
+                    }
+                    return parseJsonThen(message.payload, (action)=>{
+                        if (action.type === "__setState") {
+                            if (store === void 0) {
+                                setStateFromDevtools(action.state);
+                                return;
+                            }
+                            if (Object.keys(action.state).length !== 1) {
+                                console.error(`
+                    [zustand devtools middleware] Unsupported __setState action format.
+                    When using 'store' option in devtools(), the 'state' should have only one key, which is a value of 'store' that was passed in devtools(),
+                    and value of this only key should be a state object. Example: { "type": "__setState", "state": { "abc123Store": { "foo": "bar" } } }
+                    `);
+                            }
+                            const stateFromDevtools = action.state[store];
+                            if (stateFromDevtools === void 0 || stateFromDevtools === null) {
+                                return;
+                            }
+                            if (JSON.stringify(api.getState()) !== JSON.stringify(stateFromDevtools)) {
+                                setStateFromDevtools(stateFromDevtools);
+                            }
+                            return;
+                        }
+                        if (!api.dispatchFromDevtools) return;
+                        if (typeof api.dispatch !== "function") return;
+                        api.dispatch(action);
+                    });
+                case "DISPATCH":
+                    switch(message.payload.type){
+                        case "RESET":
+                            setStateFromDevtools(initialState);
+                            if (store === void 0) {
+                                return connection == null ? void 0 : connection.init(api.getState());
+                            }
+                            return connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
+                        case "COMMIT":
+                            if (store === void 0) {
+                                connection == null ? void 0 : connection.init(api.getState());
+                                return;
+                            }
+                            return connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
+                        case "ROLLBACK":
+                            return parseJsonThen(message.state, (state)=>{
+                                if (store === void 0) {
+                                    setStateFromDevtools(state);
+                                    connection == null ? void 0 : connection.init(api.getState());
+                                    return;
+                                }
+                                setStateFromDevtools(state[store]);
+                                connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
+                            });
+                        case "JUMP_TO_STATE":
+                        case "JUMP_TO_ACTION":
+                            return parseJsonThen(message.state, (state)=>{
+                                if (store === void 0) {
+                                    setStateFromDevtools(state);
+                                    return;
+                                }
+                                if (JSON.stringify(api.getState()) !== JSON.stringify(state[store])) {
+                                    setStateFromDevtools(state[store]);
+                                }
+                            });
+                        case "IMPORT_STATE":
+                            {
+                                const { nextLiftedState } = message.payload;
+                                const lastComputedState = (_a = nextLiftedState.computedStates.slice(-1)[0]) == null ? void 0 : _a.state;
+                                if (!lastComputedState) return;
+                                if (store === void 0) {
+                                    setStateFromDevtools(lastComputedState);
+                                } else {
+                                    setStateFromDevtools(lastComputedState[store]);
+                                }
+                                connection == null ? void 0 : connection.send(null, // FIXME no-any
+                                nextLiftedState);
+                                return;
+                            }
+                        case "PAUSE_RECORDING":
+                            return isRecording = !isRecording;
+                    }
+                    return;
+            }
+        });
+        return initialState;
+    };
+const devtools = devtoolsImpl;
+const parseJsonThen = (stringified, fn)=>{
+    let parsed;
+    try {
+        parsed = JSON.parse(stringified);
+    } catch (e) {
+        console.error("[zustand devtools middleware] Could not parse the received json", e);
+    }
+    if (parsed !== void 0) fn(parsed);
+};
+const subscribeWithSelectorImpl = (fn)=>(set, get, api)=>{
+        const origSubscribe = api.subscribe;
+        api.subscribe = (selector, optListener, options)=>{
+            let listener = selector;
+            if (optListener) {
+                const equalityFn = (options == null ? void 0 : options.equalityFn) || Object.is;
+                let currentSlice = selector(api.getState());
+                listener = (state)=>{
+                    const nextSlice = selector(state);
+                    if (!equalityFn(currentSlice, nextSlice)) {
+                        const previousSlice = currentSlice;
+                        optListener(currentSlice = nextSlice, previousSlice);
+                    }
+                };
+                if (options == null ? void 0 : options.fireImmediately) {
+                    optListener(currentSlice, currentSlice);
+                }
+            }
+            return origSubscribe(listener);
+        };
+        const initialState = fn(set, get, api);
+        return initialState;
+    };
+const subscribeWithSelector = subscribeWithSelectorImpl;
+function combine(initialState, create) {
+    return (...args)=>Object.assign({}, initialState, create(...args));
+}
+function createJSONStorage(getStorage, options) {
+    let storage;
+    try {
+        storage = getStorage();
+    } catch (e) {
+        return;
+    }
+    const persistStorage = {
+        getItem: (name)=>{
+            var _a;
+            const parse = (str2)=>{
+                if (str2 === null) {
+                    return null;
+                }
+                return JSON.parse(str2, options == null ? void 0 : options.reviver);
+            };
+            const str = (_a = storage.getItem(name)) != null ? _a : null;
+            if (str instanceof Promise) {
+                return str.then(parse);
+            }
+            return parse(str);
+        },
+        setItem: (name, newValue)=>storage.setItem(name, JSON.stringify(newValue, options == null ? void 0 : options.replacer)),
+        removeItem: (name)=>storage.removeItem(name)
+    };
+    return persistStorage;
+}
+const toThenable = (fn)=>(input)=>{
+        try {
+            const result = fn(input);
+            if (result instanceof Promise) {
+                return result;
+            }
+            return {
+                then (onFulfilled) {
+                    return toThenable(onFulfilled)(result);
+                },
+                catch (_onRejected) {
+                    return this;
+                }
+            };
+        } catch (e) {
+            return {
+                then (_onFulfilled) {
+                    return this;
+                },
+                catch (onRejected) {
+                    return toThenable(onRejected)(e);
+                }
+            };
+        }
+    };
+const persistImpl = (config, baseOptions)=>(set, get, api)=>{
+        let options = {
+            storage: createJSONStorage(()=>localStorage),
+            partialize: (state)=>state,
+            version: 0,
+            merge: (persistedState, currentState)=>({
+                    ...currentState,
+                    ...persistedState
+                }),
+            ...baseOptions
+        };
+        let hasHydrated = false;
+        const hydrationListeners = /* @__PURE__ */ new Set();
+        const finishHydrationListeners = /* @__PURE__ */ new Set();
+        let storage = options.storage;
+        if (!storage) {
+            return config((...args)=>{
+                console.warn(`[zustand persist middleware] Unable to update item '${options.name}', the given storage is currently unavailable.`);
+                set(...args);
+            }, get, api);
+        }
+        const setItem = ()=>{
+            const state = options.partialize({
+                ...get()
+            });
+            return storage.setItem(options.name, {
+                state,
+                version: options.version
+            });
+        };
+        const savedSetState = api.setState;
+        api.setState = (state, replace)=>{
+            savedSetState(state, replace);
+            return setItem();
+        };
+        const configResult = config((...args)=>{
+            set(...args);
+            return setItem();
+        }, get, api);
+        api.getInitialState = ()=>configResult;
+        let stateFromStorage;
+        const hydrate = ()=>{
+            var _a, _b;
+            if (!storage) return;
+            hasHydrated = false;
+            hydrationListeners.forEach((cb)=>{
+                var _a2;
+                return cb((_a2 = get()) != null ? _a2 : configResult);
+            });
+            const postRehydrationCallback = ((_b = options.onRehydrateStorage) == null ? void 0 : _b.call(options, (_a = get()) != null ? _a : configResult)) || void 0;
+            return toThenable(storage.getItem.bind(storage))(options.name).then((deserializedStorageValue)=>{
+                if (deserializedStorageValue) {
+                    if (typeof deserializedStorageValue.version === "number" && deserializedStorageValue.version !== options.version) {
+                        if (options.migrate) {
+                            const migration = options.migrate(deserializedStorageValue.state, deserializedStorageValue.version);
+                            if (migration instanceof Promise) {
+                                return migration.then((result)=>[
+                                        true,
+                                        result
+                                    ]);
+                            }
+                            return [
+                                true,
+                                migration
+                            ];
+                        }
+                        console.error(`State loaded from storage couldn't be migrated since no migrate function was provided`);
+                    } else {
+                        return [
+                            false,
+                            deserializedStorageValue.state
+                        ];
+                    }
+                }
+                return [
+                    false,
+                    void 0
+                ];
+            }).then((migrationResult)=>{
+                var _a2;
+                const [migrated, migratedState] = migrationResult;
+                stateFromStorage = options.merge(migratedState, (_a2 = get()) != null ? _a2 : configResult);
+                set(stateFromStorage, true);
+                if (migrated) {
+                    return setItem();
+                }
+            }).then(()=>{
+                postRehydrationCallback == null ? void 0 : postRehydrationCallback(stateFromStorage, void 0);
+                stateFromStorage = get();
+                hasHydrated = true;
+                finishHydrationListeners.forEach((cb)=>cb(stateFromStorage));
+            }).catch((e)=>{
+                postRehydrationCallback == null ? void 0 : postRehydrationCallback(void 0, e);
+            });
+        };
+        api.persist = {
+            setOptions: (newOptions)=>{
+                options = {
+                    ...options,
+                    ...newOptions
+                };
+                if (newOptions.storage) {
+                    storage = newOptions.storage;
+                }
+            },
+            clearStorage: ()=>{
+                storage == null ? void 0 : storage.removeItem(options.name);
+            },
+            getOptions: ()=>options,
+            rehydrate: ()=>hydrate(),
+            hasHydrated: ()=>hasHydrated,
+            onHydrate: (cb)=>{
+                hydrationListeners.add(cb);
+                return ()=>{
+                    hydrationListeners.delete(cb);
+                };
+            },
+            onFinishHydration: (cb)=>{
+                finishHydrationListeners.add(cb);
+                return ()=>{
+                    finishHydrationListeners.delete(cb);
+                };
+            }
+        };
+        if (!options.skipHydration) {
+            hydrate();
+        }
+        return stateFromStorage || configResult;
+    };
+const persist = persistImpl;
+;
+}}),
 
 };
 
-//# sourceMappingURL=_d3863aba._.js.map
+//# sourceMappingURL=_4fffba44._.js.map

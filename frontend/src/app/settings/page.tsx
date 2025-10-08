@@ -1,17 +1,11 @@
 'use client'
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Camera, Save, User, Mail, Lock, FileText, Globe, ChevronDown } from 'lucide-react'
+import { useUserStore } from '../../store/userStore'
+import { toast } from 'react-toastify'
 
-interface UserData {
-  id_user: number
-  username: string
-  fullname: string | null
-  bio: string | null
-  profile_img: string
-  email: string
-  langue: string
-  auth_method: number
-}
+const API_URL = 'http://localhost:4444'
+const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
 
 interface LanguageOption {
   id: string
@@ -20,174 +14,401 @@ interface LanguageOption {
 }
 
 const ProfileSettingsPage = () => {
-  const initialUser: UserData = {
-    id_user: 15,
-    username: "test",
-    fullname: null,
-    bio: null,
-    profile_img: "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg",
-    email: "tes@mail.m",
-    langue: "en",
-    auth_method: 0,
-  }
+  const Userdata = useUserStore((state) => state.user)
+  const setUser = useUserStore((state) => state.setUser)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  const [formData, setFormData] = useState({
+    profile_img: '',
+    languages: 'es',
+    username: '',
+    full_name: '',
+    email: '',
+    bio: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
+  
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Populate form with user data when component mounts or Userdata changes
+  useEffect(() => {
+    if (Userdata) {
+      setFormData({
+        profile_img: Userdata.profile_img || '',
+        languages: Userdata.languages || 'en',
+        username: Userdata.username || '',
+        full_name: Userdata.full_name || '',
+        email: Userdata.email || '',
+        bio: Userdata.bio || '',
+        newPassword: '',
+        confirmPassword: '',
+      })
+    }
+  }, [Userdata])
 
   const languages: LanguageOption[] = [
-    { id: 'en', label: 'En', flag: '🇬🇧' },
-    { id: 'es', label: 'Es', flag: '🇪🇸' },
-    { id: 'tz', label: 'Tz', flag: 'ⵣ' },
-    { id: 'fr', label: 'Fr', flag: '🇫🇷' },
+    { id: 'en', label: 'English', flag: '🇬🇧' },
+    { id: 'es', label: 'Spanish', flag: '🇪🇸' },
+    { id: 'tz', label: 'Tamazight', flag: 'ⵣ' },
+    { id: 'fr', label: 'French', flag: '🇫🇷' },
   ]
+ 
+  const authMethod = Userdata?.auth_method || 0
+  const isPasswordAuth = authMethod === 0
 
-  const isPasswordAuth = 0 === initialUser.auth_method
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
 
+  const handleImageClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB')
+        return
+      }
+
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload a valid image file')
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string)
+        setFormData(prev => ({ ...prev, profile_img: reader.result as string }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const validateForm = () => {
+    if (!formData.username.trim()) {
+      toast.error('Username is required')
+      return false
+    }
+
+    if (!formData.email.trim()) {
+      toast.error('Email is required')
+      return false
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address')
+      return false
+    }
+
+    if (isPasswordAuth && (formData.newPassword || formData.confirmPassword)) {
+      if (formData.newPassword.length < 8) {
+        toast.error('Password must be at least 8 characters long')
+        return false
+      }
+
+      if (formData.newPassword !== formData.confirmPassword) {
+        toast.error('Passwords do not match')
+        return false
+      }
+    }
+
+    return true
+  }
+
+  const handleSave = async () => {
+    if (!validateForm()) return
+
+    setIsLoading(true)
+
+    try {
+      // Prepare update data
+      const updateData: any = {
+        username: formData.username.trim(),
+        full_name: formData.full_name.trim(),
+        email: formData.email.trim(),
+        bio: formData.bio.trim(),
+        profile_img: formData.profile_img || Userdata?.profile_img,
+        languages: formData.languages,
+      }
+
+      // Only include password if user is changing it
+      if (isPasswordAuth && formData.newPassword) {
+        updateData.password = formData.newPassword
+      }
+
+      // TODO: Make actual API call to update user
+      // const response = await fetch(`${API_URL}/updateUser/${Userdata?.id_user}`, {
+      //   method: 'PUT',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(updateData)
+      // })
+      // 
+      // if (!response.ok) {
+      //   throw new Error('Failed to update profile')
+      // }
+      // 
+      // const updatedUser = await response.json()
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // Update user store with new data
+      const updatedUser = {
+        ...Userdata,
+        ...updateData,
+      }
+
+      setUser(updatedUser)
+
+      // Update localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+
+      toast.success('Profile updated successfully!')
+      
+      // Clear password fields
+      setFormData(prev => ({ 
+        ...prev, 
+        newPassword: '', 
+        confirmPassword: '' 
+      }))
+
+      // Clear preview image
+      setPreviewImage(null)
+      
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      toast.error('Failed to update profile. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (!Userdata) {
+    return (
+      <div className='min-h-screen w-full flex items-center justify-center bg-black'>
+        <p className='text-gray-500'>Loading user data...</p>
+      </div>
+    )
+  }
+  
   return (
-    <div className='min-h-screen w-full  p-4 sm:p-6 lg:p-8'>
-      <div className='max-w-4xl mx-auto'>
-        <div className='text-center mb-6 sm:mb-8'>
-          <h1 className='text-3xl sm:text-4xl lg:text-5xl font-bold  mb-2'>
+    <div className='min-h-screen w-full bg-black p-3 sm:p-4 md:p-6 lg:p-8'>
+      <div className='max-w-5xl mx-auto'>
+        {/* Header */}
+        <div className='text-center mb-6 sm:mb-8 md:mb-10'>
+          <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2'>
             Account Settings
           </h1>
-          <p className='text-sm sm:text-base '>
+          <p className='text-xs sm:text-sm md:text-base text-gray-500'>
             Manage your profile and preferences
           </p>
         </div>
 
-        <div className='bg-white rounded-2xl shadow-lg overflow-hidden'>
-          <div className='bg-gray-500 p-6 sm:p-8 flex justify-center'>
+        {/* Main Card */}
+        <div className='bg-black border-2 border-gray-400 rounded-2xl shadow-2xl overflow-hidden'>
+          {/* Profile Image Section */}
+          <div className='bg-gradient-to-b from-black to-gray-800 p-6 sm:p-8 md:p-10 flex justify-center relative border-b-2 border-gray-400'>
             <div 
               className='relative group cursor-pointer'
-              // onClick={}
+              onClick={handleImageClick}
+              role="button"
+              aria-label="Change profile picture"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleImageClick()
+                }
+              }}
             >
-              <img 
-                src={initialUser.profile_img} 
-                alt="Profile" 
-                className='w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-xl group-hover:opacity-75 transition-all duration-300'
-              />
-              <div className='absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
-                <Camera size={32} className='text-white' />
+              <div className='relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 lg:w-40 lg:h-40'>
+                <img 
+                  src={previewImage || formData.profile_img || defaultProfileImg}
+                  alt="Profile" 
+                  className='w-full h-full rounded-full object-cover border-2 border-gray-400 shadow-2xl transition-all duration-300 group-hover:brightness-50 group-hover:border-white'
+                />
+                {/* Camera Overlay */}
+                <div className='absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300'>
+                  <Camera size={36} className='text-white mb-1' strokeWidth={2.5} />
+                  <span className='text-white text-xs font-semibold'>Change Photo</span>
+                </div>
               </div>
               <input 
+                ref={fileInputRef}
                 type="file" 
                 accept="image/*"
+                onChange={handleImageChange}
                 className="hidden"
+                aria-hidden="true"
               />
             </div>
           </div>
 
-          <div className='p-6 sm:p-8 lg:p-10'>
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 '>
-              <div className='lg:col-span-2  '>
-                <label className='flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2'>
-                  <Globe size={18} />
+          {/* Form Section */}
+          <div className='p-4 sm:p-6 md:p-8 lg:p-10'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6'>
+              {/* Language Selection */}
+              <div className='md:col-span-2'>
+                <label htmlFor="languages" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+                  <Globe size={16} className='sm:w-5 sm:h-5' />
                   Preferred Language
                 </label>
                 <div className="relative">
                   <select
-                   
-                    className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all outline-none text-gray-900 appearance-none bg-white cursor-pointer"
+                    id="languages"
+                    name="languages"
+                    value={formData.languages}
+                    onChange={handleInputChange}
+                    className="w-full p-3 sm:p-3.5 pr-10 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base appearance-none cursor-pointer hover:border-white"
                   >
                     {languages.map((lang) => (
-                      <option key={lang.id} value={lang.id}>
+                      <option key={lang.id} value={lang.id} className="bg-black text-white">
                         {lang.flag} {lang.label}
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={20} />
                 </div>
               </div>
 
+              {/* Username */}
               <div>
-                <label htmlFor="username" className='flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2'>
-                  <User size={18} />
+                <label htmlFor="username" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+                  <User size={16} className='sm:w-5 sm:h-5' />
                   Username
                 </label>
                 <input 
                   type="text" 
-                  id="username" 
-                  className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900'
-                 
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+                  placeholder="Enter your username"
                 />
               </div>
 
+              {/* Full Name */}
               <div>
-                <label htmlFor="fullname" className='flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2'>
-                  <User size={18} />
+                <label htmlFor="full_name" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+                  <User size={16} className='sm:w-5 sm:h-5' />
                   Full Name
                 </label>
                 <input 
                   type="text" 
-                  id="fullname" 
-                  className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900'
-                 
+                  id="full_name"
+                  name="full_name"
+                  value={formData.full_name}
+                  onChange={handleInputChange}
+                  className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
                   placeholder="Enter your full name"
                 />
               </div>
 
-              <div className='lg:col-span-2'>
-                <label htmlFor="email" className='flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2'>
-                  <Mail size={18} />
+              {/* Email */}
+              <div className='md:col-span-2'>
+                <label htmlFor="email" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+                  <Mail size={16} className='sm:w-5 sm:h-5' />
                   Email Address
                 </label>
                 <input 
                   type="email" 
-                  id="email" 
-                  className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900'
-                  
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+                  placeholder="Enter your email address"
                 />
               </div>
 
-              <div className='lg:col-span-2'>
-                <label htmlFor="bio" className='flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2'>
-                  <FileText size={18} />
+              {/* Bio */}
+              <div className='md:col-span-2'>
+                <label htmlFor="bio" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+                  <FileText size={16} className='sm:w-5 sm:h-5' />
                   Bio
                 </label>
                 <textarea
                   id="bio"
+                  name="bio"
                   rows={4}
-                  className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none text-gray-900'
-                 
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none resize-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
                   placeholder="Tell us about yourself..."
                 />
               </div>
 
-          
+              {/* Password Fields - Only show if password auth */}
+              {isPasswordAuth && (
+                <>
                   <div>
-                    <label htmlFor="password" className='flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2'>
-                      <Lock size={18} />
+                    <label htmlFor="newPassword" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+                      <Lock size={16} className='sm:w-5 sm:h-5' />
                       New Password
                     </label>
                     <input 
                       type="password" 
-                      id="password" 
-                      className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900'
-                     
-                      placeholder="Password"
+                      id="newPassword"
+                      name="newPassword"
+                      value={formData.newPassword}
+                      onChange={handleInputChange}
+                      className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+                      placeholder="Enter new password"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="confirm-password" className='flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2'>
-                      <Lock size={18} />
+                    <label htmlFor="confirmPassword" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+                      <Lock size={16} className='sm:w-5 sm:h-5' />
                       Confirm Password
                     </label>
                     <input 
                       type="password" 
-                      id="confirm-password" 
-                      className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900'
-                
-                      placeholder="Confirmed password"
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+                      placeholder="Confirm new password"
                     />
                   </div>
+                </>
+              )}
+
+              {/* OAuth Info Message */}
+              {!isPasswordAuth && (
+                <div className='md:col-span-2 p-4 bg-black border-2 border-gray-400 rounded-xl'>
+                  <p className='text-xs sm:text-sm text-gray-500 flex items-start gap-2'>
+                    <Lock size={16} className='mt-0.5 flex-shrink-0' />
+                    <span>
+                      You signed in with <strong className='text-white'>{authMethod === 1 ? 'Google' : '42'}</strong>. Password management is not available for OAuth accounts.
+                    </span>
+                  </p>
+                </div>
+              )}
             </div>
-            <div className='mt-6 text-right'>
+
+            {/* Save Button */}
+            <div className='mt-6 sm:mt-8 flex flex-col sm:flex-row justify-end gap-3'>
               <button
                 type="button"
-                className='inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all'
-                >
-              
-                Save Changes
+                onClick={handleSave}
+                disabled={isLoading}
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 font-semibold rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-gray-500 transition-all text-sm sm:text-base ${
+                  isLoading
+                    ? 'bg-gray-500 text-black cursor-not-allowed opacity-50'
+                    : 'bg-white text-black hover:bg-gray-500 hover:text-white active:scale-95'
+                }`}
+              >
+                <Save size={18} className='sm:w-5 sm:h-5' />
+                {isLoading ? 'Saving...' : 'Save Changes'}
               </button>
-
             </div>
           </div>
         </div>
