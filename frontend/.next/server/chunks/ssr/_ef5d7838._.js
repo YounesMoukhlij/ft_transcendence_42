@@ -22,464 +22,461 @@ __turbopack_context__.n(__turbopack_context__.i("[project]/src/app/layout.tsx [a
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-// // 'use client'
-// // import React, { useState } from 'react'
-// // import { Camera } from 'lucide-react'
-// // const ProfileSettingsPage = () => {
-// //   const [user, setUser] = useState({
-// //     idUser: 1,
-// //     username: 'li kwak',
-// //     email: 'likwak@9alwa.com',
-// //     password: '',
-// //     confirmPassword: '',
-// //     bio: 'Li 3waj ngado zaml boh',
-// //     profile: 'avatar'
-// //   });
-// //   const handleSaveChanges = () => {
-// //     // Add your save logic here
-// //     console.log('Saving user data:', user);
-// //   };
-// //   return (
-// //     <div className='p-4 w-full h-full flex flex-col gap-4 justify-center items-center'>
-// //       <div className='w-full max-w-2xl p-6 bg-gray-400 rounded-lg shadow-md flex flex-col items-center'>
-// //         <div className='text-center'>
-// //           <h1 className='text-4xl font-bold text-black'>Settings</h1>
-// //           <p className='text-black'>Manage your account settings here.</p>
-// //         </div>
-// //         <div className='flex flex-col gap-2 bg-red-500 rounded-md w-1/2'>
-// //         <div className=''>
-// //           {/* Clickable Avatar with Camera Overlay */}
-// //           <div 
-// //             className='relative w-24 h-24 mb-4 cursor-pointer'
-// //             // onClick={}
-// //           >
-// //             <img 
-// //               src={user.profile} 
-// //               alt="Profile" 
-// //               className='w-24 h-24 rounded-full object-cover border-2 group-hover:opacity-75 transition-opacity duration-200'
-// //             />
-// //             {/* Camera Overlay */}
-// //             <div className='absolute inset-0 flex items-center justify-center bg-opacity-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
-// //               <input type="file" className="absolute inset-0 rounded-full opacity-0" />
-// //               <Camera size={24} className='text-black' />
-// //             </div>
-// //           </div>
-// //         </div>
-// //           <label htmlFor="username" className='block text-sm font-medium text-black'>Username</label>
-// //           <input 
-// //             type="text" 
-// //             id="username" 
-// //             className='mt-1 p-2 w-full border rounded-md text-black'
-// //             value={user.username}
-// //             onChange={(e) => setUser(prev => ({ ...prev, username: e.target.value }))}
-// //           />
-// //           <label htmlFor="email" className='block text-sm font-medium text-black'>Email</label>
-// //           <input 
-// //             type="email" 
-// //             id="email" 
-// //             className='mt-1 p-2 w-full border rounded-md text-black'
-// //             value={user.email}
-// //             onChange={(e) => setUser(prev => ({ ...prev, email: e.target.value }))}
-// //           />
-// //           <label htmlFor="bio" className='block text-sm font-medium text-black'>Bio</label>
-// //           <textarea
-// //             id="bio"
-// //             className='mt-1 p-2 w-full border rounded-md text-black'
-// //             value={user.bio}
-// //             onChange={(e) => setUser(prev => ({ ...prev, bio: e.target.value }))}
-// //           />
-// //           <label htmlFor="password" className='block text-sm font-medium text-black'>Password</label>
-// //           <input 
-// //             type="password" 
-// //             id="password" 
-// //             className='mt-1 p-2 w-full border rounded-md text-black'
-// //             value={user.password}
-// //             onChange={(e) => setUser(prev => ({ ...prev, password: e.target.value }))}
-// //           />
-// //           <label htmlFor="confirm-password" className='block text-sm font-medium text-black'>Confirm Password</label>
-// //           <input 
-// //             type="password" 
-// //             id="confirm-password" 
-// //             className='mt-1 p-2 w-full border rounded-md text-black'
-// //             value={user.confirmPassword}
-// //             onChange={(e) => setUser(prev => ({ ...prev, confirmPassword: e.target.value }))}
-// //           />
-// //         </div>
-// //         <div className='mt-6 text-center'>
-// //           <button 
-// //           className='px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800'
-// //           onClick={handleSaveChanges}
-// //           >Save Changes</button>
-// //         </div>
-// //       </div>
-// //     </div>
-// //   )
-// // }
-// // export default ProfileSettingsPage
 // 'use client'
-// import React, { useState, useRef } from 'react'
-// import { Camera, Save, User, Mail, Lock, FileText, Globe } from 'lucide-react'
-// interface UserData {
-//   id_user: number
-//   username: string
-//   fullname: string | null
-//   bio: string | null
-//   profile_img: string
-//   email: string
-//   langue: string
-//   auth_method: number
-// }
+// import React, { useState, useRef, useEffect } from 'react'
+// import { Camera, Save, User, Mail, Lock, FileText, Globe, ChevronDown } from 'lucide-react'
+// import { useUserStore } from '../../store/userStore'
+// import { toast } from 'react-toastify'
+// const API_URL = 'http://localhost:4444'
+// const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
 // interface LanguageOption {
 //   id: string
 //   label: string
 //   flag: string
 // }
-// function LanguageSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+// const ProfileSettingsPage = () => {
+//   const Userdata = useUserStore((state) => state.user)
+//   const setUser = useUserStore((state) => state.setUser)
+//   const fileInputRef = useRef<HTMLInputElement>(null)
+//   const [formData, setFormData] = useState({
+//     profile_img: '',
+//     languages: 'es',
+//     username: '',
+//     full_name: '',
+//     email: '',
+//     bio: '',
+//     newPassword: '',
+//     confirmPassword: '',
+//   })
+//   const [previewImage, setPreviewImage] = useState<string | null>(null)
+//   const [isLoading, setIsLoading] = useState(false)
+//   // Populate form with user data when component mounts or Userdata changes
+//   useEffect(() => {
+//     if (Userdata) {
+//       setFormData({
+//         profile_img: Userdata.profile_img || '',
+//         languages: Userdata.languages || 'en',
+//         username: Userdata.username || '',
+//         full_name: Userdata.full_name || '',
+//         email: Userdata.email || '',
+//         bio: Userdata.bio || '',
+//         newPassword: '',
+//         confirmPassword: '',
+//       })
+//     }
+//   }, [Userdata])
 //   const languages: LanguageOption[] = [
 //     { id: 'en', label: 'English', flag: '🇬🇧' },
 //     { id: 'es', label: 'Spanish', flag: '🇪🇸' },
 //     { id: 'tz', label: 'Tamazight', flag: 'ⵣ' },
 //     { id: 'fr', label: 'French', flag: '🇫🇷' },
 //   ]
-//   return (
-//     <select
-//       value={value}
-//       onChange={(e) => onChange(e.target.value)}
-//       className="w-full p-3 border border-gray-300 rounded-lg bg-white text-black focus:outline-none focus:ring-2 focus:ring-gray-600"
-//     >
-//       {languages.map((lang) => (
-//         <option key={lang.id} value={lang.id}>
-//           {lang.flag} {lang.label}
-//         </option>
-//       ))}
-//     </select>
-//   )
-// }
-// export default function ProfileSettingsPage() {
-//   const initialUser: UserData = {
-//     id_user: 15,
-//     username: "test",
-//     fullname: null,
-//     bio: null,
-//     profile_img: "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg",
-//     email: "tes@mail.m",
-//     langue: "en",
-//     auth_method: 0,
+//   const authMethod = Userdata?.auth_method || 0
+//   const isPasswordAuth = authMethod === 0
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+//     const { name, value } = e.target
+//     setFormData(prev => ({ ...prev, [name]: value }))
 //   }
-//   // const [user, setUser] = useState<UserData>(initialUser)
-//   // const [passwords, setPasswords] = useState({ password: '', confirmPassword: '' })
-//   // const [previewImage, setPreviewImage] = useState<string>(user.profile_img)
-//   // const [imageFile, setImageFile] = useState<File | null>(null)
-//   // const [isLoading, setIsLoading] = useState(false)
-//   // const fileInputRef = useRef<HTMLInputElement>(null)
-//   // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//   //   const file = e.target.files?.[0]
-//   //   if (file) {
-//   //     if (file.size > 5 * 1024 * 1024) {
-//   //       alert('Image size should be less than 5MB')
-//   //       return
-//   //     }
-//   //     setImageFile(file)
-//   //     const reader = new FileReader()
-//   //     reader.onloadend = () => {
-//   //       setPreviewImage(reader.result as string)
-//   //     }
-//   //     reader.readAsDataURL(file)
-//   //   }
-//   // }
-//   // const handleAvatarClick = () => {
-//   //   fileInputRef.current?.click()
-//   // }
-//   // const handleSaveChanges = async () => {
-//   //   setIsLoading(true)
-//   //   if (passwords.password && passwords.password !== passwords.confirmPassword) {
-//   //     alert('Passwords do not match')
-//   //     setIsLoading(false)
-//   //     return
-//   //   }
-//   //   try {
-//   //     if (imageFile) {
-//   //       const formData = new FormData()
-//   //       formData.append('profile_img', imageFile)
-//   //       console.log('Uploading image:', imageFile.name)
-//   //     }
-//   //     const updateData = {
-//   //       ...user,
-//   //       ...(passwords.password && { password: passwords.password })
-//   //     }
-//   //     console.log('Saving user data:', updateData)
-//   //     alert('Changes saved successfully!')
-//   //   } catch (error) {
-//   //     console.error('Error saving changes:', error)
-//   //     alert('Failed to save changes')
-//   //   } finally {
-//   //     setIsLoading(false)
-//   //   }
-//   // }
-//   // const isPasswordAuth = user.auth_method === 0
-//   return (
-//   <div className="min-h-screen w-full bg-white p-6 text-gray-900">
-//     <div className="max-w-4xl mx-auto">
-//       {/* Header */}
-//       <div className="text-center mb-8">
-//         <h1 className="text-4xl font-bold mb-2">Account Settings</h1>
-//         <p className="text-gray-600">Manage your profile and preferences</p>
+//   const handleImageClick = () => {
+//     fileInputRef.current?.click()
+//   }
+//   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     const file = e.target.files?.[0]
+//     if (file) {
+//       if (file.size > 5 * 1024 * 1024) {
+//         toast.error('Image size should be less than 5MB')
+//         return
+//       }
+//       if (!file.type.startsWith('image/')) {
+//         toast.error('Please upload a valid image file')
+//         return
+//       }
+//       const reader = new FileReader()
+//       reader.onloadend = () => {
+//         setPreviewImage(reader.result as string)
+//         setFormData(prev => ({ ...prev, profile_img: reader.result as string }))
+//       }
+//       reader.readAsDataURL(file)
+//     }
+//   }
+//   const validateForm = () => {
+//     if (!formData.username.trim()) {
+//       toast.error('Username is required')
+//       return false
+//     }
+//     if (!formData.email.trim()) {
+//       toast.error('Email is required')
+//       return false
+//     }
+//     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+//     if (!emailRegex.test(formData.email)) {
+//       toast.error('Please enter a valid email address')
+//       return false
+//     }
+//     if (isPasswordAuth && (formData.newPassword || formData.confirmPassword)) {
+//       if (formData.newPassword.length < 8) {
+//         toast.error('Password must be at least 8 characters long')
+//         return false
+//       }
+//       if (formData.newPassword !== formData.confirmPassword) {
+//         toast.error('Passwords do not match')
+//         return false
+//       }
+//     }
+//     return true
+//   }
+//   const handleSave = async () => {
+//     if (!validateForm()) return
+//     setIsLoading(true)
+//     try {
+//       // Prepare update data
+//       const updateData: any = {
+//         username: formData.username.trim(),
+//         full_name: formData.full_name.trim(),
+//         email: formData.email.trim(),
+//         bio: formData.bio.trim(),
+//         profile_img: formData.profile_img || Userdata?.profile_img,
+//         languages: formData.languages,
+//       }
+//       // Only include password if user is changing it
+//       if (isPasswordAuth && formData.newPassword) {
+//         updateData.password = formData.newPassword
+//       }
+//       // TODO: Make actual API call to update user
+//       // const response = await fetch(`${API_URL}/updateUser/${Userdata?.id_user}`, {
+//       //   method: 'PUT',
+//       //   headers: { 'Content-Type': 'application/json' },
+//       //   body: JSON.stringify(updateData)
+//       // })
+//       // 
+//       // if (!response.ok) {
+//       //   throw new Error('Failed to update profile')
+//       // }
+//       // 
+//       // const updatedUser = await response.json()
+//       // Simulate API call
+//       await new Promise(resolve => setTimeout(resolve, 1000))
+//       // Update user store with new data
+//       const updatedUser = {
+//         ...Userdata,
+//         ...updateData,
+//       }
+//       setUser(updatedUser)
+//       // Update localStorage
+//       localStorage.setItem('user', JSON.stringify(updatedUser))
+//       toast.success('Profile updated successfully!')
+//       // Clear password fields
+//       setFormData(prev => ({ 
+//         ...prev, 
+//         newPassword: '', 
+//         confirmPassword: '' 
+//       }))
+//       // Clear preview image
+//       setPreviewImage(null)
+//     } catch (error) {
+//       console.error('Error updating profile:', error)
+//       toast.error('Failed to update profile. Please try again.')
+//     } finally {
+//       setIsLoading(false)
+//     }
+//   }
+//   if (!Userdata) {
+//     return (
+//       <div className='min-h-screen w-full flex items-center justify-center bg-black'>
+//         <p className='text-gray-500'>Loading user data...</p>
 //       </div>
-//       {/* Main Card */}
-//       <div className="bg-white rounded-lg shadow border border-gray-300 overflow-hidden">
-//         {/* Profile Image Section */}
-//         <div className="bg-white p-8 flex justify-center">
-//           <div
-//             className="relative cursor-pointer top bottom"
-//             // onClick={handleAvatarClick}
-//             style={{ width: 128, height: 128 }}
-//           >
-//             <img
-//               // src={previewImage}
-//               alt="Profile"
-//               className="w-full h-full rounded-full object-cover border-4 border-gray-900 shadow-lg"
-//             />
-//             <input
-//               // ref={fileInputRef}
-//               type="file"
-//               accept="image/*"
-//               // onChange={handleImageChange}
-//               className="hidden"
-//             />
-//           </div>
+//     )
+//   }
+//   return (
+//     <div className='min-h-screen w-full bg-black p-3 sm:p-4 md:p-6 lg:p-8'>
+//       <div className='max-w-5xl mx-auto'>
+//         {/* Header */}
+//         <div className='text-center mb-6 sm:mb-8 md:mb-10'>
+//           <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2'>
+//             Account Settings
+//           </h1>
+//           <p className='text-xs sm:text-sm md:text-base text-gray-500'>
+//             Manage your profile and preferences
+//           </p>
 //         </div>
-//         {/* Form Section */}
-//         <div className="p-8 space-y-6">
-//           {/* Language Select */}
-//           <div>
-//             <label className="block mb-1 font-semibold flex items-center gap-2">
-//               <Globe size={18} /> Preferred Language
-//             </label>
-//             <select
-//               className="w-full p-3 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800"
-//             >
-//               {[
-//                 { id: "en", label: "English", flag: "🇬🇧" },
-//                 { id: "es", label: "Spanish", flag: "🇪🇸" },
-//                 { id: "tz", label: "Tamazight", flag: "ⵣ" },
-//                 { id: "fr", label: "French", flag: "🇫🇷" },
-//               ].map((lang) => (
-//                 <option key={lang.id} value={lang.id}>
-//                   {lang.flag} {lang.label}
-//                 </option>
-//               ))}
-//             </select>
-//           </div>
-//           {/* Username */}
-//           <div>
-//             <label className="block mb-1 font-semibold flex items-center gap-2">
-//               <User size={18} /> Username
-//             </label>
-//             <input
-//               type="text"
-//               value={user.username}
-//               onChange={(e) =>
-//                 setUser((prev) => ({ ...prev, username: e.target.value }))
-//               }
-//               className="w-full p-3 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800"
-//             />
-//           </div>
-//           {/* Full Name */}
-//           <div>
-//             <label className="block mb-1 font-semibold flex items-center gap-2">
-//               <User size={18} /> Full Name
-//             </label>
-//             <input
-//               type="text"
-//               value={user.fullname || ""}
-//               onChange={(e) =>
-//                 setUser((prev) => ({ ...prev, fullname: e.target.value }))
-//               }
-//               placeholder="Enter your full name"
-//               className="w-full p-3 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800"
-//             />
-//           </div>
-//           {/* Email */}
-//           <div>
-//             <label className="block mb-1 font-semibold flex items-center gap-2">
-//               <Mail size={18} /> Email Address
-//             </label>
-//             <input
-//               type="email"
-//               value={user.email}
-//               onChange={(e) =>
-//                 setUser((prev) => ({ ...prev, email: e.target.value }))
-//               }
-//               className="w-full p-3 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800"
-//             />
-//           </div>
-//           {/* Bio */}
-//           <div>
-//             <label className="block mb-1 font-semibold flex items-center gap-2">
-//               <FileText size={18} /> Bio
-//             </label>
-//             <textarea
-//               rows={4}
-//               value={user.bio || ""}
-//               onChange={(e) =>
-//                 setUser((prev) => ({ ...prev, bio: e.target.value }))
-//               }
-//               placeholder="Tell us about yourself..."
-//               className="w-full p-3 border border-gray-400 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-gray-800"
-//             />
-//           </div>
-//           {/* Password (only if password auth) */}
-//           {user.auth_method === 0 ? (
-//             <>
-//               <div>
-//                 <label className="block mb-1 font-semibold flex items-center gap-2">
-//                   <Lock size={18} /> New Password
-//                 </label>
-//                 <input
-//                   type="password"
-//                   value={passwords.password}
-//                   onChange={(e) =>
-//                     setPasswords((prev) => ({ ...prev, password: e.target.value }))
-//                   }
-//                   placeholder="Leave blank to keep current"
-//                   className="w-full p-3 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800"
-//                 />
-//               </div>
-//               <div>
-//                 <label className="block mb-1 font-semibold flex items-center gap-2">
-//                   <Lock size={18} /> Confirm Password
-//                 </label>
-//                 <input
-//                   type="password"
-//                   value={passwords.confirmPassword}
-//                   onChange={(e) =>
-//                     setPasswords((prev) => ({
-//                       ...prev,
-//                       confirmPassword: e.target.value,
-//                     }))
-//                   }
-//                   placeholder="Confirm new password"
-//                   className="w-full p-3 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800"
-//                 />
-//               </div>
-//             </>
-//           ) : (
-//             <div className="p-4 bg-gray-100 text-gray-700 rounded-md text-sm">
-//               <strong>Note:</strong> You're signed in with OAuth. Password changes
-//               are not available.
-//             </div>
-//           )}
-//           {/* Buttons */}
-//           <div className="flex justify-end gap-4 mt-6">
-//             <button
-//               onClick={() => {
-//                 setUser(initialUser)
-//                 setPasswords({ password: "", confirmPassword: "" })
-//                 setPreviewImage(initialUser.profile_img)
-//                 setImageFile(null)
+//         {/* Main Card */}
+//         <div className='bg-black border-2 border-gray-400 rounded-2xl shadow-2xl overflow-hidden'>
+//           {/* Profile Image Section */}
+//           <div className='bg-gradient-to-b from-black to-gray-800 p-6 sm:p-8 md:p-10 flex justify-center relative border-b-2 border-gray-400'>
+//             <div 
+//               className='relative group cursor-pointer'
+//               onClick={handleImageClick}
+//               role="button"
+//               aria-label="Change profile picture"
+//               tabIndex={0}
+//               onKeyDown={(e) => {
+//                 if (e.key === 'Enter' || e.key === ' ') {
+//                   handleImageClick()
+//                 }
 //               }}
-//               disabled={isLoading}
-//               className="px-6 py-3 border border-gray-500 rounded-md bg-white text-gray-900 hover:bg-gray-100 disabled:opacity-50"
 //             >
-//               Reset
-//             </button>
-//             <button
-//               onClick={handleSaveChanges}
-//               disabled={isLoading}
-//               className="px-6 py-3 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50 flex items-center gap-2"
-//             >
-//               {isLoading ? (
+//               <div className='relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 lg:w-40 lg:h-40'>
+//                 <img 
+//                   src={previewImage || formData.profile_img || defaultProfileImg}
+//                   alt="Profile" 
+//                   className='w-full h-full rounded-full object-cover border-2 border-gray-400 shadow-2xl transition-all duration-300 group-hover:brightness-50 group-hover:border-white'
+//                 />
+//                 {/* Camera Overlay */}
+//                 <div className='absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300'>
+//                   <Camera size={36} className='text-white mb-1' strokeWidth={2.5} />
+//                   <span className='text-white text-xs font-semibold'>Change Photo</span>
+//                 </div>
+//               </div>
+//               <input 
+//                 ref={fileInputRef}
+//                 type="file" 
+//                 accept="image/*"
+//                 onChange={handleImageChange}
+//                 className="hidden"
+//                 aria-hidden="true"
+//               />
+//             </div>
+//           </div>
+//           {/* Form Section */}
+//           <div className='p-4 sm:p-6 md:p-8 lg:p-10'>
+//             <div className='grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6'>
+//               {/* Language Selection */}
+//               <div className='md:col-span-2'>
+//                 <label htmlFor="languages" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+//                   <Globe size={16} className='sm:w-5 sm:h-5' />
+//                   Preferred Language
+//                 </label>
+//                 <div className="relative">
+//                   <select
+//                     id="languages"
+//                     name="languages"
+//                     value={formData.languages}
+//                     onChange={handleInputChange}
+//                     className="w-full p-3 sm:p-3.5 pr-10 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base appearance-none cursor-pointer hover:border-white"
+//                   >
+//                     {languages.map((lang) => (
+//                       <option key={lang.id} value={lang.id} className="bg-black text-white">
+//                         {lang.flag} {lang.label}
+//                       </option>
+//                     ))}
+//                   </select>
+//                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={20} />
+//                 </div>
+//               </div>
+//               {/* Username */}
+//               <div>
+//                 <label htmlFor="username" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+//                   <User size={16} className='sm:w-5 sm:h-5' />
+//                   Username
+//                 </label>
+//                 <input 
+//                   type="text" 
+//                   id="username"
+//                   name="username"
+//                   value={formData.username}
+//                   onChange={handleInputChange}
+//                   className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+//                   placeholder="Enter your username"
+//                 />
+//               </div>
+//               {/* Full Name */}
+//               <div>
+//                 <label htmlFor="full_name" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+//                   <User size={16} className='sm:w-5 sm:h-5' />
+//                   Full Name
+//                 </label>
+//                 <input 
+//                   type="text" 
+//                   id="full_name"
+//                   name="full_name"
+//                   value={formData.full_name}
+//                   onChange={handleInputChange}
+//                   className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+//                   placeholder="Enter your full name"
+//                 />
+//               </div>
+//               {/* Email */}
+//               <div className='md:col-span-2'>
+//                 <label htmlFor="email" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+//                   <Mail size={16} className='sm:w-5 sm:h-5' />
+//                   Email Address
+//                 </label>
+//                 <input 
+//                   type="email" 
+//                   id="email"
+//                   name="email"
+//                   value={formData.email}
+//                   onChange={handleInputChange}
+//                   className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+//                   placeholder="Enter your email address"
+//                 />
+//               </div>
+//               {/* Bio */}
+//               <div className='md:col-span-2'>
+//                 <label htmlFor="bio" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+//                   <FileText size={16} className='sm:w-5 sm:h-5' />
+//                   Bio
+//                 </label>
+//                 <textarea
+//                   id="bio"
+//                   name="bio"
+//                   rows={4}
+//                   value={formData.bio}
+//                   onChange={handleInputChange}
+//                   className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none resize-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+//                   placeholder="Tell us about yourself..."
+//                 />
+//               </div>
+//               {/* Password Fields - Only show if password auth */}
+//               {isPasswordAuth && (
 //                 <>
-//                   <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full" />
-//                   Saving...
-//                 </>
-//               ) : (
-//                 <>
-//                   <Save size={18} />
-//                   Save Changes
+//                   <div>
+//                     <label htmlFor="newPassword" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+//                       <Lock size={16} className='sm:w-5 sm:h-5' />
+//                       New Password
+//                     </label>
+//                     <input 
+//                       type="password" 
+//                       id="newPassword"
+//                       name="newPassword"
+//                       value={formData.newPassword}
+//                       onChange={handleInputChange}
+//                       className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+//                       placeholder="Enter new password"
+//                     />
+//                   </div>
+//                   <div>
+//                     <label htmlFor="confirmPassword" className='flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-500 mb-2'>
+//                       <Lock size={16} className='sm:w-5 sm:h-5' />
+//                       Confirm Password
+//                     </label>
+//                     <input 
+//                       type="password" 
+//                       id="confirmPassword"
+//                       name="confirmPassword"
+//                       value={formData.confirmPassword}
+//                       onChange={handleInputChange}
+//                       className='w-full p-3 sm:p-3.5 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm sm:text-base hover:border-white placeholder-gray-500'
+//                       placeholder="Confirm new password"
+//                     />
+//                   </div>
 //                 </>
 //               )}
-//             </button>
+//               {/* OAuth Info Message */}
+//               {!isPasswordAuth && (
+//                 <div className='md:col-span-2 p-4 bg-black border-2 border-gray-400 rounded-xl'>
+//                   <p className='text-xs sm:text-sm text-gray-500 flex items-start gap-2'>
+//                     <Lock size={16} className='mt-0.5 flex-shrink-0' />
+//                     <span>
+//                       You signed in with <strong className='text-white'>{authMethod === 1 ? 'Google' : '42'}</strong>. Password management is not available for OAuth accounts.
+//                     </span>
+//                   </p>
+//                 </div>
+//               )}
+//             </div>
+//             {/* Save Button */}
+//             <div className='mt-6 sm:mt-8 flex flex-col sm:flex-row justify-end gap-3'>
+//               <button
+//                 type="button"
+//                 onClick={handleSave}
+//                 disabled={isLoading}
+//                 className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 font-semibold rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-gray-500 transition-all text-sm sm:text-base ${
+//                   isLoading
+//                     ? 'bg-gray-500 text-black cursor-not-allowed opacity-50'
+//                     : 'bg-white text-black hover:bg-gray-500 hover:text-white active:scale-95'
+//                 }`}
+//               >
+//                 <Save size={18} className='sm:w-5 sm:h-5' />
+//                 {isLoading ? 'Saving...' : 'Save Changes'}
+//               </button>
+//             </div>
 //           </div>
 //         </div>
 //       </div>
 //     </div>
-//   </div>
-// )
+//   )
 // }
+// export default ProfileSettingsPage
 __turbopack_context__.s({
-    "default": (()=>ProfileSettingsPage)
+    "default": (()=>__TURBOPACK__default__export__)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/rsc/react-jsx-dev-runtime.js [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/rsc/react.js [app-rsc] (ecmascript)");
 ;
-function ProfileSettingsPage() {
+;
+impo;
+const page = ()=>{
+    const [setCode] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].useState([
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+    ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "debug w-full h-full flex flex-col items-center justify-center",
+        className: "flex min-h-screen flex-col items-center justify-center ",
         children: [
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                    className: "text-2xl font-bold",
-                    children: "Profile Settings"
-                }, void 0, false, {
-                    fileName: "[project]/src/app/settings/page.tsx",
-                    lineNumber: 435,
-                    columnNumber: 9
-                }, this)
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
+                className: "mb-4 text-2xl font-bold",
+                children: "Two-Factor Authentication"
             }, void 0, false, {
                 fileName: "[project]/src/app/settings/page.tsx",
-                lineNumber: 434,
-                columnNumber: 7
+                lineNumber: 430,
+                columnNumber: 9
             }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {}, void 0, false, {
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                className: "mb-8 text-center text-gray-500 text-xl",
+                children: "Please enter the 6-digit code from your authenticator app to continue."
+            }, void 0, false, {
                 fileName: "[project]/src/app/settings/page.tsx",
-                lineNumber: 437,
-                columnNumber: 7
+                lineNumber: 431,
+                columnNumber: 9
             }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "relative w-1/2 h-1/2 bg-gray-300",
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
+                className: "w-full max-w-sm",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "absolute inset-0 top"
+                        className: "mb-4 flex justify-between",
+                        children: [
+                            ...Array(6)
+                        ].map((_, i)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "text",
+                                maxLength: 1,
+                                className: "w-12 rounded border border-gray-300 p-2 text-center text-xl focus:border-gray-500 focus:outline-none"
+                            }, i, false, {
+                                fileName: "[project]/src/app/settings/page.tsx",
+                                lineNumber: 438,
+                                columnNumber: 21
+                            }, this))
                     }, void 0, false, {
                         fileName: "[project]/src/app/settings/page.tsx",
-                        lineNumber: 442,
-                        columnNumber: 9
+                        lineNumber: 436,
+                        columnNumber: 13
                     }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "absolute inset-0 bottom"
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                        type: "submit",
+                        className: "w-full rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600",
+                        children: "Verify"
                     }, void 0, false, {
                         fileName: "[project]/src/app/settings/page.tsx",
-                        lineNumber: 445,
-                        columnNumber: 9
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "relative z-10 flex items-center justify-center h-full",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                            className: "text-black font-bold",
-                            children: "Profile Settings"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/settings/page.tsx",
-                            lineNumber: 449,
-                            columnNumber: 11
-                        }, this)
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/settings/page.tsx",
-                        lineNumber: 448,
-                        columnNumber: 9
+                        lineNumber: 446,
+                        columnNumber: 13
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/settings/page.tsx",
-                lineNumber: 440,
-                columnNumber: 7
+                lineNumber: 434,
+                columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/settings/page.tsx",
-        lineNumber: 433,
-        columnNumber: 5
+        lineNumber: 429,
+        columnNumber: 8
     }, this);
-}
+};
+const __TURBOPACK__default__export__ = page;
 }}),
 "[project]/src/app/settings/page.tsx [app-rsc] (ecmascript, Next.js server component)": ((__turbopack_context__) => {
 
