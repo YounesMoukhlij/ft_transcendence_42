@@ -5,23 +5,27 @@ module.exports = {
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-// import { create } from 'zustand'
-// export const useUserStore = create((set) => ({
-//   // Initial state
-//   user: null,
-//   // Actions (functions to change state)
-//   setUser: (userObj) => set({ user: userObj }),
-//   // Function to clear user data
-//   clearUser: () => set({ user: null }),
-// }))
 __turbopack_context__.s({
     "useUserStore": (()=>useUserStore)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/react.mjs [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/middleware.mjs [app-ssr] (ecmascript)");
 ;
+const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["create"])((set)=>({
+        // Initial state
+        user: null,
+        // Actions (functions to change state)
+        setUser: (userObj)=>set({
+                user: userObj
+            }),
+        // Function to clear user data
+        clearUser: ()=>set({
+                user: null
+            })
+    }));
 ;
-const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["create"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["persist"])((set)=>({
+;
+const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["create"])(console.log("Initializing user store"), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["persist"])((set)=>({
         user: null,
         setUser: (userObj)=>set({
                 user: userObj
@@ -29,10 +33,7 @@ const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mo
         clearUser: ()=>set({
                 user: null
             })
-    }), {
-    name: 'user-storage',
-    getStorage: ()=>localStorage
-}));
+    })));
 }}),
 "[project]/src/app/settings/page.tsx [app-ssr] (ecmascript)": ((__turbopack_context__) => {
 "use strict";

@@ -5,34 +5,35 @@
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
 {
-// import { create } from 'zustand'
-// export const useUserStore = create((set) => ({
-//   // Initial state
-//   user: null,
-//   // Actions (functions to change state)
-//   setUser: (userObj) => set({ user: userObj }),
-//   // Function to clear user data
-//   clearUser: () => set({ user: null }),
-// }))
 __turbopack_context__.s({
     "useUserStore": (()=>useUserStore)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/react.mjs [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/middleware.mjs [app-client] (ecmascript)");
 ;
-;
-const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["create"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["persist"])((set)=>({
+const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["create"])((set)=>({
+        // Initial state
         user: null,
+        // Actions (functions to change state)
         setUser: (userObj)=>set({
                 user: userObj
             }),
+        // Function to clear user data
         clearUser: ()=>set({
                 user: null
             })
-    }), {
-    name: 'user-storage',
-    getStorage: ()=>localStorage
-}));
+    })) // import { create } from 'zustand'
+ // import { persist } from 'zustand/middleware'
+ // export const useUserStore = create(
+ //   console.log("Initializing user store"),
+ //   persist(
+ //     (set) => ({
+ //       user: null,
+ //       setUser: (userObj) => set({ user: userObj }),
+ //       clearUser: () => set({ user: null }),
+ //     }),
+ //   )
+ // )
+;
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
@@ -295,6 +296,7 @@ function SignUpForm({ onToggle }) {
                 password: '',
                 confirmPassword: ''
             });
+            onToggle();
             setTimeout(()=>{
                 router.push('/signIn');
             }, 1500);
@@ -316,7 +318,7 @@ function SignUpForm({ onToggle }) {
                         children: "Welcome to the Sign Up Page"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 203,
+                        lineNumber: 204,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -324,13 +326,13 @@ function SignUpForm({ onToggle }) {
                         children: "Please fill in the details below to create an account."
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 206,
+                        lineNumber: 207,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 202,
+                lineNumber: 203,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -346,7 +348,7 @@ function SignUpForm({ onToggle }) {
                         onChange: handleInputChange('username')
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 215,
+                        lineNumber: 216,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -358,7 +360,7 @@ function SignUpForm({ onToggle }) {
                         onChange: handleInputChange('email')
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 224,
+                        lineNumber: 225,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -370,7 +372,7 @@ function SignUpForm({ onToggle }) {
                         onChange: handleInputChange('password')
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 233,
+                        lineNumber: 234,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -382,7 +384,7 @@ function SignUpForm({ onToggle }) {
                         onChange: handleInputChange('confirmPassword')
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 242,
+                        lineNumber: 243,
                         columnNumber: 9
                     }, this),
                     error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -390,7 +392,7 @@ function SignUpForm({ onToggle }) {
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 252,
+                        lineNumber: 253,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -400,7 +402,7 @@ function SignUpForm({ onToggle }) {
                         children: isLoading ? 'Creating Account...' : 'Sign Up'
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 257,
+                        lineNumber: 258,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -411,7 +413,7 @@ function SignUpForm({ onToggle }) {
                                 children: "Already have an account?"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 270,
+                                lineNumber: 271,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -420,25 +422,25 @@ function SignUpForm({ onToggle }) {
                                 children: "Sign In"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 273,
+                                lineNumber: 274,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 269,
+                        lineNumber: 270,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 211,
+                lineNumber: 212,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-        lineNumber: 201,
+        lineNumber: 202,
         columnNumber: 5
     }, this);
 }
@@ -652,7 +654,7 @@ function SignInForm({ onToggle }) {
                         children: "Hey there, space champ!"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 516,
+                        lineNumber: 517,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -660,7 +662,7 @@ function SignInForm({ onToggle }) {
                         children: "Join GalaxyPong to smash, chat, and climb the leaderboard."
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 519,
+                        lineNumber: 520,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -668,13 +670,13 @@ function SignInForm({ onToggle }) {
                         children: "Sign in and let the games begin!"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 522,
+                        lineNumber: 523,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 515,
+                lineNumber: 516,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -694,7 +696,7 @@ function SignInForm({ onToggle }) {
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 531,
+                        lineNumber: 532,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -710,7 +712,7 @@ function SignInForm({ onToggle }) {
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 544,
+                        lineNumber: 545,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -721,12 +723,12 @@ function SignInForm({ onToggle }) {
                             children: "Forgot your password?"
                         }, void 0, false, {
                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                            lineNumber: 558,
+                            lineNumber: 559,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 557,
+                        lineNumber: 558,
                         columnNumber: 9
                     }, this),
                     error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -734,7 +736,7 @@ function SignInForm({ onToggle }) {
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 566,
+                        lineNumber: 567,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -747,7 +749,7 @@ function SignInForm({ onToggle }) {
                                 children: isLoading ? 'Signing In...' : 'Login'
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 572,
+                                lineNumber: 573,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -771,7 +773,7 @@ function SignInForm({ onToggle }) {
                                                     fill: "#4285F4"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 592,
+                                                    lineNumber: 593,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -779,7 +781,7 @@ function SignInForm({ onToggle }) {
                                                     fill: "#34A853"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 593,
+                                                    lineNumber: 594,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -787,7 +789,7 @@ function SignInForm({ onToggle }) {
                                                     fill: "#FBBC05"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 594,
+                                                    lineNumber: 595,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -795,18 +797,18 @@ function SignInForm({ onToggle }) {
                                                     fill: "#EB4335"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 595,
+                                                    lineNumber: 596,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                            lineNumber: 591,
+                                            lineNumber: 592,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                        lineNumber: 585,
+                                        lineNumber: 586,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -825,51 +827,51 @@ function SignInForm({ onToggle }) {
                                                     points: "32,412.6 362.1,412.6 362.1,578 526.8,578 526.8,279.1 197.3,279.1 526.8,-51.1 362.1,-51.1 32,279.1"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 606,
+                                                    lineNumber: 607,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("polygon", {
                                                     points: "597.9,114.2 762.7,-51.1 597.9,-51.1"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 607,
+                                                    lineNumber: 608,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("polygon", {
                                                     points: "762.7,114.2 597.9,279.1 597.9,443.9 762.7,443.9 762.7,279.1 928,114.2 928,-51.1 762.7,-51.1"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 608,
+                                                    lineNumber: 609,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("polygon", {
                                                     points: "928,279.1 762.7,443.9 928,443.9"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 609,
+                                                    lineNumber: 610,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                            lineNumber: 605,
+                                            lineNumber: 606,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                        lineNumber: 599,
+                                        lineNumber: 600,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 584,
+                                lineNumber: 585,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 571,
+                        lineNumber: 572,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -880,7 +882,7 @@ function SignInForm({ onToggle }) {
                                 children: "Don't have an account?"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 616,
+                                lineNumber: 617,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -889,25 +891,25 @@ function SignInForm({ onToggle }) {
                                 children: "Sign up"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 619,
+                                lineNumber: 620,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 615,
+                        lineNumber: 616,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 527,
+                lineNumber: 528,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-        lineNumber: 514,
+        lineNumber: 515,
         columnNumber: 5
     }, this);
 }

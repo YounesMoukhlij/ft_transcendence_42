@@ -4,14 +4,15 @@
 
 import './globals.css'
 import {useUserStore} from '../store/userStore';
-import { useEffect } from 'react';
 
+const Def = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
 
 
 export default function Home()
 {
  const user = useUserStore((state) => state.user)
   const clearUser = useUserStore((state) => state.clearUser)
+  console.log("Home user:", user);
   
   return (
 
@@ -23,9 +24,27 @@ export default function Home()
       <p>Enjoy your stay!</p>
       {user ? (
         <div className='text-center text-red-500 text-3xl'>
+         
+          <img
+            src={user.profile_img || Def}
+            alt="Profile Image"
+            width={150}
+            height={150}
+            className="rounded-full mx-auto mb-4"
+          />
+          <h2 className="text-2xl font-bold mb-2">User Information</h2>
           <p>Username: {user.username}</p>
           <p>Email: {user.email}</p>
-          <img src={user.profile_img} alt="Profile Image" />
+          <>ID: {user.id}</>
+          <button 
+            onClick={() => {
+              clearUser();
+              console.log("User after clearing:", useUserStore.getState().user);
+            }}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Logout
+          </button>
         </div>
       ) : (
         <p>No user is logged in.</p>

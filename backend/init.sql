@@ -14,6 +14,8 @@ CREATE TABLE users (
     langue TEXT DEFAULT En,
     status TEXT,
     auth_method INTEGER DEFAULT 0, -- 0: local, 1: google, 2: Intra42 
+    twoFA_enabled BOOLEAN DEFAULT FALSE,
+    twoFA_secret TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

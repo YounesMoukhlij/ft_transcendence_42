@@ -11,7 +11,7 @@ const GOOGLE_CLIENT_SECRET = "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";
 const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
 const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
-const OAUTH42_SECRET = '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';
+const OAUTH42_SECRET = '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';
 const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
 
 // token function generator
@@ -270,7 +270,7 @@ export async function GoogleAuth(request, reply) {
         } else {
             const token = generateToken(googleUser.name, googleUser.email);
             const insertQuery = request.server.db
-            .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method, access_token) VALUES (?, ?, ?, ?, ?)");
+            .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method, access_token) VALUES (?, ?, ?, ?, ?, ?)");
             const result = insertQuery.run(
             googleUser.name.split(" ")[0] + Math.floor(Math.random() * 1000),
             googleUser.name,
@@ -306,6 +306,7 @@ export async function FortyTwoAuth(request, reply) {
 
     // Exchange authorization code for access token
     try {
+        console.log("42 Auth code:", code);
         const tokenResponse = await fetch('https://api.intra.42.fr/oauth/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

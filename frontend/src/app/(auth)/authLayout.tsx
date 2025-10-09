@@ -185,6 +185,7 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
       setUser(userData)
       setFormData({ username: '', email: '', password: '', confirmPassword: '' })
       
+      onToggle()
       setTimeout(() => {
         router.push('/signIn')
       }, 1500)

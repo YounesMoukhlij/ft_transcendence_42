@@ -31,7 +31,7 @@ const ForgotPasswordPage = () => {
         {/* Logo/Image */}
         <div className="w-full max-w-[180px] sm:max-w-[220px] md:max-w-xs mx-auto mb-2 sm:mb-4">
           <img 
-            src="../wallpaper.jpg" 
+            src="https://media1.tenor.com/m/5ot5ADGxJdAAAAAd/hello.gif" 
             alt="Logo" 
             className="w-full h-auto rounded-lg"
           />
