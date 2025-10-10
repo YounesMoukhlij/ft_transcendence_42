@@ -14,16 +14,34 @@ import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 import { globalStore } from '../../components/globalStore';
 import getFormattedDate from './tools'
 
-function handle_Emojis(setShow: any, show: boolean) {
+interface Friend {
+  username: string;
+  profile_img: string;
+  LastMessage: string;
+  LastMessageTime: string;
+  status: boolean;
+}
+
+interface Message {
+  sender: string;
+  conv_id: string;
+  message: string;
+  created_at: string;
+  isSeen: boolean;
+}
+
+function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, show: boolean) {
   setShow(!show)
 }
 
-async function fetchData(title: string, setDboubleBlock, Setuser_block) {
+async function fetchData(
+  title: string, 
+  setDboubleBlock: (num: number) => void, 
+  Setuser_block: (user: string) => void
+): Promise<Message[] | undefined> {
   try {
     const user = window.localStorage.getItem('name');
     
-    
-
     const result = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`, { user, friend: title });
     localStorage.setItem('conversationId', result.data.conversation_id);
     setDboubleBlock(result.data.is_double_block);
@@ -36,27 +54,30 @@ async function fetchData(title: string, setDboubleBlock, Setuser_block) {
 }
 
 type FreindsListProps = {
-  photo: string,
-  title: string,
-  message: string,
-  status: boolean,
-  setConversation: any,
-  setRoom: any,
-  setimg: any,
-  SetSelectContact: any,
+  photo: string;
+  title: string;
+  message: string;
+  status: boolean;
+  setConversation: (messages: Message[]) => void;
+  setRoom: (room: string) => void;
+  setimg: (img: string) => void;
+  SetSelectContact: (selected: boolean) => void;
 };
 
-const FreindsList = ({ photo, title, message = "" , status, setConversation, setRoom, setimg, SetSelectContact }: FreindsListProps) => {
+const FreindsList = ({ photo, title, message = "", status, setConversation, setRoom, setimg, SetSelectContact }: FreindsListProps) => {
   const { setDboubleBlock, double_block, Setuser_block, user_block } = globalStore();
+  
   const Get_Conversation = async () => {
     localStorage.setItem('room_select', title);
     setRoom(title);
     setimg(photo);
     SetSelectContact(true);
     const conversation = await fetchData(title, setDboubleBlock, Setuser_block);
-    setConversation(conversation);
+    if (conversation) {
+      setConversation(conversation);
+    }
   };
-
+  
   return (
     <div onClick={Get_Conversation} className="flex w-full h-full hover:flex hover:cursor-pointer hover:bg-[#515151] hover:backdrop-blur-[10px] hover:rounded-[20px]">
       <div className="flex-col pl-2 pt-4">
@@ -65,7 +86,6 @@ const FreindsList = ({ photo, title, message = "" , status, setConversation, set
         </div>
         <div className={status ? "test w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 bg-[green] rounded-[50%] " : "test w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 bg-[red] rounded-[50%] "}></div>
       </div>
-
       <div className="flex flex-col justify-center gap-2 pl-[5%] sm:pl-[10%]">
         <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl">
           <h1>{title}</h1>
@@ -80,12 +100,21 @@ const FreindsList = ({ photo, title, message = "" , status, setConversation, set
   );
 };
 
-function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const handleChange = (e) => {
+interface Test1Props {
+  friends: Friend[];
+  setMessages: (messages: Message[]) => void;
+  setRoom: (room: string) => void;
+  setImg: (img: string) => void;
+  SetSelectContact: (selected: boolean) => void;
+}
+
+function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test1Props) {
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-
+  
   return (
     <div className="flex flex-col h-full">
       <div>
@@ -125,7 +154,7 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }) {
                 </div>
               ))
             : friends
-              .sort((a, b) => new Date(b.LastMessageTime) - new Date(a.LastMessageTime))
+              .sort((a, b) => new Date(b.LastMessageTime).getTime() - new Date(a.LastMessageTime).getTime())
               .map((friend, index) => (
                 <div key={index}>
                   <FreindsList
@@ -146,29 +175,36 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }) {
   );
 }
 
-export default function chatPage() {
+interface MessageDateComponentProps {
+  date: string;
+}
+
+function MessageDateComponent({ date }: MessageDateComponentProps) {
+  const currentDate = date?.split(' ')[0];
+  return (
+    <div className="flex items-center justify-center my-2">
+      <div className="flex-grow border-t border-gray-300" />
+      <span className="mx-3 text-xs text-gray-500">{currentDate}</span>
+      <div className="flex-grow border-t border-gray-300" />
+    </div>
+  );
+}
+
+interface EmojiClickData {
+  emoji: string;
+}
+
+export default function ChatPage() {
   const { friends, addFriend, removeFriend, setFriends, updateFriendStatus, updateLastMessage } = globalStore();
   const { messages, setMessages, addMessage, room, setRoom, profile_img, setImg } = globalStore();
   const { setDboubleBlock, double_block, Setuser_block, user_block } = globalStore();
   const { connect, username, socket } = globalStore();
-
-  const [show, setShow] = useState(false);
-  const [input, setEmoji] = useState('');
-  const [dropmenu, setdropmenu] = useState(false);
-  const [confirm_invite, setConfirm] = useState(false);
-  const [display_chats, set_chats] = useState(false);
-  const [SelectContact, SetSelectContact] = useState(false);
-
-  function MessageDateComponent({ date }) {
-    const currentDate = date?.split(' ')[0];
-    return (
-      <div className="flex items-center justify-center my-2">
-        <div className="flex-grow border-t border-gray-300" />
-        <span className="mx-3 text-xs text-gray-500">{currentDate}</span>
-        <div className="flex-grow border-t border-gray-300" />
-      </div>
-    );
-  }
+  const [show, setShow] = useState<boolean>(false);
+  const [input, setEmoji] = useState<string>('');
+  const [dropmenu, setdropmenu] = useState<boolean>(false);
+  const [confirm_invite, setConfirm] = useState<boolean>(false);
+  const [display_chats, set_chats] = useState<boolean>(false);
+  const [SelectContact, SetSelectContact] = useState<boolean>(false);
 
   useEffect(() => {
     connect();
@@ -176,8 +212,7 @@ export default function chatPage() {
 
   useEffect(() => {
     if (!socket) return;
-
-    socket.onmessage = (event: any) => {
+    socket.onmessage = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "message") {
         addMessage(data);
@@ -208,52 +243,49 @@ export default function chatPage() {
     fetchData();
   }, [username]);
 
-  function handleEnterKey(event: any) {
+  function handleEnterKey(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Enter') {
       handleSend();
     }
   }
 
-  async function handleBlock(friend, setDboubleBlock, double_block, Setuser_block, user_block) {
-
-
-
-
-
+  async function handleBlock(
+    friend: string, 
+    setDboubleBlock: (num: number) => void, 
+    double_block: number, 
+    Setuser_block: (user: string) => void, 
+    user_block: string
+  ) {
     const username = globalStore.getState().username;
     const id = window.localStorage.getItem('conversationId');
-
     if (double_block == 2 || (double_block == 1 && user_block === username))
-        return ;
-
-
+      return;
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`, {
       user: username,
       conv_id: id,
       friend: friend
     });
-
-    Setuser_block(username);
+    Setuser_block(username || '');
     if (double_block < 2)
       setDboubleBlock(double_block + 1);
-
-
-
   }
 
-  async function Deblock(friend, setDboubleBlock, double_block, Setuser_block, user_block) {
-
-    
+  async function Deblock(
+    friend: string, 
+    setDboubleBlock: (num: number) => void, 
+    double_block: number, 
+    Setuser_block: (user: string) => void, 
+    user_block: string
+  ) {
     const username = globalStore.getState().username;
     const id = localStorage.getItem('conversationId');
-
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock`, {
       user: username,
       conv_id: id,
       friend: friend
     });
     
-      console.log("hererererererer11223");
+    console.log("hererererererer11223");
     
     if (double_block > 0) {
       if (double_block === 2) {
@@ -267,7 +299,7 @@ export default function chatPage() {
     }
   }
 
-  async function handleUnfriend(friend, removeFriend) {
+  async function handleUnfriend(friend: string, removeFriend: (username: string) => void) {
     const id = window.localStorage.getItem('conversationId');
     const username = globalStore.getState().username;
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`, {
@@ -283,7 +315,6 @@ export default function chatPage() {
       return;
     const user = localStorage.getItem('name');
     const friend = localStorage.getItem('room_select');
-
     const id = localStorage.getItem('conversationId');
     try {
       const data = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/IsOnline`, {
@@ -292,15 +323,15 @@ export default function chatPage() {
         }
       })
       const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, { user, input, id, friend });
-      const object = {
-        sender: user,
+      const object: Message = {
+        sender: user || '',
         message: input,
-        conv_id: id,
+        conv_id: id || '',
         created_at: getFormattedDate(),
         isSeen: data.data
       };
       addMessage(object);
-      updateLastMessage(input, friend);
+      updateLastMessage(input, friend || '');
     } catch (err) {
       console.error(err);
     }
@@ -328,11 +359,7 @@ export default function chatPage() {
     setConfirm(true);
   }
 
-  type objectOfEmoji = {
-    emoji: string;
-  };
-
-  function move_emoji_to_input(object: objectOfEmoji) {
+  function move_emoji_to_input(object: EmojiClickData) {
     setShow(false);
     setEmoji(prevValue => prevValue + object.emoji);
   }
@@ -357,13 +384,11 @@ export default function chatPage() {
             SetSelectContact={SetSelectContact}
           />
         </div>
-
         <div className="flex self-start lg:hidden fixed top-4 left-4 z-50">
           <button onClick={handle_chats_display} className="p-2 mt-10 bg-amber-700  rounded-lg">
             <FaArrowRight />
           </button>
         </div>
-
         {display_chats && (
           <div className="lg:hidden fixed inset-0 z-40">
             <div className="absolute inset-0 bg-black/50" onClick={handle_chats_display}></div>
@@ -378,7 +403,6 @@ export default function chatPage() {
             </div>
           </div>
         )}
-
         <div className="flex w-full lg:w-2/3 xl:w-3/4 flex-col border rounded-[35px] border-solid bg-black ">
           
           {SelectContact && (
@@ -386,7 +410,7 @@ export default function chatPage() {
               <div className="flex h-3/5 self-center">
                 <img 
                   className="rounded-[50%] w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" 
-                  src={profile_img || null} 
+                  src={profile_img || undefined} 
                   alt='image'
                 />
                 <p className="self-center text-[0.8rem] sm:text-[1rem] md:text-[1.2rem] lg:text-[1.5rem] pl-[1rem]">
@@ -417,7 +441,6 @@ export default function chatPage() {
               </div>
             </div>
           )}
-
           <div className={`chat-body flex w-full flex-col overflow-scroll bg-[black] rounded-b-[40px] ${SelectContact ? 'h-[83%] sm:h-[85%]' : 'h-full'} px-2 sm:px-4 ${confirm_invite ? "blur-[15px]" : ""}`}>
             {!SelectContact && (
               <div className='flex flex-col items-center justify-center w-full h-full text-center'>
@@ -427,7 +450,6 @@ export default function chatPage() {
                 <img className="w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64" src="/animation.gif" alt="animation" />
               </div>
             )}
-
             {messages?.length > 0 && SelectContact && (
               <div className="flex w-[90%] sm:w-[80%] lg:w-[25rem] bg-[rgb(168,147,104)] self-center mt-4 sm:mt-8 p-3 sm:p-4 rounded-[10px]">
                 <p className="text-xs sm:text-sm">
@@ -435,12 +457,10 @@ export default function chatPage() {
                 </p>
               </div>
             )}
-
             {SelectContact && messages.map((item, index) => {
               if (item.conv_id == localStorage.getItem('conversationId')) {
                 const currentDate = item.created_at.split(' ')[0];
                 const prevDate = index > 0 ? messages[index - 1].created_at.split(' ')[0] : null;
-
                 return (
                   <div key={index} className="flex flex-col  ">
                     {currentDate !== prevDate && <MessageDateComponent date={item.created_at} />}
@@ -450,12 +470,10 @@ export default function chatPage() {
                         style={{ maxWidth: '85%', minWidth: '100px' }}
                       >
                         <p className="break-words text-xs sm:text-sm lg:text-base">{item.message}</p>
-
                         <div className="flex justify-between items-center mt-1 sm:mt-2 text-xs">
                           <span className="whitespace-nowrap">
                             {new Date(item.created_at).toTimeString().slice(0, 5)}
                           </span>
-
                           {item.sender === localStorage.getItem('name') && (
                             <div className="ml-2">
                               {item.isSeen ? <FaCheckDouble /> : <FaCheck />}
@@ -469,7 +487,6 @@ export default function chatPage() {
               }
             })}
           </div>
-
           {SelectContact && (
             <>
               {double_block === 2 ? (
@@ -515,7 +532,6 @@ export default function chatPage() {
                       </div>
                     )}
                   </div>
-
                   <div className="flex-1 mx-2 sm:mx-4">
                     <input
                       className="w-full h-8 sm:h-10 lg:h-12 bg-black p-2 sm:p-4 rounded-[20px] sm:rounded-[50px] outline-none text-xs sm:text-sm lg:text-base"
@@ -525,17 +541,14 @@ export default function chatPage() {
                       onChange={(e) => setEmoji(e.target.value)}
                     />
                   </div>
-
                   <div className="mr-2 sm:mr-4">
                     <button onClick={handle_confirm_invite}>
                       <IoGameController className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
                     </button>
                   </div>
-
                   <div className="mr-2 sm:mr-4">
                     <IoSend onClick={handleSend} className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 cursor-pointer" />
                   </div>
-
                   {confirm_invite && (
                     <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
                       <div className="absolute inset-0 bg-black/50" onClick={() => setConfirm(false)}></div>
