@@ -36,11 +36,8 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/react-toastify/dist/index.mjs [app-ssr] (ecmascript)");
-(()=>{
-    const e = new Error("Cannot find module 'emailjs-com'");
-    e.code = 'MODULE_NOT_FOUND';
-    throw e;
-})();
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/index.js [app-ssr] (ecmascript) <module evaluation>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/index.js [app-ssr] (ecmascript) <locals>");
 'use client';
 ;
 ;
@@ -54,9 +51,9 @@ const ForgotPasswordPage = ()=>{
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
     // EmailJS configuration - REPLACE THESE WITH YOUR ACTUAL VALUES
     const EMAILJS_CONFIG = {
-        SERVICE_ID: 'your_service_id',
-        TEMPLATE_ID: 'your_template_id',
-        PUBLIC_KEY: 'your_public_key' // From Step 4
+        SERVICE_ID: 'service_olzq7jd',
+        TEMPLATE_ID: 'template_y4x9xld',
+        PUBLIC_KEY: '8TLmc-F4eClurvKNU' // From Step 4
     };
     const handleEmailChange = (e)=>{
         setEmail(e.target.value);
@@ -68,9 +65,9 @@ const ForgotPasswordPage = ()=>{
                 to_email: email,
                 username: username,
                 password: newPassword,
-                from_name: 'Your App Name'
+                from_name: 'ft_transcendence_42'
             };
-            await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams, EMAILJS_CONFIG.PUBLIC_KEY);
+            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["default"].send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams, EMAILJS_CONFIG.PUBLIC_KEY);
             return true;
         } catch (error) {
             console.error('EmailJS error:', error);
@@ -2038,7 +2035,203 @@ var { g: global, __dirname, m: module, e: exports } = __turbopack_context__;
 {
 module.exports = __turbopack_context__.r("[project]/node_modules/next/dist/client/components/navigation.js [app-ssr] (ecmascript)");
 }}),
+"[project]/node_modules/emailjs-com/es/store/store.js [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "store": (()=>store)
+});
+const store = {
+    _origin: 'https://api.emailjs.com'
+};
+}}),
+"[project]/node_modules/emailjs-com/es/methods/init/init.js [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "init": (()=>init)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$store$2f$store$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/store/store.js [app-ssr] (ecmascript)");
+;
+const init = (userID, origin = 'https://api.emailjs.com')=>{
+    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$store$2f$store$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["store"]._userID = userID;
+    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$store$2f$store$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["store"]._origin = origin;
+};
+}}),
+"[project]/node_modules/emailjs-com/es/utils/validateParams.js [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "validateParams": (()=>validateParams)
+});
+const validateParams = (userID, serviceID, templateID)=>{
+    if (!userID) {
+        throw 'The user ID is required. Visit https://dashboard.emailjs.com/admin/integration';
+    }
+    if (!serviceID) {
+        throw 'The service ID is required. Visit https://dashboard.emailjs.com/admin';
+    }
+    if (!templateID) {
+        throw 'The template ID is required. Visit https://dashboard.emailjs.com/admin/templates';
+    }
+    return true;
+};
+}}),
+"[project]/node_modules/emailjs-com/es/models/EmailJSResponseStatus.js [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "EmailJSResponseStatus": (()=>EmailJSResponseStatus)
+});
+class EmailJSResponseStatus {
+    constructor(httpResponse){
+        this.status = httpResponse.status;
+        this.text = httpResponse.responseText;
+    }
+}
+}}),
+"[project]/node_modules/emailjs-com/es/api/sendPost.js [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "sendPost": (()=>sendPost)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$models$2f$EmailJSResponseStatus$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/models/EmailJSResponseStatus.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$store$2f$store$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/store/store.js [app-ssr] (ecmascript)");
+;
+;
+const sendPost = (url, data, headers = {})=>{
+    return new Promise((resolve, reject)=>{
+        const xhr = new XMLHttpRequest();
+        xhr.addEventListener('load', ({ target })=>{
+            const responseStatus = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$models$2f$EmailJSResponseStatus$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["EmailJSResponseStatus"](target);
+            if (responseStatus.status === 200 || responseStatus.text === 'OK') {
+                resolve(responseStatus);
+            } else {
+                reject(responseStatus);
+            }
+        });
+        xhr.addEventListener('error', ({ target })=>{
+            reject(new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$models$2f$EmailJSResponseStatus$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["EmailJSResponseStatus"](target));
+        });
+        xhr.open('POST', __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$store$2f$store$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["store"]._origin + url, true);
+        Object.keys(headers).forEach((key)=>{
+            xhr.setRequestHeader(key, headers[key]);
+        });
+        xhr.send(data);
+    });
+};
+}}),
+"[project]/node_modules/emailjs-com/es/methods/send/send.js [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "send": (()=>send)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$store$2f$store$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/store/store.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$utils$2f$validateParams$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/utils/validateParams.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$api$2f$sendPost$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/api/sendPost.js [app-ssr] (ecmascript)");
+;
+;
+;
+const send = (serviceID, templateID, templatePrams, userID)=>{
+    const uID = userID || __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$store$2f$store$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["store"]._userID;
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$utils$2f$validateParams$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["validateParams"])(uID, serviceID, templateID);
+    const params = {
+        lib_version: '3.2.0',
+        user_id: uID,
+        service_id: serviceID,
+        template_id: templateID,
+        template_params: templatePrams
+    };
+    return (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$api$2f$sendPost$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["sendPost"])('/api/v1.0/email/send', JSON.stringify(params), {
+        'Content-type': 'application/json'
+    });
+};
+}}),
+"[project]/node_modules/emailjs-com/es/methods/sendForm/sendForm.js [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "sendForm": (()=>sendForm)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$store$2f$store$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/store/store.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$utils$2f$validateParams$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/utils/validateParams.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$api$2f$sendPost$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/api/sendPost.js [app-ssr] (ecmascript)");
+;
+;
+;
+const findHTMLForm = (form)=>{
+    let currentForm;
+    if (typeof form === 'string') {
+        currentForm = document.querySelector(form);
+    } else {
+        currentForm = form;
+    }
+    if (!currentForm || currentForm.nodeName !== 'FORM') {
+        throw 'The 3rd parameter is expected to be the HTML form element or the style selector of form';
+    }
+    return currentForm;
+};
+const sendForm = (serviceID, templateID, form, userID)=>{
+    const uID = userID || __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$store$2f$store$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["store"]._userID;
+    const currentForm = findHTMLForm(form);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$utils$2f$validateParams$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["validateParams"])(uID, serviceID, templateID);
+    const formData = new FormData(currentForm);
+    formData.append('lib_version', '3.2.0');
+    formData.append('service_id', serviceID);
+    formData.append('template_id', templateID);
+    formData.append('user_id', uID);
+    return (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$api$2f$sendPost$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["sendPost"])('/api/v1.0/email/send-form', formData);
+};
+}}),
+"[project]/node_modules/emailjs-com/es/index.js [app-ssr] (ecmascript) <locals>": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "default": (()=>__TURBOPACK__default__export__)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$methods$2f$init$2f$init$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/methods/init/init.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$methods$2f$send$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/methods/send/send.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$methods$2f$sendForm$2f$sendForm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/methods/sendForm/sendForm.js [app-ssr] (ecmascript)");
+;
+;
+;
+;
+const __TURBOPACK__default__export__ = {
+    init: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$methods$2f$init$2f$init$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["init"],
+    send: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$methods$2f$send$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["send"],
+    sendForm: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$methods$2f$sendForm$2f$sendForm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["sendForm"]
+};
+}}),
+"[project]/node_modules/emailjs-com/es/index.js [app-ssr] (ecmascript) <module evaluation>": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$methods$2f$init$2f$init$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/methods/init/init.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$methods$2f$send$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/methods/send/send.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$methods$2f$sendForm$2f$sendForm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/methods/sendForm/sendForm.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$emailjs$2d$com$2f$es$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/emailjs-com/es/index.js [app-ssr] (ecmascript) <locals>");
+}}),
 
 };
 
-//# sourceMappingURL=%5Broot-of-the-server%5D__343ad0b1._.js.map
+//# sourceMappingURL=%5Broot-of-the-server%5D__0fecc585._.js.map

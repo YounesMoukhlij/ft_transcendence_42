@@ -1,6 +1,12 @@
 import bcrypt from 'bcrypt';
 import fetch from 'node-fetch';
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
+
+
+import { SMTPClient } from 'emailjs';
+// Remove the previous emailjs import and add this:
+import emailjs from '@emailjs/nodejs';
+
 
 // Constants
 const DEFAULT_PROFILE_IMAGE = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg";
@@ -208,6 +214,105 @@ export async function DeleteUserById(request, reply) {
 }
 
 
+
+// EmailJS configuration
+const EMAILJS_CONFIG = {
+    SERVICE_ID: 'service_olzq7jd',
+    TEMPLATE_ID: 'template_y4x9xld', 
+    PRIVATE_KEY: 'DpuittgIXC3Ppn_kbJCcY'
+};
+
+// Keep your existing SMTP client as backup (optional)
+const emailClient = new SMTPClient({
+    user: 'ft_transcendence-support@gmail.com',
+    password: process.env.SMTP_PASS || 'your_email_password',
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    ssl: true,
+    port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 465,
+});
+
+function sendMail(message) {
+    return new Promise((resolve, reject) => {
+        emailClient.send(message, (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        });
+    });
+}
+
+// Update your resetPassword function to use EmailJS
+export async function resetPassword(request, reply) {
+  const { email } = request.body;
+
+  try {
+    const user = request.server.db
+      .prepare("SELECT * FROM users WHERE email = ?")
+      .get(email);
+
+    if (!user) {
+      return reply.code(404).send({ message: "User not found" });
+    }
+
+    const newPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await hashPassword(newPassword);
+
+    // Update the password in DB
+    request.server.db
+      .prepare("UPDATE users SET password = ? WHERE email = ?")
+      .run(hashedPassword, email);
+
+    // Send email using EmailJS
+    const templateParams = {
+      to_email: email,
+      username: user.username || '',
+      password: newPassword,
+      from_name: 'Pong Game'
+    };
+
+    try {
+      // Using EmailJS with the correct package
+      await emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
+        templateParams,
+        {
+          publicKey: EMAILJS_CONFIG.PRIVATE_KEY, // Note: Use publicKey for @emailjs/nodejs
+        }
+      );
+      
+      console.log('Password reset email sent successfully via EmailJS');
+      
+    } catch (err) {
+      console.error('Failed to send reset email via EmailJS:', err);
+      
+      // Fallback to SMTP client if EmailJS fails
+      console.log('Trying fallback SMTP method...');
+      try {
+        const mailMessage = {
+          text: `Hey ${user.username || ''}, your new password is: ${newPassword}, you can change it after logging in.\nDon't share it with anyone!`,
+          from: process.env.SMTP_FROM || 'Pong Game <ft_transcendence-support@gmail.com>',
+          to: email,
+          subject: 'Your new password',
+        };
+        
+        await sendMail(mailMessage);
+        console.log('Password reset email sent successfully via SMTP fallback');
+        
+      } catch (smtpErr) {
+        console.error('Failed to send reset email via SMTP fallback:', smtpErr);
+        return reply.code(500).send({ message: 'Error sending reset email' });
+      }
+    }
+
+    return reply.code(200).send({
+      success: true,
+      message: "Password updated successfully. Check your email for the new password."
+    });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    return reply.code(500).send({ message: "Error updating password" });
+  }
+}
 // ====== GOOGLE OAUTH ======
 
 export async function InitiateGoogleAuth(request, reply) {
