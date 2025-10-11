@@ -52,7 +52,6 @@ export default function Navbar()
         id: notify_id,
       }
     });
-
   }
 
   async function AcceptFriendRequest(item){
@@ -81,6 +80,8 @@ export default function Navbar()
 
   function showNotification(){
     setNotificationIndex(!notificationIndex);
+    SetunseenCount(0);
+    // i need to se the index is_seen in funcking db
   }
 
 
@@ -105,7 +106,11 @@ export default function Navbar()
     connect();
   }, [])
 
-  
+  const [unseenCount , SetunseenCount] = useState(0);
+
+  useEffect(()=>{
+    SetunseenCount (notificatiion.filter(n => !n.is_seen).length);
+  },[notificatiion])
 
   useEffect(() => {
 
@@ -185,7 +190,7 @@ export default function Navbar()
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
-          {notificationIndex && 
+          {notificationIndex &&
             <div className='absolute flex flex-col top-[10%] right-[10%] h-[300px] w-[350px]  bg-black text-white border-2 border-white overflow-scroll gap-2 '>
              {
                notificatiion.map((item , index)=>(
@@ -209,7 +214,7 @@ export default function Navbar()
 
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
                 <IoNotificationsOutline onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
-                <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>5</p></div>
+                <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
             </div>
             <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>
               <span ref={profileIconRef}>

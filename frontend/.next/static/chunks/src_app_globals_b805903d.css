@@ -72,7 +72,6 @@
   :root, :host {
     --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --color-red-300: oklch(80.8% .114 19.571);
     --color-red-600: oklch(57.7% .245 27.325);
     --color-orange-500: oklch(70.5% .213 47.604);
     --color-amber-400: oklch(82.8% .189 84.429);
@@ -411,10 +410,6 @@
     right: 10%;
   }
 
-  .right-\[100\%\] {
-    right: 100%;
-  }
-
   .bottom-12 {
     bottom: calc(var(--spacing) * 12);
   }
@@ -441,42 +436,6 @@
 
   .left-4 {
     left: calc(var(--spacing) * 4);
-  }
-
-  .left-90 {
-    left: calc(var(--spacing) * 90);
-  }
-
-  .left-100 {
-    left: calc(var(--spacing) * 100);
-  }
-
-  .left-\[50\%\] {
-    left: 50%;
-  }
-
-  .left-\[80\%\] {
-    left: 80%;
-  }
-
-  .left-\[90\%\] {
-    left: 90%;
-  }
-
-  .left-\[90\] {
-    left: 90px;
-  }
-
-  .left-\[96\%\] {
-    left: 96%;
-  }
-
-  .left-\[99\%\] {
-    left: 99%;
-  }
-
-  .left-\[100\%\] {
-    left: 100%;
   }
 
   .z-10 {
@@ -1418,10 +1377,6 @@
     background-color: var(--color-purple-700);
   }
 
-  .bg-red-300 {
-    background-color: var(--color-red-300);
-  }
-
   .bg-red-600 {
     background-color: var(--color-red-600);
   }
@@ -1748,10 +1703,6 @@
 
   .text-purple-300 {
     color: var(--color-purple-300);
-  }
-
-  .text-red-600 {
-    color: var(--color-red-600);
   }
 
   .text-white {
