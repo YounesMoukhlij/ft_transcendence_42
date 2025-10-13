@@ -157,6 +157,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
+;
 function Navbar() {
     _s();
     const [isOpen, setIsOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -392,7 +393,7 @@ function Navbar() {
                                     columnNumber: 13
                                 }, this),
                                 notificationIndex && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "jsx-7809a6b4b0e596ab" + " " + 'absolute flex flex-col top-[10%] right-[10%] h-[300px] w-[350px]  bg-black text-white border-2 border-white overflow-scroll gap-2 ',
+                                    className: "jsx-7809a6b4b0e596ab" + " " + 'testt absolute flex flex-col top-22 rounded-2xl right-30 h-52 w-80  bg-black text-white border-2  overflow-y-scroll gap-2',
                                     children: notificatiion.map((item, index)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             className: "jsx-7809a6b4b0e596ab" + " " + ' index flex flex-col border-t border-gray-300 ',
                                             children: [

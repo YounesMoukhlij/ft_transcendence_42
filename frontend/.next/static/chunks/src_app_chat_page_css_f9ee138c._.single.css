@@ -20,7 +20,7 @@
   overflow: scroll;
 }
 
-.chat-body {
+.chat-body, .testt {
   scrollbar-width: none;
 }
 

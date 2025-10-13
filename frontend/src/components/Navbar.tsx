@@ -8,7 +8,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { Toaster, toast } from 'sonner';
 import { globalStore } from '../components/globalStore';
-
+import '../app/chat/page.css'
 
 
 
@@ -191,7 +191,7 @@ export default function Navbar()
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
           {notificationIndex &&
-            <div className='absolute flex flex-col top-[10%] right-[10%] h-[300px] w-[350px]  bg-black text-white border-2 border-white overflow-scroll gap-2 '>
+            <div className='testt absolute flex flex-col top-22 rounded-2xl right-30 h-52 w-80  bg-black text-white border-2  overflow-y-scroll gap-2'>
              {
                notificatiion.map((item , index)=>(
                    <div  key={index} className=' index flex flex-col border-t border-gray-300 '>
