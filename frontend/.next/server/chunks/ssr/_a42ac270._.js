@@ -10,30 +10,19 @@ __turbopack_context__.s({
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/react.mjs [app-ssr] (ecmascript)");
 ;
-const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["create"])((set)=>({
+const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["create"])((set, get)=>({
         // Initial state
         user: null,
         // Actions (functions to change state)
-        setUser: (userObj)=>set({
-                user: userObj
-            }),
-        // Function to clear user data
         clearUser: ()=>set({
                 user: null
-            })
-    })) // import { create } from 'zustand'
- // import { persist } from 'zustand/middleware'
- // export const useUserStore = create(
- //   console.log("Initializing user store"),
- //   persist(
- //     (set) => ({
- //       user: null,
- //       setUser: (userObj) => set({ user: userObj }),
- //       clearUser: () => set({ user: null }),
- //     }),
- //   )
- // )
-;
+            }),
+        setUser: (userData)=>set({
+                user: userData
+            }),
+        // Function to get user data
+        getUser: ()=>get().user
+    }));
 }}),
 "[project]/src/app/page.tsx [app-ssr] (ecmascript)": ((__turbopack_context__) => {
 "use strict";

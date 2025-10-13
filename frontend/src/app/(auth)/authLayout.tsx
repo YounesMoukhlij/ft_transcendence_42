@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useRef, use } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from 'react-toastify'
@@ -110,7 +110,7 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const setUser = useUserStore((state) => state.setUser)
+  // const setUser = useUserStore((state) => state.setUser) // Not needed here, user state is set on sign-in
 
   const handleInputChange = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }))
@@ -181,8 +181,8 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
         return
       }
 
-      toast.success('Account created successfully!')
-      setUser(userData)
+      // No need to set the user state here; they must sign in first.
+      toast.success('Account created successfully! Please sign in.') 
       setFormData({ username: '', email: '', password: '', confirmPassword: '' })
       
       onToggle()
@@ -294,7 +294,12 @@ function SignInForm({ onToggle }: SignInFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-   const setUser = useUserStore((state) => state.setUser)
+  const setUser = useUserStore((state) => state.setUser)
+  
+  // Ref to prevent OAuth effects from running twice in Strict Mode
+  const googleAuthEffectRef = useRef(false) 
+  const fortyTwoAuthEffectRef = useRef(false)
+
 
   // Handle Google OAuth callback
   useEffect(() => {
@@ -306,6 +311,12 @@ function SignInForm({ onToggle }: SignInFormProps) {
     if (!userId && !authError) {
       return
     }
+
+    // Prevents double execution in React Strict Mode (Dev)
+    if (googleAuthEffectRef.current) {
+      return
+    }
+    googleAuthEffectRef.current = true
 
     if (authError) {
       const errorMessages: Record<string, string> = {
@@ -336,10 +347,8 @@ function SignInForm({ onToggle }: SignInFormProps) {
           
           console.log('Google OAuth user data:', userData)
           
-          // Update global user state
+          // Update global user state (Zustand)
           setUser(userData)
-          // localStorage.setItem('user', JSON.stringify(userData))
-          
           
           // Display success message based on whether user is new
           const message = isNewUser === 'true' 
@@ -366,16 +375,15 @@ function SignInForm({ onToggle }: SignInFormProps) {
       fetchUserData()
     }
     
-    // Run only one time to do not duplicate toasts
-  }, [])
+  }, [searchParams, router, setUser]) // Added dependencies
 
   const handleGoogleAuth = () => {
     // Redirect to backend OAuth initiation
     window.location.href = `${API_URL}/auth/google`
   }
   
+  // Handle 42 OAuth callback
   useEffect(() => {
-    //         return reply.redirect(`${FRONTEND_URL}/signIn/?42Auth=success&userId=${userId}&isNewUser=${isNewUser}`);
     const fortyTwoAuth = searchParams.get('42Auth')
     const userId = searchParams.get('userId')
     const isNewUser = searchParams.get('isNewUser')
@@ -385,6 +393,13 @@ function SignInForm({ onToggle }: SignInFormProps) {
     if (!fortyTwoAuth && !authError) {
       return
     }
+    
+    // Prevents double execution in React Strict Mode (Dev)
+    if (fortyTwoAuthEffectRef.current) {
+      return
+    }
+    fortyTwoAuthEffectRef.current = true
+
     if (authError) {
       const errorMessages: Record<string, string> = {
         'no_code': '42 authentication failed: No authorization code',
@@ -414,9 +429,8 @@ function SignInForm({ onToggle }: SignInFormProps) {
           
           console.log('42 OAuth user data:', userData)
           
-          // Update global user state
+          // Update global user state (Zustand)
           setUser(userData)
-          // localStorage.setItem('user', JSON.stringify(userData))
           
           
           // Display success message based on whether user is new
@@ -444,8 +458,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
       fetchUserData()
     }
     
-    // Run only one time to do not duplicate toasts
-  }, [])
+  }, [searchParams, router, setUser]) // Added dependencies
 
   const handle42Auth = () => {
     window.location.href = `${API_URL}/auth/42`
@@ -489,7 +502,9 @@ function SignInForm({ onToggle }: SignInFormProps) {
       }
 
       if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user))
+        // FIX: Update Zustand store correctly
+        setUser(data.user)
+        // localStorage.setItem('user', JSON.stringify(data.user)) // Removed: Rely on Zustand for state management
       }
 
       toast.success('Login successful!')

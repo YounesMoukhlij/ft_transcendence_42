@@ -81,6 +81,131 @@ export async function AddUser(request, reply) {
     }
 }
 
+//  update user info
+export async function updateUserInfo(request, reply) {
+    const {id_user, profile_image , username, fullname, email, twofa_enabled , language , bio} = request.body;
+
+    try {
+        const user = request.server.db
+            .prepare("SELECT * FROM users WHERE id_user = ?")
+            .get(id_user);
+        
+        if (!user) {
+            return reply.code(404).send({
+                success: false,
+                message: "User not found"
+            });
+        }
+        // Update user fields
+        const updatedUser = {
+            profile_img: profile_image || user.profile_img,
+            username: username || user.username,
+            fullname: fullname || user.fullname,
+            email: email || user.email,
+            twofa_enabled: twofa_enabled !== undefined ? twofa_enabled : user.twofa_enabled,
+            language: language || user.language,
+            bio: bio || user.bio
+        };
+        // check if username or email already exists for another user
+        const userExists = request.server.db
+            .prepare("SELECT * FROM users WHERE (username = ? OR email = ?) AND id_user != ?")
+            .get(updatedUser.username, updatedUser.email, id_user);
+        
+        if (userExists) {
+            return reply.code(409).send({ 
+                success: false, 
+                message: "Username or email already exists" 
+            });
+        }
+        // prepare and run update query (username and email should be unique)
+        const query = request.server.db
+            .prepare(`UPDATE users SET 
+                profile_img = ?, 
+                username = ?, 
+                fullname = ?, 
+                email = ?, 
+                twofa_enabled = ?, 
+                language = ?, 
+                bio = ? 
+                WHERE id_user = ?`);``
+        query.run(
+            updatedUser.profile_img,
+            updatedUser.username,
+            updatedUser.fullname,
+            updatedUser.email,
+            updatedUser.twofa_enabled,
+            updatedUser.language,
+            updatedUser.bio,
+            id_user
+        );
+        return reply.code(200).send({
+            success: true,
+            message: "User updated successfully",
+            //full user object
+            user: { id_user, ...updatedUser }
+        });
+
+    } catch (error) {
+        console.error("Error updating user:", error);
+        return reply.code(500).send({ 
+            success: false,
+            message: "Error updating user"
+        });
+    }
+}
+
+
+export async function updateUserSecurity(request, reply) {
+    const { id_user, current_password, new_password } = request.body;
+
+    if (!id_user || !current_password || !new_password) {
+        return reply.code(400).send({ 
+            success: false, 
+            message: "Missing required fields" 
+        });
+    }
+
+    try {
+        const user = request.server.db
+            .prepare("SELECT * FROM users WHERE id_user = ?")
+            .get(id_user);
+
+        if (!user) {
+            return reply.code(404).send({ 
+                success: false, 
+                message: "User not found" 
+            });
+        }
+
+        const isPasswordValid = await bcrypt.compare(current_password, user.password);
+        
+        if (!isPasswordValid) {
+            return reply.code(401).send({ 
+                success: false, 
+                message: "Current password is incorrect" 
+            });
+        }
+
+        const hashedNewPassword = await hashPassword(new_password);
+        request.server.db
+            .prepare("UPDATE users SET password = ? WHERE id_user = ?")
+            .run(hashedNewPassword, id_user);
+
+        return reply.code(200).send({ 
+            success: true, 
+            message: "Password updated successfully" 
+        });
+
+    } catch (error) {
+        console.error("Error updating password:", error);
+        return reply.code(500).send({ 
+            success: false,
+            message: "Error updating password"
+        });
+    }
+}
+
+
 export async function login(request, reply) {
     const { username, password } = request.body;
     
@@ -138,7 +263,7 @@ export async function login(request, reply) {
 export async function getAllUsers(request, reply) {
     try {
         const users = request.server.db
-            .prepare("SELECT id_user, username, email, profile_img FROM users")
+            .prepare("SELECT * FROM users")
             .all();
         return reply.code(200).send(users);
     } catch (error) {
@@ -436,12 +561,6 @@ export async function FortyTwoAuth(request, reply) {
         });
 
         const fortyTwoUser = await userResponse.json();
-        console.log("42 User:", fortyTwoUser.login);
-        console.log("42 User:", fortyTwoUser.email);
-        console.log("42 User:", fortyTwoUser.displayname);
-        console.log("42 User:", fortyTwoUser.image.link);
-        console.log("11111111")
-
         // Check if user already exists
         const existingUser = request.server.db
             .prepare("SELECT * FROM users WHERE email = ?")

@@ -11,7 +11,9 @@ import {
     GoogleAuth,
     Initiate42Auth,
     FortyTwoAuth,
-    resetPassword
+    resetPassword,
+    updateUserInfo,
+    updateUserSecurity
 } from '../modules/userAuth.module.js';
 
 export default async function routes(fastify, options) {
@@ -29,6 +31,10 @@ export default async function routes(fastify, options) {
     fastify.get('/getUserById/:id', getUserById);
     fastify.get('/getUserByEmail/:email', getUserByEmail);
     fastify.delete('/DeleteUserById/:id', DeleteUserById);
+
+    // setting routes
+    fastify.post('/updateUserInfo', updateUserInfo);
+    fastify.post('/updateUserSecurity', updateUserSecurity);
 
     // Password reset route
     fastify.post('/resetPassword', resetPassword);

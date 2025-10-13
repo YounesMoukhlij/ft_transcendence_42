@@ -10,7 +10,7 @@ const Def = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzou
 
 export default function Home()
 {
- const user = useUserStore((state) => state.user)
+  const user = useUserStore((state) => state.user)
   const clearUser = useUserStore((state) => state.clearUser)
   console.log("Home user:", user);
   
