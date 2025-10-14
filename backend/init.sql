@@ -11,7 +11,7 @@ CREATE TABLE users (
     feeden TEXT,
     email TEXT UNIQUE,
     password TEXT,
-    language TEXT DEFAULT 'en',
+    languages TEXT DEFAULT 'en',
     status TEXT,
     auth_method INTEGER DEFAULT 0, -- 0: local, 1: google, 2: Intra42 
     twoFA_enabled BOOLEAN DEFAULT FALSE,

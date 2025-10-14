@@ -13,7 +13,11 @@ export default function Home()
   const user = useUserStore((state) => state.user)
   const clearUser = useUserStore((state) => state.clearUser)
   console.log("Home user:", user);
-  
+  if (!user) {
+    // window.location.href = '/signIn'; // Redirect to /signin if no user is found
+    return null;
+  }
+
   return (
 
     <div className="text-white border">
@@ -34,8 +38,13 @@ export default function Home()
           />
           <h2 className="text-2xl font-bold mb-2">User Information</h2>
           <p>Username: {user.username}</p>
+          <p>Full Name: {user.fullname}</p>
+          {/* 2fa */}
+          <p>2FA Enabled: {user.is2FAEnabled ? 'Yes' : 'No'}</p>
           <p>Email: {user.email}</p>
-          <>ID: {user.id}</>
+          <p>ID: {user.id_user}</p>
+          <p>Languages: {user.languages}</p>
+          <p>Bio: {user.bio}</p>
           <button 
             onClick={() => {
               clearUser();

@@ -83,7 +83,7 @@ export async function AddUser(request, reply) {
 
 //  update user info
 export async function updateUserInfo(request, reply) {
-    const {id_user, profile_image , username, fullname, email, twofa_enabled , language , bio} = request.body;
+    const {id_user, profile_image , username, fullname, email, twofa_enabled , languages , bio} = request.body;
 
     try {
         const user = request.server.db
@@ -103,7 +103,7 @@ export async function updateUserInfo(request, reply) {
             fullname: fullname || user.fullname,
             email: email || user.email,
             twofa_enabled: twofa_enabled !== undefined ? twofa_enabled : user.twofa_enabled,
-            language: language || user.language,
+            languages: languages || user.languages,
             bio: bio || user.bio
         };
         // check if username or email already exists for another user
@@ -125,7 +125,7 @@ export async function updateUserInfo(request, reply) {
                 fullname = ?, 
                 email = ?, 
                 twofa_enabled = ?, 
-                language = ?, 
+                languages = ?, 
                 bio = ? 
                 WHERE id_user = ?`);``
         query.run(
@@ -134,7 +134,7 @@ export async function updateUserInfo(request, reply) {
             updatedUser.fullname,
             updatedUser.email,
             updatedUser.twofa_enabled,
-            updatedUser.language,
+            updatedUser.languages,
             updatedUser.bio,
             id_user
         );
@@ -156,12 +156,14 @@ export async function updateUserInfo(request, reply) {
 
 
 export async function updateUserSecurity(request, reply) {
-    const { id_user, current_password, new_password } = request.body;
-
+    const { id_user, current_password, new_password , twofa_enabled } = request.body;
+    const twofa = twofa_enabled ? 1 : 0;
+    console.log("updateUserSecurity called with:", { id_user, current_password, new_password, twofa_enabled });
+    
     if (!id_user || !current_password || !new_password) {
-        return reply.code(400).send({ 
-            success: false, 
-            message: "Missing required fields" 
+        return reply.code(400).send({
+            success: false,
+            message: "Missing required fields"
         });
     }
 
@@ -188,8 +190,8 @@ export async function updateUserSecurity(request, reply) {
 
         const hashedNewPassword = await hashPassword(new_password);
         request.server.db
-            .prepare("UPDATE users SET password = ? WHERE id_user = ?")
-            .run(hashedNewPassword, id_user);
+            .prepare("UPDATE users SET password = ?, twofa_enabled = ? WHERE id_user = ?")
+            .run(hashedNewPassword, twofa, id_user);
 
         return reply.code(200).send({ 
             success: true, 
@@ -215,7 +217,24 @@ export async function login(request, reply) {
             message: "Missing required fields" 
         });
     }
-
+    // // check if auth method is 0 (local)
+    // const userAuthMethod = request.server.db
+    //     .prepare("SELECT auth_method FROM users WHERE username = ?")
+    //     .get(username);
+    
+    // if (!userAuthMethod) {
+    //     return reply.code(401).send({ 
+    //         success: false, 
+    //         message: "Invalid username or password" 
+    //     });
+    // }
+    
+    // if (userAuthMethod.auth_method !== 0) {
+    //     return reply.code(400).send({ 
+    //         success: false, 
+    //         message: "Use OAuth to log in" 
+    //     });
+    // }
     try {
         const user = request.server.db
             .prepare("SELECT * FROM users WHERE username = ?")
@@ -227,7 +246,12 @@ export async function login(request, reply) {
                 message: "Invalid username or password" 
             });
         }
-
+        if (user.auth_method !== 0) {
+            return reply.code(400).send({ 
+                success: false, 
+                message: "Use OAuth to log in" 
+            });
+        }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         
         if (!isPasswordValid) {
