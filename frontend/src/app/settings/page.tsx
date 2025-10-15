@@ -112,7 +112,7 @@ const DeleteConfirmationDialog = ({
   )
 }
 
-// --- SwitchButton Component ---
+
 function SwitchButton({ label, checked, onChange }) {
   return (
     <div className="flex items-center justify-end w-full sm:w-auto gap-3">
@@ -233,7 +233,7 @@ const ProfileSettingsPage = () => {
 
   const handleSaveProfile = async () => {
     setIsLoading(true)
-    
+
     const imageToSave = previewImage || user.profile_img || defaultProfileImg
 
     try {
@@ -250,12 +250,14 @@ const ProfileSettingsPage = () => {
         toast.error('Please enter a valid email address')
         return
       }
-
+      const token = user.access_token;
+      // toast.success('token: ' + token);
       const response = await fetch(`${API_URL}/updateUserInfo`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' 
+          , Authorization: `Bearer ${user.access_token}`
+        },
         body: JSON.stringify({
-          id_user: user.id_user,
           profile_img: defaultProfileImg,
           languages: formData.languages,
           username: formData.username,
@@ -313,11 +315,6 @@ const ProfileSettingsPage = () => {
         setIsLoading(false)
         return
       }
-      if (!formData.currentPassword.trim()) {
-        toast.error('Current password is required')
-        setIsLoading(false)
-        return
-      }
       if (formData.newPassword.trim() !== '') {
         if (formData.newPassword.length < 8) {
           toast.error('New password must be at least 8 characters long')
@@ -333,14 +330,14 @@ const ProfileSettingsPage = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/updateUserSecurity`, {
+      const response = await fetch(`${API_URL}/updateUserPassword`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' 
+          , Authorization: `Bearer ${user.access_token}`
+        },
         body: JSON.stringify({
-          id_user: user.id_user,
           current_password: formData.currentPassword,
           new_password: formData.newPassword,
-          twofa_enabled: is2FAEnabled,
         }),
       })
       
@@ -350,16 +347,16 @@ const ProfileSettingsPage = () => {
         toast.error(data.message || 'Failed to update security settings')
         return
       }
-      
-      toast.success('Security settings updated successfully!')
-      
-      setUser({ ...user, is2FAEnabled: is2FAEnabled })
+
+      toast.success('Password  updated successfully!')
+
+      setUser({ ...user })
 
       setFormData((prev) => ({
         ...prev,
-        // currentPassword: '',
-        // newPassword: '',
-        // confirmPassword: '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
       }))
 
     } catch (error) {
@@ -370,6 +367,41 @@ const ProfileSettingsPage = () => {
     }
   }
 
+  const handleToggle2FA = async () => {
+    setIsLoading(true)
+    const twofavalue = !is2FAEnabled ? 1 : 0;
+    console.log('Toggling 2FA, current state:', twofavalue);
+    try {
+      const response = await fetch(`${API_URL}/update2FA`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' , 
+          Authorization: `Bearer ${user.access_token}`},
+        body: JSON.stringify({
+          twofa: twofavalue,
+        }),
+      })
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        toast.error(data.message || 'Failed to update 2FA settings')
+        return
+      }
+
+      setIs2FAEnabled(!is2FAEnabled)
+      setUser({ ...user, is2FAEnabled: !is2FAEnabled })
+      toast.success(`Two-Factor Authentication ${!is2FAEnabled ? 'enabled' : 'disabled'} successfully!`)
+      // set a timeout to clear the message after 3 seconds
+      
+
+    } catch (error) {
+      console.error('2FA update error:', error)
+      toast.error('An unexpected error occurred while updating 2FA settings')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Account deletion handler
 
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
@@ -388,11 +420,8 @@ const ProfileSettingsPage = () => {
       toast.success('Account deleted successfully!')
       setUser(null)
       setIsDeleteDialogOpen(false)
-      
-      setTimeout(() => {
-        router.push('/signIn')
-      }, 1000)
 
+      router.push('/signIn')
     } catch (error) {
       console.error('Account deletion error:', error)
       toast.error('An unexpected error occurred while deleting the account')
@@ -680,7 +709,7 @@ const ProfileSettingsPage = () => {
                     <SwitchButton
                       label={is2FAEnabled ? 'Enabled' : 'Disabled'}
                       checked={is2FAEnabled}
-                      onChange={() => isPasswordAuth && setIs2FAEnabled(!is2FAEnabled)}
+                     onChange={() => isPasswordAuth && handleToggle2FA()}
                     />
                   </div>
                   

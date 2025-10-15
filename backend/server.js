@@ -6,6 +6,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from '@fastify/cors';
+import jwt from 'jsonwebtoken';
+
+const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +22,23 @@ app.register(cors, {
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 });
 
+app.decorate('authenticate', async (request, reply) => {
+  try {
+    const authHeader = request.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reply.code(401).send({ error: 'Missing or invalid token' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    const decoded = jwt.verify(token, SECRET);
+    request.user = decoded; // attach the decoded user payload
+  } catch (err) {
+    console.error('JWT error:', err.message);
+    return reply.code(401).send({ error: 'Unauthorized' });
+  }
+});
 
 app.register(routes);
 app.decorate('db', db);

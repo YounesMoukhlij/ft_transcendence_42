@@ -13,8 +13,10 @@ import {
     FortyTwoAuth,
     resetPassword,
     updateUserInfo,
-    updateUserSecurity
+    updateUserPassword,
+    update2FA,
 } from '../modules/userAuth.module.js';
+
 
 export default async function routes(fastify, options) {
     // Existing routes
@@ -33,8 +35,12 @@ export default async function routes(fastify, options) {
     fastify.delete('/DeleteUserById/:id', DeleteUserById);
 
     // setting routes
-    fastify.post('/updateUserInfo', updateUserInfo);
-    fastify.post('/updateUserSecurity', updateUserSecurity);
+    fastify.post('/updateUserInfo', { preHandler: [fastify.authenticate] }, updateUserInfo);
+    fastify.post('/updateUserPassword', { preHandler: [fastify.authenticate] }, updateUserPassword);
+    fastify.post('/update2FA', { preHandler: [fastify.authenticate] }, update2FA);
+    
+
+
 
     // Password reset route
     fastify.post('/resetPassword', resetPassword);

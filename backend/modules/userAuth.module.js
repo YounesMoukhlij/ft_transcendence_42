@@ -1,34 +1,46 @@
+// userAuth.module.js
 import bcrypt from 'bcrypt';
 import fetch from 'node-fetch';
 import jwt from 'jsonwebtoken';
+// Install: npm install otplib qrcode
+import otplib from 'otplib'; 
+import qrcode from 'qrcode'; 
 
 
 import { SMTPClient } from 'emailjs';
-// Remove the previous emailjs import and add this:
 import emailjs from '@emailjs/nodejs';
+import { log } from 'console';
 
 
 // Constants
 const DEFAULT_PROFILE_IMAGE = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg";
 const GOOGLE_CLIENT_ID = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com";
 const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
-// const GOOGLE_CLIENT_SECRET = "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";
 const GOOGLE_CLIENT_SECRET = "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";
 const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
 const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
 const OAUTH42_SECRET = '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';
 const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
+const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
-// token function generator
-export function generateToken(username, email) {
+// token function generator (FIXED)
+export function generateToken(username, email, id_user) {
     console.log("generateToken");
-    if (!username || !email) {
-        throw new Error("Username and email are required to generate token");
+    log("generateToken params:", { username, email, id_user });
+    if (!username || !email || !id_user) {
+        throw new Error("Username, email, and user ID are required to generate token");
     }
 
-    const payload = { username, email };
-    return jwt.sign(payload, SECRET, { expiresIn: '1h' });
+    const payload = { username, email, id_user };
+    
+    // 💡 FIX: Ensure the token is stored and returned correctly
+    const token = jwt.sign(payload, SECRET, { expiresIn: '2h' });
+
+    console.log("Token generated successfully for user:", username, id_user);
+    console.log("Token:", token);
+
+    return token;
 }
 
 // Helper function to hash passwords
@@ -83,7 +95,16 @@ export async function AddUser(request, reply) {
 
 //  update user info
 export async function updateUserInfo(request, reply) {
-    const {id_user, profile_image , username, fullname, email, twofa_enabled , languages , bio} = request.body;
+    console.log("updateUserInfo called with:", request.user);
+    const id_user = request.user.id_user;
+    console.log("updateUserInfo id_user:", id_user);
+    if (!id_user) {
+        return reply.code(400).send({
+            success: false,
+            message: "Missing user ID"
+        });
+    }
+    const {profile_image , username, fullname, email, languages , bio} = request.body; 
 
     try {
         const user = request.server.db
@@ -96,17 +117,16 @@ export async function updateUserInfo(request, reply) {
                 message: "User not found"
             });
         }
-        // Update user fields
+
         const updatedUser = {
-            profile_img: profile_image || user.profile_img,
+            profile_img: typeof profile_image !== 'undefined' ? profile_image : user.profile_img, 
             username: username || user.username,
             fullname: fullname || user.fullname,
             email: email || user.email,
-            twofa_enabled: twofa_enabled !== undefined ? twofa_enabled : user.twofa_enabled,
             languages: languages || user.languages,
             bio: bio || user.bio
         };
-        // check if username or email already exists for another user
+        
         const userExists = request.server.db
             .prepare("SELECT * FROM users WHERE (username = ? OR email = ?) AND id_user != ?")
             .get(updatedUser.username, updatedUser.email, id_user);
@@ -117,23 +137,21 @@ export async function updateUserInfo(request, reply) {
                 message: "Username or email already exists" 
             });
         }
-        // prepare and run update query (username and email should be unique)
+        
         const query = request.server.db
             .prepare(`UPDATE users SET 
                 profile_img = ?, 
                 username = ?, 
                 fullname = ?, 
                 email = ?, 
-                twofa_enabled = ?, 
                 languages = ?, 
                 bio = ? 
-                WHERE id_user = ?`);``
+                WHERE id_user = ?`);
         query.run(
             updatedUser.profile_img,
             updatedUser.username,
             updatedUser.fullname,
             updatedUser.email,
-            updatedUser.twofa_enabled,
             updatedUser.languages,
             updatedUser.bio,
             id_user
@@ -141,7 +159,6 @@ export async function updateUserInfo(request, reply) {
         return reply.code(200).send({
             success: true,
             message: "User updated successfully",
-            //full user object
             user: { id_user, ...updatedUser }
         });
 
@@ -155,12 +172,21 @@ export async function updateUserInfo(request, reply) {
 }
 
 
-export async function updateUserSecurity(request, reply) {
-    const { id_user, current_password, new_password , twofa_enabled } = request.body;
-    const twofa = twofa_enabled ? 1 : 0;
-    console.log("updateUserSecurity called with:", { id_user, current_password, new_password, twofa_enabled });
+export async function updateUserPassword(request, reply) {
+
+    const id_user = request.user.id_user;
+    if (!id_user) {
+        return reply.code(400).send({
+            success: false,
+            message: "Missing user ID"
+        });
+    }
+    console.log("updateUserPassword called with id_user:", id_user);
+    const { current_password, new_password } = request.body;
+    console.log("updateUserPassword called with:", { id_user, current_password, new_password });
     
-    if (!id_user || !current_password || !new_password) {
+    // Removed redundant check for id_user from body
+    if (!current_password || !new_password) {
         return reply.code(400).send({
             success: false,
             message: "Missing required fields"
@@ -190,11 +216,11 @@ export async function updateUserSecurity(request, reply) {
 
         const hashedNewPassword = await hashPassword(new_password);
         request.server.db
-            .prepare("UPDATE users SET password = ?, twofa_enabled = ? WHERE id_user = ?")
-            .run(hashedNewPassword, twofa, id_user);
+            .prepare("UPDATE users SET password = ? WHERE id_user = ?")
+            .run(hashedNewPassword, id_user); 
 
         return reply.code(200).send({ 
-            success: true, 
+            success: true,
             message: "Password updated successfully" 
         });
 
@@ -207,6 +233,52 @@ export async function updateUserSecurity(request, reply) {
     }
 }
 
+// --- update2FA (Handles 2FA flag update only) ---
+export async function update2FA(request, reply) {
+    const {twofa } = request.body;
+    const id_user = request.user.id_user;
+    
+    if (typeof id_user === 'undefined' || typeof twofa === 'undefined') {
+        return reply.code(400).send({
+            success: false,
+            message: "Missing required fields"
+        });
+    }
+
+    try {
+        const user = request.server.db
+            .prepare("SELECT * FROM users WHERE id_user = ?")
+            .get(id_user);
+
+        if (!user) {
+            return reply.code(404).send({ 
+                success: false, 
+                message: "User not found" 
+            });
+        }
+
+        const twofaAsInt = twofa ? 1 : 0; 
+
+        request.server.db
+            .prepare("UPDATE users SET twofa_enabled = ? WHERE id_user = ?")
+            .run(twofaAsInt, id_user);
+
+        return reply.code(200).send({ 
+            success: true,
+            message: "2FA setting updated successfully" 
+        });
+
+    } catch (error) {
+        console.error("Error updating 2FA setting:", error);
+        return reply.code(500).send({ 
+            success: false,
+            message: "Error updating 2FA setting"
+        });
+    }
+}
+
+
+// ====== LOGIN / AUTH FLOWS ======
 
 export async function login(request, reply) {
     const { username, password } = request.body;
@@ -217,24 +289,6 @@ export async function login(request, reply) {
             message: "Missing required fields" 
         });
     }
-    // // check if auth method is 0 (local)
-    // const userAuthMethod = request.server.db
-    //     .prepare("SELECT auth_method FROM users WHERE username = ?")
-    //     .get(username);
-    
-    // if (!userAuthMethod) {
-    //     return reply.code(401).send({ 
-    //         success: false, 
-    //         message: "Invalid username or password" 
-    //     });
-    // }
-    
-    // if (userAuthMethod.auth_method !== 0) {
-    //     return reply.code(400).send({ 
-    //         success: false, 
-    //         message: "Use OAuth to log in" 
-    //     });
-    // }
     try {
         const user = request.server.db
             .prepare("SELECT * FROM users WHERE username = ?")
@@ -261,9 +315,22 @@ export async function login(request, reply) {
             });
         }
 
-        const { password: _, ...userWithoutPassword } = user;
+        // 2FA Check Logic (If implemented)
+        if (user.twoFA_enabled) {
+            return reply.code(200).send({
+                success: true,
+                message: "2FA required",
+                twoFA_required: true,
+                id_user: user.id_user 
+            });
+        }
+
+        // Regular login success
+        const token = generateToken(user.username, user.email, user.id_user);
         
-        const token = generateToken(user.username, user.email);
+        // Ensure userWithoutPassword is correctly created after token generation
+        const { password: _, twoFA_secret: __, ...userWithoutPassword } = user;
+
         // insert token into database
         request.server.db
             .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
@@ -272,7 +339,8 @@ export async function login(request, reply) {
         return reply.code(200).send({ 
             success: true, 
             message: "Login successful",
-            user: userWithoutPassword 
+            user: userWithoutPassword,
+            token: token // Send token to frontend
         });
 
     } catch (error) {
@@ -284,12 +352,19 @@ export async function login(request, reply) {
     }
 }
 
+// ====== UTILITY FUNCTIONS ======
+
 export async function getAllUsers(request, reply) {
     try {
         const users = request.server.db
             .prepare("SELECT * FROM users")
             .all();
-        return reply.code(200).send(users);
+        // Remove sensitive fields before sending
+        const safeUsers = users.map(user => {
+            const { password, twoFA_secret, ...safeUser } = user;
+            return safeUser;
+        });
+        return reply.code(200).send(safeUsers);
     } catch (error) {
         console.error("Error fetching users:", error);
         return reply.code(500).send({ 
@@ -310,7 +385,9 @@ export async function getUserById(request, reply) {
             return reply.code(404).send({ message: "User not found" });
         }
         
-        return reply.code(200).send(user);
+        // Remove sensitive fields before sending
+        const { password, twoFA_secret, ...safeUser } = user;
+        return reply.code(200).send(safeUser);
     } catch (error) {
         console.error("Error fetching user:", error);
         return reply.code(500).send({ 
@@ -331,7 +408,8 @@ export async function getUserByEmail(request, reply) {
             return reply.code(404).send({ message: "User not found" });
         }
         
-        return reply.code(200).send(user);
+        const { password, twoFA_secret, ...safeUser } = user;
+        return reply.code(200).send(safeUser);
     } catch (error) {
         console.error("Error fetching user:", error);
         return reply.code(500).send({ 
@@ -341,7 +419,6 @@ export async function getUserByEmail(request, reply) {
 }
 
 export async function DeleteUserById(request, reply) {
-    console.log("DeleteUserById called");
     const { id } = request.params;
 
     try {
@@ -363,6 +440,7 @@ export async function DeleteUserById(request, reply) {
 }
 
 
+// ====== PASSWORD RESET (EMAILJS) ======
 
 // EmailJS configuration
 const EMAILJS_CONFIG = {
@@ -462,6 +540,7 @@ export async function resetPassword(request, reply) {
     return reply.code(500).send({ message: "Error updating password" });
   }
 }
+
 // ====== GOOGLE OAUTH ======
 
 export async function InitiateGoogleAuth(request, reply) {
@@ -517,12 +596,12 @@ export async function GoogleAuth(request, reply) {
             userId = existingUser.id_user;
             isNewUser = false;
             // Update access token
-            const token = generateToken(existingUser.username, existingUser.email);
+            const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user); // 💡 FIX: Capture token
             request.server.db
                 .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId);
+                .run(token, userId); // 💡 FIX: Use token
         } else {
-            const token = generateToken(googleUser.name, googleUser.email);
+            const token = generateToken(googleUser.name, googleUser.email, googleUser.id_user); // 💡 FIX: Capture token
             const insertQuery = request.server.db
             .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method, access_token) VALUES (?, ?, ?, ?, ?, ?)");
             const result = insertQuery.run(
@@ -531,7 +610,7 @@ export async function GoogleAuth(request, reply) {
             googleUser.email, 
             googleUser.picture,
             1,
-            token
+            token // 💡 FIX: Use token
             );
             userId = result.lastInsertRowid;
             isNewUser = true;
@@ -598,12 +677,12 @@ export async function FortyTwoAuth(request, reply) {
             userId = existingUser.id_user;
             isNewUser = false;
             // Update access token
-            const token = generateToken(existingUser.username, existingUser.email);
+            const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user); // 💡 FIX: Capture token
             request.server.db
                 .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId);
+                .run(token, userId); // 💡 FIX: Use token
         } else {
-            const token = generateToken(fortyTwoUser.login, fortyTwoUser.email);
+            const token = generateToken(fortyTwoUser.login, fortyTwoUser.email, fortyTwoUser.id_user); // 💡 FIX: Capture token
             const insertQuery = request.server.db
                 .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method, access_token) VALUES (?, ?, ?, ?, ?, ?)");
             const result = insertQuery.run(
@@ -612,7 +691,7 @@ export async function FortyTwoAuth(request, reply) {
                 fortyTwoUser.email,
                 fortyTwoUser.image.link,
                 2,
-                token
+                token // 💡 FIX: Use token
             );
             userId = result.lastInsertRowid;
             isNewUser = true;
@@ -626,4 +705,3 @@ export async function FortyTwoAuth(request, reply) {
         return reply.redirect(`${FRONTEND_URL}?error=auth_failed`);
     }
 }
-
