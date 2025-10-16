@@ -1,32 +1,83 @@
 import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction ,DeblockFunction , unfriend } from '../modules/user.module.js';
 import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest } from '../modules/nofitication.moudle.js';
+import {
+    AddUser,
+    getAllUsers,
+    getUserById,
+    getUserByEmail,
+    DeleteUserById,
+    login,
+    InitiateGoogleAuth,
+    GoogleAuth,
+    Initiate42Auth,
+    FortyTwoAuth,
+    resetPassword,
+    updateUserInfo,
+    updateUserPassword,
+    update2FA,
+} from '../modules/userAuth.module.js';
+
+
+
+
+
+
+
+
+
+
+
+
 
 export default async function routes(fastify, options) {
-  fastify.post('/getConversationId', getConversationId);
-  fastify.get('/Xprank' , Xprank);
+    // Existing routes
 
-  fastify.get('/GetFriends' , GetFriends);
-
-  fastify.post('/getMsgs' , getMsgs);
-  fastify.post('/sendMsg' , sendMsg);
-  fastify.get('/IsOnline' , IsOnline);
-  
-  
-  
-  fastify.post('/unfriend' , unfriend)
-  
-  fastify.post('/AddFriend' , AddFriend);
-  fastify.post('/sendRequestFriend' , sendRequestFriend);
-  fastify.get('/GetNotification' , GetNotification);
-  
-  fastify.post('/block' , blockFunction);
-  fastify.post('/Deblock' , DeblockFunction);
-  
-  
-  
-  
+   
+    // User management routes
+    fastify.post('/AddUser', AddUser);
+    fastify.get('/getAllUsers', getAllUsers);
+    fastify.get('/getUserById/:id', getUserById);
+    fastify.get('/getUserByEmail/:email', getUserByEmail);
+    fastify.delete('/DeleteUserById/:id', DeleteUserById);
 
 
-  fastify.delete('/DeleteFriendRequest' , DeleteFriendRequest);
+    fastify.post('/getConversationId', getConversationId);
+    fastify.get('/Xprank' , Xprank);
+    fastify.get('/GetFriends' , GetFriends);
+    fastify.post('/getMsgs' , getMsgs);
+    fastify.post('/sendMsg' , sendMsg);
+    fastify.get('/IsOnline' , IsOnline);
+    fastify.post('/unfriend' , unfriend)
+    fastify.post('/AddFriend' , AddFriend);
+    fastify.post('/sendRequestFriend' , sendRequestFriend);
+    fastify.get('/GetNotification' , GetNotification);    
+    fastify.post('/block' , blockFunction);
+    fastify.post('/Deblock' , DeblockFunction);
+    fastify.delete('/DeleteFriendRequest' , DeleteFriendRequest);
 
+    // setting routes
+    fastify.post('/updateUserInfo', { preHandler: [fastify.authenticate] }, updateUserInfo);
+    fastify.post('/updateUserPassword', { preHandler: [fastify.authenticate] }, updateUserPassword);
+    fastify.post('/update2FA', { preHandler: [fastify.authenticate] }, update2FA);
+    
+
+
+
+    // Password reset route
+    fastify.post('/resetPassword', resetPassword);
+
+    fastify.post('/login', login);
+   
+    // ====== GOOGLE OAUTH ROUTES ======
+    // Step 1: Initiate OAuth flow
+    fastify.get('/auth/google', InitiateGoogleAuth);
+    
+    // Step 2: Google redirects here with code
+    fastify.get('/GoogleAuth', GoogleAuth);
+    
+    // ====== 42 OAUTH ROUTES ======
+    // Step 1: Initiate OAuth flow
+    fastify.get('/auth/42', Initiate42Auth);
+    // Step 2: 42 redirects here with code
+    fastify.get('/42Auth', FortyTwoAuth);
 }

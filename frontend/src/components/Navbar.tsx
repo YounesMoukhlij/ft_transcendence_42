@@ -7,14 +7,9 @@ import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettin
 import Link from 'next/link';
 import axios from 'axios';
 import { Toaster, toast } from 'sonner';
-import { globalStore } from '../components/globalStore';
+import  {useUserStore}  from '../store/userStore';
 
-
-
-
-
-  
-
+import '../app/(protected)/chat/page.css'
 
 export default function Navbar()
 {
@@ -25,17 +20,19 @@ export default function Navbar()
   const dropdownRef = useRef(null);
   const profileIconRef = useRef<HTMLSpanElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
-  const {connect   ,username , init } = globalStore();
+  const {connect  , init } = useUserStore();
   
-  const setUsername = globalStore.setState;
-  const socket = globalStore((state) => state.socket);
-  const {addFriend, removeFriend , setFriends} = globalStore();
+  const setUsername = useUserStore.setState;
+  const socket = useUserStore((state) => state.socket);
+  const {addFriend, removeFriend , setFriends} = useUserStore();
+
+  const user = useUserStore((state) => state.user);
+
+  // if (!user?.username) return null;
 
 
   useEffect(() => {
-    const name = localStorage.getItem('name');
-    setUsername({username: name});
-    
+    setUsername({username: user?.username});
   }, []);
 
 
@@ -52,13 +49,12 @@ export default function Navbar()
         id: notify_id,
       }
     });
-
   }
 
   async function AcceptFriendRequest(item){
 
     toast.success('Accepted');
-    const loginUsername  = globalStore.getState().username;
+    // const loginUsername  = useUserStore.getState().username;
 
     const object = {
       profile_img: item.sender_profile_img,
@@ -68,7 +64,7 @@ export default function Navbar()
     }
     addFriend(object);
 
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: item.sender_user , user2: loginUsername});
+    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: item.sender_user , user2: user.username});
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== item.notify_id));
 
     await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
@@ -81,6 +77,8 @@ export default function Navbar()
 
   function showNotification(){
     setNotificationIndex(!notificationIndex);
+    SetunseenCount(0);
+    // i need to se the index is_seen in funcking db
   }
 
 
@@ -90,22 +88,34 @@ export default function Navbar()
   };
 
 
-  useEffect(()=>{
-    async function get_notify(){
-      const user  = localStorage.getItem('name');
-      const result = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetNotification`, {
-        params: { user }
-      });
-      setNotification(result.data);
+
+  useEffect(() => {
+    if (!user?.username) return;
+    async function get_notify() {
+      try {
+        const result = await axios.get(
+          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetNotification`,
+          { params: { user: user.username } }
+        );
+        setNotification(result.data);
+      } catch (error) {
+        console.error('Failed to fetch notifications', error);
+      }
     }
     get_notify();
-  },[])
+    // Optionally, add polling or listen to user.username changes 
+    // by adding [user?.username] as dependency
+  }, [user?.username]);
 
   useEffect( ()=>{
     connect();
   }, [])
 
-  
+  const [unseenCount , SetunseenCount] = useState(0);
+
+  useEffect(()=>{
+    SetunseenCount (notificatiion.filter(n => !n.is_seen).length);
+  },[notificatiion])
 
   useEffect(() => {
 
@@ -185,12 +195,12 @@ export default function Navbar()
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
-          {notificationIndex && 
-            <div className='absolute flex flex-col top-[10%] right-[10%] h-[300px] w-[350px]  bg-black text-white border-2 border-white overflow-scroll gap-2 '>
+          {notificationIndex &&
+            <div className='testt absolute flex flex-col top-22 rounded-2xl right-30 h-52 w-80  bg-black text-white border-2  overflow-y-scroll gap-2'>
              {
                notificatiion.map((item , index)=>(
-                   <div className=' index flex flex-col border-t border-gray-300 '>
-                    <div className='flex '>
+                   <div  key={index} className=' index flex flex-col border-t border-gray-300 '>
+                    <div  className='flex '>
                       <div className='h-[4.5rem] w-[4.5rem] pl-0.5 pt-2 '> <img  className='rounded-[50%] h-full w-full 'src={item.sender_profile_img} alt="profile" /></div>
                       <div className='flex w-full justify-between'>
                         <div className='ml-[0.5rem] '> <p className='text-2xl'>{item.sender_user}</p></div>
@@ -208,7 +218,8 @@ export default function Navbar()
           }
 
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
-              <IoNotificationsOutline  onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
+                <IoNotificationsOutline onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
+                <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
             </div>
             <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>
               <span ref={profileIconRef}>

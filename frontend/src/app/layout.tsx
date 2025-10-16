@@ -1,14 +1,13 @@
-'use client'; // kandiroha bash ngolo l NextJs had lcomponent ghadi tkhdm f client side w ghadi tcompila f browser --> client component
+// 'use client'; // kandiroha bash ngolo l NextJs had lcomponent ghadi tkhdm f client side w ghadi tcompila f browser --> client component
 
-import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar";
 import ParticlesBackground from "../components/ParticlesBackground";
-import { GameProvider } from "../components/GameContext";
+// import SignInUp from "./Auth/page";
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 import React  from "react";
 import "./globals.css";
 
-import { Toaster, toast } from 'sonner';
 
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>)
@@ -19,19 +18,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <title>Ping Pong Game</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="h-[100%] flex flex-col  bg-black">
-        <GameProvider>
-          <Navbar />
-          <div className="flex h-[90%] rounded-3xl gap-[10px] p-[10px] z-10 ">
-            <Sidebar />
-            <div className="w-[100%] md:w-[90%] bg-transparent ">
-              {children}
-            </div>
-          </div>
-          {/* <ParticlesBackground id="particles" /> */}
-
-          <Toaster position='top-right' richColors={true} />
-        </GameProvider>
+      <body className="h-[100%] bg-black">
+        <div className="w-[100%] bg-transparent ">
+          {children}
+        </div>
+        {/* <ParticlesBackground id="particles" /> */}
+        <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="dark"/>
       </body>
     </html>
   );

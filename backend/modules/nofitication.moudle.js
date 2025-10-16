@@ -1,7 +1,6 @@
 import fastify from "fastify";
 
 
-
 export async function GetNotification(request, reply) {
   const username = request.query.user;
 
@@ -11,7 +10,7 @@ export async function GetNotification(request, reply) {
 
   try {
     const query = request.server.db.prepare(`
-      SELECT
+      SELECT 
         n.*,
         u.profile_img AS sender_profile_img
       FROM notification n
@@ -48,7 +47,7 @@ export async function sendRequestFriend(request, reply) {
   if (!title || !sender || !friend) {
     return reply.code(400).send({ error: 'Title, sender, and friend are required fields.' });
   }
-
+  
 
   const socket = request.server.users_socket.get(friend);
 
@@ -149,12 +148,12 @@ export async function AddFriend( request  , reply){
 //     const allFriendIds = [...new Set([...friends1, ...friends2])];
 
 //     if (allFriendIds.length === 0) {
-//       return reply.send([]);
+//       return reply.send([]); 
 //     }
 
 //     const placeholders = allFriendIds.map(() => '?').join(', ');
 //     const getFriendDetailsStmt = request.server.db.prepare(`
-//       SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token , status
+//       SELECT id_user, username, email, fullname ,profile_img,xp , email,access_token , status 
 //       FROM users
 //       WHERE id_user IN (${placeholders})
 //       `);
@@ -177,8 +176,9 @@ export async function GetFriends(request, reply) {
   }
 
 
+
+
   try {
-    // Get the user ID based on the username
     const getUserIdStmt = request.server.db.prepare(`SELECT id_user FROM users WHERE username = ?`);
     const user = getUserIdStmt.get(username);
 
@@ -188,7 +188,6 @@ export async function GetFriends(request, reply) {
 
     const userId = user.id_user;
 
-    // Get the IDs of the user's friends
     const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id FROM friends WHERE friend_id = ?`);
     const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id FROM friends WHERE user_id = ?`);
 
@@ -201,17 +200,15 @@ export async function GetFriends(request, reply) {
       return reply.send([]);
     }
 
-    // Get details for all the friends
     const placeholders = allFriendIds.map(() => '?').join(', ');
     const getFriendDetailsStmt = request.server.db.prepare(`
-      SELECT id_user, username, email, fullname, profile_img, xp, access_token, status
+      SELECT id_user, username, email, fullname, profile_img, xp, access_token, status 
       FROM users
       WHERE id_user IN (${placeholders})
     `);
 
     const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
 
-    // Prepare statement to get the latest message from the message table
     const getLastMessageStmt = request.server.db.prepare(`
       SELECT message, created_at
       FROM message
