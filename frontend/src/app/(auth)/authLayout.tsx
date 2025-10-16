@@ -349,6 +349,8 @@ function SignInForm({ onToggle }: SignInFormProps) {
           
           // Update global user state (Zustand)
           setUser(userData)
+          // set auth_token cookie? (handled in middleware)
+          document.cookie = `auth_token=${userData.access_token}; 4`;
           
           // Display success message based on whether user is new
           const message = isNewUser === 'true' 
@@ -431,6 +433,8 @@ function SignInForm({ onToggle }: SignInFormProps) {
           
           // Update global user state (Zustand)
           setUser(userData)
+          // set auth_token cookie? (handled in middleware)
+          document.cookie = `auth_token=${userData.access_token}; path=/`;
           
           
           // Display success message based on whether user is new
@@ -501,9 +505,12 @@ function SignInForm({ onToggle }: SignInFormProps) {
         return
       }
 
+      console.log('Login response data:', data.user)
       if (data.user) {
         // FIX: Update Zustand store correctly
         setUser(data.user)
+        // set auth_token cookie? (handled in middleware)
+        document.cookie = `auth_token=${data.user.access_token}; path=/`;
         // localStorage.setItem('user', JSON.stringify(data.user)) // Removed: Rely on Zustand for state management
       }
 

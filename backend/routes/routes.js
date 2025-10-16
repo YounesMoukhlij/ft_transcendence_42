@@ -57,7 +57,6 @@ export default async function routes(fastify, options) {
     // ====== 42 OAUTH ROUTES ======
     // Step 1: Initiate OAuth flow
     fastify.get('/auth/42', Initiate42Auth);
-    
     // Step 2: 42 redirects here with code
     fastify.get('/42Auth', FortyTwoAuth);
 }

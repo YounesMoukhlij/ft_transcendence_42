@@ -1475,10 +1475,6 @@
     background-color: var(--color-red-50);
   }
 
-  .bg-red-500 {
-    background-color: var(--color-red-500);
-  }
-
   .bg-red-500\/10 {
     background-color: #fb2c361a;
   }
@@ -2254,12 +2250,6 @@
   @media (hover: hover) {
     .hover\:bg-red-500:hover {
       background-color: var(--color-red-500);
-    }
-  }
-
-  @media (hover: hover) {
-    .hover\:bg-red-600:hover {
-      background-color: var(--color-red-600);
     }
   }
 

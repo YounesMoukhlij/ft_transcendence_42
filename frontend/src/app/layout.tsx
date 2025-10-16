@@ -1,4 +1,4 @@
-'use client'; // kandiroha bash ngolo l NextJs had lcomponent ghadi tkhdm f client side w ghadi tcompila f browser --> client component
+// 'use client'; // kandiroha bash ngolo l NextJs had lcomponent ghadi tkhdm f client side w ghadi tcompila f browser --> client component
 
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
@@ -22,7 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className="h-[100%] bg-black">
-        {/* <GameProvider>
+        <GameProvider>
           <Navbar />
           <div className="flex h-[90%] rounded-3xl gap-[10px] p-[10px] z-10 ">
             <Sidebar />
@@ -30,11 +30,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               {children}
             </div>
           </div>
-          <ParticlesBackground id="particles" />
-        </GameProvider> */}
+          {/* <ParticlesBackground id="particles" /> */}
+        </GameProvider> 
 
-        {/* <SignInUp /> */}
-        {children}
+    
+        {/* {children} */}
         <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="dark"/>
       </body>
     </html>

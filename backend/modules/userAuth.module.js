@@ -592,28 +592,39 @@ export async function GoogleAuth(request, reply) {
         let isNewUser = false;
 
         if (existingUser) {
+            console.log("Existing Google user");
             // User exists - log them in
             userId = existingUser.id_user;
             isNewUser = false;
             // Update access token
+            console.log("vataar >>>", existingUser);
             const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user); // 💡 FIX: Capture token
             request.server.db
                 .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
                 .run(token, userId); // 💡 FIX: Use token
         } else {
-            const token = generateToken(googleUser.name, googleUser.email, googleUser.id_user); // 💡 FIX: Capture token
+            console.log("New Google user, creating account");
+            // const token = generateToken(googleUser.name, googleUser.email, googleUser.id_user); // 💡 FIX: Capture token
             const insertQuery = request.server.db
-            .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method, access_token) VALUES (?, ?, ?, ?, ?, ?)");
+            .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method) VALUES (?, ?, ?, ?, ?)");
             const result = insertQuery.run(
             googleUser.name.split(" ")[0] + Math.floor(Math.random() * 1000),
             googleUser.name,
             googleUser.email, 
             googleUser.picture,
             1,
-            token // 💡 FIX: Use token
             );
             userId = result.lastInsertRowid;
             isNewUser = true;
+            // console.log("New Google user created:", result.lastInsertRowid);
+
+            // generate token for new user
+            const token = generateToken(googleUser.username, googleUser.email, userId);
+            // store token in db
+            request.server.db
+                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+                .run(token, userId); // 💡 FIX: Use token
+        
         }
     
         return reply.redirect(`${FRONTEND_URL}/signIn/?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}`);
@@ -682,19 +693,24 @@ export async function FortyTwoAuth(request, reply) {
                 .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
                 .run(token, userId); // 💡 FIX: Use token
         } else {
-            const token = generateToken(fortyTwoUser.login, fortyTwoUser.email, fortyTwoUser.id_user); // 💡 FIX: Capture token
+            // const token = generateToken(fortyTwoUser.login, fortyTwoUser.email, fortyTwoUser.id_user); // 💡 FIX: Capture token
             const insertQuery = request.server.db
-                .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method, access_token) VALUES (?, ?, ?, ?, ?, ?)");
+                .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method) VALUES (?, ?, ?, ?, ?)");
             const result = insertQuery.run(
                 fortyTwoUser.login,
                 fortyTwoUser.displayname,
                 fortyTwoUser.email,
                 fortyTwoUser.image.link,
                 2,
-                token // 💡 FIX: Use token
             );
             userId = result.lastInsertRowid;
             isNewUser = true;
+            const token = generateToken(fortyTwoUser.login, fortyTwoUser.email, userId);
+            // store token in db
+            request.server.db
+                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+                .run(token, userId); // 💡 FIX: Use token
+            // console.log("New 42 user created:", result.lastInsertRowid);
         }
 
         return reply.redirect(`${FRONTEND_URL}/signIn/?42Auth=success&userId=${userId}&isNewUser=${isNewUser}`);
