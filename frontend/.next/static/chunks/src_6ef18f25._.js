@@ -14,16 +14,19 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$e
 ;
 const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["create"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["persist"])((set, get)=>({
         user: null,
+        refreshToken: null,
         _hasHydrated: false,
         // Actions
-        setUser: (userObj)=>set({
-                user: userObj
+        setUser: (userObj, refreshToken)=>set({
+                user: userObj,
+                refreshToken: refreshToken
             }),
         getUser: ()=>get().user,
         clearUser: ()=>set({
-                user: null
+                user: null,
+                refreshToken: null
             }),
-        // 👈 Action to set the flag
+        getRefreshToken: ()=>get().refreshToken,
         setHasHydrated: (state)=>{
             set({
                 _hasHydrated: state
@@ -33,9 +36,9 @@ const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mo
     name: 'user-storage',
     getStorage: ()=>localStorage,
     partialize: (state)=>({
-            user: state.user
+            user: state.user,
+            refreshToken: state.refreshToken
         }),
-    // 👈 Lifecycle hook for hydration completion
     onRehydrateStorage: (state)=>{
         console.log('hydration started');
         return (state, error)=>{
@@ -43,7 +46,7 @@ const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mo
                 console.error('An error occurred during hydration:', error);
             } else {
                 console.log('hydration finished');
-                state.setHasHydrated(true); // Set the flag when done
+                state.setHasHydrated(true);
             }
         };
     }

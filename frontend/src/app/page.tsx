@@ -82,6 +82,9 @@ export default function Home() {
                 <p className="text-sm text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap pt-2">
                     **Token:** {user.access_token ? user.access_token.substring(0, 30) + '...' : 'N/A'}
                 </p>
+                 <p className="text-sm text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap pt-2">
+                    **Refresh Token:** {user.refresh_token ? user.refresh_token.substring(0, 30) + '...' : 'N/A'}
+                </p>
             </div>
             
             <button 

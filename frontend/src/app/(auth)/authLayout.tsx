@@ -348,7 +348,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
           console.log('Google OAuth user data:', userData)
           
           // Update global user state (Zustand)
-          setUser(userData)
+          setUser(userData, userData.refresh_token) //
           // set auth_token cookie? (handled in middleware)
           document.cookie = `auth_token=${userData.access_token}; 4`;
           
@@ -432,7 +432,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
           console.log('42 OAuth user data:', userData)
           
           // Update global user state (Zustand)
-          setUser(userData)
+          setUser(userData, userData.refresh_token) //
           // set auth_token cookie? (handled in middleware)
           document.cookie = `auth_token=${userData.access_token}; path=/`;
           
@@ -507,8 +507,8 @@ function SignInForm({ onToggle }: SignInFormProps) {
 
       console.log('Login response data:', data.user)
       if (data.user) {
-        // FIX: Update Zustand store correctly
-        setUser(data.user)
+        // zustand 
+        setUser(data.user, data.user.refresh_token) //
         // set auth_token cookie? (handled in middleware)
         document.cookie = `auth_token=${data.user.access_token}; path=/`;
         // localStorage.setItem('user', JSON.stringify(data.user)) // Removed: Rely on Zustand for state management

@@ -26,15 +26,11 @@ const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
 // token function generator (FIXED)
 export function generateToken(username, email, id_user) {
-    console.log("generateToken");
-    log("generateToken params:", { username, email, id_user });
     if (!username || !email || !id_user) {
         throw new Error("Username, email, and user ID are required to generate token");
     }
 
     const payload = { username, email, id_user };
-    
-    // 💡 FIX: Ensure the token is stored and returned correctly
     const token = jwt.sign(payload, SECRET, { expiresIn: '2h' });
 
     console.log("Token generated successfully for user:", username, id_user);
@@ -42,6 +38,43 @@ export function generateToken(username, email, id_user) {
 
     return token;
 }
+
+export function generateRefreshToken(username, email, id_user) {
+    console.log("Generating refresh token for:", { username, email, id_user });
+    if (!username || !email || !id_user) {
+        throw new Error("Username, email, and user ID are required to generate refresh token");
+    }
+    const payload = { username, email, id_user };
+    const refreshToken = jwt.sign(payload, SECRET, { expiresIn: '7d' }); // Refresh token valid for 7 days
+
+    console.log("Refresh token generated successfully for user:", username, id_user);
+    console.log("Refresh Token:", refreshToken);
+
+    return refreshToken;
+}
+
+
+
+// export function generate2FASecret(username) {
+//     const secret = otplib.authenticator.generateSecret();
+//     const otpauth = otplib.authenticator.keyuri(username, ISSUER_NAME, secret);
+//     return { secret, otpauth };
+// }
+
+// export async function generate2FAQrCode(otpauth) {
+//     try {
+//         const qrCodeDataURL = await qrcode.toDataURL(otpauth);
+//         return qrCodeDataURL;
+//     } catch (error) {
+//         console.error("Error generating QR code:", error);
+//         throw error;
+//     }
+// }
+
+// export function verify2FACode(secret, token) {
+//     return otplib.authenticator.check(token, secret);
+// }
+
 
 // Helper function to hash passwords
 async function hashPassword(password) {
@@ -327,20 +360,22 @@ export async function login(request, reply) {
 
         // Regular login success
         const token = generateToken(user.username, user.email, user.id_user);
+        const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         
         // Ensure userWithoutPassword is correctly created after token generation
         const { password: _, twoFA_secret: __, ...userWithoutPassword } = user;
 
         // insert token into database
         request.server.db
-            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-            .run(token, user.id_user);
-        
+            .prepare("UPDATE users SET access_token = ? , refresh_token = ? WHERE id_user = ?")
+            .run(token, refreshToken, user.id_user);
+
         return reply.code(200).send({ 
             success: true, 
             message: "Login successful",
             user: userWithoutPassword,
-            token: token // Send token to frontend
+            token: token,
+            refreshToken: refreshToken
         });
 
     } catch (error) {
@@ -351,6 +386,35 @@ export async function login(request, reply) {
         });
     }
 }
+
+export async function refreshToken(request, reply) {
+    const { refreshToken } = request.body;
+
+    if (!refreshToken) {
+        return reply.code(401).send({ success: false, message: "Refresh token is required" });
+    }
+
+    try {
+        const decoded = jwt.verify(refreshToken, SECRET);
+        const user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(decoded.id_user);
+
+        if (!user || user.refresh_tokens !== refreshToken) {
+            return reply.code(401).send({ success: false, message: "Invalid refresh token" });
+        }
+
+        const newAccessToken = generateToken(user.username, user.email, user.id_user);
+
+        request.server.db
+            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+            .run(newAccessToken, user.id_user);
+
+        return reply.code(200).send({ success: true, accessToken: newAccessToken });
+
+    } catch (error) {
+        return reply.code(401).send({ success: false, message: "Invalid or expired refresh token" });
+    }
+}
+
 
 // ====== UTILITY FUNCTIONS ======
 
@@ -599,9 +663,10 @@ export async function GoogleAuth(request, reply) {
             // Update access token
             console.log("vataar >>>", existingUser);
             const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user); // 💡 FIX: Capture token
+            const refreshToken = generateRefreshToken(existingUser.username, existingUser.email, existingUser.id_user);
             request.server.db
-                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId); // 💡 FIX: Use token
+                .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
+                .run(token, refreshToken, userId); // 💡 FIX: Use token
         } else {
             console.log("New Google user, creating account");
             // const token = generateToken(googleUser.name, googleUser.email, googleUser.id_user); // 💡 FIX: Capture token
@@ -620,11 +685,12 @@ export async function GoogleAuth(request, reply) {
 
             // generate token for new user
             const token = generateToken(googleUser.username, googleUser.email, userId);
+            const refreshToken = generateRefreshToken(googleUser.username, googleUser.email, userId);
             // store token in db
             request.server.db
-                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId); // 💡 FIX: Use token
-        
+                .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
+                .run(token, refreshToken, userId); 
+
         }
     
         return reply.redirect(`${FRONTEND_URL}/signIn/?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}`);
@@ -688,10 +754,11 @@ export async function FortyTwoAuth(request, reply) {
             userId = existingUser.id_user;
             isNewUser = false;
             // Update access token
-            const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user); // 💡 FIX: Capture token
+            const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user);
+            const refreshToken = generateRefreshToken(existingUser.username, existingUser.email, existingUser.id_user);
             request.server.db
-                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId); // 💡 FIX: Use token
+                .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
+                .run(token, refreshToken, userId);
         } else {
             // const token = generateToken(fortyTwoUser.login, fortyTwoUser.email, fortyTwoUser.id_user); // 💡 FIX: Capture token
             const insertQuery = request.server.db
@@ -706,10 +773,11 @@ export async function FortyTwoAuth(request, reply) {
             userId = result.lastInsertRowid;
             isNewUser = true;
             const token = generateToken(fortyTwoUser.login, fortyTwoUser.email, userId);
+            const refreshToken = generateRefreshToken(fortyTwoUser.login, fortyTwoUser.email, userId);
             // store token in db
             request.server.db
-                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId); // 💡 FIX: Use token
+                .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
+                .run(token, refreshToken, userId);
             // console.log("New 42 user created:", result.lastInsertRowid);
         }
 

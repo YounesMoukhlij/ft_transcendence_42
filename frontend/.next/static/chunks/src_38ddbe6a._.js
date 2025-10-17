@@ -14,16 +14,19 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$e
 ;
 const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["create"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["persist"])((set, get)=>({
         user: null,
+        refreshToken: null,
         _hasHydrated: false,
         // Actions
-        setUser: (userObj)=>set({
-                user: userObj
+        setUser: (userObj, refreshToken)=>set({
+                user: userObj,
+                refreshToken: refreshToken
             }),
         getUser: ()=>get().user,
         clearUser: ()=>set({
-                user: null
+                user: null,
+                refreshToken: null
             }),
-        // 👈 Action to set the flag
+        getRefreshToken: ()=>get().refreshToken,
         setHasHydrated: (state)=>{
             set({
                 _hasHydrated: state
@@ -33,9 +36,9 @@ const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mo
     name: 'user-storage',
     getStorage: ()=>localStorage,
     partialize: (state)=>({
-            user: state.user
+            user: state.user,
+            refreshToken: state.refreshToken
         }),
-    // 👈 Lifecycle hook for hydration completion
     onRehydrateStorage: (state)=>{
         console.log('hydration started');
         return (state, error)=>{
@@ -43,7 +46,7 @@ const useUserStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mo
                 console.error('An error occurred during hydration:', error);
             } else {
                 console.log('hydration finished');
-                state.setHasHydrated(true); // Set the flag when done
+                state.setHasHydrated(true);
             }
         };
     }
@@ -517,7 +520,8 @@ function SignInForm({ onToggle }) {
                             const userData = await response.json();
                             console.log('Google OAuth user data:', userData);
                             // Update global user state (Zustand)
-                            setUser(userData);
+                            setUser(userData, userData.refresh_token) //
+                            ;
                             // set auth_token cookie? (handled in middleware)
                             document.cookie = `auth_token=${userData.access_token}; 4`;
                             // Display success message based on whether user is new
@@ -593,7 +597,8 @@ function SignInForm({ onToggle }) {
                             const userData = await response.json();
                             console.log('42 OAuth user data:', userData);
                             // Update global user state (Zustand)
-                            setUser(userData);
+                            setUser(userData, userData.refresh_token) //
+                            ;
                             // set auth_token cookie? (handled in middleware)
                             document.cookie = `auth_token=${userData.access_token}; path=/`;
                             // Display success message based on whether user is new
@@ -660,8 +665,9 @@ function SignInForm({ onToggle }) {
             }
             console.log('Login response data:', data.user);
             if (data.user) {
-                // FIX: Update Zustand store correctly
-                setUser(data.user);
+                // zustand 
+                setUser(data.user, data.user.refresh_token) //
+                ;
                 // set auth_token cookie? (handled in middleware)
                 document.cookie = `auth_token=${data.user.access_token}; path=/`;
             // localStorage.setItem('user', JSON.stringify(data.user)) // Removed: Rely on Zustand for state management

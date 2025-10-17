@@ -1,18 +1,19 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware' 
+import { persist } from 'zustand/middleware'
 
 export const useUserStore = create(
   persist(
     (set, get) => ({
       user: null,
-      _hasHydrated: false, // 👈 New state flag
+      refreshToken: null, //
+      _hasHydrated: false,
 
       // Actions
-      setUser: (userObj) => set({ user: userObj }),
+      setUser: (userObj, refreshToken) => set({ user: userObj, refreshToken: refreshToken }), // 
       getUser: () => get().user,
-      clearUser: () => set({ user: null }),
-      
-      // 👈 Action to set the flag
+      clearUser: () => set({ user: null, refreshToken: null }), //
+      getRefreshToken: () => get().refreshToken, // 
+
       setHasHydrated: (state) => {
         set({
           _hasHydrated: state
@@ -22,9 +23,8 @@ export const useUserStore = create(
     {
       name: 'user-storage',
       getStorage: () => localStorage,
-      partialize: (state) => ({ user: state.user }),
-      
-      // 👈 Lifecycle hook for hydration completion
+      partialize: (state) => ({ user: state.user, refreshToken: state.refreshToken }), //
+
       onRehydrateStorage: (state) => {
         console.log('hydration started');
         return (state, error) => {
@@ -32,7 +32,7 @@ export const useUserStore = create(
             console.error('An error occurred during hydration:', error);
           } else {
             console.log('hydration finished');
-            state.setHasHydrated(true); // Set the flag when done
+            state.setHasHydrated(true);
           }
         }
       }

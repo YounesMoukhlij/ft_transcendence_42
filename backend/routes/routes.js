@@ -6,12 +6,14 @@ import {
     getUserById,
     getUserByEmail,
     DeleteUserById,
+    // resetPassword,
+    refreshToken,
     login,
     InitiateGoogleAuth,
     GoogleAuth,
     Initiate42Auth,
     FortyTwoAuth,
-    resetPassword,
+    // requestPasswordReset,
     updateUserInfo,
     updateUserPassword,
     update2FA,
@@ -43,9 +45,10 @@ export default async function routes(fastify, options) {
 
 
     // Password reset route
-    fastify.post('/resetPassword', resetPassword);
+    // fastify.post('/requestPasswordReset', resetPassword);
 
     fastify.post('/login', login);
+    fastify.post('/refreshToken', refreshToken);
    
     // ====== GOOGLE OAUTH ROUTES ======
     // Step 1: Initiate OAuth flow
@@ -59,4 +62,7 @@ export default async function routes(fastify, options) {
     fastify.get('/auth/42', Initiate42Auth);
     // Step 2: 42 redirects here with code
     fastify.get('/42Auth', FortyTwoAuth);
+
+
+
 }
