@@ -268,9 +268,8 @@ export default function ChatPage() {
   ) {
     
     const id = window.localStorage.getItem('conversationId');
+
     alert(user.username);
-    alert( id );
-    alert( friend)
     if (double_block == 2 || (double_block == 1 && user_block === user.username))
       return;
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`, {
@@ -290,7 +289,7 @@ export default function ChatPage() {
     Setuser_block: (user: string) => void, 
     user_block: string
   ) {
-      const user = useUserStore((state) => state.user);
+
 
     const id = localStorage.getItem('conversationId');
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock`, {
@@ -314,7 +313,6 @@ export default function ChatPage() {
 
   async function handleUnfriend(friend: string, removeFriend: (username: string) => void) {
     const id = window.localStorage.getItem('conversationId');
-      const user = useUserStore((state) => state.user);
 
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`, {
       user: user.username,
@@ -325,8 +323,10 @@ export default function ChatPage() {
   }
 
   const handleSend = async () => {
-    if (input.length == 0)
+    if (input.trim().length == 0){
+      setEmoji('');
       return;
+    }
     const friend = localStorage.getItem('room_select');
     const id = localStorage.getItem('conversationId');
     try {
@@ -335,6 +335,7 @@ export default function ChatPage() {
           username: friend
         }
       })
+
       const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, { user:user.username, input, id, friend });
       const object: Message = {
         sender: user.username || '',
@@ -345,7 +346,6 @@ export default function ChatPage() {
       };
       addMessage(object);
 
-      // console.log(sender , message , conv_id , created_at , isSeen);
       updateLastMessage(input, friend || '');
     } catch (err) {
       console.error(err);
@@ -515,7 +515,7 @@ export default function ChatPage() {
                     </button>
                   </div>
                 </div>
-              ) : double_block === 1 && user_block === localStorage.getItem("name") ? (
+              ) : double_block === 1 && user_block === user.username ? (
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
                   <div className="flex justify-around w-full h-full items-center px-2">
                     <p className="text-xs sm:text-sm">You can't send to this contact. Please deblock first.</p>
@@ -527,7 +527,7 @@ export default function ChatPage() {
                     </button>
                   </div>
                 </div>
-              ) : double_block === 1 && localStorage.getItem("name") !== user_block ? (
+              ) : double_block === 1 && user.username !== user_block ? (
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
                   <div className="flex justify-around w-full h-full items-center">
                     <p className="text-xs sm:text-sm">Sorry You can't send message to this contact</p>

@@ -54,7 +54,6 @@ export default function Navbar()
   async function AcceptFriendRequest(item){
 
     toast.success('Accepted');
-    // const loginUsername  = useUserStore.getState().username;
 
     const object = {
       profile_img: item.sender_profile_img,
@@ -78,7 +77,7 @@ export default function Navbar()
   function showNotification(){
     setNotificationIndex(!notificationIndex);
     SetunseenCount(0);
-    // i need to se the index is_seen in funcking db
+    // i need to set the index is_seen in funcking db
   }
 
 

@@ -18,11 +18,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <title>Ping Pong Game</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="h-[100%] bg-black">
-        <div className="w-[100%] bg-transparent ">
+      <body className="h-[100vh] bg-black">
+        <div className="h-full bg-transparent ">
           {children}
         </div>
-        {/* <ParticlesBackground id="particles" /> */}
         <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="dark"/>
       </body>
     </html>
