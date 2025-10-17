@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../../../../components/GameContext';
+import { useGameContext } from '@/components/GameContext';
 import Image from 'next/image';
 import { FaUserFriends, FaGlobe } from 'react-icons/fa';
 
@@ -15,10 +15,12 @@ export default function VersusSelectionPage() {
     document.title = '1 Versus 1 - Choose Game Type';
   }, []);
 
-  const handleModeSelection = (mode: 'local') => {
+  const handleModeSelection = (mode: 'local' | 'remote') => {
     setGameMode(mode);
     if (mode === 'local') {
       router.push('/game/player2');
+    } else if (mode === 'remote') {
+      router.push('/game/remote');
     } else {
       router.push('/game/customize');
     }

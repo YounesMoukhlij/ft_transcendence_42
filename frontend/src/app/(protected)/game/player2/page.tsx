@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../../../../components/GameContext';
+import { useGameContext } from '@/components/GameContext';
 
 const predefinedAvatars = [
   '/profileface.png',
@@ -43,7 +43,7 @@ function Player2Setup() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full bg-transparent p-4">
-      <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-700 p-8">
+      <div className="w-full max-w-lg bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-700 p-8">
         <h1 className="text-2xl font-bold text-white mb-4 text-center">Player 2 Setup</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="text-white">Name</label>
@@ -78,7 +78,7 @@ function Player2Setup() {
           )}
           <button
             type="submit"
-            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="mt-4 bg-black hover:bg-white hover:text-black border-2 border-white text-white font-bold py-2 px-4 rounded"
             disabled={!name && !avatar}
           >
             Continue

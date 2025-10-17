@@ -2,8 +2,8 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../../../../components/GameContext';
-import GameCustomization from '../../../../components/GameCustomization';
+import { useGameContext } from '@/components/GameContext';
+import GameCustomization from '@/components/GameCustomization';
 
 export default function CustomizePage() {
   const router = useRouter();

@@ -181,12 +181,12 @@ export default function Navbar()
       <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[10vh] bg-transparent">
         <div className="flex justify-between items-center">
           <div className="flex flex-row items-center gap-1 md:gap-2">
-            <GiPingPongBat
+            {/* <GiPingPongBat
               className="text-white w-15 h-15  cursor-pointer animate-spin"
               style={{
                 animation: 'spin 6s linear infinite'
               }}
-            />
+            /> */}
           </div>
 
           {/* Desktop Right Section */}

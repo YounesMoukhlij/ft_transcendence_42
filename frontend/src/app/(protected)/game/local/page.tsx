@@ -2,8 +2,8 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '../../../../components/GameContext';
-import PingPongGame from '../../../../components/PingPongGame';
+import { useGameContext } from '@/components/GameContext';
+import PingPongGame from '@/components/PingPongGame';
 
 export default function LocalGamePage() {
   const { gameState } = useGameContext();
