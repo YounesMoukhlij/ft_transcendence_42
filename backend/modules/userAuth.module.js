@@ -35,7 +35,7 @@ export function generateToken(username, email, id_user) {
     const payload = { username, email, id_user };
     
     // 💡 FIX: Ensure the token is stored and returned correctly
-    const token = jwt.sign(payload, SECRET, { expiresIn: '2h' });
+    const token = jwt.sign(payload, SECRET, { expiresIn: '200h' });
 
     console.log("Token generated successfully for user:", username, id_user);
     console.log("Token:", token);

@@ -53,7 +53,6 @@ export default function Navbar()
 
   async function AcceptFriendRequest(item){
 
-    console.log(item);
     toast.success('Accepted');
 
     const object = {
@@ -62,7 +61,6 @@ export default function Navbar()
       fullname:"say hello",
       status:0,
     }
-    
     const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{
       user1: item.sender_user ,
       user2: user.username
