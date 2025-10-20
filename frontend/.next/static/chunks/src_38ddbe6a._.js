@@ -666,7 +666,7 @@ function SignInForm({ onToggle }) {
             console.log('Login response data:', data.user);
             if (data.user) {
                 // zustand 
-                setUser(data.user, data.user.refresh_token) //
+                setUser(data.user) //
                 ;
                 // set auth_token cookie? (handled in middleware)
                 document.cookie = `auth_token=${data.user.access_token}; path=/`;

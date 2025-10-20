@@ -30,6 +30,17 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const refreshToken = useUserStore.getState().getRefreshToken();
+
+        // Add this console log to check if the token exists
+        console.log("Interceptor: Attempting to use refresh token:", refreshToken); 
+
+        if (!refreshToken) {
+          console.error("Interceptor: No refresh token found in store.");
+          useUserStore.getState().clearUser();
+          window.location.href = '/signIn';
+          return Promise.reject(error);
+        }
+
         const { data } = await axios.post(`${API_URL}/refreshToken`, { refreshToken });
         const { user, setUser } = useUserStore.getState();
         const updatedUser = { ...user, access_token: data.accessToken };

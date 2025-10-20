@@ -6,7 +6,9 @@ import {
     getUserById,
     getUserByEmail,
     DeleteUserById,
-    // resetPassword,
+    forgotPassword,
+    verifyCode,
+    resetPasswordWithToken,
     refreshToken,
     login,
     InitiateGoogleAuth,
@@ -46,6 +48,9 @@ export default async function routes(fastify, options) {
 
     // Password reset route
     // fastify.post('/requestPasswordReset', resetPassword);
+    fastify.post('/forgotPassword', forgotPassword);
+    fastify.post('/verifyCode', verifyCode);
+    fastify.post('/resetPasswordWithToken', resetPasswordWithToken);
 
     fastify.post('/login', login);
     fastify.post('/refreshToken', refreshToken);

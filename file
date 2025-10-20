@@ -99,3 +99,7 @@ export async function login(request, reply) {
         });
     }
 }
+
+
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Inptb3VtbmkiLCJlbWFpbCI6Inptb3VtbmlAc3R1ZGVudC4xMzM3Lm1hIiwiaWRfdXNlciI6MSwiaWF0IjoxNzYwOTU3NDE5LCJleHAiOjE3NjA5NTc0Nzl9.b7y2GRjz9XTlnieGSOWsxv1hWx7A45FS4x8UXQbUuVU

@@ -98,21 +98,17 @@ function Navbar() {
     const toggleMobileMenu = ()=>{
         setMobileMenuOpen(!mobileMenuOpen);
     };
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
-        "Navbar.useEffect": ()=>{
-            async function get_notify() {
-                const user = localStorage.getItem('name');
-                const result = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get('http://localhost:4444/GetNotification', {
-                    params: {
-                        user
-                    }
-                });
-                setNotification(result.data);
-                console.log(result.data);
-            }
-            get_notify();
-        }
-    }["Navbar.useEffect"], []);
+    // useEffect(()=>{
+    //   async function get_notify(){
+    //     const user  = localStorage.getItem('name');
+    //     const result = await axios.get('http://localhost:4444/GetNotification', {
+    //       params: { user }
+    //     });
+    //     setNotification(result.data);
+    //     console.log(result.data);
+    //   }
+    //   get_notify();
+    // },[])
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Navbar.useEffect": ()=>{
             connect();
@@ -665,7 +661,7 @@ function Navbar() {
         ]
     }, void 0, true);
 }
-_s(Navbar, "wq7YY/9NDQtFsjnLXkMvZH5Y6uA=");
+_s(Navbar, "DxIaV5ZvvVDy8Nhnsrcb5kcyFUw=");
 _c = Navbar;
 var _c;
 __turbopack_context__.k.register(_c, "Navbar");

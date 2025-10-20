@@ -440,7 +440,7 @@ const ProfileSettingsPage = ()=>{
                     Authorization: `Bearer ${user.access_token}`
                 },
                 body: JSON.stringify({
-                    profile_img: defaultProfileImg,
+                    profile_img: imageToSave,
                     languages: formData.languages,
                     username: formData.username,
                     fullname: formData.fullname,

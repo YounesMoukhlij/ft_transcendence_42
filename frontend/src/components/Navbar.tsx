@@ -48,17 +48,17 @@ export default function Navbar()
   };
 
 
-  useEffect(()=>{
-    async function get_notify(){
-      const user  = localStorage.getItem('name');
-      const result = await axios.get('http://localhost:4444/GetNotification', {
-        params: { user }
-      });
-      setNotification(result.data);
-      console.log(result.data);
-    }
-    get_notify();
-  },[])
+  // useEffect(()=>{
+  //   async function get_notify(){
+  //     const user  = localStorage.getItem('name');
+  //     const result = await axios.get('http://localhost:4444/GetNotification', {
+  //       params: { user }
+  //     });
+  //     setNotification(result.data);
+  //     console.log(result.data);
+  //   }
+  //   get_notify();
+  // },[])
 
   useEffect( ()=>{
     connect();
