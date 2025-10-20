@@ -53,6 +53,7 @@ export default function Navbar()
 
   async function AcceptFriendRequest(item){
 
+    console.log(item);
     toast.success('Accepted');
 
     const object = {
@@ -61,10 +62,19 @@ export default function Navbar()
       fullname:"say hello",
       status:0,
     }
+    
+    const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{
+      user1: item.sender_user ,
+      user2: user.username
+    },{
+      headers: {
+        Authorization: `Bearer ${user.access_token}`
+      }
+    }
+  );
+  if (res.status === 200)
     addFriend(object);
-
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{user1: item.sender_user , user2: user.username});
-    setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== item.notify_id));
+  setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== item.notify_id));
 
     await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{

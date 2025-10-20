@@ -34,17 +34,18 @@ function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, s
   setShow(!show)
 }
 
-async function fetchData(
-  title: string,  
-  setDboubleBlock: (num: number) => void, 
-  Setuser_block: (user: string) => void
-): Promise<Message[] | undefined> {
+async function fetchData(friend_id , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
   const { user } = useUserStore.getState();
   try {
-    const convRes = await axios.post(
-      `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,
-      { user: user.username, friend: title }
-    );
+    const convRes = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,{
+      friend_id: friend_id
+    },
+    {
+        headers: {
+          Authorization: `Bearer ${user.access_token}`
+        }
+    }
+  );
     localStorage.setItem('conversationId', convRes.data.conversation_id);
     setDboubleBlock(convRes.data.is_double_block);
     Setuser_block(convRes.data.block_user);
@@ -60,6 +61,8 @@ async function fetchData(
 }
 
 type FreindsListProps = {
+  id_user: number,
+  friend_id: number,
   photo: string;
   title: string;
   message: string;
@@ -70,7 +73,7 @@ type FreindsListProps = {
   SetSelectContact: (selected: boolean) => void;
 };
 
-const FreindsList = ({ photo, title, message = "", status, setConversation, setRoom, setimg, SetSelectContact }: FreindsListProps) => {
+const FreindsList = ({friend_id ,  photo, title, message = "", status, setConversation, setRoom, setimg, SetSelectContact }: FreindsListProps) => {
   const { setDboubleBlock, double_block, Setuser_block, user_block } = useUserStore();
   
   const Get_Conversation = async () => {
@@ -78,7 +81,7 @@ const FreindsList = ({ photo, title, message = "", status, setConversation, setR
     setRoom(title);
     setimg(photo);
     SetSelectContact(true);
-    const conversation = await fetchData(title, setDboubleBlock, Setuser_block);
+    const conversation = await fetchData(friend_id , title, setDboubleBlock, Setuser_block);
     if (conversation) {
       setConversation(conversation);
     }
@@ -148,6 +151,7 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test
               .map((friend, index) => (
                 <div key={index}>
                   <FreindsList
+                    friend_id={friend.id_user}
                     photo={friend.profile_img}
                     title={friend.username}
                     message={friend.LastMessage}
@@ -164,6 +168,7 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test
               .map((friend, index) => (
                 <div key={index}>
                   <FreindsList
+                    friend_id={friend.id_user}
                     photo={friend.profile_img}
                     title={friend.username}
                     message={friend.LastMessage}
@@ -336,7 +341,15 @@ export default function ChatPage() {
         }
       })
 
-      const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, { user:user.username, input, id, friend });
+      const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, {
+          user:user.username,
+          input, id, friend
+        },{
+          headers: {
+            Authorization: `Bearer ${user.access_token}`
+        }
+    }
+      );
       const object: Message = {
         sender: user.username || '',
         message: input,

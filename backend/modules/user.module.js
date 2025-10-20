@@ -1,10 +1,28 @@
+import jwt from 'jsonwebtoken';
+const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 
 export async function getConversationId(request, reply) {
-  const user = request.body.user;
-  const friend = request.body.friend;
 
-  const caseOne = user + ',' + friend;
-  const caseTwo = friend + ',' + user;
+  const Friend_id = request.body.friend_id;
+
+
+  const authHeader = request.headers['authorization'];
+  const token = authHeader.split(' ')[1];
+  
+  if (!Friend_id || !authHeader || !token)
+    return reply.code(403).send("");
+  
+
+  const decodedObject = jwt.verify(token, SECRET);
+
+
+
+
+  const caseOne = Friend_id + ',' + decodedObject.id_user;
+  const caseTwo = decodedObject.id_user + ',' + Friend_id;
+
+
+
 
 
   try {
@@ -45,49 +63,56 @@ export async function getMsgs (request , reply){
 }
 
 
+
 export async function sendMsg(request, reply) {
+
   const { user, input, id, friend } = request.body;
+  const authHeader = request.headers['authorization'];
 
-  const socketsMap = request.server.users_socket;
-  const waitingSet = request.server.waitingMessages;
+  if (!id || !friend || !authHeader) {
+    return reply.code(403).send("");
+  }
 
-  let socket;
-  if (socketsMap && typeof socketsMap.get === "function")
-    socket = socketsMap.get(friend);
-  else
-    socket = undefined;
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+
+  try {
+    decodedObject = jwt.verify(token, SECRET);
+  } catch (err) {
+    return reply.code(401).send({ error: 'Unauthorized' });
+  }
+
+
+  const socket = request.server.users_socket.get(friend);
+
 
   try {
     const query = request.server.db.prepare(
-      "INSERT INTO message (conv_id, message, sender , isSeen) VALUES (?, ?, ? , ?)"
+      "INSERT INTO message (conv_id, message, sender, isSeen) VALUES (?, ?, ?, ?)"
     );
-    if (socket) {
-      query.run(id, input, user, 1);
-    } else {
-      query.run(id, input, user, 0);
-    }
+
+    const isSeen = socket ? 1 : 0;
+    query.run(id, input, user, isSeen);
 
     if (socket) {
       const data = {
-        user: user,
+        user,
         message: input,
         conv_id: id,
       };
-      socket.send(
-        JSON.stringify({
-          type: "message",
-          data: data,
-        })
-      );
-    } else if (waitingSet && typeof waitingSet.add === "function") {
-      waitingSet.add(friend);
+      socket.send(JSON.stringify({
+        type: "message",
+        data,
+      }));
     }
+
     reply.code(200).send({ success: true });
   } catch (err) {
     console.error("Error in sendMsg:", err);
     reply.code(500).send({ error: "Internal server error" });
   }
 }
+
 
 
 

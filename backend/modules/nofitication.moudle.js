@@ -1,4 +1,6 @@
 import fastify from "fastify";
+const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
+import jwt from 'jsonwebtoken';
 
 
 export async function GetNotification(request, reply) {
@@ -93,30 +95,54 @@ export async function sendRequestFriend(request, reply) {
 }
 
 
+
 export async function AddFriend( request  , reply){
 
   const {user1 , user2 } = request.body;
+
+
+    const authHeader = request.headers['authorization'];
+  
+    if (!user1 || !user2 || !authHeader)
+      return reply.code(403),send("");
+
+    const token = authHeader.split(' ')[1];
+
+    const decodedObject = jwt.verify(token, SECRET);
+
+
+    if (!decodedObject || user2 !== decodedObject.username){
+      return reply.code(403).send("");
+    }
+
+
+
+
 
 
   try{
       const query = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
       const user = query.get(user1);
       const user1Id = user.id_user;
-      const query1 = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
-      const result = query1.get(user2);
-      const user2Id = result.id_user;
+
+
+
 
 
       const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
+      Fquery.run(decodedObject.id_user , user1Id);
+
+
       const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
-      const members = [user1, user2].join(',');
+      const members = [decodedObject.id_user, user1Id].join(',');
       conversationquery.run(members);
 
 
 
-      Fquery.run(user2Id , user1Id);
-  }catch(err){
-
+      reply.code(200).send("");
+    }catch(err){
+      
+      reply.code(500);
   }
 }
 
