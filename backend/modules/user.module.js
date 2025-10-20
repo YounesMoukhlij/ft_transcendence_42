@@ -66,24 +66,24 @@ export async function getMsgs (request , reply){
 
 export async function sendMsg(request, reply) {
 
-  const { user, input, id, friend } = request.body;
+  const { user, input, id, friend_id} = request.body;
   const authHeader = request.headers['authorization'];
 
-  if (!id || !friend || !authHeader) {
+  if (!id || !friend_id || !authHeader) {
     return reply.code(403).send("");
   }
 
   const token = authHeader.split(' ')[1];
   let decodedObject;
 
-  try {
+  // try {
     decodedObject = jwt.verify(token, SECRET);
-  } catch (err) {
-    return reply.code(401).send({ error: 'Unauthorized' });
-  }
+  // } catch (err) {
+    // return reply.code(401).send({ error: 'Unauthorized' });
+  // }
 
 
-  const socket = request.server.users_socket.get(friend);
+  const socket = request.server.users_socket.get(friend_id);
 
 
   try {
@@ -92,7 +92,7 @@ export async function sendMsg(request, reply) {
     );
 
     const isSeen = socket ? 1 : 0;
-    query.run(id, input, user, isSeen);
+    query.run(id, input, decodedObject.id_user, isSeen);
 
     if (socket) {
       const data = {

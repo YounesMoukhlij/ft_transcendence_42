@@ -33,7 +33,7 @@ app.decorate('authenticate', async (request, reply) => {
     const token = authHeader.split(' ')[1];
 
     const decoded = jwt.verify(token, SECRET);
-    request.user = decoded; // attach the decoded user payload
+    request.user = decoded;
   } catch (err) {
     console.error('JWT error:', err.message);
     return reply.code(401).send({ error: 'Unauthorized' });
@@ -151,13 +151,13 @@ function statusSahre(username , socket , mode){
 
 wss.on('connection', (socket) => {
 
-  let username = null;
+  let id = 0;
 
   socket.once('message', (msg) => {
-    username = msg.toString();
-    users_socket.set(username, socket);
+    id = msg.toString();
+    users_socket.set(id, socket);
 
-    const status = waitingMessages.has(username);
+    const status = waitingMessages.has(id);
 
     if (status){
       const query =  db.prepare("UPDATE message SET isSeen = ?");
@@ -165,20 +165,20 @@ wss.on('connection', (socket) => {
     }
 
 
-    const query = db.prepare('UPDATE users SET status = ? WHERE username = ?');
-    query.run(1 , username);
+    const query = db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
+    query.run(1 , id);
 
-    statusSahre(username , socket , 1);
+    // statusSahre(id , socket , 1);
     
 
     socket.on('close', () => {
-      console.log(`Client ${username} disconnected`);
-      users_socket.delete(username);
-      db.prepare('UPDATE users SET status = ? WHERE username = ?');
-      query.run(0 , username);
+      console.log(`Client ${id} disconnected`);
+      users_socket.delete(id);
+      db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
+      query.run(0 , id);
 
 
-      statusSahre(username , socket , 0);
+      statusSahre(id , socket , 0);
 
 
     });

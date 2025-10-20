@@ -75,7 +75,7 @@ CREATE TABLE notification (
     notify_id INTEGER PRIMARY KEY AUTOINCREMENT,
     getter_user TEXT NOT NULL,
     sender_user TEXT NOT NULL,
-    title TEXT NOT NULL,
+    title INTEGER NOT NULL,
     notifyBody TEXT NOT NULL,
     is_seen BOOLEAN DEFAULT FALSE,
     is_game_invite BOOLEAN DEFAULT FALSE,
@@ -88,7 +88,9 @@ CREATE TABLE message (
     conv_id INTEGER NOT NULL,
     message TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    sender TEXT NOT NULL,
+    -- sender TEXT NOT NULL,
     isSeen BOOLEAN DEFAULT FALSE,
+    sender INTEGER NOT NULL,
+    FOREIGN KEY ( sender ) REFERENCES users(id_user),
     FOREIGN KEY (conv_id) REFERENCES room(conversation_id)
 );

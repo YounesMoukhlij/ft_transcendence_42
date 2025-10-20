@@ -44,15 +44,19 @@ export async function DeleteFriendRequest(request , reply){
 
 
 export async function sendRequestFriend(request, reply) {
-  const { sender, friend, title } = request.body;
+  const { sender, friend, title  , friend_id} = request.body;
 
   if (!title || !sender || !friend) {
     return reply.code(400).send({ error: 'Title, sender, and friend are required fields.' });
   }
   
 
-  const socket = request.server.users_socket.get(friend);
 
+  console.log(friend_id);
+  const socket = request.server.users_socket.get(friend_id);
+
+  if (socket)
+      console.log("okkkkk");
 
 
   try {
