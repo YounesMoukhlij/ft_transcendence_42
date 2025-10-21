@@ -155,30 +155,34 @@ wss.on('connection', (socket) => {
 
   socket.once('message', (msg) => {
     id = msg.toString();
+
+    console.log("connect " , id);
     users_socket.set(id, socket);
 
-    const status = waitingMessages.has(id);
-
-    if (status){
-      const query =  db.prepare("UPDATE message SET isSeen = ?");
-      query.run(1);
-    }
+    // console.log("All sockets:", Array.from(users_socket.values()));
 
 
-    const query = db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
-    query.run(1 , id);
 
-    // statusSahre(id , socket , 1);
+    // const status = waitingMessages.has(id);
+
+    // if (status){
+    //   const query =  db.prepare("UPDATE message SET isSeen = ?");
+    //   query.run(1);
+    // }
+
+
+    // const query = db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
+    // query.run(1 , id);
     
 
     socket.on('close', () => {
-      console.log(`Client ${id} disconnected`);
-      users_socket.delete(id);
-      db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
-      query.run(0 , id);
+      // console.log(`Client ${id} disconnected`);
+      // users_socket.delete(id);
+      // db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
+      // query.run(0 , id);
 
 
-      statusSahre(id , socket , 0);
+      // statusSahre(id , socket , 0);
 
 
     });

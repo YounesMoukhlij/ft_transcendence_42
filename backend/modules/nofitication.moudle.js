@@ -4,23 +4,20 @@ import jwt from 'jsonwebtoken';
 
 
 export async function GetNotification(request, reply) {
-  const username = request.query.user;
 
-  if (!username) {
-    return reply.code(400).send({ error: "missing username" });
-  }
+
+  const authHeader = request.headers['authorization'];
+
+
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+  decodedObject = jwt.verify(token, SECRET);
+
 
   try {
-    const query = request.server.db.prepare(`
-      SELECT 
-        n.*,
-        u.profile_img AS sender_profile_img
-      FROM notification n
-      JOIN users u ON n.sender_user = u.username
-      WHERE n.getter_user = ?
-    `);
+    const query = request.server.db.prepare(` SELECT n.*, u.username AS sender_username, u.profile_img AS sender_profile_img FROM notification n JOIN users u ON n.sender_user = u.id_user WHERE n.getter_user = ?`);
+    const notifications = query.all(decodedObject.id_user);
 
-    const notifications = query.all(username);
     return reply.send(notifications);
 
   } catch (err) {
@@ -28,6 +25,8 @@ export async function GetNotification(request, reply) {
     reply.code(500).send({ error: "internal server error" });
   }
 }
+
+
 
 export async function DeleteFriendRequest(request , reply){
 
@@ -46,40 +45,57 @@ export async function DeleteFriendRequest(request , reply){
 export async function sendRequestFriend(request, reply) {
   const { sender, friend, title  , friend_id} = request.body;
 
+
+  
+  const authHeader = request.headers['authorization'];
+  
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+  
+  
+  
+  decodedObject = jwt.verify(token, SECRET);
+  
+  
+  
   if (!title || !sender || !friend) {
+    console.log("errrrrrr ");
     return reply.code(400).send({ error: 'Title, sender, and friend are required fields.' });
   }
   
-
-
-  console.log(friend_id);
-  const socket = request.server.users_socket.get(friend_id);
-
-  if (socket)
-      console.log("okkkkk");
+  
+  
+  
+  
+  
+  const socket = request.server.users_socket.get(friend_id.toString());
 
 
   try {
+
     const existsNotify = request.server.db.prepare(`SELECT 1 FROM notification  WHERE getter_user = ? AND title = ? AND sender_user = ? AND notifyBody = ? LIMIT 1`);
-    const exists = existsNotify.get(friend, title, sender, "test");
+    const exists = existsNotify.get(friend_id, title, decodedObject.id_user, "test");
 
   if (exists)
     return reply.code(200);
-  const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
-  insertQuery.run(friend, title, sender, "test");
+  
+    const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
+    insertQuery.run(friend_id, title, decodedObject.id_user, "test");
+
+
 
     if (socket) {
-
 
       const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE username = ?");
       const result = query1.get(sender);
 
       const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
-      const res = query2.get(friend, sender);
+      const res = query2.get(friend_id, decodedObject.id_user);
 
       const object = {
-        getter_user: friend,
-        sender_user: sender,
+        getter_user: friend_id,
+        sender_user: decodedObject.id_user,
+        sender_username: decodedObject.username,
         title: title,
         sender_profile_img: result.profile_img,
         notify_id: res.notify_id
@@ -101,42 +117,38 @@ export async function sendRequestFriend(request, reply) {
 
 
 export async function AddFriend( request  , reply){
-
-  const {user1 , user2 } = request.body;
-
-
-    const authHeader = request.headers['authorization'];
   
-    if (!user1 || !user2 || !authHeader)
-      return reply.code(403),send("");
-
-    const token = authHeader.split(' ')[1];
+  const { Freind_id } = request.body;
 
 
-        const decodedObject = jwt.verify(token, SECRET);
+  
+  
+  const authHeader = request.headers['authorization'];
+  
+  if ( !authHeader)
+    return reply.code(403),send("");
 
-
-    if (!decodedObject || user2 !== decodedObject.username){
-      return reply.code(403).send("");
-    }
+  
+  const token = authHeader.split(' ')[1];
+  
+  
+  const decodedObject = jwt.verify(token, SECRET);
 
 
   try{
-      const query = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
-      const user = query.get(user1);
-      const user1Id = user.id_user;
-
 
       const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
-      Fquery.run(decodedObject.id_user , user1Id);
+      Fquery.run(decodedObject.id_user , Freind_id);
 
       const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
-      const members = [decodedObject.id_user, user1Id].join(',');
+      const members = [decodedObject.id_user, Freind_id].join(',');
       conversationquery.run(members);
 
       reply.code(200).send("");
     }catch(err){
-      
+
+      console.log(err);
+
       reply.code(500);
   }
 }

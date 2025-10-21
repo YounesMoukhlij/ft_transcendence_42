@@ -78,6 +78,7 @@ const FreindsList = ({friend_id ,  photo, title, message = "", status, setConver
   
   const Get_Conversation = async () => {
     localStorage.setItem('room_select', title);
+    localStorage.setItem('friend_id' , friend_id);
     setRoom(title);
     setimg(photo);
     SetSelectContact(true);
@@ -273,14 +274,14 @@ export default function ChatPage() {
   ) {
     
     const id = window.localStorage.getItem('conversationId');
-
-    alert(user.username);
+    const friend_id = localStorage.getItem("friend_id");
     if (double_block == 2 || (double_block == 1 && user_block === user.username))
       return;
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`, {
       user: user.username,
       conv_id: id,
-      friend: friend
+      friend: friend, 
+      friend_id: friend_id 
     });
     Setuser_block(user.username || '');
     if (double_block < 2)
@@ -295,12 +296,14 @@ export default function ChatPage() {
     user_block: string
   ) {
 
-
+    const friend_id = localStorage.getItem("friend_id");
     const id = localStorage.getItem('conversationId');
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock`, {
       user: user.username,
       conv_id: id,
-      friend: friend
+      friend: friend,
+      friend_id: friend_id 
+
     });
     
     
@@ -318,11 +321,12 @@ export default function ChatPage() {
 
   async function handleUnfriend(friend: string, removeFriend: (username: string) => void) {
     const id = window.localStorage.getItem('conversationId');
-
+    const friend_id = localStorage.getItem("friend_id");
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`, {
       user: user.username,
       conv_id: id,
-      friend: friend
+      friend: friend,
+      friend_id: friend_id
     });
     removeFriend(friend);
   }
@@ -333,6 +337,7 @@ export default function ChatPage() {
       return;
     }
     const friend = localStorage.getItem('room_select');
+    const friend_id = localStorage.getItem('friend_id');
     const id = localStorage.getItem('conversationId');
     try {
       const data = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/IsOnline`, {
@@ -343,7 +348,7 @@ export default function ChatPage() {
 
       const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, {
           user:user.username,
-          input, id, friend
+          input, id, friend , friend_id
         },{
           headers: {
             Authorization: `Bearer ${user.access_token}`
@@ -351,7 +356,7 @@ export default function ChatPage() {
     }
       );
       const object: Message = {
-        sender: user.username || '',
+        sender: user.id_user || '',
         message: input,
         conv_id: id || '',
         created_at: getFormattedDate(),
@@ -491,9 +496,9 @@ export default function ChatPage() {
                 return (
                   <div key={index} className="flex flex-col  ">
                     {currentDate !== prevDate && <MessageDateComponent date={item.created_at} />}
-                    <div className={`flex ${item.sender === user.username ? 'justify-end' : 'justify-start'} mb-2`}>
+                    <div className={`flex ${item.sender === user.id_user ? 'justify-end' : 'justify-start'} mb-2`}>
                       <div
-                        className={`p-2 sm:p-3 rounded-lg flex flex-col  ${item.sender === user.username ? 'bg-[#2E372E] text-white rounded-br-none' : 'bg-[#B0C4DE] text-black rounded-bl-none'}`}
+                        className={`p-2 sm:p-3 rounded-lg flex flex-col  ${item.sender === user.id_user ? 'bg-[#2E372E] text-white rounded-br-none' : 'bg-[#B0C4DE] text-black rounded-bl-none'}`}
                         style={{ maxWidth: '85%', minWidth: '100px' }}
                       >
                         <p className="break-words text-xs sm:text-sm lg:text-base">{item.message}</p>
@@ -501,7 +506,7 @@ export default function ChatPage() {
                           <span className="whitespace-nowrap">
                             {new Date(item.created_at).toTimeString().slice(0, 5)}
                           </span>
-                          {item.sender === user.username && (
+                          {item.sender === user.id_user && (
                             <div className="ml-2">
                               {item.isSeen ? <FaCheckDouble /> : <FaCheck />}
                             </div>

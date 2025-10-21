@@ -57,13 +57,13 @@ export default function Navbar()
 
     const object = {
       profile_img: item.sender_profile_img,
-      username: item.sender_user,
+      username: item.sender_username,
       fullname:"say hello",
       status:0,
     }
+    alert(item.sender_user);
     const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{
-      user1: item.sender_user ,
-      user2: user.username
+      Freind_id: item.sender_user ,
     },{
       headers: {
         Authorization: `Bearer ${user.access_token}`
@@ -102,7 +102,11 @@ export default function Navbar()
       try {
         const result = await axios.get(
           `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetNotification`,
-          { params: { user: user.username } }
+          {
+            headers:{
+              Authorization: `Bearer ${user.access_token}`,
+            }
+          }
         );
         setNotification(result.data);
       } catch (error) {
@@ -131,7 +135,13 @@ export default function Navbar()
     const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
-        setNotification(prev => [...prev, {sender_user: data.sender_user, sender_profile_img: data.sender_profile_img}]); 
+
+        console.log("notification recieved");
+
+
+
+
+        setNotification(prev => [...prev, {sender_user: data.sender_user,sender_username:data.sender_username , sender_profile_img: data.sender_profile_img}]); 
       }
     };
   
@@ -210,7 +220,7 @@ export default function Navbar()
                     <div  className='flex '>
                       <div className='h-[4.5rem] w-[4.5rem] pl-0.5 pt-2 '> <img  className='rounded-[50%] h-full w-full 'src={item.sender_profile_img} alt="profile" /></div>
                       <div className='flex w-full justify-between'>
-                        <div className='ml-[0.5rem] '> <p className='text-2xl'>{item.sender_user}</p></div>
+                        <div className='ml-[0.5rem] '> <p className='text-2xl'>{item.sender_username}</p></div>
                         <div className=''> <p className='text-1.5xl'>1d</p></div>
                       </div>
                     </div>

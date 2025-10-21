@@ -12,13 +12,21 @@ import { useUserStore } from '../../../store/userStore';
 const LeaderBord = ({users}) =>{
   const user = useUserStore((state) => state.user);
   
-  async function  handleAddFriend (username : any){
+  async function  handleAddFriend (object : any){
     
-    alert(username);
-    alert(user.username);
 
     try {
-      await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendRequestFriend` , { sender: user.username, friend: username , title:"request friend"});
+      await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendRequestFriend` , { 
+          sender: user.username,
+          friend: object.username ,
+          title:"request friend",
+          friend_id: object.id_user
+        },{
+          headers:{
+            Authorization: `Bearer ${user.access_token}`,
+          }
+        }
+      );
     } catch (err) {
       console.log(err);
     }
@@ -43,7 +51,7 @@ const LeaderBord = ({users}) =>{
                         <div className="w-[40%] flex items-center"><p className="text-2xl">{item.xp}</p></div>
                         {
                           item.friend_status != "friend" && 
-                          <div className="flex  w-[77%] items-center "><button onClick={()=>handleAddFriend(item.username)} className="bg-blue-500 w-full h-[40%] rounded-[10px]">Add friend</button></div>
+                          <div className="flex  w-[77%] items-center "><button onClick={()=>handleAddFriend(item)} className="bg-blue-500 w-full h-[40%] rounded-[10px]">Add friend</button></div>
                         }
                         {
                           item.friend_status == "friend" && 

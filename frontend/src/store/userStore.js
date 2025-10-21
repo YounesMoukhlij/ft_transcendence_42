@@ -101,7 +101,7 @@ export const useUserStore = create(
       const ws = new WebSocket(url)
       ws.onopen = () => {
         console.log('Connected', url)
-        ws.send(get().user.username || '')
+        ws.send(get().user.id_user || '')
         set({ isConnect: true })
       }
       ws.onclose = () => {

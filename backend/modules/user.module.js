@@ -6,7 +6,11 @@ export async function getConversationId(request, reply) {
   const Friend_id = request.body.friend_id;
 
 
+
+  
   const authHeader = request.headers['authorization'];
+  console.log(Friend_id ,authHeader);
+
   const token = authHeader.split(' ')[1];
   
   if (!Friend_id || !authHeader || !token)
@@ -69,6 +73,10 @@ export async function sendMsg(request, reply) {
   const { user, input, id, friend_id} = request.body;
   const authHeader = request.headers['authorization'];
 
+
+
+
+  console.log(user , id , authHeader , friend_id);
   if (!id || !friend_id || !authHeader) {
     return reply.code(403).send("");
   }
@@ -76,14 +84,11 @@ export async function sendMsg(request, reply) {
   const token = authHeader.split(' ')[1];
   let decodedObject;
 
-  // try {
-    decodedObject = jwt.verify(token, SECRET);
-  // } catch (err) {
-    // return reply.code(401).send({ error: 'Unauthorized' });
-  // }
+  decodedObject = jwt.verify(token, SECRET);
 
 
-  const socket = request.server.users_socket.get(friend_id);
+
+  const socket = request.server.users_socket.get(friend_id.toString());
 
 
   try {
@@ -182,9 +187,9 @@ export async function IsOnline(request , reply){
 
 export async function blockFunction(request , reply){
 
-  const { user , conv_id , friend } = request.body;
+  const { user , conv_id , friend , friend_id} = request.body;
 
-  const socket = request.server.users_socket.get(friend);
+  const socket = request.server.users_socket.get(friend_id.toString());
   try{
 
 
@@ -223,8 +228,11 @@ export async function blockFunction(request , reply){
 
 export async function DeblockFunction(request , reply){
 
-  const { user , conv_id , friend} = request.body;
-  const socket = request.server.users_socket.get(friend);
+  const { user , conv_id , friend , friend_id} = request.body;
+
+
+
+  const socket = request.server.users_socket.get(friend_id.toString());
 
   try{
     const query = request.server.db.prepare(`SELECT * FROM  room WHERE conversation_id = ?`);
@@ -267,10 +275,10 @@ export async function DeblockFunction(request , reply){
 
 export async function unfriend(request, reply) {
 
-  const { user, friend, conv_id } = request.body;
+  const { user, friend, conv_id , friend_id } = request.body;
   
   try {
-    const socket = request.server.users_socket.get(friend);
+    const socket = request.server.users_socket.get(friend_id.toString());
 
     const query = request.server.db.prepare("SELECT id_user FROM users WHERE username = ?");
     const userresult = query.get(user);
