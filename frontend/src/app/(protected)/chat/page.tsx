@@ -239,6 +239,7 @@ export default function ChatPage() {
         Setuser_block(data.block_user);
       } else if (type === "unfriend") {
         removeFriend(data.username);
+        SetSelectContact(false);
       } else if (type === "status") {
         updateFriendStatus(data.status, data.friend);
       }
@@ -321,6 +322,7 @@ export default function ChatPage() {
 
   async function handleUnfriend(friend: string, removeFriend: (username: string) => void) {
     const id = window.localStorage.getItem('conversationId');
+    SetSelectContact(false);
     const friend_id = localStorage.getItem("friend_id");
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`, {
       user: user.username,
