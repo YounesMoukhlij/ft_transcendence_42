@@ -10,7 +10,7 @@ import { useUserStore } from "../../store/userStore"
 // import FlyingSaucer from '@/components/FlyingSaucer'
 // import { cookies } from 'next/headers'
 
-const API_URL = 'http://localhost:4444'
+const API_URL = 'http://10.11.2.13:4444'
 
 export default function AuthLayout() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -506,6 +506,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
       }
 
       console.log('Login response data:', data.user)
+      
       if (data.user) {
         // FIX: Update Zustand store correctly
         setUser(data.user)

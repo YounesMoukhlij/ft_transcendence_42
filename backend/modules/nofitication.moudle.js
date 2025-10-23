@@ -5,14 +5,15 @@ import jwt from 'jsonwebtoken';
 
 export async function GetNotification(request, reply) {
 
-
   const authHeader = request.headers['authorization'];
 
 
+
+  
   const token = authHeader.split(' ')[1];
   let decodedObject;
   decodedObject = jwt.verify(token, SECRET);
-
+  
 
   try {
     const query = request.server.db.prepare(` SELECT n.*, u.username AS sender_username, u.profile_img AS sender_profile_img FROM notification n JOIN users u ON n.sender_user = u.id_user WHERE n.getter_user = ?`);
@@ -21,6 +22,7 @@ export async function GetNotification(request, reply) {
     return reply.send(notifications);
 
   } catch (err) {
+
     console.error("GetNotification error:", err);
     reply.code(500).send({ error: "internal server error" });
   }
@@ -119,15 +121,12 @@ export async function sendRequestFriend(request, reply) {
 export async function AddFriend( request  , reply){
   
   const { Freind_id } = request.body;
-
-
-  
   
   const authHeader = request.headers['authorization'];
   
   if ( !authHeader)
     return reply.code(403),send("");
-
+  
   
   const token = authHeader.split(' ')[1];
   

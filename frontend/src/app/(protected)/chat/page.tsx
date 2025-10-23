@@ -34,8 +34,13 @@ function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, s
   setShow(!show)
 }
 
-async function fetchData(friend_id , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
+async function fetchData(friend_id: number , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
   const { user } = useUserStore.getState();
+  const friend_id1 = localStorage.getItem("friend_id");
+  if (!friend_id){
+    alert("waloooo");
+    return ;
+  }
   try {
     const convRes = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,{
       friend_id: friend_id
@@ -73,12 +78,16 @@ type FreindsListProps = {
   SetSelectContact: (selected: boolean) => void;
 };
 
-const FreindsList = ({friend_id ,  photo, title, message = "", status, setConversation, setRoom, setimg, SetSelectContact }: FreindsListProps) => {
+const FreindsList = ({friend_id ,  photo, title, message = "", status, setConversation, setRoom, setimg, SetSelectContact  }: FreindsListProps) => {
+  console.log("here     ===>  " , friend_id);
   const { setDboubleBlock, double_block, Setuser_block, user_block } = useUserStore();
+
+
+
+  localStorage.setItem('room_select', title);
+  localStorage.setItem('friend_id' , friend_id);
   
   const Get_Conversation = async () => {
-    localStorage.setItem('room_select', title);
-    localStorage.setItem('friend_id' , friend_id);
     setRoom(title);
     setimg(photo);
     SetSelectContact(true);
@@ -252,6 +261,7 @@ export default function ChatPage() {
         const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
           params: { username: user.username }
         });
+        // console.log("herererererer=========================> friendsss" , res.data);
         setFriends(res.data);
       } catch (err) {
         console.log(err);

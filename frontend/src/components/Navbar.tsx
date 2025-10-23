@@ -26,9 +26,11 @@ export default function Navbar()
   const socket = useUserStore((state) => state.socket);
   const {addFriend, removeFriend , setFriends} = useUserStore();
 
+  
+  
   const user = useUserStore((state) => state.user);
 
-  // if (!user?.username) return null;
+  console.log("avatararararar===============================================+>>> ", user);
 
 
   useEffect(() => {
@@ -59,9 +61,9 @@ export default function Navbar()
       profile_img: item.sender_profile_img,
       username: item.sender_username,
       fullname:"say hello",
+      id_user: item.sender_user,
       status:0,
     }
-    alert(item.sender_user);
     const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{
       Freind_id: item.sender_user ,
     },{
@@ -95,9 +97,10 @@ export default function Navbar()
   };
 
 
-
   useEffect(() => {
-    if (!user?.username) return;
+
+    if (!user)
+        return ;
     async function get_notify() {
       try {
         const result = await axios.get(
@@ -114,9 +117,8 @@ export default function Navbar()
       }
     }
     get_notify();
-    // Optionally, add polling or listen to user.username changes 
-    // by adding [user?.username] as dependency
-  }, [user?.username]);
+
+  }, [user]);
 
   useEffect( ()=>{
     connect();

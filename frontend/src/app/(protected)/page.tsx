@@ -49,6 +49,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-4">{user.username}</h2>
           <div className="w-full space-y-2 text-left text-lg">
             <p><strong>Full Name:</strong> {user.fullname}</p>
+            <p><strong>Token :</strong> {user.access_token}</p>
             <p><strong>Email:</strong> {user.email}</p>
             <p><strong>ID:</strong> {user.id_user}</p>
             <p><strong>Languages:</strong> {user.languages || 'N/A'}</p>

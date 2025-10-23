@@ -5,8 +5,6 @@ export async function getConversationId(request, reply) {
 
   const Friend_id = request.body.friend_id;
 
-
-
   
   const authHeader = request.headers['authorization'];
   console.log(Friend_id ,authHeader);
