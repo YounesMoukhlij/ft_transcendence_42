@@ -16,6 +16,7 @@ interface DeleteConfirmationDialogProps {
   isLoading: boolean
 }
 
+// ... (DeleteConfirmationDialog component remains unchanged)
 const DeleteConfirmationDialog = ({ 
   isOpen, 
   onClose, 
@@ -113,6 +114,7 @@ const DeleteConfirmationDialog = ({
 }
 
 
+// ... (SwitchButton component remains unchanged)
 function SwitchButton({ label, checked, onChange }) {
   return (
     <div className="flex items-center justify-end w-full sm:w-auto gap-3">
@@ -141,6 +143,7 @@ function SwitchButton({ label, checked, onChange }) {
   )
 }
 
+
 const ProfileSettingsPage = () => {
  
   const user = useUserStore((state) => state.user);
@@ -155,6 +158,10 @@ const ProfileSettingsPage = () => {
   
   const [is2FAEnabled, setIs2FAEnabled] = useState(false) 
   const [previewImage, setPreviewImage] = useState(null)
+  
+  // *** CHANGE 1: Add state for the file object ***
+  const [imageFile, setImageFile] = useState(null) 
+  
   const [activeTab, setActiveTab] = useState('profile') 
 
   const [formData, setFormData] = useState({
@@ -219,6 +226,7 @@ const ProfileSettingsPage = () => {
 
   const handleImageClick = () => fileInputRef.current?.click()
 
+  // *** CHANGE 2: Update handleImageChange ***
   const handleImageChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -226,68 +234,106 @@ const ProfileSettingsPage = () => {
       toast.error('Please upload a valid image file')
       return
     }
+
+    // Set the state for the raw file upload
+    setImageFile(file) 
+    
+    // Set the state for the visual preview
     const reader = new FileReader()
     reader.onloadend = () => setPreviewImage(reader.result)
     reader.readAsDataURL(file)
   }
 
+
+  // *** CHANGE 3: Rewrite handleSaveProfile to use FormData ***
   const handleSaveProfile = async () => {
     setIsLoading(true)
-
-    const imageToSave = previewImage || user.profile_img || defaultProfileImg
 
     try {
       if (!formData.username.trim()) {
         toast.error('Username is required')
+        setIsLoading(false)
         return
       }
       if (!formData.email.trim()) {
         toast.error('Email is required')
+        setIsLoading(false)
         return
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(formData.email)) {
-        toast.error('Please enter a valid email address')
-        return
+        if (!emailRegex.test(formData.email)) {
+          toast.error('Please enter a valid email address')
+          setIsLoading(false)
+          return
       }
-      const token = user.access_token;
-      // toast.success('token: ' + token);
+
+      // Create a new FormData object
+      const dataToSend = new FormData()
+
+      // Append all the text fields
+      dataToSend.append('languages', formData.languages)
+      dataToSend.append('username', formData.username)
+      dataToSend.append('fullname', formData.fullname)
+      dataToSend.append('email', formData.email)
+      dataToSend.append('bio', formData.bio)
+
+      // Only append the image file if a new one was selected
+      if (imageFile) {
+        dataToSend.append('profileImage', imageFile) // 'profileImage' is the key your server must look for
+      }
+      // If no new file is added, the server should be programmed to simply not update the image path.
+
       const response = await fetch(`${API_URL}/updateUserInfo`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' 
-          , Authorization: `Bearer ${user.access_token}`
+        headers: { 
+            // DO NOT set 'Content-Type': 'application/json'
+            // The browser will automatically set 'multipart/form-data' with the correct boundary
+            Authorization: `Bearer ${user.access_token}`
         },
-        body: JSON.stringify({
-          profile_img: imageToSave,
-          languages: formData.languages,
-          username: formData.username,
-          fullname: formData.fullname,
-          email: formData.email,
-          bio: formData.bio,
-        }),
+        body: dataToSend, // Send the FormData object
       })
 
       const data = await response.json()
 
       if (!response.ok || data.code === 409 || !data.success) {
         toast.error(data.message || 'Failed to update profile')
+        setIsLoading(false)
         return
       }
 
       toast.success('Profile updated successfully!')
       
-      const updatedUser = {
-        ...user,
-        profile_img: imageToSave,
-        languages: formData.languages,
-        username: formData.username,
-        fullname: formData.fullname,
-        email: formData.email,
-        bio: formData.bio,
+      // -- IMPORTANT --
+      // Your server should ideally send back the *entire updated user object*
+      // or at least the new image path so the UI can update.
+      // Let's assume the server sends back `{ success: true, user: updatedUserObject }`
+      // or `{ success: true, newImagePath: '/uploads/new-image.png' }`
+
+      if (data.user) {
+        // Best case: server sends back the full user object
+        setUser(data.user)
+      } else {
+        // Fallback: manually update state.
+        // We need the new image path from the server.
+        const newImagePath = data.newImagePath 
+            ? `${API_URL}${data.newImagePath}` // Assumes server path is relative
+            : (previewImage ? previewImage : user.profile_img); // Fallback to preview or old image
+
+        const updatedUser = {
+          ...user,
+          profile_img: newImagePath,
+          languages: formData.languages,
+          username: formData.username,
+          fullname: formData.fullname,
+          email: formData.email,
+          bio: formData.bio,
+        }
+        setUser(updatedUser) 
       }
-      setUser(updatedUser) 
       
+      // Clear the temporary file and preview
       setPreviewImage(null)
+      setImageFile(null)
 
     } catch (error) {
       console.error('Profile update error:', error)
@@ -296,8 +342,8 @@ const ProfileSettingsPage = () => {
       setIsLoading(false)
     }
   }
-  // security part 
 
+  // ... (handleSaveSecurity component remains unchanged)
   const handleSaveSecurity = async () => {
     setIsLoading(true)
 
@@ -367,6 +413,7 @@ const ProfileSettingsPage = () => {
     }
   }
 
+  // ... (handleToggle2FA component remains unchanged)
   const handleToggle2FA = async () => {
     setIsLoading(true)
     const twofavalue = !is2FAEnabled ? 1 : 0;
@@ -401,8 +448,8 @@ const ProfileSettingsPage = () => {
     }
   }
 
-  // Account deletion handler
 
+  // ... (handleDeleteAccount component remains unchanged)
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     
@@ -430,7 +477,7 @@ const ProfileSettingsPage = () => {
     }
   }
 
-  // Tab navigation component
+  // ... (TabButton component remains unchanged)
   const TabButton = ({ tab, icon: Icon, label }) => (
     <button
       onClick={() => setActiveTab(tab)}
@@ -445,6 +492,7 @@ const ProfileSettingsPage = () => {
     </button>
   )
 
+  // ... (The rest of the JSX remains unchanged)
   return (
     <div className="min-h-screen w-full bg-black text-white p-4 sm:p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
@@ -477,8 +525,7 @@ const ProfileSettingsPage = () => {
                 >
                   <img
                     src={previewImage || user.profile_img || defaultProfileImg}
-                    alt="Profile"
-                    className="w-32 h-32 sm:w-36 sm:h-36 rounded-full border-2 border-gray-500 object-cover group-hover:brightness-75 transition"
+                    className="w-300 h-300 sm:w-36 sm:h-36 rounded-full border-2 border-gray-500 object-cover group-hover:brightness-75 transition"
                   />
                   <div className="absolute inset-0 bg-opacity-60 flex flex-col justify-center items-center rounded-full  group-hover:opacity-100 transition">
                     <Camera color='black' size={30} className="absolute  bg-white bottom-0 right-0 p-0.5 rounded-full" />

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import React from 'react';
 import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
 
 // Define step constants for clarity
 const STEPS = {
@@ -12,12 +13,15 @@ const STEPS = {
 
 const ForgotPasswordPage = () => {
   // State for multi-step form logic
+  // VERIFY_CODE - ENTER_EMAIL - RESET_PASSWORD
   const [currentStep, setCurrentStep] = useState(STEPS.ENTER_EMAIL);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [resetToken, setResetToken] = useState(''); // To store the temporary token from the backend
+  // router
+  const router = useRouter();
 
   // General UI state
   const [error, setError] = useState(null);
@@ -122,7 +126,7 @@ const ForgotPasswordPage = () => {
       }
 
       toast.success('Password has been reset successfully!');
-      window.location.href = '/signIn'; // Redirect on success
+      window.location.href = '/signIn';
 
     } catch (err) {
       const errorMessage = err.message || 'An error occurred. Please try again.';
@@ -133,7 +137,6 @@ const ForgotPasswordPage = () => {
     }
   };
 
-  // Render different form inputs based on the current step
   const renderFormContent = () => {
     switch (currentStep) {
       case STEPS.ENTER_EMAIL:
@@ -157,7 +160,7 @@ const ForgotPasswordPage = () => {
               A 6-digit code was sent to <span className="font-semibold text-white">{email}</span>. It expires in 1 minute.
             </p>
             <form className="flex flex-col space-y-3 sm:space-y-4" onSubmit={handleVerifyCode}>
-              <input type="text" placeholder="6-digit code" className="w-full p-3 sm:p-3.5 md:p-4 pl-4 sm:pl-5 rounded-xl md:rounded-2xl border border-gray-300 outline-0 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out" value={code} onChange={handleStateChange(setCode)} required maxLength={6} disabled={loading} />
+              <input type="text" placeholder="XXX-XXX" className="w-full p-3 sm:p-3.5 md:p-4 pl-4 sm:pl-5 rounded-xl md:rounded-2xl border border-gray-300 outline-0 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 bg-gray-100 text-black text-xl font-bold sm:text-base transition-all duration-300 ease-in-out text-center" value={code} onChange={handleStateChange(setCode)} required maxLength={6} disabled={loading} />
               <button type="submit" disabled={loading} className="bg-gray-600 hover:bg-gray-500 active:bg-gray-700 w-full p-3 sm:p-3.5 md:p-4 rounded-xl md:rounded-2xl text-white text-sm sm:text-base font-semibold transition-all duration-300 ease-in-out hover:cursor-pointer shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                 {loading ? 'Verifying...' : 'Verify Code'}
               </button>
@@ -185,7 +188,7 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-8 lg:p-10">
+    <div className="flex items-center justify-center max-h-screen p-4 sm:p-6 md:p-8 lg:p-10">
       <div className="w-full max-w-sm sm:max-w-md p-6 sm:p-8 md:p-10 space-y-4 sm:space-y-6 rounded-lg md:rounded-xl shadow-md sm:shadow-lg md:shadow-xl">
         <div className="w-full max-w-[180px] sm:max-w-[220px] md:max-w-xs mx-auto mb-2 sm:mb-4">
           <img src="https://media1.tenor.com/m/5ot5ADGxJdAAAAAd/hello.gif" alt="Logo" className="w-full h-auto rounded-lg" />

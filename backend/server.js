@@ -9,6 +9,7 @@ import cors from '@fastify/cors';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis'; // Import the Redis client
 
+
 const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +30,7 @@ async function startServer() {
   try {
     // --- Redis Client Setup ---
     // 1. Create the Redis client
+    console.log('Connecting to Redis...');
     const redisClient = createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379'
     });

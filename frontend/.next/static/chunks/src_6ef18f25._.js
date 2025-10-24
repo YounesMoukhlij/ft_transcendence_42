@@ -85,6 +85,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 const API_URL = 'http://localhost:4444';
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
+// ... (DeleteConfirmationDialog component remains unchanged)
 const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, isLoading })=>{
     if (!isOpen) return null;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -95,7 +96,7 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, isLoading })=>{
                 className: "absolute inset-0 bg-black/60 backdrop-blur-sm"
             }, void 0, false, {
                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                lineNumber: 32,
+                lineNumber: 33,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -118,22 +119,22 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, isLoading })=>{
                                     d: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                    lineNumber: 48,
+                                    lineNumber: 49,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 42,
+                                lineNumber: 43,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                            lineNumber: 41,
+                            lineNumber: 42,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                        lineNumber: 40,
+                        lineNumber: 41,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -144,7 +145,7 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, isLoading })=>{
                                 children: "Delete Account?"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 59,
+                                lineNumber: 60,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -152,13 +153,13 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, isLoading })=>{
                                 children: "This action is permanent and cannot be undone. All your data, settings, and content will be permanently deleted."
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 62,
+                                lineNumber: 63,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                        lineNumber: 58,
+                        lineNumber: 59,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -171,7 +172,7 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, isLoading })=>{
                                 children: "Cancel"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 69,
+                                lineNumber: 70,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -195,7 +196,7 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, isLoading })=>{
                                                     strokeWidth: "4"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                    lineNumber: 89,
+                                                    lineNumber: 90,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -204,13 +205,13 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, isLoading })=>{
                                                     d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                    lineNumber: 97,
+                                                    lineNumber: 98,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                            lineNumber: 83,
+                                            lineNumber: 84,
                                             columnNumber: 17
                                         }, this),
                                         "Deleting..."
@@ -218,29 +219,30 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, isLoading })=>{
                                 }, void 0, true) : 'Delete Account'
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 76,
+                                lineNumber: 77,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                        lineNumber: 68,
+                        lineNumber: 69,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                lineNumber: 35,
+                lineNumber: 36,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-        lineNumber: 28,
+        lineNumber: 29,
         columnNumber: 5
     }, this);
 };
 _c = DeleteConfirmationDialog;
+// ... (SwitchButton component remains unchanged)
 function SwitchButton({ label, checked, onChange }) {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "flex items-center justify-end w-full sm:w-auto gap-3",
@@ -252,7 +254,7 @@ function SwitchButton({ label, checked, onChange }) {
                     children: label
                 }, void 0, false, {
                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                    lineNumber: 120,
+                    lineNumber: 122,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -265,38 +267,38 @@ function SwitchButton({ label, checked, onChange }) {
                             onChange: onChange
                         }, void 0, false, {
                             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                            lineNumber: 122,
+                            lineNumber: 124,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: `w-12 h-7 rounded-full transition-colors duration-300 ${checked ? 'bg-blue-400' : 'bg-gray-400'}`
                         }, void 0, false, {
                             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                            lineNumber: 128,
+                            lineNumber: 130,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: `absolute top-[2px] left-[2px] w-6 h-6 bg-gray-900 rounded-full shadow-md transform transition-transform duration-300 ${checked ? 'translate-x-5 ' : ''}`
                         }, void 0, false, {
                             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                            lineNumber: 133,
+                            lineNumber: 135,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                    lineNumber: 121,
+                    lineNumber: 123,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-            lineNumber: 119,
+            lineNumber: 121,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-        lineNumber: 118,
+        lineNumber: 120,
         columnNumber: 5
     }, this);
 }
@@ -319,6 +321,8 @@ const ProfileSettingsPage = ()=>{
     const [isDeletingAccount, setIsDeletingAccount] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [is2FAEnabled, setIs2FAEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [previewImage, setPreviewImage] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    // *** CHANGE 1: Add state for the file object ***
+    const [imageFile, setImageFile] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [activeTab, setActiveTab] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('profile');
     const [formData, setFormData] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
         languages: 'en',
@@ -386,12 +390,12 @@ const ProfileSettingsPage = ()=>{
                 children: "Loading user data..."
             }, void 0, false, {
                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                lineNumber: 210,
+                lineNumber: 217,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-            lineNumber: 209,
+            lineNumber: 216,
             columnNumber: 7
         }, this);
     }
@@ -403,6 +407,7 @@ const ProfileSettingsPage = ()=>{
             }));
     };
     const handleImageClick = ()=>fileInputRef.current?.click();
+    // *** CHANGE 2: Update handleImageChange ***
     const handleImageChange = (e)=>{
         const file = e.target.files?.[0];
         if (!file) return;
@@ -410,61 +415,90 @@ const ProfileSettingsPage = ()=>{
             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Please upload a valid image file');
             return;
         }
+        // Set the state for the raw file upload
+        setImageFile(file);
+        // Set the state for the visual preview
         const reader = new FileReader();
         reader.onloadend = ()=>setPreviewImage(reader.result);
         reader.readAsDataURL(file);
     };
+    // *** CHANGE 3: Rewrite handleSaveProfile to use FormData ***
     const handleSaveProfile = async ()=>{
         setIsLoading(true);
-        const imageToSave = previewImage || user.profile_img || defaultProfileImg;
         try {
             if (!formData.username.trim()) {
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Username is required');
+                setIsLoading(false);
                 return;
             }
             if (!formData.email.trim()) {
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Email is required');
+                setIsLoading(false);
                 return;
             }
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(formData.email)) {
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Please enter a valid email address');
+                setIsLoading(false);
                 return;
             }
-            const token = user.access_token;
-            // toast.success('token: ' + token);
+            // Create a new FormData object
+            const dataToSend = new FormData();
+            // Append all the text fields
+            dataToSend.append('languages', formData.languages);
+            dataToSend.append('username', formData.username);
+            dataToSend.append('fullname', formData.fullname);
+            dataToSend.append('email', formData.email);
+            dataToSend.append('bio', formData.bio);
+            // Only append the image file if a new one was selected
+            if (imageFile) {
+                dataToSend.append('profileImage', imageFile) // 'profileImage' is the key your server must look for
+                ;
+            }
+            // If no new file is added, the server should be programmed to simply not update the image path.
             const response = await fetch(`${API_URL}/updateUserInfo`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    // DO NOT set 'Content-Type': 'application/json'
+                    // The browser will automatically set 'multipart/form-data' with the correct boundary
                     Authorization: `Bearer ${user.access_token}`
                 },
-                body: JSON.stringify({
-                    profile_img: imageToSave,
+                body: dataToSend
+            });
+            const data = await response.json();
+            if (!response.ok || data.code === 409 || !data.success) {
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error(data.message || 'Failed to update profile');
+                setIsLoading(false);
+                return;
+            }
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success('Profile updated successfully!');
+            // -- IMPORTANT --
+            // Your server should ideally send back the *entire updated user object*
+            // or at least the new image path so the UI can update.
+            // Let's assume the server sends back `{ success: true, user: updatedUserObject }`
+            // or `{ success: true, newImagePath: '/uploads/new-image.png' }`
+            if (data.user) {
+                // Best case: server sends back the full user object
+                setUser(data.user);
+            } else {
+                // Fallback: manually update state.
+                // We need the new image path from the server.
+                const newImagePath = data.newImagePath ? `${API_URL}${data.newImagePath}` // Assumes server path is relative
+                 : previewImage ? previewImage : user.profile_img; // Fallback to preview or old image
+                const updatedUser = {
+                    ...user,
+                    profile_img: newImagePath,
                     languages: formData.languages,
                     username: formData.username,
                     fullname: formData.fullname,
                     email: formData.email,
                     bio: formData.bio
-                })
-            });
-            const data = await response.json();
-            if (!response.ok || data.code === 409 || !data.success) {
-                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error(data.message || 'Failed to update profile');
-                return;
+                };
+                setUser(updatedUser);
             }
-            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success('Profile updated successfully!');
-            const updatedUser = {
-                ...user,
-                profile_img: imageToSave,
-                languages: formData.languages,
-                username: formData.username,
-                fullname: formData.fullname,
-                email: formData.email,
-                bio: formData.bio
-            };
-            setUser(updatedUser);
+            // Clear the temporary file and preview
             setPreviewImage(null);
+            setImageFile(null);
         } catch (error) {
             console.error('Profile update error:', error);
             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('An unexpected error occurred while updating profile.');
@@ -472,7 +506,7 @@ const ProfileSettingsPage = ()=>{
             setIsLoading(false);
         }
     };
-    // security part 
+    // ... (handleSaveSecurity component remains unchanged)
     const handleSaveSecurity = async ()=>{
         setIsLoading(true);
         if (is2FAEnabled) {
@@ -535,6 +569,7 @@ const ProfileSettingsPage = ()=>{
             setIsLoading(false);
         }
     };
+    // ... (handleToggle2FA component remains unchanged)
     const handleToggle2FA = async ()=>{
         setIsLoading(true);
         const twofavalue = !is2FAEnabled ? 1 : 0;
@@ -569,7 +604,7 @@ const ProfileSettingsPage = ()=>{
             setIsLoading(false);
         }
     };
-    // Account deletion handler
+    // ... (handleDeleteAccount component remains unchanged)
     const handleDeleteAccount = async ()=>{
         setIsDeletingAccount(true);
         try {
@@ -592,7 +627,7 @@ const ProfileSettingsPage = ()=>{
             setIsDeletingAccount(false);
         }
     };
-    // Tab navigation component
+    // ... (TabButton component remains unchanged)
     const TabButton = ({ tab, icon: Icon, label })=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
             onClick: ()=>setActiveTab(tab),
             className: `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === tab ? 'bg-white text-black' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`,
@@ -601,22 +636,23 @@ const ProfileSettingsPage = ()=>{
                     size: 20
                 }, void 0, false, {
                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                    lineNumber: 443,
+                    lineNumber: 490,
                     columnNumber: 7
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                     children: label
                 }, void 0, false, {
                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                    lineNumber: 444,
+                    lineNumber: 491,
                     columnNumber: 7
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-            lineNumber: 435,
+            lineNumber: 482,
             columnNumber: 5
         }, this);
+    // ... (The rest of the JSX remains unchanged)
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "min-h-screen w-full bg-black text-white p-4 sm:p-6 md:p-10",
         children: [
@@ -631,7 +667,7 @@ const ProfileSettingsPage = ()=>{
                                 children: "Account Settings"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 453,
+                                lineNumber: 501,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -639,13 +675,13 @@ const ProfileSettingsPage = ()=>{
                                 children: "Manage your profile and preferences"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 454,
+                                lineNumber: 502,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                        lineNumber: 452,
+                        lineNumber: 500,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -657,7 +693,7 @@ const ProfileSettingsPage = ()=>{
                                 label: "Profile"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 461,
+                                lineNumber: 509,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(TabButton, {
@@ -666,7 +702,7 @@ const ProfileSettingsPage = ()=>{
                                 label: "Security"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 462,
+                                lineNumber: 510,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(TabButton, {
@@ -675,13 +711,13 @@ const ProfileSettingsPage = ()=>{
                                 label: "Help"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 463,
+                                lineNumber: 511,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                        lineNumber: 460,
+                        lineNumber: 508,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -698,11 +734,10 @@ const ProfileSettingsPage = ()=>{
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
                                                         src: previewImage || user.profile_img || defaultProfileImg,
-                                                        alt: "Profile",
-                                                        className: "w-32 h-32 sm:w-36 sm:h-36 rounded-full border-2 border-gray-500 object-cover group-hover:brightness-75 transition"
+                                                        className: "w-300 h-300 sm:w-36 sm:h-36 rounded-full border-2 border-gray-500 object-cover group-hover:brightness-75 transition"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 478,
+                                                        lineNumber: 526,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -713,18 +748,18 @@ const ProfileSettingsPage = ()=>{
                                                             className: "absolute  bg-white bottom-0 right-0 p-0.5 rounded-full"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                            lineNumber: 484,
+                                                            lineNumber: 531,
                                                             columnNumber: 21
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 483,
+                                                        lineNumber: 530,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 474,
+                                                lineNumber: 522,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -735,13 +770,13 @@ const ProfileSettingsPage = ()=>{
                                                 onChange: handleImageChange
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 487,
+                                                lineNumber: 534,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                        lineNumber: 473,
+                                        lineNumber: 521,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -761,14 +796,14 @@ const ProfileSettingsPage = ()=>{
                                                                         size: 18
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 506,
+                                                                        lineNumber: 553,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     " Preferred Language"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 502,
+                                                                lineNumber: 549,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -790,12 +825,12 @@ const ProfileSettingsPage = ()=>{
                                                                                 ]
                                                                             }, lang.id, true, {
                                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                                lineNumber: 517,
+                                                                                lineNumber: 564,
                                                                                 columnNumber: 29
                                                                             }, this))
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 509,
+                                                                        lineNumber: 556,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
@@ -803,29 +838,29 @@ const ProfileSettingsPage = ()=>{
                                                                         size: 20
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 526,
+                                                                        lineNumber: 573,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 508,
+                                                                lineNumber: 555,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 501,
+                                                        lineNumber: 548,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                    lineNumber: 500,
+                                                    lineNumber: 547,
                                                     columnNumber: 19
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 499,
+                                                lineNumber: 546,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -835,7 +870,7 @@ const ProfileSettingsPage = ()=>{
                                                         children: "Username"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 537,
+                                                        lineNumber: 584,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -847,13 +882,13 @@ const ProfileSettingsPage = ()=>{
                                                         className: "w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 538,
+                                                        lineNumber: 585,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 536,
+                                                lineNumber: 583,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -863,7 +898,7 @@ const ProfileSettingsPage = ()=>{
                                                         children: "Full Name"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 550,
+                                                        lineNumber: 597,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -875,13 +910,13 @@ const ProfileSettingsPage = ()=>{
                                                         className: "w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white  appearance-none"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 551,
+                                                        lineNumber: 598,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 549,
+                                                lineNumber: 596,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -892,7 +927,7 @@ const ProfileSettingsPage = ()=>{
                                                         children: "Email"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 563,
+                                                        lineNumber: 610,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -904,13 +939,13 @@ const ProfileSettingsPage = ()=>{
                                                         className: "w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 564,
+                                                        lineNumber: 611,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 562,
+                                                lineNumber: 609,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -921,7 +956,7 @@ const ProfileSettingsPage = ()=>{
                                                         children: "Bio"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 577,
+                                                        lineNumber: 624,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
@@ -933,19 +968,19 @@ const ProfileSettingsPage = ()=>{
                                                         className: "w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white resize-none overflow-hidden"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 578,
+                                                        lineNumber: 625,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 576,
+                                                lineNumber: 623,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                        lineNumber: 497,
+                                        lineNumber: 544,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -958,7 +993,7 @@ const ProfileSettingsPage = ()=>{
                                                 children: isLoading ? 'Saving...' : 'Save Profile Changes'
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 591,
+                                                lineNumber: 638,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -968,13 +1003,13 @@ const ProfileSettingsPage = ()=>{
                                                 children: "Delete Account"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 602,
+                                                lineNumber: 649,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                        lineNumber: 590,
+                                        lineNumber: 637,
                                         columnNumber: 15
                                     }, this)
                                 ]
@@ -990,7 +1025,7 @@ const ProfileSettingsPage = ()=>{
                                                 children: "Security Settings"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 621,
+                                                lineNumber: 668,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -998,13 +1033,13 @@ const ProfileSettingsPage = ()=>{
                                                 children: "Manage your password and security preferences"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 622,
+                                                lineNumber: 669,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                        lineNumber: 620,
+                                        lineNumber: 667,
                                         columnNumber: 15
                                     }, this),
                                     !isPasswordAuth && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1017,7 +1052,7 @@ const ProfileSettingsPage = ()=>{
                                                     className: "mt-0.5 flex-shrink-0"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                    lineNumber: 629,
+                                                    lineNumber: 676,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1028,25 +1063,25 @@ const ProfileSettingsPage = ()=>{
                                                             children: authMethod === 1 ? 'Google' : '42'
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                            lineNumber: 631,
+                                                            lineNumber: 678,
                                                             columnNumber: 42
                                                         }, this),
                                                         ". Password management is not available for OAuth accounts."
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                    lineNumber: 630,
+                                                    lineNumber: 677,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                            lineNumber: 628,
+                                            lineNumber: 675,
                                             columnNumber: 19
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                        lineNumber: 627,
+                                        lineNumber: 674,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1065,14 +1100,14 @@ const ProfileSettingsPage = ()=>{
                                                                         size: 16
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 646,
+                                                                        lineNumber: 693,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     "Current Password"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 645,
+                                                                lineNumber: 692,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -1085,13 +1120,13 @@ const ProfileSettingsPage = ()=>{
                                                                 placeholder: "Enter current password"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 649,
+                                                                lineNumber: 696,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 644,
+                                                        lineNumber: 691,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1104,14 +1139,14 @@ const ProfileSettingsPage = ()=>{
                                                                         size: 16
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 663,
+                                                                        lineNumber: 710,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     "New Password (optional)"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 662,
+                                                                lineNumber: 709,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -1124,13 +1159,13 @@ const ProfileSettingsPage = ()=>{
                                                                 placeholder: "Enter new password"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 666,
+                                                                lineNumber: 713,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 661,
+                                                        lineNumber: 708,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1143,14 +1178,14 @@ const ProfileSettingsPage = ()=>{
                                                                         size: 16
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 680,
+                                                                        lineNumber: 727,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     "Confirm New Password"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 679,
+                                                                lineNumber: 726,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -1163,13 +1198,13 @@ const ProfileSettingsPage = ()=>{
                                                                 placeholder: "Confirm new password"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 683,
+                                                                lineNumber: 730,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 678,
+                                                        lineNumber: 725,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
@@ -1182,7 +1217,7 @@ const ProfileSettingsPage = ()=>{
                                                         children: "Security Preferences"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 698,
+                                                        lineNumber: 745,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1196,7 +1231,7 @@ const ProfileSettingsPage = ()=>{
                                                                         className: "text-gray-400"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 703,
+                                                                        lineNumber: 750,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1206,7 +1241,7 @@ const ProfileSettingsPage = ()=>{
                                                                                 children: "Two-Factor Authentication"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                                lineNumber: 705,
+                                                                                lineNumber: 752,
                                                                                 columnNumber: 25
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1214,19 +1249,19 @@ const ProfileSettingsPage = ()=>{
                                                                                 children: "Add an extra layer of security to your account"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                                lineNumber: 706,
+                                                                                lineNumber: 753,
                                                                                 columnNumber: 25
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 704,
+                                                                        lineNumber: 751,
                                                                         columnNumber: 23
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 702,
+                                                                lineNumber: 749,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(SwitchButton, {
@@ -1235,13 +1270,13 @@ const ProfileSettingsPage = ()=>{
                                                                 onChange: ()=>isPasswordAuth && handleToggle2FA()
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 709,
+                                                                lineNumber: 756,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 701,
+                                                        lineNumber: 748,
                                                         columnNumber: 19
                                                     }, this),
                                                     !isPasswordAuth && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1253,19 +1288,19 @@ const ProfileSettingsPage = ()=>{
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 718,
+                                                        lineNumber: 765,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 697,
+                                                lineNumber: 744,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                        lineNumber: 638,
+                                        lineNumber: 685,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1277,18 +1312,18 @@ const ProfileSettingsPage = ()=>{
                                             children: isLoading ? 'Saving...' : 'Update Security Settings'
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                            lineNumber: 727,
+                                            lineNumber: 774,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                        lineNumber: 726,
+                                        lineNumber: 773,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 619,
+                                lineNumber: 666,
                                 columnNumber: 13
                             }, this),
                             activeTab === 'help' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1302,7 +1337,7 @@ const ProfileSettingsPage = ()=>{
                                                 children: "Help & Support"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 746,
+                                                lineNumber: 793,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1310,13 +1345,13 @@ const ProfileSettingsPage = ()=>{
                                                 children: "Get help with your account and application"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 747,
+                                                lineNumber: 794,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                        lineNumber: 745,
+                                        lineNumber: 792,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1332,14 +1367,14 @@ const ProfileSettingsPage = ()=>{
                                                                 size: 20
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 754,
+                                                                lineNumber: 801,
                                                                 columnNumber: 21
                                                             }, this),
                                                             "Frequently Asked Questions"
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 753,
+                                                        lineNumber: 800,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1352,7 +1387,7 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "How do I reset my password?"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 759,
+                                                                        lineNumber: 806,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1360,13 +1395,13 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "Go to the Security tab and use the password reset form. You'll need to provide your current password and set a new one."
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 760,
+                                                                        lineNumber: 807,
                                                                         columnNumber: 23
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 758,
+                                                                lineNumber: 805,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1376,7 +1411,7 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "What is Two-Factor Authentication?"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 765,
+                                                                        lineNumber: 812,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1384,13 +1419,13 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "2FA adds an extra layer of security by requiring a verification code from your mobile device when signing in."
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 766,
+                                                                        lineNumber: 813,
                                                                         columnNumber: 23
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 764,
+                                                                lineNumber: 811,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1400,7 +1435,7 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "Can I change my username?"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 771,
+                                                                        lineNumber: 818,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1408,25 +1443,25 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "Yes, you can change your username in the Profile tab. Note that your old username may become available for others."
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 772,
+                                                                        lineNumber: 819,
                                                                         columnNumber: 23
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 770,
+                                                                lineNumber: 817,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 757,
+                                                        lineNumber: 804,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 752,
+                                                lineNumber: 799,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1437,7 +1472,7 @@ const ProfileSettingsPage = ()=>{
                                                         children: "Contact Support"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 781,
+                                                        lineNumber: 828,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1445,7 +1480,7 @@ const ProfileSettingsPage = ()=>{
                                                         children: "If you need further assistance, please contact our support team:"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 782,
+                                                        lineNumber: 829,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1456,7 +1491,7 @@ const ProfileSettingsPage = ()=>{
                                                                 children: "📧 Email: support@ponggame.com"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 786,
+                                                                lineNumber: 833,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1464,19 +1499,19 @@ const ProfileSettingsPage = ()=>{
                                                                 children: "🕒 Response Time: 24-48 hours"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 787,
+                                                                lineNumber: 834,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 785,
+                                                        lineNumber: 832,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 780,
+                                                lineNumber: 827,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1487,7 +1522,7 @@ const ProfileSettingsPage = ()=>{
                                                         children: "Application Information"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 793,
+                                                        lineNumber: 840,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1500,7 +1535,7 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "Version"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 796,
+                                                                        lineNumber: 843,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1508,13 +1543,13 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "1.0.0"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 797,
+                                                                        lineNumber: 844,
                                                                         columnNumber: 23
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 795,
+                                                                lineNumber: 842,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1524,7 +1559,7 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "Last Updated"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 800,
+                                                                        lineNumber: 847,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1532,49 +1567,49 @@ const ProfileSettingsPage = ()=>{
                                                                         children: "November 2024"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                        lineNumber: 801,
+                                                                        lineNumber: 848,
                                                                         columnNumber: 23
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                                lineNumber: 799,
+                                                                lineNumber: 846,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                        lineNumber: 794,
+                                                        lineNumber: 841,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                                lineNumber: 792,
+                                                lineNumber: 839,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                        lineNumber: 750,
+                                        lineNumber: 797,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                                lineNumber: 744,
+                                lineNumber: 791,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                        lineNumber: 467,
+                        lineNumber: 515,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                lineNumber: 450,
+                lineNumber: 498,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(DeleteConfirmationDialog, {
@@ -1584,17 +1619,17 @@ const ProfileSettingsPage = ()=>{
                 isLoading: isDeletingAccount
             }, void 0, false, {
                 fileName: "[project]/src/app/(protected)/settings/page.tsx",
-                lineNumber: 812,
+                lineNumber: 859,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(protected)/settings/page.tsx",
-        lineNumber: 449,
+        lineNumber: 497,
         columnNumber: 5
     }, this);
 };
-_s(ProfileSettingsPage, "IhuwJXXFqrXmKl4C1WNhgY1F3/A=", false, function() {
+_s(ProfileSettingsPage, "ZNblwLt9qZAYwcsYULY3M3MHpm8=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$userStore$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useUserStore"],
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$userStore$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useUserStore"],

@@ -9,8 +9,7 @@ import qrcode from 'qrcode';
 
 import { createClient } from 'redis';
 import emailjs from '@emailjs/nodejs';
-
-
+import {SMTPClient} from 'emailjs';
 
 
 
@@ -712,6 +711,39 @@ export async function FortyTwoAuth(request, reply) {
     }
 }
 
+
+
+
+const EMAILJS_SERVICE_ID = 'service_0nzbkpl'
+const EMAILJS_TEMPLATE_ID = 'ytemplate_pfo8i1d'
+const EMAILJS_PUBLIC_KEY = 'DpuittgIXC3Ppn_kbJCcY'
+const EMAILJS_PUBLIC_KEY = '8TLmc-F4eClurvKNU'
+
+
+
+async function sendVerificationCode(userEmail, code) {
+  // These are the variables we set up in the template
+  const templateParams = {
+    to_email: userEmail,
+    code: code,
+    // from_name: 'Your App Name' // (Optional) if you used {{from_name}}
+  };
+
+  const options = {
+    publicKey: EMAILJS_PUBLIC_KEY,
+    privateKey: EMAILJS_PUBLIC_KEY,
+  };
+
+  try {
+    const result = await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, options);
+    console.log('EmailJS Success:', result.text);
+    return { success: true, message: 'Code sent!' };
+  } catch (error) {
+    console.error('EmailJS Error:', error);
+    return { success: false, message: 'Failed to send code.' };
+  }
+}
+
 // ====== PASSWORD RESET (EMAILJS) ======
 export async function forgotPassword(request, reply) {
     const { email } = request.body;
@@ -722,33 +754,51 @@ export async function forgotPassword(request, reply) {
     }
 
     try {
+        // check if auth_method is 0 (normal auth)
+        const authMethod = request.server.db.prepare("SELECT auth_method FROM users WHERE email = ?").get(email);
+        if (!authMethod || authMethod.auth_method !== 0) {
+            return reply.code(400).send(
+                {
+                    success: false, 
+                    message: "Password reset is only available for standard authentication users. Use OAuth to log in."
+                }
+            );
+        }
         const user = request.server.db.prepare("SELECT username FROM users WHERE email = ?").get(email);
         if (!user) {
             // This is a good security practice to prevent email enumeration.
             console.log(`Password reset attempt for non-existent email: ${email}`);
-            return reply.code(200).send({ success: true, message: "If your email is in our records, you will receive a code." });
+            return reply.code(200).send(
+                {
+                    success: true, 
+                    message: "This email does not exist in our databases. :("
+                }
+            );
         }
 
-        // Use Math.random() for broader Node.js compatibility.
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
         
-        await redis.set(`reset:${email}`, code, { EX: 60 }); // Expires in 60 seconds
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        console.log(`Generated code for ${email}: ${code}`);
+        await redis.set(`reset:${email}`, code, { EX: 120 });
 
-        const templateParams = {
-            to_email: email,
-            username: user.username || 'there',
-            code: code,
-        };
+        sendVerificationCode(email, code);
 
-        await emailjs.send(
-            EMAILJS_CONFIG.SERVICE_ID,
-            EMAILJS_CONFIG.TEMPLATE_ID,
-            templateParams,
-            {
-                publicKey: EMAILJS_CONFIG.PUBLIC_KEY,
-                privateKey: EMAILJS_CONFIG.PRIVATE_KEY, // The private key is essential for Node.js
-            }
-        );
+
+        // const templateParams = {
+        //     to_email: email,
+        //     username: user.username || 'there',
+        //     code: code,
+        // };
+
+        // await emailjs.send(
+        //     EMAILJS_CONFIG.SERVICE_ID,
+        //     EMAILJS_CONFIG.TEMPLATE_ID,
+        //     templateParams,
+        //     {
+        //         publicKey: EMAILJS_CONFIG.PUBLIC_KEY,
+        //         privateKey: EMAILJS_CONFIG.PRIVATE_KEY, // The private key is essential for Node.js
+        //     }
+        // );
         
         console.log(`Verification code sent to ${email}`);
         return reply.code(200).send({ success: true, message: "A verification code has been sent to your email." });
@@ -775,8 +825,6 @@ export async function verifyCode(request, reply) {
         if (!storedCode || storedCode !== code) {
             return reply.code(400).send({ success: false, message: "Invalid or expired code." });
         }
-
-        // The code is correct, so delete it to prevent reuse.
         await redis.del(redisKey);
 
         // Generate a short-lived JWT token that gives the user permission to change their password.
