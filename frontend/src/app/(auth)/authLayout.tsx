@@ -10,7 +10,7 @@ import { useUserStore } from "../../store/userStore"
 // import FlyingSaucer from '@/components/FlyingSaucer'
 // import { cookies } from 'next/headers'
 
-const API_URL = 'http://10.11.2.13:4444'
+const API_URL = 'http://localhost:4444'
 
 export default function AuthLayout() {
   const [isSignUp, setIsSignUp] = useState(false)

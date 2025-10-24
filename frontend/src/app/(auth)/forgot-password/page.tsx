@@ -60,7 +60,7 @@ const ForgotPasswordPage = () => {
     }
 
     try {
-      const response = await fetch('http://10.11.2.13:4444/forgotPassword', {
+      const response = await fetch('http://localhost:4444/forgotPassword', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

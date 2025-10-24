@@ -30,7 +30,6 @@ export default function Navbar()
   
   const user = useUserStore((state) => state.user);
 
-  console.log("avatararararar===============================================+>>> ", user);
 
 
   useEffect(() => {
@@ -137,12 +136,6 @@ export default function Navbar()
     const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
-
-        console.log("notification recieved");
-
-
-
-
         setNotification(prev => [...prev, {sender_user: data.sender_user,sender_username:data.sender_username , sender_profile_img: data.sender_profile_img}]); 
       }
     };

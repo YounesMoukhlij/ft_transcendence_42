@@ -48,6 +48,8 @@ export async function sendRequestFriend(request, reply) {
   const { sender, friend, title  , friend_id} = request.body;
 
 
+
+
   
   const authHeader = request.headers['authorization'];
   
@@ -61,17 +63,12 @@ export async function sendRequestFriend(request, reply) {
   
   
   if (!title || !sender || !friend) {
-    console.log("errrrrrr ");
     return reply.code(400).send({ error: 'Title, sender, and friend are required fields.' });
   }
   
-  
-  
-  
-  
+
   
   const socket = request.server.users_socket.get(friend_id.toString());
-
 
   try {
 
@@ -134,14 +131,28 @@ export async function AddFriend( request  , reply){
   const decodedObject = jwt.verify(token, SECRET);
 
 
+  const socket = request.server.users_socket.get(Freind_id.toString());
+
+
   try{
 
-      const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
-      Fquery.run(decodedObject.id_user , Freind_id);
+      // const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
+      // Fquery.run(decodedObject.id_user , Freind_id);
 
-      const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
-      const members = [decodedObject.id_user, Freind_id].join(',');
-      conversationquery.run(members);
+      // const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
+      // const members = [decodedObject.id_user, Freind_id].join(',');
+      // conversationquery.run(members);
+
+
+
+      if (socket){
+        const query = request.server.db.prepare("SELECT * FROM USERS WHERE id_user = ? ");
+        const res = query.get(Freind_id);
+        console.log(res);
+        const object = {
+          
+        }
+      }
 
       reply.code(200).send("");
     }catch(err){
@@ -159,8 +170,6 @@ export async function GetFriends(request, reply) {
   if (!username) {
     return reply.code(400).send({ error: "Username is required" });
   }
-
-
 
 
   try {

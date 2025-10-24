@@ -252,6 +252,9 @@ export default function ChatPage() {
       } else if (type === "status") {
         updateFriendStatus(data.status, data.friend);
       }
+      else if (type === "New_Friend") {
+        // updateFriendStatus(data.status, data.friend);
+      }
     };
   }, [socket]);
 
