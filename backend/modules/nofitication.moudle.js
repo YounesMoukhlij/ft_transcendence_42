@@ -136,22 +136,29 @@ export async function AddFriend( request  , reply){
 
   try{
 
-      // const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
-      // Fquery.run(decodedObject.id_user , Freind_id);
+      const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
+      Fquery.run(decodedObject.id_user , Freind_id);
 
-      // const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
-      // const members = [decodedObject.id_user, Freind_id].join(',');
-      // conversationquery.run(members);
+      const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
+      const members = [decodedObject.id_user, Freind_id].join(',');
+      conversationquery.run(members);
 
 
 
       if (socket){
         const query = request.server.db.prepare("SELECT * FROM USERS WHERE id_user = ? ");
-        const res = query.get(Freind_id);
-        console.log(res);
+        const res = query.get(decodedObject.id_user);
         const object = {
-          
-        }
+          profile_img: res.profile_img,
+          username: res.username,
+          fullname:"say hello",
+          id_user: res.id_user,
+          status:1
+        };
+        socket.send(JSON.stringify({
+            type: "test",
+            data: object
+        }));
       }
 
       reply.code(200).send("");

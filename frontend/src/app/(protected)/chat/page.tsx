@@ -238,6 +238,7 @@ export default function ChatPage() {
     if (!socket) return;
 
     socket.onmessage = (event: MessageEvent) => {
+      
       const { type, data } = JSON.parse(event.data);
       if (type === "message") {
         addMessage(data);
@@ -252,8 +253,8 @@ export default function ChatPage() {
       } else if (type === "status") {
         updateFriendStatus(data.status, data.friend);
       }
-      else if (type === "New_Friend") {
-        // updateFriendStatus(data.status, data.friend);
+      else if (type === "test") {
+        addFriend(data);
       }
     };
   }, [socket]);
@@ -264,7 +265,7 @@ export default function ChatPage() {
         const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
           params: { username: user.username }
         });
-        // console.log("herererererer=========================> friendsss" , res.data);
+
         setFriends(res.data);
       } catch (err) {
         console.log(err);
