@@ -699,10 +699,6 @@
     height: calc(var(--spacing) * 16);
   }
 
-  .h-20 {
-    height: calc(var(--spacing) * 20);
-  }
-
   .h-24 {
     height: calc(var(--spacing) * 24);
   }
@@ -721,10 +717,6 @@
 
   .h-96 {
     height: calc(var(--spacing) * 96);
-  }
-
-  .h-100 {
-    height: calc(var(--spacing) * 100);
   }
 
   .h-300 {
@@ -789,10 +781,6 @@
 
   .h-\[100\%\] {
     height: 100%;
-  }
-
-  .h-\[100\] {
-    height: 100px;
   }
 
   .h-\[300px\] {

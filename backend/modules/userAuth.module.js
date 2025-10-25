@@ -10,6 +10,9 @@ import qrcode from 'qrcode';
 import { createClient } from 'redis';
 import emailjs from '@emailjs/nodejs';
 import {SMTPClient} from 'emailjs';
+// import nodemailer
+import nodemailer from 'nodemailer';
+import { text } from 'stream/consumers';
 
 
 
@@ -714,35 +717,153 @@ export async function FortyTwoAuth(request, reply) {
 
 
 
-const EMAILJS_SERVICE_ID = 'service_0nzbkpl'
-const EMAILJS_TEMPLATE_ID = 'ytemplate_pfo8i1d'
-const EMAILJS_PUBLIC_KEY = 'DpuittgIXC3Ppn_kbJCcY'
-const EMAILJS_PUBLIC_KEY = '8TLmc-F4eClurvKNU'
+// const EMAILJS_SERVICE_ID = 'service_0nzbkpl'
+// const EMAILJS_TEMPLATE_ID = 'ytemplate_pfo8i1d'
+// const EMAILJS_PRIVATE_KEY = 'DpuittgIXC3Ppn_kbJCcY'
+// const EMAILJS_PUBLIC_KEY = '8TLmc-F4eClurvKNU'
+
+
+const EMAIL_USER='mini.9liliwi@gmail.com'
+const EMAIL_PASS='aufg lsjj pxds bnqs'
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // We are using Gmail
+  auth: {
+    user: EMAIL_USER, // Your email address
+    pass: EMAIL_PASS, // Your 16-character App Password
+  },
+});
 
 
 
 async function sendVerificationCode(userEmail, code) {
-  // These are the variables we set up in the template
-  const templateParams = {
-    to_email: userEmail,
-    code: code,
-    // from_name: 'Your App Name' // (Optional) if you used {{from_name}}
+  
+  // 3. Define the email options
+  const mailOptions = {
+    from: `Zmoumni`, // Sender's name and email
+    to: userEmail,                             // Who you are sending it to
+    subject: 'Your Verification Code',         // Subject line
+    
+    // This is the simple message you wanted
+    // text :`Salam Allah Alaykom,
+
+    //         We received a request to reset your password.
+
+    //         Enter the following verification code to proceed. This code is valid for 60 seconds.
+
+    //         ${code}
+
+    //         If you did not request a password reset, please ignore this email.
+
+    //         Thanks,
+    //         The ft_transcendence_42 Team`,
+    // text: `Your verification code is: ${code}`,
+    html  : `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Password Recovery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      font-family: 'Fira Sans', Arial, Helvetica, sans-serif;
+      color: #2D3A41;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.08);
+    }
+    .header {
+      background-color: #1B1B1B;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .header span {
+      color: #40be65;
+      font-weight: 500;
+      font-size: 14px;
+      display: block;
+      margin-bottom: 10px;
+    }
+    .header h1 {
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 32px;
+      margin: 0;
+    }
+    .content {
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .content p {
+      color: #555555;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0 0 20px;
+    }
+    .code-box {
+      background-color: #f4f4f4;
+      display: inline-block;
+      padding: 15px 25px;
+      font-size: 24px;
+      font-weight: 800;
+      color: #c83434;
+      border-radius: 6px;
+      letter-spacing: 2px;
+      margin: 10px 0 25px;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      color: #888888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span>Support</span>
+      <h1>Recover Your Account</h1>
+    </div>
+    <div class="content">
+      <p>Salam Allah Alaykom,</p>
+      <p>We received a request to reset your password for the account:</p>
+      <img src="https://postimg.cc/8FV14g5K" alt="User Avatar"  style="border-radius: 50%; margin-bottom: 20px;" />
+      <p>Enter the following verification code to proceed. This code is valid for <strong>60 seconds</strong>:</p>
+      <div class="code-box">${code}</div>
+      <p>If you did not request a password reset, please ignore this email.</p>
+      <p>Thanks,<br><strong>The ft_transcendence_42 Team</strong></p>
+    </div>
+    <div class="footer">
+      <p>© 2025 ft_transcendence_42. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+` 
   };
 
-  const options = {
-    publicKey: EMAILJS_PUBLIC_KEY,
-    privateKey: EMAILJS_PUBLIC_KEY,
-  };
-
+  // 4. Send the email
   try {
-    const result = await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, options);
-    console.log('EmailJS Success:', result.text);
+    let info = await transporter.sendMail(mailOptions);
+    console.log('Message sent: %s', info.messageId);
     return { success: true, message: 'Code sent!' };
   } catch (error) {
-    console.error('EmailJS Error:', error);
+    console.error('Error sending email:', error);
     return { success: false, message: 'Failed to send code.' };
   }
 }
+
 
 // ====== PASSWORD RESET (EMAILJS) ======
 export async function forgotPassword(request, reply) {
