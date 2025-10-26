@@ -15,8 +15,8 @@ import fastifyStatic from '@fastify/static';
 
 const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // --- NEW --- Define the path to your uploads directory
 const uploadsDir = path.join(__dirname, 'uploads');

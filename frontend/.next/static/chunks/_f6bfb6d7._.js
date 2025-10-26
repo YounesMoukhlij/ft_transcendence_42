@@ -61,7 +61,7 @@ var { g: global, __dirname, k: __turbopack_refresh__, m: module, e: exports } = 
 {
 const e = new Error(`Could not parse module '[project]/src/app/(protected)/settings/page.tsx'
 
-Expected ';', '}' or <eof>`);
+Unexpected token `div`. Expected jsx identifier`);
 e.code = 'MODULE_UNPARSEABLE';
 throw e;}}),
 "[project]/node_modules/lucide-react/dist/esm/shared/src/utils.js [app-client] (ecmascript)": ((__turbopack_context__) => {

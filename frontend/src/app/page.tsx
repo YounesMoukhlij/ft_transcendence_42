@@ -63,9 +63,9 @@ export default function Home() {
             <img
                 src={`http://localhost:4444` + user.profile_img || DEFAULT_PROFILE_IMAGE}
                 alt="Profile"
-                width={150}
-                height={150}
-                className="rounded-full mx-auto mb-6 border-4 border-white object-cover"
+                // width={150}
+                // height={150}
+                className=" w-32 h-32 sm:w-36 sm:h-36 rounded-full mx-auto mb-6 border-4 border-white object-cover"
             />
           
             <h2 className="text-3xl font-bold mb-4">{user.username}</h2>

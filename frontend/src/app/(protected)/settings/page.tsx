@@ -605,15 +605,23 @@ const ProfileSettingsPage = () => {
                 </div>
 
                 {/* Email */}
+                {/* Email (Combined and Conditional) */}
                 <div className="md:col-span-2">
-                  <label className="text-gray-400 text-sm mb-1 block">Email</label>
+                  <label className="text-gray-400 text-sm mb-1 block">
+                    {isPasswordAuth ? 'Email' : 'Email (You cannot change your email)'}
+                  </label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="Enter email"
-                    className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white"
+                    disabled={!isPasswordAuth}
+                    className={
+                      isPasswordAuth
+                        ? 'w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white'
+                        : 'w-full  border-2 border-gray-600 rounded-xl p-3 text-gray-500 cursor-not-allowed'
+                    }
                   />
                 </div>
 
