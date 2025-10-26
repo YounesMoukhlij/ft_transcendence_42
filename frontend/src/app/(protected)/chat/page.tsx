@@ -35,12 +35,12 @@ function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, s
 }
 
 async function fetchData(friend_id: number , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
-  const { user } = useUserStore.getState();
-  const friend_id1 = localStorage.getItem("friend_id");
-  if (!friend_id){
-    alert("waloooo");
-    return ;
-  }
+  const { user , updateLastMessage} = useUserStore.getState();
+
+
+  // alert(friend_id);
+  localStorage.setItem('room_select', title);
+  localStorage.setItem('friend_id' , friend_id);
   try {
     const convRes = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,{
       friend_id: friend_id
@@ -51,6 +51,7 @@ async function fetchData(friend_id: number , title: string, setDboubleBlock: (nu
         }
     }
   );
+
     localStorage.setItem('conversationId', convRes.data.conversation_id);
     setDboubleBlock(convRes.data.is_double_block);
     Setuser_block(convRes.data.block_user);
@@ -59,6 +60,7 @@ async function fetchData(friend_id: number , title: string, setDboubleBlock: (nu
       `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`,
       { id: convRes.data.conversation_id }
     );
+    updateLastMessage(msgsRes.data[msgsRes.data.length - 1].message);
     return msgsRes.data;
   } catch (err) {
     console.error('Error fetching conversation or messages:', err);
@@ -79,13 +81,9 @@ type FreindsListProps = {
 };
 
 const FreindsList = ({friend_id ,  photo, title, message = "", status, setConversation, setRoom, setimg, SetSelectContact  }: FreindsListProps) => {
-  console.log("here     ===>  " , friend_id);
-  const { setDboubleBlock, double_block, Setuser_block, user_block } = useUserStore();
+  const { setDboubleBlock, double_block, Setuser_block, user_block , } = useUserStore();
 
 
-
-  localStorage.setItem('room_select', title);
-  localStorage.setItem('friend_id' , friend_id);
   
   const Get_Conversation = async () => {
     setRoom(title);
@@ -94,6 +92,9 @@ const FreindsList = ({friend_id ,  photo, title, message = "", status, setConver
     const conversation = await fetchData(friend_id , title, setDboubleBlock, Setuser_block);
     if (conversation) {
       setConversation(conversation);
+
+      // console.log("last ===> " , );
+      // updateLastMessage(conversation.findLast);
     }
   };
   
@@ -266,6 +267,7 @@ export default function ChatPage() {
           params: { username: user.username }
         });
 
+
         setFriends(res.data);
       } catch (err) {
         console.log(err);
@@ -379,8 +381,8 @@ export default function ChatPage() {
         isSeen: data.data
       };
       addMessage(object);
-
       updateLastMessage(input, friend || '');
+
     } catch (err) {
       console.error(err);
     }
