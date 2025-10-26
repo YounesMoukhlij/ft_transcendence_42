@@ -46,12 +46,38 @@ CREATE TABLE friend_requests (
 -- Game history
 CREATE TABLE game_history (
     game_history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    -- Match info
     user_win INTEGER NOT NULL,
+    user_lose INTEGER NOT NULL,
     win_score INTEGER NOT NULL,
     lose_score INTEGER NOT NULL,
-    user_lose INTEGER NOT NULL,
+
+    -- Match type
+    type TEXT DEFAULT 'casual',          -- 'casual' or 'tournament'
+    tournament_id INTEGER,                -- FK if it's a tournament match
+    tournament_round TEXT,                -- optional, e.g., 'Quarter-Final'
+    
+    -- General data
+    game_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    duration INTEGER,                     -- in seconds or minutes
+    longest_rally INTEGER,                -- max touches before a goal
+    average_rally REAL,                   -- average touches before a goal
+    ball_max_speed REAL,                  -- km/h or m/s
+
+    -- Player data
+    touches_win INTEGER,
+    touches_lose INTEGER,
+    max_points_streak_win INTEGER,
+    max_points_streak_lose INTEGER,
+    max_leading_time_win INTEGER,         -- in seconds
+    max_leading_time_lose INTEGER,        -- in seconds
+
+    blockchain_hash TEXT,                 -- optional, store on-chain reference
+
     FOREIGN KEY (user_win) REFERENCES users(id_user),
-    FOREIGN KEY (user_lose) REFERENCES users(id_user)
+    FOREIGN KEY (user_lose) REFERENCES users(id_user),
+    FOREIGN KEY (tournament_id) REFERENCES tournaments(id_tournament)
 );
 
 -- Achievement
@@ -97,4 +123,14 @@ CREATE TABLE message (
     sender INTEGER NOT NULL,
     FOREIGN KEY ( sender ) REFERENCES users(id_user),
     FOREIGN KEY (conv_id) REFERENCES room(conversation_id)
+);
+
+CREATE TABLE tournaments (
+    id_tournament INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    start_date DATETIME,
+    end_date DATETIME,
+    status TEXT DEFAULT 'upcoming',  -- upcoming, ongoing, finished
+    description TEXT,
+    blockchain_hash TEXT             -- optional, store hash of results on-chain
 );

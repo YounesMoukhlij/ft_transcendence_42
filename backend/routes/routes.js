@@ -21,6 +21,10 @@ import {
     update2FA,
 } from '../modules/userAuth.module.js';
 
+import { getUserStats } from '../modules/profile.module.js';
+import { getMatchHistory } from '../modules/matchHistory.module.js';
+import { getLeagueStats } from '../modules/leagues.module.js';
+
 
 
 
@@ -89,4 +93,20 @@ export default async function routes(fastify, options) {
     fastify.get('/auth/42', Initiate42Auth);
     // Step 2: 42 redirects here with code
     fastify.get('/42Auth', FortyTwoAuth);
+
+
+    // Ayoub
+
+  // Profile Routes
+
+  fastify.get('/getUserStats/:username', getUserStats);
+  
+  // leagues Toutes
+
+  fastify.get('/getLeaguesStats/:league', getLeagueStats);
+
+
+  // MatchHistory
+
+  fastify.get('/getMatchHistory/:username', getMatchHistory);
 }
