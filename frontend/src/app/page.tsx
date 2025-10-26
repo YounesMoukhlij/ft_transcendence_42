@@ -18,6 +18,9 @@ export default function Home() {
   const clearUser = useUserStore((state) => state.clearUser);
   const hasHydrated = useUserStore((state) => state._hasHydrated);
 
+  console.log("image url:", user?.profile_img);
+  
+
   // 1. Client-Side Redirection Logic
   useEffect(() => {
     // Wait until Zustand has finished loading state from localStorage
@@ -58,7 +61,7 @@ export default function Home() {
         
         <div className='flex flex-col items-center justify-center'>
             <img
-                src={user.profile_img || DEFAULT_PROFILE_IMAGE}
+                src={`http://localhost:4444` + user.profile_img || DEFAULT_PROFILE_IMAGE}
                 alt="Profile"
                 width={150}
                 height={150}

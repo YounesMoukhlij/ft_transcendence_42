@@ -9,11 +9,17 @@ import cors from '@fastify/cors';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis'; // Import the Redis client
 
+// --- NEW --- Import plugins for file uploads and serving static files
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 
 const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+
+// --- NEW --- Define the path to your uploads directory
+const uploadsDir = path.join(__dirname, 'uploads');
 
 // Initialize Fastify
 const app = fastify({
@@ -28,6 +34,12 @@ app.decorate('db', db);
 // --- Main Server Function ---
 async function startServer() {
   try {
+    // --- NEW --- Create the 'uploads' directory if it doesn't exist
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      app.log.info('Uploads directory created at:', uploadsDir);
+    }
+
     // --- Redis Client Setup ---
     // 1. Create the Redis client
     console.log('Connecting to Redis...');
@@ -51,6 +63,20 @@ async function startServer() {
     app.register(cors, {
       origin: '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    });
+
+
+        // --- NEW --- Register fastify-static to serve files from /uploads
+    // This makes http://localhost:4444/uploads/your-image.png accessible
+    app.register(fastifyStatic, {
+      root: uploadsDir,
+      prefix: '/uploads/', // The URL prefix to access the files
+    });
+    // --- END NEW ---
+
+    // --- NEW --- Register fastify-multipart to handle file uploads
+    app.register(multipart, {
+        attachFieldsToBody: false, // We will handle parts manually
     });
 
     // --- Authentication Decorator ---

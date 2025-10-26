@@ -5,6 +5,7 @@ import { useUserStore } from '../../../store/userStore'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 
+// Define the base URL of your backend API
 const API_URL = 'http://localhost:4444'
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
 
@@ -16,7 +17,7 @@ interface DeleteConfirmationDialogProps {
   isLoading: boolean
 }
 
-// ... (DeleteConfirmationDialog component remains unchanged)
+// This component remains unchanged
 const DeleteConfirmationDialog = ({ 
   isOpen, 
   onClose, 
@@ -58,7 +59,7 @@ const DeleteConfirmationDialog = ({
 
         <div className="px-8 pb-6">
           <h2 className="text-2xl font-bold text-white text-center mb-3">
-            Delete Account?
+            Delete Account ?
           </h2>
           <p className="text-gray-400 text-center leading-relaxed">
             This action is permanent and cannot be undone. All your data, settings, and content will be permanently deleted.
@@ -113,8 +114,7 @@ const DeleteConfirmationDialog = ({
   )
 }
 
-
-// ... (SwitchButton component remains unchanged)
+// This component remains unchanged
 function SwitchButton({ label, checked, onChange }) {
   return (
     <div className="flex items-center justify-end w-full sm:w-auto gap-3">
@@ -143,7 +143,6 @@ function SwitchButton({ label, checked, onChange }) {
   )
 }
 
-
 const ProfileSettingsPage = () => {
  
   const user = useUserStore((state) => state.user);
@@ -157,10 +156,10 @@ const ProfileSettingsPage = () => {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   
   const [is2FAEnabled, setIs2FAEnabled] = useState(false) 
-  const [previewImage, setPreviewImage] = useState(null)
+  const [previewImage, setPreviewImage] = useState(null) // Kept for UI preview
   
-  // *** CHANGE 1: Add state for the file object ***
-  const [imageFile, setImageFile] = useState(null) 
+  // --- NEW --- State to hold the actual file for upload
+  const [imageFile, setImageFile] = useState(null);
   
   const [activeTab, setActiveTab] = useState('profile') 
 
@@ -175,11 +174,11 @@ const ProfileSettingsPage = () => {
     currentPassword: '',
   })
   
-  // Languages data
+  // Languages data (remains unchanged)
   const languages = [
     { id: 'en', label: 'English', flag: '🇬🇧' },
     { id: 'es', label: 'Spanish', flag: '🇪🇸' },
-    { id: 'tz', label: 'Tamazight', flag: 'ⵣ' },
+    { id: 'tz', label: 'Tamazight', flag: '🇲🇦' },
     { id: 'fr', label: 'French', flag: '🇫🇷' },
   ]
 
@@ -188,6 +187,7 @@ const ProfileSettingsPage = () => {
   const isPasswordAuth = authMethod === 0
   
 
+  // This useEffect remains unchanged
   useEffect(() => {
     if (!hasHydrated) return;
     if (!user) {
@@ -211,6 +211,7 @@ const ProfileSettingsPage = () => {
   }, [user, router, hasHydrated])
 
   
+  // Loading state remains unchanged
   if (!user) {
     return (
       <div className="min-h-screen w-full bg-black text-white flex items-center justify-center">
@@ -219,6 +220,7 @@ const ProfileSettingsPage = () => {
     )
   }
 
+  // This function remains unchanged
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -226,7 +228,7 @@ const ProfileSettingsPage = () => {
 
   const handleImageClick = () => fileInputRef.current?.click()
 
-  // *** CHANGE 2: Update handleImageChange ***
+  // --- MODIFIED --- This function now stores the file and sets a preview
   const handleImageChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -234,116 +236,95 @@ const ProfileSettingsPage = () => {
       toast.error('Please upload a valid image file')
       return
     }
-
-    // Set the state for the raw file upload
-    setImageFile(file) 
     
-    // Set the state for the visual preview
+    // 1. Store the raw file object for uploading
+    setImageFile(file);
+
+    // 2. Create a Base64 preview for the UI
     const reader = new FileReader()
-    reader.onloadend = () => setPreviewImage(reader.result)
+    reader.onloadend = () => setPreviewImage(reader.result as string) // Cast to string
     reader.readAsDataURL(file)
   }
 
-
-  // *** CHANGE 3: Rewrite handleSaveProfile to use FormData ***
+  // --- MODIFIED --- This function now sends FormData
   const handleSaveProfile = async () => {
     setIsLoading(true)
 
     try {
+      // Form validation remains the same
       if (!formData.username.trim()) {
         toast.error('Username is required')
-        setIsLoading(false)
+        setIsLoading(false) // Added this to stop execution
         return
       }
       if (!formData.email.trim()) {
         toast.error('Email is required')
-        setIsLoading(false)
+        setIsLoading(false) // Added this to stop execution
         return
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(formData.email)) {
-          toast.error('Please enter a valid email address')
-          setIsLoading(false)
-          return
+      if (!emailRegex.test(formData.email)) {
+        toast.error('Please enter a valid email address')
+        setIsLoading(false) // Added this to stop execution
+        return
       }
-
-      // Create a new FormData object
-      const dataToSend = new FormData()
-
-      // Append all the text fields
-      dataToSend.append('languages', formData.languages)
-      dataToSend.append('username', formData.username)
-      dataToSend.append('fullname', formData.fullname)
-      dataToSend.append('email', formData.email)
-      dataToSend.append('bio', formData.bio)
-
-      // Only append the image file if a new one was selected
+      
+      // --- NEW --- Create FormData to send file and text
+      const dataToSave = new FormData();
+      
+      // Append all text-based form fields
+      dataToSave.append('languages', formData.languages);
+      dataToSave.append('username', formData.username);
+      dataToSave.append('fullname', formData.fullname);
+      dataToSave.append('email', formData.email);
+      dataToSave.append('bio', formData.bio);
       if (imageFile) {
-        dataToSend.append('profileImage', imageFile) // 'profileImage' is the key your server must look for
+        dataToSave.append('profile_image', imageFile, imageFile.name);
       }
-      // If no new file is added, the server should be programmed to simply not update the image path.
 
+      const token = user.access_token;
+      
       const response = await fetch(`${API_URL}/updateUserInfo`, {
         method: 'POST',
         headers: { 
-            // DO NOT set 'Content-Type': 'application/json'
-            // The browser will automatically set 'multipart/form-data' with the correct boundary
-            Authorization: `Bearer ${user.access_token}`
+          Authorization: `Bearer ${user.access_token}`
         },
-        body: dataToSend, // Send the FormData object
+
+        body: dataToSave,
       })
 
       const data = await response.json()
 
       if (!response.ok || data.code === 409 || !data.success) {
         toast.error(data.message || 'Failed to update profile')
-        setIsLoading(false)
-        return
+        return // Do not proceed on failure
       }
 
       toast.success('Profile updated successfully!')
       
-      // -- IMPORTANT --
-      // Your server should ideally send back the *entire updated user object*
-      // or at least the new image path so the UI can update.
-      // Let's assume the server sends back `{ success: true, user: updatedUserObject }`
-      // or `{ success: true, newImagePath: '/uploads/new-image.png' }`
-
-      if (data.user) {
-        // Best case: server sends back the full user object
-        setUser(data.user)
-      } else {
-        // Fallback: manually update state.
-        // We need the new image path from the server.
-        const newImagePath = data.newImagePath 
-            ? `${API_URL}${data.newImagePath}` // Assumes server path is relative
-            : (previewImage ? previewImage : user.profile_img); // Fallback to preview or old image
-
-        const updatedUser = {
-          ...user,
-          profile_img: newImagePath,
-          languages: formData.languages,
-          username: formData.username,
-          fullname: formData.fullname,
-          email: formData.email,
-          bio: formData.bio,
-        }
-        setUser(updatedUser) 
+      // --- MODIFIED --- Update user state from the backend's response
+      // The backend now sends back the updated user object
+      const updatedUser = {
+        ...user,
+        ...data.user, // Merge the updated fields (e.g., new profile_img path)
       }
+      setUser(updatedUser) 
       
-      // Clear the temporary file and preview
+      // Clear the temporary states
       setPreviewImage(null)
       setImageFile(null)
 
-    } catch (error) {
+    } catch (error)
+    {
       console.error('Profile update error:', error)
       toast.error('An unexpected error occurred while updating profile.')
     } finally {
       setIsLoading(false)
     }
   }
+  
+  // --- All functions below remain unchanged ---
 
-  // ... (handleSaveSecurity component remains unchanged)
   const handleSaveSecurity = async () => {
     setIsLoading(true)
 
@@ -413,7 +394,6 @@ const ProfileSettingsPage = () => {
     }
   }
 
-  // ... (handleToggle2FA component remains unchanged)
   const handleToggle2FA = async () => {
     setIsLoading(true)
     const twofavalue = !is2FAEnabled ? 1 : 0;
@@ -448,8 +428,6 @@ const ProfileSettingsPage = () => {
     }
   }
 
-
-  // ... (handleDeleteAccount component remains unchanged)
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     
@@ -477,14 +455,13 @@ const ProfileSettingsPage = () => {
     }
   }
 
-  // ... (TabButton component remains unchanged)
   const TabButton = ({ tab, icon: Icon, label }) => (
     <button
       onClick={() => setActiveTab(tab)}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+      className={`flex items-center justify-center gap-3  py-3 rounded-xl font-medium  w-1/4 hover:cursor-pointer ${
         activeTab === tab
           ? 'bg-white text-black'
-          : 'text-gray-400 hover:text-white hover:bg-gray-800'
+          : 'text-gray-400 hover:text-white hover:bg-gray-700'
       }`}
     >
       <Icon size={20} />
@@ -492,7 +469,27 @@ const ProfileSettingsPage = () => {
     </button>
   )
 
-  // ... (The rest of the JSX remains unchanged)
+  // --- NEW --- Helper function to determine the correct image URL
+  const getProfileImageUrl = () => {
+    // 1. If there's a local preview (Base64), show it first
+    if (previewImage) {
+      return previewImage;
+    }
+    
+    // Get the current image path from the user state or use default
+    const currentImg = user.profile_img || defaultProfileImg;
+
+    // 2. If the path is from our DB (e.g., /uploads/...), prefix with API_URL
+    if (currentImg && currentImg.startsWith('/uploads/')) {
+      // e.g., http://localhost:4444/uploads/12345.png
+      return `${API_URL}${currentImg}`; 
+    }
+    
+    // 3. Otherwise, it's a full URL (default or from OAuth), use it directly
+    return currentImg;
+  }
+  // --- END NEW ---
+
   return (
     <div className="min-h-screen w-full bg-black text-white p-4 sm:p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
@@ -505,7 +502,7 @@ const ProfileSettingsPage = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap justify-center gap-2 mb-6 ">
           <TabButton tab="profile" icon={User} label="Profile" />
           <TabButton tab="security" icon={Shield} label="Security" />
           <TabButton tab="help" icon={HelpCircle} label="Help" />
@@ -524,8 +521,10 @@ const ProfileSettingsPage = () => {
                   className="relative cursor-pointer group"
                 >
                   <img
-                    src={previewImage || user.profile_img || defaultProfileImg}
-                    className="w-300 h-300 sm:w-36 sm:h-36 rounded-full border-2 border-gray-500 object-cover group-hover:brightness-75 transition"
+                    // --- MODIFIED --- Use the helper function to get the correct src
+                    src={getProfileImageUrl()}
+                    alt="Profile"
+                    className="w-32 h-32 sm:w-36 sm:h-36 rounded-full border-2 border-gray-500 object-cover group-hover:brightness-75 transition"
                   />
                   <div className="absolute inset-0 bg-opacity-60 flex flex-col justify-center items-center rounded-full  group-hover:opacity-100 transition">
                     <Camera color='black' size={30} className="absolute  bg-white bottom-0 right-0 p-0.5 rounded-full" />
@@ -540,7 +539,7 @@ const ProfileSettingsPage = () => {
                 />
               </div>
 
-              {/* Profile Form */}
+              {/* Profile Form (This section remains unchanged) */}
               <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Language Selector */}
                 <div className="md:col-span-2">
@@ -619,7 +618,6 @@ const ProfileSettingsPage = () => {
                 </div>
 
                 {/* Bio */}
-                {/* Hide scroll */}
                 <div className="md:col-span-2 scrollbar-hide">
                   <label className="text-gray-400 text-sm mb-1 block">Bio</label>
                   <textarea
@@ -633,7 +631,7 @@ const ProfileSettingsPage = () => {
                 </div>
               </div>
 
-              {/* Save Button for Profile */}
+              {/* Save Button for Profile (This section remains unchanged) */}
               <div className="flex justify-around p-3 sm:p-8 border-t border-gray-700">
                 <button
                   onClick={handleSaveProfile}
@@ -661,7 +659,7 @@ const ProfileSettingsPage = () => {
             </>
           )}
 
-          {/* SECURITY TAB */}
+          {/* SECURITY TAB (This section remains unchanged) */}
           {activeTab === 'security' && (
             <div className="p-6 sm:p-8">
               <div className="mb-8">
@@ -786,7 +784,7 @@ const ProfileSettingsPage = () => {
             </div>
           )}
 
-          {/* HELP TAB */}
+          {/* HELP TAB (This section remains unchanged) */}
           {activeTab === 'help' && (
             <div className="p-6 sm:p-8">
               <div className="mb-8">
@@ -796,7 +794,7 @@ const ProfileSettingsPage = () => {
 
               <div className="space-y-6">
                 {/* FAQ Section */}
-                <div className="bg-gray-900 rounded-xl p-6">
+                <div className="bg-black rounded-xl p-6">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <HelpCircle size={20} />
                     Frequently Asked Questions
@@ -824,7 +822,7 @@ const ProfileSettingsPage = () => {
                 </div>
 
                 {/* Contact Support */}
-                <div className="bg-gray-900 rounded-xl p-6">
+                <div className="bg-black rounded-xl p-6">
                   <h3 className="text-lg font-semibold mb-4">Contact Support</h3>
                   <p className="text-gray-400 mb-4">
                     If you need further assistance, please contact our support team:
@@ -836,7 +834,7 @@ const ProfileSettingsPage = () => {
                 </div>
 
                 {/* Application Info */}
-                <div className="bg-gray-900 rounded-xl p-6">
+                <div className="bg-black rounded-xl p-6">
                   <h3 className="text-lg font-semibold mb-4">Application Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
@@ -855,7 +853,7 @@ const ProfileSettingsPage = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Dialog (This component remains unchanged) */}
       <DeleteConfirmationDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
