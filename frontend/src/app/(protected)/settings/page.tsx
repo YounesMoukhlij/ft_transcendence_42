@@ -258,7 +258,7 @@ const ProfileSettingsPage = () => {
           , Authorization: `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
-          profile_img: defaultProfileImg,
+          profile_img: imageToSave,
           languages: formData.languages,
           username: formData.username,
           fullname: formData.fullname,
@@ -446,7 +446,7 @@ const ProfileSettingsPage = () => {
   )
 
   return (
-    <div className="h-full w-full bg-black text-white p-4 sm:p-6 md:p-10">
+    <div className="min-h-screen w-full bg-black text-white p-4 sm:p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -468,9 +468,9 @@ const ProfileSettingsPage = () => {
           
           {/* PROFILE TAB */}
           {activeTab === 'profile' && (
-            <div className=''>
+            <>
               {/* Profile Image */}
-              <div className="flex flex-col items-center py-8 border-b border-gray-700 relative h-full ">
+              <div className="flex flex-col items-center py-8 border-b border-gray-700 relative">
                 <div
                   onClick={handleImageClick}
                   className="relative cursor-pointer group"
@@ -611,7 +611,7 @@ const ProfileSettingsPage = () => {
                   Delete Account
                 </button>
               </div>
-            </div>
+            </>
           )}
 
           {/* SECURITY TAB */}

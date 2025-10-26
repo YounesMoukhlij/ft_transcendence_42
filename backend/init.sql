@@ -1,5 +1,6 @@
 -- Users table
--- Users table
+
+
 CREATE TABLE users (
     id_user INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
@@ -8,6 +9,7 @@ CREATE TABLE users (
     profile_img TEXT,
     xp INTEGER DEFAULT 0,
     access_token TEXT,
+    refresh_token TEXT,
     feeden TEXT,
     email TEXT UNIQUE,
     password TEXT,

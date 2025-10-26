@@ -7,9 +7,11 @@ import otplib from 'otplib';
 import qrcode from 'qrcode'; 
 
 
-import { SMTPClient } from 'emailjs';
+import { createClient } from 'redis';
 import emailjs from '@emailjs/nodejs';
-import { log } from 'console';
+
+
+
 
 
 // Constants
@@ -24,26 +26,63 @@ const OAUTH42_SECRET = 's-s4t2ud-fb27f3cc416474264811ebc3fa53dc8ced53c29c11703ce
 const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
 const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
+const EMAILJS_CONFIG = {
+    SERVICE_ID: 'service_olzq7jd',    // From Step 2
+    TEMPLATE_ID: 'template_pfo8i1d',   // From Step 3
+    PUBLIC_KEY: '8TLmc-F4eClurvKNU',     // From Step 4 (Good to have, but we'll use Private)
+    PRIVATE_KEY: 'DpuittgIXC3Ppn_kbJCcY'    // From Step 4 (This is the important one for the backend)
+};
+
+
+
 // token function generator (FIXED)
 export function generateToken(username, email, id_user) {
-    console.log("generateToken");
-    log("generateToken params:", { username, email, id_user });
+    console.log("generateToken called with:", { username, email, id_user });
     if (!username || !email || !id_user) {
         throw new Error("Username, email, and user ID are required to generate token");
     }
 
     const payload = { username, email, id_user };
-    
-    // 💡 FIX: Ensure the token is stored and returned correctly
-    const token = jwt.sign(payload, SECRET, { expiresIn: '200h' });
-
-    console.log("Token generated successfully for user:", username, id_user);
-    console.log("Token:", token);
-
+    const token = jwt.sign(payload, SECRET, { expiresIn: '2h' });
+    console.log(" >> Token generated successfully for user:", username, email, id_user);
     return token;
 }
 
+export function generateRefreshToken(username, email, id_user) {
+    console.log("generateRefreshToken called with:", { username, email, id_user });
+    if (!username || !email || !id_user) {
+        throw new Error("Username, email, and user ID are required to generate refresh token");
+    }
+    const payload = { username, email, id_user };
+    const refreshToken = jwt.sign(payload, SECRET, { expiresIn: '7d' }); // Refresh token valid for 7 days
+    console.log(" >> Refresh token generated successfully for user:", { username, email, id_user });
+    return refreshToken;
+}
+
+
+// export function generate2FASecret(username) {
+//     const secret = otplib.authenticator.generateSecret();
+//     const otpauth = otplib.authenticator.keyuri(username, ISSUER_NAME, secret);
+//     return { secret, otpauth };
+// }
+
+// export async function generate2FAQrCode(otpauth) {
+//     try {
+//         const qrCodeDataURL = await qrcode.toDataURL(otpauth);
+//         return qrCodeDataURL;
+//     } catch (error) {
+//         console.error("Error generating QR code:", error);
+//         throw error;
+//     }
+// }
+
+// export function verify2FACode(secret, token) {
+//     return otplib.authenticator.check(token, secret);
+// }
+
+
 // Helper function to hash passwords
+
 async function hashPassword(password) {
     const salt = await bcrypt.genSalt(10);
     return await bcrypt.hash(password, salt);
@@ -97,14 +136,14 @@ export async function AddUser(request, reply) {
 export async function updateUserInfo(request, reply) {
     console.log("updateUserInfo called with:", request.user);
     const id_user = request.user.id_user;
-    console.log("updateUserInfo id_user:", id_user);
+    
     if (!id_user) {
         return reply.code(400).send({
             success: false,
             message: "Missing user ID"
         });
     }
-    const {profile_image , username, fullname, email, languages , bio} = request.body; 
+    const {profile_img , username, fullname, email, languages , bio} = request.body; 
 
     try {
         const user = request.server.db
@@ -119,7 +158,7 @@ export async function updateUserInfo(request, reply) {
         }
 
         const updatedUser = {
-            profile_img: typeof profile_image !== 'undefined' ? profile_image : user.profile_img, 
+            profile_img: typeof profile_img !== 'undefined' ? profile_img : user.profile_img, 
             username: username || user.username,
             fullname: fullname || user.fullname,
             email: email || user.email,
@@ -316,31 +355,36 @@ export async function login(request, reply) {
         }
 
         // 2FA Check Logic (If implemented)
-        if (user.twoFA_enabled) {
-            return reply.code(200).send({
-                success: true,
-                message: "2FA required",
-                twoFA_required: true,
-                id_user: user.id_user 
-            });
-        }
+        // if (user.twoFA_enabled) {
+        //     return reply.code(200).send({
+        //         success: true,
+        //         message: "2FA required",
+        //         twoFA_required: true,
+        //         id_user: user.id_user 
+        //     });
+        // }
 
         // Regular login success
         const token = generateToken(user.username, user.email, user.id_user);
+        const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         
         // Ensure userWithoutPassword is correctly created after token generation
         const { password: _, twoFA_secret: __, ...userWithoutPassword } = user;
+        request.server.db
+        .prepare("UPDATE users SET access_token = ? , refresh_token = ? WHERE id_user = ?")
+        .run(token, refreshToken, user.id_user);
+        userWithoutPassword.access_token = token; // Add access_token to the user object sent to frontend
+        userWithoutPassword.refresh_token = refreshToken; // Add refresh_token to the user object sent to frontend
+        console.log("user from login:", userWithoutPassword);
 
         // insert token into database
-        request.server.db
-            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-            .run(token, user.id_user);
-        
+
         return reply.code(200).send({ 
             success: true, 
             message: "Login successful",
             user: userWithoutPassword,
-            token: token // Send token to frontend
+            token: token,
+            refreshToken: refreshToken
         });
 
     } catch (error) {
@@ -351,6 +395,50 @@ export async function login(request, reply) {
         });
     }
 }
+export async function refreshToken(request, reply) {
+    console.log("refreshToken function called");
+    const { refreshToken } = request.body;
+
+    if (!refreshToken) {
+        console.log("No refresh token provided in request body");
+        return reply.code(401).send({ success: false, message: "Refresh token is required" });
+    }
+
+    try {
+        const decoded = jwt.verify(refreshToken, SECRET);
+        const user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(decoded.id_user);
+
+        // --- Start of New Detailed Logging ---
+        if (!user) {
+            console.log(`No user found for id_user: ${decoded.id_user}`);
+            return reply.code(401).send({ success: false, message: "Invalid refresh token" });
+        }
+
+        console.log("Token from DB:      ", user.refresh_token);
+        console.log("Token from Request: ", refreshToken);
+
+        if (user.refresh_token !== refreshToken) {
+            console.log("Tokens do NOT match!"); // This is where the error occurs
+            return reply.code(401).send({ success: false, message: "Invalid refresh token" });
+        }
+        // --- End of New Detailed Logging ---
+
+        console.log("Tokens match. Generating new access token for user:", user.username);
+        const newAccessToken = generateToken(user.username, user.email, user.id_user);
+
+        request.server.db
+            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+            .run(newAccessToken, user.id_user);
+
+        console.log("New access token generated and sent");
+        return reply.code(200).send({ success: true, accessToken: newAccessToken });
+
+    } catch (error) {
+        console.error("Error refreshing token:", error.message);
+        return reply.code(401).send({ success: false, message: `Invalid or expired refresh token: ${error.message}` });
+    }
+}
+
 
 // ====== UTILITY FUNCTIONS ======
 
@@ -442,104 +530,7 @@ export async function DeleteUserById(request, reply) {
 
 // ====== PASSWORD RESET (EMAILJS) ======
 
-// EmailJS configuration
-const EMAILJS_CONFIG = {
-    SERVICE_ID: 'service_olzq7jd',
-    TEMPLATE_ID: 'template_y4x9xld', 
-    PRIVATE_KEY: 'DpuittgIXC3Ppn_kbJCcY'
-};
 
-// Keep your existing SMTP client as backup (optional)
-const emailClient = new SMTPClient({
-    user: 'ft_transcendence-support@gmail.com',
-    password: process.env.SMTP_PASS || 'your_email_password',
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    ssl: true,
-    port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 465,
-});
-
-function sendMail(message) {
-    return new Promise((resolve, reject) => {
-        emailClient.send(message, (err, result) => {
-            if (err) return reject(err);
-            resolve(result);
-        });
-    });
-}
-
-// Update your resetPassword function to use EmailJS
-export async function resetPassword(request, reply) {
-  const { email } = request.body;
-
-  try {
-    const user = request.server.db
-      .prepare("SELECT * FROM users WHERE email = ?")
-      .get(email);
-
-    if (!user) {
-      return reply.code(404).send({ message: "User not found" });
-    }
-
-    const newPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await hashPassword(newPassword);
-
-    // Update the password in DB
-    request.server.db
-      .prepare("UPDATE users SET password = ? WHERE email = ?")
-      .run(hashedPassword, email);
-
-    // Send email using EmailJS
-    const templateParams = {
-      to_email: email,
-      username: user.username || '',
-      password: newPassword,
-      from_name: 'Pong Game'
-    };
-
-    try {
-      // Using EmailJS with the correct package
-      await emailjs.send(
-        EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
-        templateParams,
-        {
-          publicKey: EMAILJS_CONFIG.PRIVATE_KEY, // Note: Use publicKey for @emailjs/nodejs
-        }
-      );
-      
-      console.log('Password reset email sent successfully via EmailJS');
-      
-    } catch (err) {
-      console.error('Failed to send reset email via EmailJS:', err);
-      
-      // Fallback to SMTP client if EmailJS fails
-      console.log('Trying fallback SMTP method...');
-      try {
-        const mailMessage = {
-          text: `Hey ${user.username || ''}, your new password is: ${newPassword}, you can change it after logging in.\nDon't share it with anyone!`,
-          from: process.env.SMTP_FROM || 'Pong Game <ft_transcendence-support@gmail.com>',
-          to: email,
-          subject: 'Your new password',
-        };
-        
-        await sendMail(mailMessage);
-        console.log('Password reset email sent successfully via SMTP fallback');
-        
-      } catch (smtpErr) {
-        console.error('Failed to send reset email via SMTP fallback:', smtpErr);
-        return reply.code(500).send({ message: 'Error sending reset email' });
-      }
-    }
-
-    return reply.code(200).send({
-      success: true,
-      message: "Password updated successfully. Check your email for the new password."
-    });
-  } catch (error) {
-    console.error("Error updating password:", error);
-    return reply.code(500).send({ message: "Error updating password" });
-  }
-}
 
 // ====== GOOGLE OAUTH ======
 
@@ -557,7 +548,6 @@ export async function GoogleAuth(request, reply) {
     }
 
     try {
-        // Exchange authorization code for access token
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -583,7 +573,7 @@ export async function GoogleAuth(request, reply) {
 
         const googleUser = await userResponse.json();
 
-        // Check if user already exists
+        // Check if user already exists with the given email and username 
         const existingUser = request.server.db
             .prepare("SELECT * FROM users WHERE email = ?")
             .get(googleUser.email);
@@ -592,16 +582,14 @@ export async function GoogleAuth(request, reply) {
         let isNewUser = false;
 
         if (existingUser) {
-            console.log("Existing Google user");
             // User exists - log them in
             userId = existingUser.id_user;
             isNewUser = false;
-            // Update access token
-            console.log("vataar >>>", existingUser);
-            const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user); // 💡 FIX: Capture token
+            const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user);
+            const refreshToken = generateRefreshToken(existingUser.username, existingUser.email, existingUser.id_user);
             request.server.db
-                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId); // 💡 FIX: Use token
+                .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
+                .run(token, refreshToken, userId); // 💡 FIX: Use token
         } else {
             console.log("New Google user, creating account");
             // const token = generateToken(googleUser.name, googleUser.email, googleUser.id_user); // 💡 FIX: Capture token
@@ -616,15 +604,15 @@ export async function GoogleAuth(request, reply) {
             );
             userId = result.lastInsertRowid;
             isNewUser = true;
-            // console.log("New Google user created:", result.lastInsertRowid);
+            // console.log("New Google user created:", result.lastInsertRowid)
 
-            // generate token for new user
-            const token = generateToken(googleUser.username, googleUser.email, userId);
+            const token = generateToken(googleUser.given_name, googleUser.email, userId);
+            const refreshToken = generateRefreshToken(googleUser.given_name, googleUser.email, userId);
             // store token in db
             request.server.db
-                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId); // 💡 FIX: Use token
-        
+                .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
+                .run(token, refreshToken, userId); 
+
         }
     
         return reply.redirect(`${FRONTEND_URL}/signIn/?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}`);
@@ -688,10 +676,11 @@ export async function FortyTwoAuth(request, reply) {
             userId = existingUser.id_user;
             isNewUser = false;
             // Update access token
-            const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user); // 💡 FIX: Capture token
+            const token = generateToken(existingUser.username, existingUser.email, existingUser.id_user);
+            const refreshToken = generateRefreshToken(existingUser.username, existingUser.email, existingUser.id_user);
             request.server.db
-                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId); // 💡 FIX: Use token
+                .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
+                .run(token, refreshToken, userId);
         } else {
             // const token = generateToken(fortyTwoUser.login, fortyTwoUser.email, fortyTwoUser.id_user); // 💡 FIX: Capture token
             const insertQuery = request.server.db
@@ -706,10 +695,11 @@ export async function FortyTwoAuth(request, reply) {
             userId = result.lastInsertRowid;
             isNewUser = true;
             const token = generateToken(fortyTwoUser.login, fortyTwoUser.email, userId);
+            const refreshToken = generateRefreshToken(fortyTwoUser.login, fortyTwoUser.email, userId);
             // store token in db
             request.server.db
-                .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-                .run(token, userId); // 💡 FIX: Use token
+                .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
+                .run(token, refreshToken, userId);
             // console.log("New 42 user created:", result.lastInsertRowid);
         }
 
@@ -721,3 +711,126 @@ export async function FortyTwoAuth(request, reply) {
         return reply.redirect(`${FRONTEND_URL}?error=auth_failed`);
     }
 }
+
+// ====== PASSWORD RESET (EMAILJS) ======
+export async function forgotPassword(request, reply) {
+    const { email } = request.body;
+    const redis = request.server.redis;
+
+    if (!email) {
+        return reply.code(400).send({ success: false, message: "Email is required." });
+    }
+
+    try {
+        const user = request.server.db.prepare("SELECT username FROM users WHERE email = ?").get(email);
+        if (!user) {
+            // This is a good security practice to prevent email enumeration.
+            console.log(`Password reset attempt for non-existent email: ${email}`);
+            return reply.code(200).send({ success: true, message: "If your email is in our records, you will receive a code." });
+        }
+
+        // Use Math.random() for broader Node.js compatibility.
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        await redis.set(`reset:${email}`, code, { EX: 60 }); // Expires in 60 seconds
+
+        const templateParams = {
+            to_email: email,
+            username: user.username || 'there',
+            code: code,
+        };
+
+        await emailjs.send(
+            EMAILJS_CONFIG.SERVICE_ID,
+            EMAILJS_CONFIG.TEMPLATE_ID,
+            templateParams,
+            {
+                publicKey: EMAILJS_CONFIG.PUBLIC_KEY,
+                privateKey: EMAILJS_CONFIG.PRIVATE_KEY, // The private key is essential for Node.js
+            }
+        );
+        
+        console.log(`Verification code sent to ${email}`);
+        return reply.code(200).send({ success: true, message: "A verification code has been sent to your email." });
+
+    } catch (error) {
+        console.error("Error in sendVerificationCode:", error.text || error);
+        return reply.code(500).send({ success: false, message: "Failed to send verification code." });
+    }
+}
+
+// --- STEP 2: Verify the Code and Create a Temporary Token ---
+export async function verifyCode(request, reply) {
+    const { email, code } = request.body;
+    const redis = request.server.redis;
+
+    if (!email || !code) {
+        return reply.code(400).send({ success: false, message: "Email and code are required." });
+    }
+
+    try {
+        const redisKey = `reset:${email}`;
+        const storedCode = await redis.get(redisKey);
+
+        if (!storedCode || storedCode !== code) {
+            return reply.code(400).send({ success: false, message: "Invalid or expired code." });
+        }
+
+        // The code is correct, so delete it to prevent reuse.
+        await redis.del(redisKey);
+
+        // Generate a short-lived JWT token that gives the user permission to change their password.
+        const user = request.server.db.prepare("SELECT id_user, username, email FROM users WHERE email = ?").get(email);
+        const resetToken = jwt.sign(
+            { id_user: user.id_user, email: user.email, purpose: 'password-reset' },
+            SECRET,
+            { expiresIn: '5m' } // This token is only valid for 5 minutes
+        );
+
+        return reply.code(200).send({ success: true, message: "Code verified.", resetToken: resetToken });
+
+    } catch (error) {
+        console.error("Error in verifyCode:", error);
+        return reply.code(500).send({ success: false, message: "An error occurred during code verification." });
+    }
+}
+
+// --- STEP 3: Reset the Password Using the Temporary Token ---
+export async function resetPasswordWithToken(request, reply) {
+    const { resetToken, newPassword } = request.body;
+
+    if (!resetToken || !newPassword) {
+        return reply.code(400).send({ success: false, message: "Token and new password are required." });
+    }
+
+    try {
+        // Verify the temporary token.
+        const decoded = jwt.verify(resetToken, SECRET);
+
+        // Extra check to ensure this token was for password reset.
+        if (decoded.purpose !== 'password-reset') {
+            return reply.code(401).send({ success: false, message: "Invalid token purpose." });
+        }
+
+        const hashedPassword = await hashPassword(newPassword);
+
+        // Update the password in the database.
+        const result = request.server.db
+            .prepare("UPDATE users SET password = ? WHERE id_user = ?")
+            .run(hashedPassword, decoded.id_user);
+
+        if (result.changes === 0) {
+            return reply.code(404).send({ success: false, message: "User not found." });
+        }
+
+        return reply.code(200).send({ success: true, message: "Password has been reset successfully." });
+
+    } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError) {
+            return reply.code(401).send({ success: false, message: "Invalid or expired token." });
+        }
+        console.error("Error in resetPasswordWithToken:", error);
+        return reply.code(500).send({ success: false, message: "An error occurred while resetting the password." });
+    }
+}
+
