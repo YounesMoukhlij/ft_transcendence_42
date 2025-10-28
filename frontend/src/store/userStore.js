@@ -83,7 +83,7 @@ export const useUserStore = create(
   updateFriendStatus: (status, friend) => 
     set((state) => ({
       friends: state.friends.map((f) =>
-        f.username === friend ? { ...f, status } : f
+        f.id_user == friend ? { ...f, status } : f
       ),
     })),
   

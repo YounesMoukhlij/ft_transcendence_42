@@ -13,6 +13,7 @@ import { FaArrowRight } from "react-icons/fa";
 import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 import  {useUserStore}  from '../../../store/userStore';
 import getFormattedDate from './tools'
+import { stat } from 'fs';
 
 interface Friend {
   username: string;
@@ -37,8 +38,6 @@ function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, s
 async function fetchData(friend_id: number , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
   const { user , updateLastMessage} = useUserStore.getState();
 
-
-  // alert(friend_id);
   localStorage.setItem('room_select', title);
   localStorage.setItem('friend_id' , friend_id);
   try {
@@ -80,7 +79,7 @@ type FreindsListProps = {
   SetSelectContact: (selected: boolean) => void;
 };
 
-const FreindsList = ({friend_id ,  photo, title, message = "", status, setConversation, setRoom, setimg, SetSelectContact  }: FreindsListProps) => {
+const FreindsList = ({friend_id ,  photo, title, message = "test", status, setConversation, setRoom, setimg, SetSelectContact  }: FreindsListProps) => {
   const { setDboubleBlock, double_block, Setuser_block, user_block , } = useUserStore();
 
 
@@ -92,12 +91,10 @@ const FreindsList = ({friend_id ,  photo, title, message = "", status, setConver
     const conversation = await fetchData(friend_id , title, setDboubleBlock, Setuser_block);
     if (conversation) {
       setConversation(conversation);
-
-      // console.log("last ===> " , );
-      // updateLastMessage(conversation.findLast);
     }
   };
   
+
   return (
     <div onClick={Get_Conversation} className="flex w-full h-full hover:flex hover:cursor-pointer hover:bg-[#515151] hover:backdrop-blur-[10px] hover:rounded-[20px]">
       <div className="flex-col pl-2 pt-4">
@@ -112,7 +109,7 @@ const FreindsList = ({friend_id ,  photo, title, message = "", status, setConver
         </div>
         <div className='last-message'>
           <p className="text-xs sm:text-sm md:text-base">
-            {message?.length > 30 ? message.substr(0, 26) + "..." : message}
+            {message?.length > 30 ? message.substr(0, 20) + "..." : message}
           </p>
         </div>
       </div>
@@ -177,6 +174,7 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test
             : friends
               .sort((a, b) => new Date(b.LastMessageTime).getTime() - new Date(a.LastMessageTime).getTime())
               .map((friend, index) => (
+                  console.log("heeeeel  , " , friend.status),
                 <div key={index}>
                   <FreindsList
                     friend_id={friend.id_user}
@@ -253,6 +251,8 @@ export default function ChatPage() {
         SetSelectContact(false);
       } else if (type === "status") {
         updateFriendStatus(data.status, data.friend);
+        // console.log("here");
+        console.log(data);
       }
       else if (type === "test") {
         addFriend(data);
@@ -269,6 +269,7 @@ export default function ChatPage() {
 
 
         setFriends(res.data);
+        console.log(res.data);
       } catch (err) {
         console.log(err);
       }
