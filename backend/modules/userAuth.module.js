@@ -9,29 +9,39 @@ import qrcode from 'qrcode';
 
 import { createClient } from 'redis';
 import emailjs from '@emailjs/nodejs';
+import {SMTPClient} from 'emailjs';
+// import nodemailer
+import nodemailer from 'nodemailer';
+import { text } from 'stream/consumers';
 
 
+// --- Imports for file system handling ---
+import fs from 'fs';
+import path from 'path'; // <-- ADD THIS LINE
+import { promisify } from 'util';
+import stream from 'stream';
+import pump from 'pump';
 
-
+const pipeline = promisify(stream.pipeline);
 
 // Constants
 const DEFAULT_PROFILE_IMAGE = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg";
 const GOOGLE_CLIENT_ID = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com";
 const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 const GOOGLE_CLIENT_SECRET = "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";
-const GOOGLE_REDIRECT_URI = "http://LOCALHOST:4444/GoogleAuth";
+const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
 const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
 const OAUTH42_SECRET = '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';
-const OAUTH42_CALLBACK = 'http://LOCALHOST:4444/42Auth';
+const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
 const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
-const EMAILJS_CONFIG = {
-    SERVICE_ID: 'service_olzq7jd',    // From Step 2
-    TEMPLATE_ID: 'template_pfo8i1d',   // From Step 3
-    PUBLIC_KEY: '8TLmc-F4eClurvKNU',     // From Step 4 (Good to have, but we'll use Private)
-    PRIVATE_KEY: 'DpuittgIXC3Ppn_kbJCcY'    // From Step 4 (This is the important one for the backend)
-};
+// const EMAILJS_CONFIG = {
+//     SERVICE_ID: 'service_olzq7jd',    // From Step 2
+//     TEMPLATE_ID: 'template_pfo8i1d',   // From Step 3
+//     PUBLIC_KEY: '8TLmc-F4eClurvKNU',     // From Step 4 (Good to have, but we'll use Private)
+//     PRIVATE_KEY: 'DpuittgIXC3Ppn_kbJCcY'    // From Step 4 (This is the important one for the backend)
+// };
 
 
 
@@ -774,6 +784,141 @@ export async function FortyTwoAuth(request, reply) {
     }
 }
 
+
+
+
+// const EMAILJS_SERVICE_ID = 'service_0nzbkpl'
+// const EMAILJS_TEMPLATE_ID = 'ytemplate_pfo8i1d'
+// const EMAILJS_PRIVATE_KEY = 'DpuittgIXC3Ppn_kbJCcY'
+// const EMAILJS_PUBLIC_KEY = '8TLmc-F4eClurvKNU'
+
+
+const EMAIL_USER='mini.9liliwi@gmail.com'
+const EMAIL_PASS='aufg lsjj pxds bnqs'
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // We are using Gmail
+  auth: {
+    user: EMAIL_USER, // Your email address
+    pass: EMAIL_PASS, // Your 16-character App Password
+  },
+});
+
+
+
+async function sendVerificationCode(userEmail, code) {
+  
+  const mailOptions = {
+    from: `Zmoumni`,
+    to: userEmail,
+    subject: 'Your Verification Code', 
+    html  : `   <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>Password Recovery</title>
+                <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700;800&display=swap" rel="stylesheet" />
+                <style>
+                    body {
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                    font-family: 'Fira Sans', Arial, Helvetica, sans-serif;
+                    color: #2D3A41;
+                    -webkit-font-smoothing: antialiased;
+                    }
+                    .container {
+                    max-width: 600px;
+                    margin: 30px auto;
+                    background: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.08);
+                    }
+                    .header {
+                    background-color: #1B1B1B;
+                    text-align: center;
+                    padding: 40px 20px;
+                    }
+                    .header span {
+                    color: #40be65;
+                    font-weight: 500;
+                    font-size: 14px;
+                    display: block;
+                    margin-bottom: 10px;
+                    }
+                    .header h1 {
+                    color: #ffffff;
+                    font-weight: 800;
+                    font-size: 32px;
+                    margin: 0;
+                    }
+                    .content {
+                    padding: 40px 30px;
+                    text-align: center;
+                    }
+                    .content p {
+                    color: #555555;
+                    font-size: 16px;
+                    line-height: 1.6;
+                    margin: 0 0 20px;
+                    }
+                    .code-box {
+                    background-color: #f4f4f4;
+                    display: inline-block;
+                    padding: 15px 25px;
+                    font-size: 24px;
+                    font-weight: 800;
+                    color: #c83434;
+                    border-radius: 6px;
+                    letter-spacing: 2px;
+                    margin: 10px 0 25px;
+                    }
+                    .footer {
+                    text-align: center;
+                    padding: 20px;
+                    font-size: 13px;
+                    color: #888888;
+                    }
+                </style>
+                </head>
+                <body>
+                <div class="container">
+                    <div class="header">
+                    <span>Support</span>
+                    <h1>Recover Your Account</h1>
+                    </div>
+                    <div class="content">
+                    <p>Salam Allah Alaykom,</p>
+                    <p>We received a request to reset your password for the account:</p>
+                    <img src="https://postimg.cc/8FV14g5K" alt="User Avatar"  style="border-radius: 50%; margin-bottom: 20px;" />
+                    <p>Enter the following verification code to proceed. This code is valid for <strong>60 seconds</strong>:</p>
+                    <div class="code-box">${code}</div>
+                    <p>If you did not request a password reset, please ignore this email.</p>
+                    <p>Thanks,<br><strong>The ft_transcendence_42 Team</strong></p>
+                    </div>
+                    <div class="footer">
+                    <p>© 2025 ft_transcendence_42. All rights reserved.</p>
+                    </div>
+                </div>
+                </body>
+                </html>
+` 
+  };
+
+  // 4. Send the email
+  try {
+    let info = await transporter.sendMail(mailOptions);
+    console.log('Message sent: %s', info.messageId);
+    return { success: true, message: 'Code sent!' };
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return { success: false, message: 'Failed to send code.' };
+  }
+}
+
+
 // ====== PASSWORD RESET (EMAILJS) ======
 export async function forgotPassword(request, reply) {
     const { email } = request.body;
@@ -784,33 +929,51 @@ export async function forgotPassword(request, reply) {
     }
 
     try {
+        // check if auth_method is 0 (normal auth)
+        const authMethod = request.server.db.prepare("SELECT auth_method FROM users WHERE email = ?").get(email);
+        if (!authMethod || authMethod.auth_method !== 0) {
+            return reply.code(400).send(
+                {
+                    success: false, 
+                    message: "Password reset is only available for standard authentication users. Use OAuth to log in."
+                }
+            );
+        }
         const user = request.server.db.prepare("SELECT username FROM users WHERE email = ?").get(email);
         if (!user) {
             // This is a good security practice to prevent email enumeration.
             console.log(`Password reset attempt for non-existent email: ${email}`);
-            return reply.code(200).send({ success: true, message: "If your email is in our records, you will receive a code." });
+            return reply.code(200).send(
+                {
+                    success: true, 
+                    message: "This email does not exist in our databases. :("
+                }
+            );
         }
 
-        // Use Math.random() for broader Node.js compatibility.
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
         
-        await redis.set(`reset:${email}`, code, { EX: 60 }); // Expires in 60 seconds
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        console.log(`Generated code for ${email}: ${code}`);
+        await redis.set(`reset:${email}`, code, { EX: 120 });
 
-        const templateParams = {
-            to_email: email,
-            username: user.username || 'there',
-            code: code,
-        };
+        sendVerificationCode(email, code);
 
-        await emailjs.send(
-            EMAILJS_CONFIG.SERVICE_ID,
-            EMAILJS_CONFIG.TEMPLATE_ID,
-            templateParams,
-            {
-                publicKey: EMAILJS_CONFIG.PUBLIC_KEY,
-                privateKey: EMAILJS_CONFIG.PRIVATE_KEY, // The private key is essential for Node.js
-            }
-        );
+
+        // const templateParams = {
+        //     to_email: email,
+        //     username: user.username || 'there',
+        //     code: code,
+        // };
+
+        // await emailjs.send(
+        //     EMAILJS_CONFIG.SERVICE_ID,
+        //     EMAILJS_CONFIG.TEMPLATE_ID,
+        //     templateParams,
+        //     {
+        //         publicKey: EMAILJS_CONFIG.PUBLIC_KEY,
+        //         privateKey: EMAILJS_CONFIG.PRIVATE_KEY, // The private key is essential for Node.js
+        //     }
+        // );
         
         console.log(`Verification code sent to ${email}`);
         return reply.code(200).send({ success: true, message: "A verification code has been sent to your email." });
@@ -837,8 +1000,6 @@ export async function verifyCode(request, reply) {
         if (!storedCode || storedCode !== code) {
             return reply.code(400).send({ success: false, message: "Invalid or expired code." });
         }
-
-        // The code is correct, so delete it to prevent reuse.
         await redis.del(redisKey);
 
         // Generate a short-lived JWT token that gives the user permission to change their password.
@@ -895,4 +1056,3 @@ export async function resetPasswordWithToken(request, reply) {
         return reply.code(500).send({ success: false, message: "An error occurred while resetting the password." });
     }
 }
-
