@@ -32,7 +32,6 @@ export async function GetNotification(request, reply) {
 }
 
 
-
 export async function DeleteFriendRequest(request , reply){
 
 

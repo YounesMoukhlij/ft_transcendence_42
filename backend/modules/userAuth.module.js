@@ -134,7 +134,7 @@ export async function AddUser(request, reply) {
 
 //  update user info
 export async function updateUserInfo(request, reply) {
-    console.log("updateUserInfo called with:", request.user);
+    // 1. Get user ID from the authenticated request (set by your 'authenticate' decorator)
     const id_user = request.user.id_user;
     
     if (!id_user) {
@@ -143,9 +143,43 @@ export async function updateUserInfo(request, reply) {
             message: "Missing user ID"
         });
     }
-    const {profile_img , username, fullname, email, languages , bio} = request.body; 
 
+    let profileImgPath = null; // Will store the new image path if one is uploaded
+    const formData = {}; // Will store all text fields (username, email, etc.)
+    
     try {
+        // 2. Process the 'multipart/form-data' request stream
+        const parts = request.parts();
+        for await (const part of parts) {
+            if (part.type === 'file') {
+                // --- This is the file part ---
+                if (part.filename) { // Check if a file was actually selected
+                    // a. Create a unique filename to prevent overwrites
+                    const uniqueFilename = `${Date.now()}-${part.filename.replace(/\s/g, '_')}`;
+                    
+                    // b. Define the full path to save the file
+                    //    process.cwd() points to your project's root directory
+                    const savePath = path.join(process.cwd(), 'uploads', uniqueFilename);
+                    
+                    // c. Create a stream to write the file to the 'uploads' folder
+                    const writeStream = fs.createWriteStream(savePath);
+                    
+                    // d. Safely pipe the incoming file data to the write stream
+                    await pipeline(part.file, writeStream);
+
+                    // e. Store the web-accessible path for the database
+                    //    This *must* match the prefix in server.js (fastifyStatic)
+                    profileImgPath = `/uploads/${uniqueFilename}`;
+                    console.log(`File saved: ${profileImgPath}`);
+                }
+            } else {
+                // --- This is a regular text field ---
+                // Store the field's value (e.g., username, email) in the formData object
+                formData[part.fieldname] = part.value;
+            }
+        }
+        
+        // 3. Get the user's current data from the database
         const user = request.server.db
             .prepare("SELECT * FROM users WHERE id_user = ?")
             .get(id_user);
@@ -157,26 +191,52 @@ export async function updateUserInfo(request, reply) {
             });
         }
 
+        // 4. Build the updatedUser object
+        //    Use new data from formData if it exists, otherwise fall back to existing user data
         const updatedUser = {
-            profile_img: typeof profile_img !== 'undefined' ? profile_img : user.profile_img, 
-            username: username || user.username,
-            fullname: fullname || user.fullname,
-            email: email || user.email,
-            languages: languages || user.languages,
-            bio: bio || user.bio
+            // Use the new path if one was uploaded, otherwise keep the user's existing image path
+            profile_img: profileImgPath || user.profile_img, 
+            username: formData.username || user.username,
+            fullname: formData.fullname || user.fullname,
+            email: formData.email || user.email,
+            languages: formData.languages || user.languages,
+            bio: formData.bio || user.bio
         };
         
+        // 5. Check for username or email conflicts
         const userExists = request.server.db
             .prepare("SELECT * FROM users WHERE (username = ? OR email = ?) AND id_user != ?")
             .get(updatedUser.username, updatedUser.email, id_user);
         
         if (userExists) {
+            // If conflict, delete the just-uploaded image (if any) to prevent orphaned files
+            if (profileImgPath) {
+                const newPath = path.join(process.cwd(), profileImgPath);
+                fs.unlink(newPath, (err) => {
+                    if (err) console.error("Error deleting conflicting upload:", newPath, err);
+                });
+            }
             return reply.code(409).send({ 
                 success: false, 
                 message: "Username or email already exists" 
             });
         }
         
+        // 6. [Optional but Recommended] Delete the old profile image
+        //    This runs if a new image was uploaded (profileImgPath is not null)
+        //    AND the old image was not the default one
+        if (profileImgPath && user.profile_img && user.profile_img !== DEFAULT_PROFILE_IMAGE) {
+            const oldPath = path.join(process.cwd(), user.profile_img);
+            // Check if the old file exists before trying to delete it
+            if (fs.existsSync(oldPath)) {
+                fs.unlink(oldPath, (err) => {
+                    if (err) console.error("Failed to delete old image:", oldPath, err);
+                    else console.log("Deleted old image:", oldPath);
+                });
+            }
+        }
+
+        // 7. Update the user in the database
         const query = request.server.db
             .prepare(`UPDATE users SET 
                 profile_img = ?, 
@@ -195,10 +255,11 @@ export async function updateUserInfo(request, reply) {
             updatedUser.bio,
             id_user
         );
+
         return reply.code(200).send({
             success: true,
             message: "User updated successfully",
-            user: { id_user, ...updatedUser }
+            user: { ...updatedUser }
         });
 
     } catch (error) {
@@ -209,6 +270,7 @@ export async function updateUserInfo(request, reply) {
         });
     }
 }
+
 
 
 export async function updateUserPassword(request, reply) {
