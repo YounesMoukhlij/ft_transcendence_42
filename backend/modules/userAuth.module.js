@@ -19,11 +19,11 @@ const DEFAULT_PROFILE_IMAGE = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a
 const GOOGLE_CLIENT_ID = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com";
 const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 const GOOGLE_CLIENT_SECRET = "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";
-const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
+const GOOGLE_REDIRECT_URI = "http://LOCALHOST:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
 const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
 const OAUTH42_SECRET = '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';
-const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
+const OAUTH42_CALLBACK = 'http://LOCALHOST:4444/42Auth';
 const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
 const EMAILJS_CONFIG = {

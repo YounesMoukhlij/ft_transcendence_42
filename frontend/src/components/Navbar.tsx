@@ -48,6 +48,9 @@ export default function Navbar()
     await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: notify_id,
+      },
+      headers: {
+        Authorization: `Bearer ${user.access_token}`
       }
     });
   }
@@ -78,6 +81,9 @@ export default function Navbar()
     await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: item.notify_id,
+      },
+      headers: {
+        Authorization: `Bearer ${user.access_token}`
       }
     });
   };
@@ -136,7 +142,7 @@ export default function Navbar()
     const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
-        setNotification(prev => [...prev, {sender_user: data.sender_user,sender_username:data.sender_username , sender_profile_img: data.sender_profile_img}]); 
+        setNotification(prev => [...prev, {sender_user: data.sender_user,sender_username:data.sender_username , sender_profile_img: data.sender_profile_img ,notify_id: data.notify_id }]); 
       }
     };
   

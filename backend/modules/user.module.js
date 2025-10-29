@@ -7,15 +7,18 @@ export async function getConversationId(request, reply) {
 
   
   const authHeader = request.headers['authorization'];
-  console.log(Friend_id ,authHeader);
 
+
+  
   const token = authHeader.split(' ')[1];
   
   if (!Friend_id || !authHeader || !token)
     return reply.code(403).send("");
   
-
+  
+  console.log("hetrere ===============================> ", );
   const decodedObject = jwt.verify(token, SECRET);
+  console.log("hetrere ===============================> ", decodedObject);
 
 
 

@@ -17,9 +17,6 @@ const LeaderBord = ({users}) =>{
 
     try {
       await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendRequestFriend` , { 
-          sender: user.username,
-          friend: object.username ,
-          title:"request friend",
           friend_id: object.id_user
         },{
           headers:{

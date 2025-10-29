@@ -36,7 +36,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:4444/forgotPassword', {
+      const response = await fetch('http://LOCALHOST:4444/forgotPassword', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -66,7 +66,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:4444/verifyCode', {
+      const response = await fetch('http://LOCALHOST:4444/verifyCode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -110,7 +110,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:4444/resetPasswordWithToken', {
+      const response = await fetch('http://LOCALHOST:4444/resetPasswordWithToken', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetToken, newPassword }),

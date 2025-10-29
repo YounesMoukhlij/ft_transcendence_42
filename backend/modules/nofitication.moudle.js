@@ -1,4 +1,3 @@
-import fastify from "fastify";
 const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 import jwt from 'jsonwebtoken';
 
@@ -7,12 +6,18 @@ export async function GetNotification(request, reply) {
 
   const authHeader = request.headers['authorization'];
 
-
-
+  if (!authHeader)
+    reply.code(401).send("missing token");
   
   const token = authHeader.split(' ')[1];
   let decodedObject;
-  decodedObject = jwt.verify(token, SECRET);
+
+  try{
+    decodedObject = jwt.verify(token, SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
   
 
   try {
@@ -22,9 +27,7 @@ export async function GetNotification(request, reply) {
     return reply.send(notifications);
 
   } catch (err) {
-
-    console.error("GetNotification error:", err);
-    reply.code(500).send({ error: "internal server error" });
+    reply.code(500).send("internal server error");
   }
 }
 
@@ -32,65 +35,86 @@ export async function GetNotification(request, reply) {
 
 export async function DeleteFriendRequest(request , reply){
 
+
   const notify_id = request.query.id;
+  const authHeader = request.headers['authorization'];
+
+  if (!authHeader || !notify_id)
+    reply.code(400).send("Missing params");
+  
+  const token = authHeader.split(' ')[1];
+
+  let decodedObject;
+  try{
+    decodedObject = jwt.verify(token, SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
 
   try{
-      const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ?');
-      query.run(notify_id);
-      reply.code(200);
+    const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ? AND getter_user = ?');
+    const result =  query.run(notify_id , decodedObject.id_user );
+    if (result.changes === 0){
+      return reply.code(404).send("notification not found or not authorized");
+    }
+
+    return reply.code(200).send("Friend request deleted successfully");
+
   }catch(err){
-    console.log(err);
+    reply.code(500);
   }
 }
 
 
 export async function sendRequestFriend(request, reply) {
-  const { sender, friend, title  , friend_id} = request.body;
+
+  const { friend_id} = request.body;
 
 
 
 
-  
   const authHeader = request.headers['authorization'];
   
+
+  if ( !friend_id || !authHeader) {
+    return reply.code(400).send("missing params");
+  }
+
+
   const token = authHeader.split(' ')[1];
   let decodedObject;
   
   
   
-  decodedObject = jwt.verify(token, SECRET);
-  
-  
-  
-  if (!title || !sender || !friend) {
-    return reply.code(400).send({ error: 'Title, sender, and friend are required fields.' });
+  try{
+    decodedObject = jwt.verify(token, SECRET);
+  }catch(err){
+    return reply.code(401).send("invalid token ");
   }
-  
-
   
   const socket = request.server.users_socket.get(friend_id.toString());
 
   try {
-
+    const title = "request friend";
     const existsNotify = request.server.db.prepare(`SELECT 1 FROM notification  WHERE getter_user = ? AND title = ? AND sender_user = ? AND notifyBody = ? LIMIT 1`);
-    const exists = existsNotify.get(friend_id, title, decodedObject.id_user, "test");
+    const exists = existsNotify.get(friend_id, title, decodedObject.id_user, "request friend");
 
   if (exists)
-    return reply.code(200);
+    return reply.code(200).send(true);
   
     const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
-    insertQuery.run(friend_id, title, decodedObject.id_user, "test");
+    insertQuery.run(friend_id, title, decodedObject.id_user, "request friend");
 
-
-
+    
     if (socket) {
-
-      const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE username = ?");
-      const result = query1.get(sender);
-
+      
+      const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
+      const result = query1.get(decodedObject.id_user);
+      
       const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
       const res = query2.get(friend_id, decodedObject.id_user);
-
+      
       const object = {
         getter_user: friend_id,
         sender_user: decodedObject.id_user,
@@ -121,28 +145,29 @@ export async function AddFriend( request  , reply){
   
   const authHeader = request.headers['authorization'];
   
-  if ( !authHeader)
-    return reply.code(403),send("");
-  
+  if ( !authHeader || !Freind_id)
+    return reply.code(400),send(false);
   
   const token = authHeader.split(' ')[1];
+  let decodedObject;
   
   
-  const decodedObject = jwt.verify(token, SECRET);
-
-
+  try{
+    decodedObject = jwt.verify(token, SECRET);
+  }catch(err){
+    return reply.code(401).send("invalid token ");
+  }
+  
   const socket = request.server.users_socket.get(Freind_id.toString());
 
 
   try{
-
       const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
       Fquery.run(decodedObject.id_user , Freind_id);
 
       const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
       const members = [decodedObject.id_user, Freind_id].join(',');
       conversationquery.run(members);
-
 
 
       if (socket){
@@ -163,9 +188,6 @@ export async function AddFriend( request  , reply){
 
       reply.code(200).send("");
     }catch(err){
-
-      console.log(err);
-
       reply.code(500);
   }
 }

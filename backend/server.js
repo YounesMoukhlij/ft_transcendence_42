@@ -86,12 +86,10 @@ async function startServer() {
 
 
     for (let i = 0; i < allFriends.length; i++) {
-      console.log(allFriends[i]);
       const socket = users_socket.get(allFriends[i].toString());
 
       if(socket){
 
-        console.log("wwwwwwwwwwwwwwwwwwwwwwwwwwwwww=> here");
         const data= {
           status: mode,
           friend: id
@@ -117,7 +115,8 @@ async function startServer() {
       console.log("here new user ==============>" , id);
       statusSahre(id , 1);
 
-
+      const query = db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
+      query.run(1 , id);
 
     // const status = waitingMessages.has(id);
 
@@ -132,12 +131,12 @@ async function startServer() {
     
 
       socket.on('close', () => {
-      statusSahre(id , 0);
+        statusSahre(id , 0);
 
         // console.log(`Client ${id} disconnected`);
         // users_socket.delete(id);
-        // db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
-        // query.run(0 , id);
+        const query = db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
+        query.run(0 , id);
         // statusSahre(id , socket , 0);
       });
     });

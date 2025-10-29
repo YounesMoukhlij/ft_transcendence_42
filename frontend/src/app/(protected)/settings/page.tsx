@@ -5,7 +5,7 @@ import { useUserStore } from '../../../store/userStore'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 
-const API_URL = 'http://localhost:4444'
+const API_URL = 'http://LOCALHOST:4444'
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
 
 

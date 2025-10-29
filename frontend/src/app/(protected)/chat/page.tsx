@@ -59,7 +59,8 @@ async function fetchData(friend_id: number , title: string, setDboubleBlock: (nu
       `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`,
       { id: convRes.data.conversation_id }
     );
-    updateLastMessage(msgsRes.data[msgsRes.data.length - 1].message);
+
+    updateLastMessage(msgsRes.data[msgsRes.data.length - 1]?.message);
     return msgsRes.data;
   } catch (err) {
     console.error('Error fetching conversation or messages:', err);
@@ -251,7 +252,6 @@ export default function ChatPage() {
         SetSelectContact(false);
       } else if (type === "status") {
         updateFriendStatus(data.status, data.friend);
-        // console.log("here");
         console.log(data);
       }
       else if (type === "test") {
@@ -476,13 +476,23 @@ export default function ChatPage() {
                 {dropmenu && (
                   <div className="absolute right-0 top-12 z-50">
                     <div className="flex flex-col w-24 sm:w-28 lg:w-32">
-                      <div className="w-full border p-2 border-solid text-center bg-black hover:bg-amber-400 text-xs sm:text-sm">
-                        <button onClick={() => handleBlock(room, setDboubleBlock, double_block, Setuser_block, user_block)}>
-                          Block
-                        </button>
+                      <div className="w-full h-10 border border-solid bg-black hover:bg-amber-400 text-xs sm:text-sm">
+                      {
+                      (double_block === 1 && user_block === user.username) || double_block === 2 ? (
+                          <button
+                            className="w-full h-full" onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block) }>
+                            Deblock
+                          </button>
+                        ) : (
+                          <button
+                            className="w-full h-full"
+                            onClick={() => handleBlock(room, setDboubleBlock, double_block, Setuser_block, user_block)}>Block
+                          </button>
+                       )
+                      }
                       </div>
-                      <div className="w-full border p-2 border-solid text-center bg-black hover:bg-amber-400 text-xs sm:text-sm">
-                        <button onClick={() => handleUnfriend(room, removeFriend)}>
+                      <div className="w-full border h-10 border-solid text-center bg-black hover:bg-amber-400 text-xs sm:text-sm">
+                        <button  className='w-full h-full' onClick={() => handleUnfriend(room, removeFriend)}>
                           Unfriend
                         </button>
                       </div>
