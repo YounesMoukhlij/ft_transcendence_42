@@ -38,12 +38,12 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
   // const players = useMemo(() => generatePlayers(league), [league]) // we will not need this when we use API
   const players = data;
   const filteredAndSortedPlayers = useMemo(() => {
-    let filtered = players.filter((player) => player.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    let filtered = players?.filter((player) => player.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
 
     // Apply sorting
     if (sortField && sortDirection) {
-      filtered.sort((a, b) => {
+      filtered?.sort((a, b) => {
         const aVal = a[sortField]
         const bVal = b[sortField]
 
@@ -112,7 +112,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
             {getLeagueBadge()}
           </div>
           <div className="text-muted-foreground">
-            {filteredAndSortedPlayers.length} of {players.length} players
+            {filteredAndSortedPlayers?.length} of {players?.length} players
           </div>
         </div>
 
@@ -207,7 +207,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedPlayers.map((player, index) => 
+              {filteredAndSortedPlayers?.map((player, index) => 
               (
                 <TableRow key={player.id} className="hover:bg-muted/30 transition-colors border-border">
                   <TableCell className="font-medium text-card-foreground">
@@ -255,7 +255,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
           </Table>
         </div>
 
-        {filteredAndSortedPlayers.length === 0 && (
+        {filteredAndSortedPlayers?.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">No players found matching your criteria.</div>
         )}
       </div>

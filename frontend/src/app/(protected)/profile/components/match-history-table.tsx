@@ -6,6 +6,7 @@ import { GameModalDemo } from "./ui/modal"
 import { formatDuration } from "../hooks/useCountUp"
 import { useState, useEffect} from "react"
 import { GameDetails } from "@/types/user"
+import { useUserStore } from "@/store/userStore";
 import axios from "axios"
 
 interface MatchHistoryTableProps {
@@ -13,12 +14,42 @@ interface MatchHistoryTableProps {
 }
 
 export function MatchHistoryTable({username} : MatchHistoryTableProps) {
+  const { user: currentUser } = useUserStore();
   const [selectedMatch, setSelectedMatch] = useState<GameDetails | null>(null)
   const [matchHistory, setMatchHistory] = useState<GameDetails[] | null>(null)
+  const [error, setError] = useState<string | null>(null);
+  const targetUsername = username;
 
-  useEffect(() => {
-    axios.get<GameDetails[]>(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMatchHistory/${username}`).then(res => {setMatchHistory(res.data);});
-  }, [username]);
+
+  console.log(currentUser.username, "ordered match history of ", targetUsername);
+
+   useEffect(() => {
+    const fetchMatchHistory = async () => {
+      if (!currentUser?.access_token) {
+        setError("You must be logged in to view profiles");
+        return;
+      }
+      if (!targetUsername) {
+        setError("Username is missing");
+        return;
+      }
+
+      try {
+        const res = await axios.get<GameDetails[]>(
+          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMatchHistory/${targetUsername}`,
+          {
+            headers: { Authorization: `Bearer ${currentUser.access_token}` },
+          }
+        );
+        setMatchHistory(res.data);
+      } catch (err) {
+        console.error(err);
+        setError(`Failed to load profile for ${targetUsername}`);
+      }
+    };
+
+    fetchMatchHistory();
+  }, [targetUsername, currentUser]);
 
   return (
     <Card>

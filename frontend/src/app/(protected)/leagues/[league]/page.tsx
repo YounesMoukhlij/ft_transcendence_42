@@ -1,45 +1,58 @@
+"use client"
+import { use, useState, useEffect } from 'react';
 
-// import { useState } from "react"
+
 import { PlayerTable } from "@/app/(protected)/leagues/player-table"
 import axios from "axios"
 import "@/app/(protected)/profile/style.css"
+import { useUserStore } from "@/store/userStore";
+
+
 
 interface LeaguePageProps {
-  params: { league: string };
+  params: Promise<{ league : string }>; // dynamic route
 }
-export default async function LeagueTable({ params }: LeaguePageProps) {
-  const leagueParam = params.league;
 
-  if (!leagueParam) {
-    return <div>League param is missing</div>;
-  }
+export default  function LeagueTable({ params }: LeaguePageProps) {
+ const { league } = use(params); // destructure to get the string
+  const { user: currentUser } = useUserStore();
+  const [leagueStats, setLeagueStats] = useState();
+  const [error, setError] = useState<string | null>(null);
+  const targetleague = league;
+  console.log("Hello");
+useEffect(() => {
+    const fetchMatchHistory = async () => {
+      if (!currentUser?.access_token) {
+        setError("You must be logged in to view profiles");
+        return;
+      }
+      if (!targetleague) {
+        setError("Username is missing");
+        return;
+      }
 
-  try {
-    const url = `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getLeaguesStats/${leagueParam}`;
+      try {
+        const res = await axios.get(
+          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getLeaguesStats/${targetleague}`,
+          {
+            headers: { Authorization: `Bearer ${currentUser.access_token}` },
+          }
+        );
+        setLeagueStats(res.data);
+      } catch (err) {
+        console.error(err);
+        setError(`Failed to load profile for ${targetleague}`);
+      }
+    };
 
-    // Use fetch for SSR
-    const res = await fetch(url);
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch league stats: ${res.status}`);
-    }
-
-    const leagueStats = await res.json();
+    fetchMatchHistory();
+  }, [targetleague, currentUser]);
 
     return (
       <div className="min-h-screen">
         <div className="container">
-          <PlayerTable league={leagueParam} data={leagueStats} />
+          <PlayerTable league={targetleague} data={leagueStats} />
         </div>
       </div>
     );
-  } catch (err) {
-    console.error("Error fetching league data:", err);
-    return (
-      <div>
-        League not found or failed to load: {leagueParam}
-      </div>
-    );
-  }
 }
-
