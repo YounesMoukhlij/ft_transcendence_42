@@ -1,8 +1,24 @@
-import fastify from "fastify";
+const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
+import jwt from 'jsonwebtoken';
 
 export async function getMatchHistory(request, reply) {
-  const username = request.params.username; // get from query ?username=ayoub
-  console.log("Get Match History:", username);
+  const authHeader = request.headers['authorization'];
+  
+    if (!authHeader)
+      reply.code(401).send("missing token");
+      
+    const token = authHeader.split(' ')[1];
+    let decodedObject;
+  
+    try{
+      decodedObject = jwt.verify(token, SECRET);
+    }
+    catch(err){
+      return reply.code(401).send("Invalid token");
+    }
+   
+  const username = request.params.username;
+
 
   try {
         const MatchHistoryQuery = request.server.db.prepare(

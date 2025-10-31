@@ -21,7 +21,7 @@ import {
     update2FA,
 } from '../modules/userAuth.module.js';
 
-import { getUserStats } from '../modules/profile.module.js';
+import { getUserStats, getUserStatsbyUsername } from '../modules/profile.module.js';
 import { getMatchHistory } from '../modules/matchHistory.module.js';
 import { getLeagueStats } from '../modules/leagues.module.js';
 
@@ -99,7 +99,11 @@ export default async function routes(fastify, options) {
 
   // Profile Routes
 
-  fastify.get('/getUserStats/:username', getUserStats);
+  // logged in USer
+  fastify.get('/getUserStats', getUserStats);
+
+  // user by username 
+  fastify.get('/getUserStats/:username', getUserStatsbyUsername);
   
   // leagues Toutes
 
