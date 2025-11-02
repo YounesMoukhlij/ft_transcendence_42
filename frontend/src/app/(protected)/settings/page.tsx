@@ -1,14 +1,29 @@
 'use client'
-import React, { useState, useRef, useEffect } from 'react'
-import { Camera, Save, User, Mail, Lock, Globe, ChevronDown, Shield, HelpCircle } from 'lucide-react'
+import React,
+{
+  useState,
+  useRef,
+  useEffect
+} from 'react'
+import {
+  Camera,
+  Save,
+  User,
+  Mail,
+  Lock,
+  Globe,
+  ChevronDown,
+  Shield,
+  HelpCircle
+} from 'lucide-react'
 import { useUserStore } from '../../../store/userStore'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
+import { QRCodeSVG } from 'qrcode.react' // Import QR code generator
 
 // Define the base URL of your backend API
 const API_URL = 'http://localhost:4444'
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
-
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean
@@ -18,40 +33,40 @@ interface DeleteConfirmationDialogProps {
 }
 
 // This component remains unchanged
-const DeleteConfirmationDialog = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  isLoading 
+const DeleteConfirmationDialog = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  isLoading
 }: DeleteConfirmationDialogProps) => {
   if (!isOpen) return null
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      
 
-      <div 
+
+      <div
         className="relative bg-black rounded-2xl shadow-2xl w-full max-w-md border"
         onClick={(e) => e.stopPropagation()}
       >
 
         <div className="flex justify-center pt-8 pb-4">
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-            <svg 
-              className="w-8 h-8 text-red-500" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className="w-8 h-8 text-red-500"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
           </div>
@@ -82,23 +97,23 @@ const DeleteConfirmationDialog = ({
           >
             {isLoading ? (
               <>
-                <svg 
-                  className="animate-spin h-5 w-5" 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle 
-                    className="opacity-25" 
-                    cx="12" 
-                    cy="12" 
-                    r="10" 
-                    stroke="currentColor" 
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
                     strokeWidth="4"
                   />
-                  <path 
-                    className="opacity-75" 
-                    fill="currentColor" 
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
@@ -114,7 +129,6 @@ const DeleteConfirmationDialog = ({
   )
 }
 
-// This component remains unchanged
 function SwitchButton({ label, checked, onChange }) {
   return (
     <div className="flex items-center justify-end w-full sm:w-auto gap-3">
@@ -143,8 +157,94 @@ function SwitchButton({ label, checked, onChange }) {
   )
 }
 
+// --- 2FA MODAL COMPONENT ---
+interface TwoFAModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+  otpAuthUrl: string;
+  verificationCode: string;
+  setVerificationCode: (code: string) => void;
+  isLoading: boolean;
+}
+
+function TwoFAModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  otpAuthUrl,
+  verificationCode,
+  setVerificationCode,
+  isLoading
+}: TwoFAModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      <div
+        className="relative bg-black rounded-2xl shadow-2xl w-full max-w-md border border-gray-700"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-8 pt-8 pb-6">
+          <h2 className="text-2xl font-bold text-white text-center mb-4">
+            Set Up Two-Factor Authentication
+          </h2>
+          <p className="text-gray-400 text-center leading-relaxed">
+            1. Scan the QR code below with your Google Authenticator app.
+          </p>
+        </div>
+
+        <div className="flex justify-center items-center p-6 bg-white rounded-lg m-8">
+          {otpAuthUrl ? (
+            <QRCodeSVG value={otpAuthUrl} size={200} />
+          ) : (
+            <p className="text-black">Loading QR Code...</p>
+          )}
+        </div>
+
+        <div className="px-8 pb-6">
+          <p className="text-gray-400 text-center leading-relaxed">
+            2. Enter the 6-digit code from your app to verify.
+          </p>
+          <input
+            type="text"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
+            maxLength={6}
+            placeholder="XXXXXX"
+            className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white text-center text-2xl tracking-widest my-4 focus:border-white"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 px-8 pb-8">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1 px-6 py-3 rounded-xl font-semibold text-sm sm:text-base border border-gray-500 text-gray-300 hover:bg-gray-800"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSubmit}
+            disabled={isLoading || verificationCode.length < 6}
+            className="flex-1 px-6 py-3 rounded-xl font-semibold text-sm sm:text-base bg-blue-500 text-white hover:bg-blue-400 disabled:bg-gray-600 disabled:opacity-50"
+          >
+            {isLoading ? 'Verifying...' : 'Verify & Enable'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const ProfileSettingsPage = () => {
- 
+
   const user = useUserStore((state) => state.user);
   const setUser = useUserStore((state) => state.setUser)
   const hasHydrated = useUserStore((state) => state._hasHydrated);
@@ -154,14 +254,17 @@ const ProfileSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
-  
-  const [is2FAEnabled, setIs2FAEnabled] = useState(false) 
-  const [previewImage, setPreviewImage] = useState(null) // Kept for UI preview
-  
-  // --- NEW --- State to hold the actual file for upload
+
+  // --- MODIFIED --- 2FA States
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false)
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [otpAuthUrl, setOtpAuthUrl] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+
+  const [previewImage, setPreviewImage] = useState(null)
   const [imageFile, setImageFile] = useState(null);
-  
-  const [activeTab, setActiveTab] = useState('profile') 
+
+  const [activeTab, setActiveTab] = useState('profile')
 
   const [formData, setFormData] = useState({
     languages: 'en',
@@ -173,7 +276,7 @@ const ProfileSettingsPage = () => {
     confirmPassword: '',
     currentPassword: '',
   })
-  
+
   // Languages data (remains unchanged)
   const languages = [
     { id: 'en', label: 'English', flag: '🇬🇧' },
@@ -182,10 +285,10 @@ const ProfileSettingsPage = () => {
     { id: 'fr', label: 'French', flag: '🇫🇷' },
   ]
 
-  
-  const authMethod = user?.auth_method || 0 
+
+  const authMethod = user?.auth_method || 0
   const isPasswordAuth = authMethod === 0
-  
+
 
   // This useEffect remains unchanged
   useEffect(() => {
@@ -206,11 +309,12 @@ const ProfileSettingsPage = () => {
       currentPassword: '',
     })
 
-    setIs2FAEnabled(user.is2FAEnabled || false)
+    // --- MODIFIED --- Use the correct field from DB
+    setIs2FAEnabled(user.twoFA_enabled || false)
 
   }, [user, router, hasHydrated])
 
-  
+
   // Loading state remains unchanged
   if (!user) {
     return (
@@ -236,7 +340,7 @@ const ProfileSettingsPage = () => {
       toast.error('Please upload a valid image file')
       return
     }
-    
+
     // 1. Store the raw file object for uploading
     setImageFile(file);
 
@@ -268,10 +372,10 @@ const ProfileSettingsPage = () => {
         setIsLoading(false) // Added this to stop execution
         return
       }
-      
+
       // --- NEW --- Create FormData to send file and text
       const dataToSave = new FormData();
-      
+
       // Append all text-based form fields
       dataToSave.append('languages', formData.languages);
       dataToSave.append('username', formData.username);
@@ -283,10 +387,10 @@ const ProfileSettingsPage = () => {
       }
 
       const token = user.access_token;
-      
+
       const response = await fetch(`${API_URL}/updateUserInfo`, {
         method: 'POST',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${user.access_token}`
         },
 
@@ -301,33 +405,34 @@ const ProfileSettingsPage = () => {
       }
 
       toast.success('Profile updated successfully!')
-      
+
       // --- MODIFIED --- Update user state from the backend's response
       // The backend now sends back the updated user object
       const updatedUser = {
         ...user,
         ...data.user, // Merge the updated fields (e.g., new profile_img path)
       }
-      setUser(updatedUser) 
-      
+      setUser(updatedUser)
+
       // Clear the temporary states
       setPreviewImage(null)
       setImageFile(null)
 
-    } catch (error)
-    {
+    } catch (error) {
       console.error('Profile update error:', error)
       toast.error('An unexpected error occurred while updating profile.')
     } finally {
       setIsLoading(false)
     }
   }
-  
+
   // --- All functions below remain unchanged ---
 
   const handleSaveSecurity = async () => {
     setIsLoading(true)
 
+    // Note: This check is redundant if 2FA setup requires current password
+    // but good to keep if you allow password change and 2FA setup separately
     if (is2FAEnabled) {
       if (!formData.currentPassword.trim()) {
         toast.error('Current password is required')
@@ -357,28 +462,35 @@ const ProfileSettingsPage = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/updateUserPassword`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' 
-          , Authorization: `Bearer ${user.access_token}`
-        },
-        body: JSON.stringify({
-          current_password: formData.currentPassword,
-          new_password: formData.newPassword,
-        }),
-      })
-      
-      const data = await response.json()
+      // Only proceed if a new password was actually entered
+      if (formData.newPassword.trim() !== '') {
+        const response = await fetch(`${API_URL}/updateUserPassword`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user.access_token}`
+          },
+          body: JSON.stringify({
+            current_password: formData.currentPassword,
+            new_password: formData.newPassword,
+          }),
+        })
 
-      if (!response.ok || !data.success) {
-        toast.error(data.message || 'Failed to update security settings')
-        return
+        const data = await response.json()
+
+        if (!response.ok || !data.success) {
+          toast.error(data.message || 'Failed to update password')
+          return // Stop if password update failed
+        }
+
+        toast.success('Password updated successfully!')
+      } else {
+        // If no new password, just give a generic success for other settings
+        // or skip this call entirely if it *only* does password
+        toast.info('No new password entered. Skipping password update.')
       }
 
-      toast.success('Password  updated successfully!')
-
-      setUser({ ...user })
-
+      // Clear password fields regardless of outcome
       setFormData((prev) => ({
         ...prev,
         currentPassword: '',
@@ -394,43 +506,105 @@ const ProfileSettingsPage = () => {
     }
   }
 
+  // --- MODIFIED --- This function now handles the new 2FA flow
   const handleToggle2FA = async () => {
-    setIsLoading(true)
-    const twofavalue = !is2FAEnabled ? 1 : 0;
-    console.log('Toggling 2FA, current state:', twofavalue);
+    setIsLoading(true);
+
+    if (is2FAEnabled) {
+      // --- User is trying to DISABLE 2FA ---
+      try {
+        const response = await fetch(`${API_URL}/update2FA`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user.access_token}`
+          },
+          body: JSON.stringify({
+            twofa: false, // Send 'false' to disable
+          }),
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          toast.error(data.message || 'Failed to disable 2FA');
+        } else {
+          setIs2FAEnabled(false);
+          setUser({ ...user, twoFA_enabled: false, twoFA_secret: null }); // Update user state
+          toast.success('Two-Factor Authentication disabled.');
+        }
+      } catch (error) {
+        console.error('2FA disable error:', error);
+        toast.error('An error occurred while disabling 2FA.');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // --- User is trying to ENABLE 2FA (Step 1) ---
+      try {
+        // Call the new generate endpoint
+        const response = await fetch(`${API_URL}/2fa/generate`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${user.access_token}`
+          },
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          toast.error(data.message || 'Failed to generate 2FA secret');
+        } else {
+          // Success! Save the URL and show the modal
+          setOtpAuthUrl(data.otpauth);
+          setVerificationCode(''); // Clear old code
+          setShow2FAModal(true); // Open the modal
+        }
+      } catch (error) {
+        console.error('2FA generate error:', error);
+        toast.error('An error occurred while setting up 2FA.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // --- NEW --- Function to handle the 2FA verification code submission
+  const handleVerify2FA = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/update2FA`, {
+      // Call the new verify endpoint
+      const response = await fetch(`${API_URL}/2fa/verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' , 
-          Authorization: `Bearer ${user.access_token}`},
-        body: JSON.stringify({
-          twofa: twofavalue,
-        }),
-      })
-      const data = await response.json()
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.access_token}`
+        },
+        body: JSON.stringify({ token: verificationCode })
+      });
+
+      const data = await response.json();
 
       if (!response.ok || !data.success) {
-        toast.error(data.message || 'Failed to update 2FA settings')
-        return
+        toast.error(data.message || 'Invalid code. Please try again.');
+      } else {
+        // SUCCESS!
+        toast.success('Two-Factor Authentication enabled successfully!');
+        setIs2FAEnabled(true);
+        setUser({ ...user, twoFA_enabled: true }); // Update user state
+        setShow2FAModal(false); // Close the modal
+        setVerificationCode(''); // Clear the code
+        setOtpAuthUrl(''); // Clear the URL
       }
-
-      setIs2FAEnabled(!is2FAEnabled)
-      setUser({ ...user, is2FAEnabled: !is2FAEnabled })
-      toast.success(`Two-Factor Authentication ${!is2FAEnabled ? 'enabled' : 'disabled'} successfully!`)
-      // set a timeout to clear the message after 3 seconds
-      
-
     } catch (error) {
-      console.error('2FA update error:', error)
-      toast.error('An unexpected error occurred while updating 2FA settings')
+      console.error('2FA verification error:', error);
+      toast.error('An error occurred during verification.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
-    
+
     try {
       const response = await fetch(`${API_URL}/DeleteUserById/${user.id_user}`, {
         method: 'DELETE',
@@ -475,16 +649,16 @@ const ProfileSettingsPage = () => {
     if (previewImage) {
       return previewImage;
     }
-    
+
     // Get the current image path from the user state or use default
     const currentImg = user.profile_img || defaultProfileImg;
 
     // 2. If the path is from our DB (e.g., /uploads/...), prefix with API_URL
     if (currentImg && currentImg.startsWith('/uploads/')) {
       // e.g., http://localhost:4444/uploads/12345.png
-      return `${API_URL}${currentImg}`; 
+      return `${API_URL}${currentImg}`;
     }
-    
+
     // 3. Otherwise, it's a full URL (default or from OAuth), use it directly
     return currentImg;
   }
@@ -510,7 +684,7 @@ const ProfileSettingsPage = () => {
 
         {/* Profile Card */}
         <div className="border border-gray-700 rounded-2xl shadow-lg bg-black">
-          
+
           {/* PROFILE TAB */}
           {activeTab === 'profile' && (
             <>
@@ -689,7 +863,7 @@ const ProfileSettingsPage = () => {
 
               {/* Password Fields and 2FA Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 {/* Password Fields */}
                 {isPasswordAuth && (
                   <>
@@ -699,8 +873,8 @@ const ProfileSettingsPage = () => {
                         <Lock size={16} />
                         Current Password
                       </label>
-                      <input 
-                        type="password" 
+                      <input
+                        type="password"
                         id="currentPassword"
                         name="currentPassword"
                         value={formData.currentPassword}
@@ -716,8 +890,8 @@ const ProfileSettingsPage = () => {
                         <Lock size={16} />
                         New Password (optional)
                       </label>
-                      <input 
-                        type="password" 
+                      <input
+                        type="password"
                         id="newPassword"
                         name="newPassword"
                         value={formData.newPassword}
@@ -733,8 +907,8 @@ const ProfileSettingsPage = () => {
                         <Lock size={16} />
                         Confirm New Password
                       </label>
-                      <input 
-                        type="password" 
+                      <input
+                        type="password"
                         id="confirmPassword"
                         name="confirmPassword"
                         value={formData.confirmPassword}
@@ -745,11 +919,11 @@ const ProfileSettingsPage = () => {
                     </div>
                   </>
                 )}
-                
+
                 {/* Security Preferences Section */}
                 <div className="mt-8 pt-6 border-t border-gray-700 w-full md:col-span-2">
                   <h3 className="text-lg font-semibold mb-4">Security Preferences</h3>
-                  
+
                   {/* 2FA Toggle */}
                   <div className={`flex items-center justify-between p-2 border border-gray-500 rounded-xl ${!isPasswordAuth ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <div className="flex items-center gap-3">
@@ -762,10 +936,10 @@ const ProfileSettingsPage = () => {
                     <SwitchButton
                       label={is2FAEnabled ? 'Enabled' : 'Disabled'}
                       checked={is2FAEnabled}
-                     onChange={() => isPasswordAuth && handleToggle2FA()}
+                      onChange={() => isPasswordAuth && handleToggle2FA()}
                     />
                   </div>
-                  
+
                   {/* Message for OAuth users */}
                   {!isPasswordAuth && (
                     <p className="text-sm text-gray-400 mt-2">
@@ -779,7 +953,7 @@ const ProfileSettingsPage = () => {
               <div className="flex justify-end pt-6 mt-6 border-t border-gray-700">
                 <button
                   onClick={handleSaveSecurity}
-                  disabled={isLoading || !isPasswordAuth} 
+                  disabled={isLoading || !isPasswordAuth}
                   className={`px-6 py-3 rounded-xl font-semibold text-sm transition ${
                     (isLoading || !isPasswordAuth)
                     ? 'bg-gray-600 cursor-not-allowed opacity-50'
@@ -861,12 +1035,28 @@ const ProfileSettingsPage = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog (This component remains unchanged) */}
+      {/* --- MODALS ARE HERE --- */}
+      
+      {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDeleteAccount}
         isLoading={isDeletingAccount}
+      />
+
+      {/* 2FA Setup Modal */}
+      <TwoFAModal
+        isOpen={show2FAModal}
+        onClose={() => {
+          setShow2FAModal(false);
+          setIsLoading(false); // Stop loading if user cancels
+        }}
+        onSubmit={handleVerify2FA}
+        otpAuthUrl={otpAuthUrl}
+        verificationCode={verificationCode}
+        setVerificationCode={setVerificationCode}
+        isLoading={isLoading}
       />
     </div>
   )

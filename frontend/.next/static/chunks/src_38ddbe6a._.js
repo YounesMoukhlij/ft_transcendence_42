@@ -80,8 +80,10 @@ var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.sign
 ;
 ;
 //components
-// import FlyingSaucer from '@/components/FlyingSaucer'
+// C:\Users\21266\Desktop\ft_transcendence_42\frontend\src\app\(auth)\flyingsaucer.tsx
+// import FlyingSaucer from 'C:\Users\21266\Desktop\ft_transcendence_42\frontend\src\app\(auth)\flyingsaucer.tsx'
 // import { cookies } from 'next/headers'
+// import FlyingSaucer from './flyingSaucer'
 const API_URL = 'http://localhost:4444';
 function AuthLayout() {
     _s();
@@ -130,12 +132,12 @@ function AuthLayout() {
                         className: "w-full h-full flex items-center justify-center"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 51,
+                        lineNumber: 52,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                    lineNumber: 45,
+                    lineNumber: 46,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
@@ -164,17 +166,17 @@ function AuthLayout() {
                             onToggle: ()=>toggleAuthMode('signUp')
                         }, void 0, false, {
                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                            lineNumber: 68,
+                            lineNumber: 70,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 67,
+                        lineNumber: 69,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                    lineNumber: 56,
+                    lineNumber: 58,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
@@ -203,28 +205,28 @@ function AuthLayout() {
                             onToggle: ()=>toggleAuthMode('signIn')
                         }, void 0, false, {
                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                            lineNumber: 84,
+                            lineNumber: 86,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 83,
+                        lineNumber: 85,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                    lineNumber: 72,
+                    lineNumber: 74,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-            lineNumber: 43,
+            lineNumber: 44,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-        lineNumber: 42,
+        lineNumber: 43,
         columnNumber: 5
     }, this);
 }
@@ -312,9 +314,7 @@ function SignUpForm({ onToggle }) {
                 confirmPassword: ''
             });
             onToggle();
-            setTimeout(()=>{
-                router.push('/signIn');
-            }, 1500);
+            router.push('/signIn');
         } catch (error) {
             console.error('Error during sign up:', error);
             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('An unexpected error occurred');
@@ -479,13 +479,31 @@ function SignInForm({ onToggle }) {
     // Ref to prevent OAuth effects from running twice in Strict Mode
     const googleAuthEffectRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(false);
     const fortyTwoAuthEffectRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(false);
-    // Handle Google OAuth callback
+    // --- NEW 2FA STATE ---
+    const [show2FAInput, setShow2FAInput] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [twoFACode, setTwoFACode] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
+    const [tempUserId, setTempUserId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    // --- END NEW 2FA STATE ---
+    // --- MODIFIED --- Handle Google OAuth callback
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "SignInForm.useEffect": ()=>{
             const userId = searchParams.get('userId');
             const authError = searchParams.get('error');
             const isNewUser = searchParams.get('isNewUser');
-            // Skip if no OAuth parameters present
+            const twoFARequired = searchParams.get('2fa_required') // <-- NEW
+            ;
+            // --- NEW: Handle 2FA required from OAuth ---
+            if (twoFARequired === 'true' && userId) {
+                if (googleAuthEffectRef.current) return;
+                googleAuthEffectRef.current = true;
+                setTempUserId(userId);
+                setShow2FAInput(true);
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].info('Please enter your 2FA code to complete login.');
+                // router.push('/signIn'); // Clean URL
+                return;
+            }
+            // --- END NEW ---
+            // Skip if no OAuth parameters present (and not 2FA)
             if (!userId && !authError) {
                 return;
             }
@@ -495,6 +513,7 @@ function SignInForm({ onToggle }) {
             }
             googleAuthEffectRef.current = true;
             if (authError) {
+                // (Error handling unchanged)
                 const errorMessages = {
                     'no_code': 'Google authentication failed: No authorization code',
                     'token_failed': 'Failed to exchange authorization code',
@@ -502,43 +521,32 @@ function SignInForm({ onToggle }) {
                     'auth_failed': 'Google authentication failed. Please try again.'
                 };
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error(errorMessages[authError] || 'An error occurred during authentication');
-                // Clean URL
-                router.replace('/signIn');
+                // router.push('/signIn')
                 return;
             }
             if (userId) {
-                // Fetch user data from backend using the ID
+                // (Fetch user data unchanged - this is now the "2FA NOT required" flow)
                 const fetchUserData = {
                     "SignInForm.useEffect.fetchUserData": async ()=>{
                         try {
                             const response = await fetch(`${API_URL}/getUserById/${userId}`);
                             if (!response.ok) {
                                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user data');
-                                router.replace('/signIn');
+                                // router.push('/signIn')
                                 return;
                             }
                             const userData = await response.json();
                             console.log('Google OAuth user data:', userData);
-                            // Update global user state (Zustand)
-                            setUser(userData, userData.refresh_token) //
-                            ;
-                            // set auth_token cookie? (handled in middleware)
+                            setUser(userData, userData.refresh_token);
                             document.cookie = `auth_token=${userData.access_token}; 4`;
-                            // Display success message based on whether user is new
                             const message = isNewUser === 'true' ? `Welcome ${userData.username}! Account created successfully.` : `Welcome back, ${userData.username}!`;
                             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success(message);
-                            // Clean URL first to prevent re-running
-                            router.replace('/signIn');
-                            // Redirect to home after a short delay
-                            setTimeout({
-                                "SignInForm.useEffect.fetchUserData": ()=>{
-                                    router.push('/');
-                                }
-                            }["SignInForm.useEffect.fetchUserData"], 1500);
+                            // // router.push('/signIn')
+                            router.push('/');
                         } catch (err) {
                             console.error('Failed to fetch user data:', err);
                             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user information');
-                            router.replace('/signIn');
+                        // router.push('/signIn')
                         }
                     }
                 }["SignInForm.useEffect.fetchUserData"];
@@ -549,21 +557,31 @@ function SignInForm({ onToggle }) {
         searchParams,
         router,
         setUser
-    ]) // Added dependencies
-    ;
+    ]);
     const handleGoogleAuth = ()=>{
-        // Redirect to backend OAuth initiation
         window.location.href = `${API_URL}/auth/google`;
     };
-    // Handle 42 OAuth callback
+    // --- MODIFIED --- Handle 42 OAuth callback
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "SignInForm.useEffect": ()=>{
             const fortyTwoAuth = searchParams.get('42Auth');
             const userId = searchParams.get('userId');
             const isNewUser = searchParams.get('isNewUser');
             const authError = searchParams.get('error');
+            const twoFARequired = searchParams.get('2fa_required');
+            // --- NEW: Handle 2FA required from OAuth ---
+            if (twoFARequired === 'true' && userId && !fortyTwoAuth) {
+                if (fortyTwoAuthEffectRef.current) return;
+                fortyTwoAuthEffectRef.current = true;
+                setTempUserId(userId);
+                setShow2FAInput(true);
+                // toast.info('Please enter your 2FA code to complete login.');
+                // // router.push('/signIn'); // Clean URL
+                return;
+            }
+            // --- END NEW ---
             // Skip if no OAuth parameters present
-            if (!fortyTwoAuth && !authError) {
+            if (!fortyTwoAuth && !authError && !twoFARequired) {
                 return;
             }
             // Prevents double execution in React Strict Mode (Dev)
@@ -572,6 +590,7 @@ function SignInForm({ onToggle }) {
             }
             fortyTwoAuthEffectRef.current = true;
             if (authError) {
+                // (Error handling unchanged)
                 const errorMessages = {
                     'no_code': '42 authentication failed: No authorization code',
                     'token_failed': 'Failed to exchange authorization code',
@@ -579,43 +598,32 @@ function SignInForm({ onToggle }) {
                     'auth_failed': '42 authentication failed. Please try again.'
                 };
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error(errorMessages[authError] || 'An error occurred during authentication');
-                // Clean URL
-                router.replace('/signIn');
+                // router.push('/signIn')
                 return;
             }
             if (fortyTwoAuth === 'success' && userId) {
-                // Fetch user data from backend using the ID
+                // (Fetch user data unchanged - this is now the "2FA NOT required" flow)
                 const fetchUserData = {
                     "SignInForm.useEffect.fetchUserData": async ()=>{
                         try {
                             const response = await fetch(`${API_URL}/getUserById/${userId}`);
                             if (!response.ok) {
                                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user data');
-                                router.replace('/signIn');
+                                // router.push('/signIn')
                                 return;
                             }
                             const userData = await response.json();
                             console.log('42 OAuth user data:', userData);
-                            // Update global user state (Zustand)
-                            setUser(userData, userData.refresh_token) //
-                            ;
-                            // set auth_token cookie? (handled in middleware)
+                            setUser(userData, userData.refresh_token);
                             document.cookie = `auth_token=${userData.access_token}; path=/`;
-                            // Display success message based on whether user is new
                             const message = isNewUser === 'true' ? `Welcome ${userData.username}! Account created successfully.` : `Welcome back, ${userData.username}!`;
                             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success(message);
-                            // Clean URL first to prevent re-running
-                            router.replace('/signIn');
-                            // Redirect to home after a short delay
-                            setTimeout({
-                                "SignInForm.useEffect.fetchUserData": ()=>{
-                                    router.push('/');
-                                }
-                            }["SignInForm.useEffect.fetchUserData"], 1500);
+                            // router.push('/signIn')
+                            router.push('/');
                         } catch (err) {
                             console.error('Failed to fetch user data:', err);
                             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Failed to retrieve user information');
-                            router.replace('/signIn');
+                        // router.push('/signIn')
                         }
                     }
                 }["SignInForm.useEffect.fetchUserData"];
@@ -626,8 +634,7 @@ function SignInForm({ onToggle }) {
         searchParams,
         router,
         setUser
-    ]) // Added dependencies
-    ;
+    ]);
     const handle42Auth = ()=>{
         window.location.href = `${API_URL}/auth/42`;
     };
@@ -640,6 +647,7 @@ function SignInForm({ onToggle }) {
         }
         return true;
     };
+    // --- MODIFIED --- Standard Login Submit
     const handleSubmit = async (e)=>{
         e.preventDefault();
         if (!validateForm()) return;
@@ -663,22 +671,26 @@ function SignInForm({ onToggle }) {
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error(errorMessage);
                 return;
             }
-            console.log('Login response data:', data.user);
-            if (data.user) {
-                // zustand 
-                setUser(data.user) //
-                ;
-                // set auth_token cookie? (handled in middleware)
-                document.cookie = `auth_token=${data.user.access_token}; path=/`;
-            // localStorage.setItem('user', JSON.stringify(data.user)) // Removed: Rely on Zustand for state management
-            }
-            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success('Login successful!');
-            setUsername('');
-            setPassword('');
-            setError('');
-            setTimeout(()=>{
+            // --- NEW 2FA CHECK ---
+            if (data.twoFA_required) {
+                setTempUserId(data.userId.toString()); // Store the user ID
+                setShow2FAInput(true); // Show the 2FA input
+                setPassword(''); // Clear password field
+                setError('');
+            } else {
+                // --- Original Login Success Flow ---
+                console.log('Login response data:', data.user);
+                if (data.user) {
+                    setUser(data.user);
+                    document.cookie = `auth_token=${data.user.access_token}; path=/`;
+                }
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success('Login successful!');
+                setUsername('');
+                setPassword('');
+                setError('');
                 router.push('/');
-            }, 1000);
+            }
+        // --- END NEW 2FA CHECK ---
         } catch (error) {
             console.error('Network error during login:', error);
             const errorMessage = 'Network error. Please check your connection.';
@@ -688,6 +700,168 @@ function SignInForm({ onToggle }) {
             setIsLoading(false);
         }
     };
+    // --- NEW 2FA SUBMIT HANDLER ---
+    const handle2FALoginVerify = async (e)=>{
+        e.preventDefault();
+        if (!twoFACode || twoFACode.length < 6 || !tempUserId) {
+            setError('Please enter a valid 6-digit code.');
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error('Please enter a valid 6-digit code.');
+            return;
+        }
+        setIsLoading(true);
+        setError('');
+        try {
+            // Call the NEW backend endpoint
+            const response = await fetch(`${API_URL}/2fa/login-verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: parseInt(tempUserId),
+                    token: twoFACode // Send the 6-digit code
+                })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                const errorMessage = data.message || 'Invalid 2FA code. Please try again.';
+                setError(errorMessage);
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error(errorMessage);
+                return;
+            }
+            // --- 2FA Login Success Flow ---
+            if (data.user) {
+                setUser(data.user);
+                document.cookie = `auth_token=${data.user.access_token}; path=/`;
+            }
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].success('Login successful!');
+            setTwoFACode('');
+            setTempUserId(null);
+            setShow2FAInput(false);
+            setError('');
+            router.push('/');
+        } catch (error) {
+            console.error('Network error during 2FA login:', error);
+            const errorMessage = 'Network error. Please check your connection.';
+            setError(errorMessage);
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$toastify$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error(errorMessage);
+        } finally{
+            setIsLoading(false);
+        }
+    };
+    // --- END NEW 2FA HANDLER ---
+    // --- CONDITIONAL RENDERING for 2FA ---
+    if (show2FAInput) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "flex flex-col gap-6 items-center justify-center",
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "flex flex-col gap-2 sm:gap-3 items-center justify-center text-center",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
+                            className: "text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold",
+                            children: "Verify Your Identity"
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                            lineNumber: 615,
+                            columnNumber: 11
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                            className: "text-sm sm:text-base md:text-lg text-center max-w-md lg:max-w-lg",
+                            children: "Open your Google Authenticator app and enter the 6-digit code."
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                            lineNumber: 618,
+                            columnNumber: 11
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                    lineNumber: 614,
+                    columnNumber: 9
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
+                    className: "w-full gap-4 sm:gap-6 flex flex-col items-center justify-center",
+                    onSubmit: handle2FALoginVerify,
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                            type: "text",
+                            name: "2fa-code",
+                            placeholder: "XXXXXX",
+                            maxLength: 6,
+                            className: "w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out text-center tracking-[0.5em]",
+                            value: twoFACode,
+                            disabled: isLoading,
+                            onChange: (e)=>{
+                                setTwoFACode(e.target.value.replace(/[^0-9]/g, '')) // Only allow numbers
+                                ;
+                                if (error) setError('');
+                            }
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                            lineNumber: 627,
+                            columnNumber: 11
+                        }, this),
+                        error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "w-full text-center text-red-500 text-sm bg-red-50 p-2 rounded-lg",
+                            children: error
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                            lineNumber: 642,
+                            columnNumber: 13
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "flex flex-col sm:flex-row gap-2 sm:gap-3 items-center justify-center w-full",
+                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                type: "submit",
+                                disabled: isLoading || twoFACode.length < 6,
+                                className: `w-full p-3 sm:p-4 rounded-2xl transition-all duration-300 ease-in-out text-sm sm:text-base ${isLoading || twoFACode.length < 6 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-100 text-black hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer'}`,
+                                children: isLoading ? 'Verifying...' : 'Verify'
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                                lineNumber: 648,
+                                columnNumber: 13
+                            }, this)
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                            lineNumber: 647,
+                            columnNumber: 11
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "flex gap-2 items-center justify-center",
+                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                className: "text-xs sm:text-sm text-gray-500 hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer",
+                                onClick: ()=>{
+                                    setShow2FAInput(false);
+                                    setTempUserId(null);
+                                    setError('');
+                                    setPassword('');
+                                },
+                                children: "Back to login"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                                lineNumber: 662,
+                                columnNumber: 13
+                            }, this)
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                            lineNumber: 661,
+                            columnNumber: 11
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/(auth)/authLayout.tsx",
+                    lineNumber: 623,
+                    columnNumber: 9
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/(auth)/authLayout.tsx",
+            lineNumber: 613,
+            columnNumber: 7
+        }, this);
+    }
+    // --- Original Sign In Form ---
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "flex flex-col gap-6 items-center justify-center",
         children: [
@@ -699,7 +873,7 @@ function SignInForm({ onToggle }) {
                         children: "Hey there, space champ!"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 539,
+                        lineNumber: 683,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -707,7 +881,7 @@ function SignInForm({ onToggle }) {
                         children: "Join GalaxyPong to smash, chat, and climb the leaderboard."
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 542,
+                        lineNumber: 686,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -715,13 +889,13 @@ function SignInForm({ onToggle }) {
                         children: "Sign in and let the games begin!"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 545,
+                        lineNumber: 689,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 538,
+                lineNumber: 682,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -741,7 +915,7 @@ function SignInForm({ onToggle }) {
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 554,
+                        lineNumber: 698,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -757,7 +931,7 @@ function SignInForm({ onToggle }) {
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 567,
+                        lineNumber: 711,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -768,12 +942,12 @@ function SignInForm({ onToggle }) {
                             children: "Forgot your password?"
                         }, void 0, false, {
                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                            lineNumber: 581,
+                            lineNumber: 725,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 580,
+                        lineNumber: 724,
                         columnNumber: 9
                     }, this),
                     error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -781,7 +955,7 @@ function SignInForm({ onToggle }) {
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 589,
+                        lineNumber: 733,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -794,7 +968,7 @@ function SignInForm({ onToggle }) {
                                 children: isLoading ? 'Signing In...' : 'Login'
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 595,
+                                lineNumber: 739,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -818,7 +992,7 @@ function SignInForm({ onToggle }) {
                                                     fill: "#4285F4"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 615,
+                                                    lineNumber: 759,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -826,7 +1000,7 @@ function SignInForm({ onToggle }) {
                                                     fill: "#34A853"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 616,
+                                                    lineNumber: 760,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -834,7 +1008,7 @@ function SignInForm({ onToggle }) {
                                                     fill: "#FBBC05"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 617,
+                                                    lineNumber: 761,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -842,18 +1016,18 @@ function SignInForm({ onToggle }) {
                                                     fill: "#EB4335"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 618,
+                                                    lineNumber: 762,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                            lineNumber: 614,
+                                            lineNumber: 758,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                        lineNumber: 608,
+                                        lineNumber: 752,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -872,51 +1046,51 @@ function SignInForm({ onToggle }) {
                                                     points: "32,412.6 362.1,412.6 362.1,578 526.8,578 526.8,279.1 197.3,279.1 526.8,-51.1 362.1,-51.1 32,279.1"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 629,
+                                                    lineNumber: 773,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("polygon", {
                                                     points: "597.9,114.2 762.7,-51.1 597.9,-51.1"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 630,
+                                                    lineNumber: 774,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("polygon", {
                                                     points: "762.7,114.2 597.9,279.1 597.9,443.9 762.7,443.9 762.7,279.1 928,114.2 928,-51.1 762.7,-51.1"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 631,
+                                                    lineNumber: 775,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("polygon", {
                                                     points: "928,279.1 762.7,443.9 928,443.9"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                                    lineNumber: 632,
+                                                    lineNumber: 776,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                            lineNumber: 628,
+                                            lineNumber: 772,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                        lineNumber: 622,
+                                        lineNumber: 766,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 607,
+                                lineNumber: 751,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 594,
+                        lineNumber: 738,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -927,7 +1101,7 @@ function SignInForm({ onToggle }) {
                                 children: "Don't have an account?"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 639,
+                                lineNumber: 783,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -936,29 +1110,29 @@ function SignInForm({ onToggle }) {
                                 children: "Sign up"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                                lineNumber: 642,
+                                lineNumber: 786,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                        lineNumber: 638,
+                        lineNumber: 782,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/authLayout.tsx",
-                lineNumber: 550,
+                lineNumber: 694,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(auth)/authLayout.tsx",
-        lineNumber: 537,
+        lineNumber: 681,
         columnNumber: 5
     }, this);
 }
-_s2(SignInForm, "p/hafPxiTnjTyaGmSKQAYeppffs=", false, function() {
+_s2(SignInForm, "e6gVxEDp36kTmisMXc4b2SzHWBE=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSearchParams"],

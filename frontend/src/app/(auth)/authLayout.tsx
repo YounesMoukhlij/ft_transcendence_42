@@ -7,9 +7,10 @@ import '../globals.css'
 //zustand or recoil
 import { useUserStore } from "../../store/userStore"
 //components
-// import FlyingSaucer from '@/components/FlyingSaucer'
+// C:\Users\21266\Desktop\ft_transcendence_42\frontend\src\app\(auth)\flyingsaucer.tsx
+// import FlyingSaucer from 'C:\Users\21266\Desktop\ft_transcendence_42\frontend\src\app\(auth)\flyingsaucer.tsx'
 // import { cookies } from 'next/headers'
-
+// import FlyingSaucer from './flyingSaucer'
 const API_URL = 'http://localhost:4444'
 
 export default function AuthLayout() {
@@ -50,6 +51,7 @@ export default function AuthLayout() {
         >
           <div className="w-full h-full flex items-center justify-center">
             {/* <FlyingSaucer /> */}
+            
           </div>
         </motion.div>
 
@@ -186,9 +188,7 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
       setFormData({ username: '', email: '', password: '', confirmPassword: '' })
       
       onToggle()
-      setTimeout(() => {
-        router.push('/signIn')
-      }, 1500)
+      router.push('/signIn')
       
     } catch (error) {
       console.error('Error during sign up:', error)
@@ -300,14 +300,34 @@ function SignInForm({ onToggle }: SignInFormProps) {
   const googleAuthEffectRef = useRef(false) 
   const fortyTwoAuthEffectRef = useRef(false)
 
+  // --- NEW 2FA STATE ---
+  const [show2FAInput, setShow2FAInput] = useState(false)
+  const [twoFACode, setTwoFACode] = useState('')
+  const [tempUserId, setTempUserId] = useState<string | null>(null)
+  // --- END NEW 2FA STATE ---
 
-  // Handle Google OAuth callback
+
+  // --- MODIFIED --- Handle Google OAuth callback
   useEffect(() => {
     const userId = searchParams.get('userId')
     const authError = searchParams.get('error')
     const isNewUser = searchParams.get('isNewUser')
+    const twoFARequired = searchParams.get('2fa_required') // <-- NEW
 
-    // Skip if no OAuth parameters present
+    // --- NEW: Handle 2FA required from OAuth ---
+    if (twoFARequired === 'true' && userId) {
+      if (googleAuthEffectRef.current) return;
+      googleAuthEffectRef.current = true;
+      
+      setTempUserId(userId);
+      setShow2FAInput(true);
+      toast.info('Please enter your 2FA code to complete login.');
+      // router.push('/signIn'); // Clean URL
+      return;
+    }
+    // --- END NEW ---
+
+    // Skip if no OAuth parameters present (and not 2FA)
     if (!userId && !authError) {
       return
     }
@@ -319,6 +339,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
     googleAuthEffectRef.current = true
 
     if (authError) {
+      // (Error handling unchanged)
       const errorMessages: Record<string, string> = {
         'no_code': 'Google authentication failed: No authorization code',
         'token_failed': 'Failed to exchange authorization code',
@@ -326,73 +347,76 @@ function SignInForm({ onToggle }: SignInFormProps) {
         'auth_failed': 'Google authentication failed. Please try again.'
       }
       toast.error(errorMessages[authError] || 'An error occurred during authentication')
-      // Clean URL
-      router.replace('/signIn')
+      // router.push('/signIn')
       return
     }
 
     if (userId) {
-      // Fetch user data from backend using the ID
+      // (Fetch user data unchanged - this is now the "2FA NOT required" flow)
       const fetchUserData = async () => {
         try {
           const response = await fetch(`${API_URL}/getUserById/${userId}`)
           
           if (!response.ok) {
             toast.error('Failed to retrieve user data')
-            router.replace('/signIn')
+            // router.push('/signIn')
             return
           }
 
           const userData = await response.json()
-          
           console.log('Google OAuth user data:', userData)
           
-          // Update global user state (Zustand)
-          setUser(userData, userData.refresh_token) //
-          // set auth_token cookie? (handled in middleware)
+          setUser(userData, userData.refresh_token) 
           document.cookie = `auth_token=${userData.access_token}; 4`;
           
-          // Display success message based on whether user is new
           const message = isNewUser === 'true' 
             ? `Welcome ${userData.username}! Account created successfully.`
             : `Welcome back, ${userData.username}!`
           
           toast.success(message)
+          // // router.push('/signIn')
           
-          // Clean URL first to prevent re-running
-          router.replace('/signIn')
-          
-          // Redirect to home after a short delay
-          setTimeout(() => {
             router.push('/')
-          }, 1500)
           
         } catch (err) {
           console.error('Failed to fetch user data:', err)
           toast.error('Failed to retrieve user information')
-          router.replace('/signIn')
+          // router.push('/signIn')
         }
       }
 
       fetchUserData()
     }
     
-  }, [searchParams, router, setUser]) // Added dependencies
+  }, [searchParams, router, setUser])
 
   const handleGoogleAuth = () => {
-    // Redirect to backend OAuth initiation
     window.location.href = `${API_URL}/auth/google`
   }
   
-  // Handle 42 OAuth callback
+  // --- MODIFIED --- Handle 42 OAuth callback
   useEffect(() => {
     const fortyTwoAuth = searchParams.get('42Auth')
     const userId = searchParams.get('userId')
     const isNewUser = searchParams.get('isNewUser')
     const authError = searchParams.get('error')
+    const twoFARequired = searchParams.get('2fa_required')
     
+    // --- NEW: Handle 2FA required from OAuth ---
+    if (twoFARequired === 'true' && userId && !fortyTwoAuth) { // Check !fortyTwoAuth to avoid conflict with google
+      if (fortyTwoAuthEffectRef.current) return;
+      fortyTwoAuthEffectRef.current = true;
+      
+      setTempUserId(userId);
+      setShow2FAInput(true);
+      // toast.info('Please enter your 2FA code to complete login.');
+      // // router.push('/signIn'); // Clean URL
+      return;
+    }
+    // --- END NEW ---
+
     // Skip if no OAuth parameters present
-    if (!fortyTwoAuth && !authError) {
+    if (!fortyTwoAuth && !authError && !twoFARequired) {
       return
     }
     
@@ -403,6 +427,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
     fortyTwoAuthEffectRef.current = true
 
     if (authError) {
+      // (Error handling unchanged)
       const errorMessages: Record<string, string> = {
         'no_code': '42 authentication failed: No authorization code',
         'token_failed': 'Failed to exchange authorization code',
@@ -410,59 +435,47 @@ function SignInForm({ onToggle }: SignInFormProps) {
         'auth_failed': '42 authentication failed. Please try again.'
       }
       toast.error(errorMessages[authError] || 'An error occurred during authentication')
-      // Clean URL
-      router.replace('/signIn')
+      // router.push('/signIn')
       return
     }
 
     if (fortyTwoAuth === 'success' && userId) {
-      // Fetch user data from backend using the ID
+      // (Fetch user data unchanged - this is now the "2FA NOT required" flow)
       const fetchUserData = async () => {
         try {
           const response = await fetch(`${API_URL}/getUserById/${userId}`)
           
           if (!response.ok) {
             toast.error('Failed to retrieve user data')
-            router.replace('/signIn')
+            // router.push('/signIn')
             return
           }
 
           const userData = await response.json()
-          
           console.log('42 OAuth user data:', userData)
           
-          // Update global user state (Zustand)
-          setUser(userData, userData.refresh_token) //
-          // set auth_token cookie? (handled in middleware)
+          setUser(userData, userData.refresh_token) 
           document.cookie = `auth_token=${userData.access_token}; path=/`;
           
-          
-          // Display success message based on whether user is new
           const message = isNewUser === 'true' 
             ? `Welcome ${userData.username}! Account created successfully.`
             : `Welcome back, ${userData.username}!`
           
           toast.success(message)
+          // router.push('/signIn')
           
-          // Clean URL first to prevent re-running
-          router.replace('/signIn')
-          
-          // Redirect to home after a short delay
-          setTimeout(() => {
-            router.push('/')
-          }, 1500)
-          
+          router.push('/')
         } catch (err) {
           console.error('Failed to fetch user data:', err)
           toast.error('Failed to retrieve user information')
-          router.replace('/signIn')
+          // router.push('/signIn')
         }
       }
 
       fetchUserData()
     }
     
-  }, [searchParams, router, setUser]) // Added dependencies
+  }, [searchParams, router, setUser])
 
   const handle42Auth = () => {
     window.location.href = `${API_URL}/auth/42`
@@ -478,6 +491,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
     return true
   }
 
+  // --- MODIFIED --- Standard Login Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -505,23 +519,26 @@ function SignInForm({ onToggle }: SignInFormProps) {
         return
       }
 
-      console.log('Login response data:', data.user)
-      if (data.user) {
-        // zustand 
-        setUser(data.user) //
-        // set auth_token cookie? (handled in middleware)
-        document.cookie = `auth_token=${data.user.access_token}; path=/`;
-        // localStorage.setItem('user', JSON.stringify(data.user)) // Removed: Rely on Zustand for state management
-      }
-
-      toast.success('Login successful!')
-      setUsername('')
-      setPassword('')
-      setError('')
-      
-      setTimeout(() => {
+      // --- NEW 2FA CHECK ---
+      if (data.twoFA_required) {
+        setTempUserId(data.userId.toString()); // Store the user ID
+        setShow2FAInput(true); // Show the 2FA input
+        setPassword(''); // Clear password field
+        setError('');
+      } else {
+        // --- Original Login Success Flow ---
+        console.log('Login response data:', data.user)
+        if (data.user) {
+          setUser(data.user) 
+          document.cookie = `auth_token=${data.user.access_token}; path=/`;
+        }
+        toast.success('Login successful!')
+        setUsername('')
+        setPassword('')
+        setError('')
         router.push('/')
-      }, 1000)
+      }
+      // --- END NEW 2FA CHECK ---
       
     } catch (error) {
       console.error('Network error during login:', error)
@@ -533,6 +550,133 @@ function SignInForm({ onToggle }: SignInFormProps) {
     }
   }
 
+  // --- NEW 2FA SUBMIT HANDLER ---
+  const handle2FALoginVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFACode || twoFACode.length < 6 || !tempUserId) {
+      setError('Please enter a valid 6-digit code.');
+      toast.error('Please enter a valid 6-digit code.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Call the NEW backend endpoint
+      const response = await fetch(`${API_URL}/2fa/login-verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: parseInt(tempUserId), // Send the stored user ID
+          token: twoFACode          // Send the 6-digit code
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        const errorMessage = data.message || 'Invalid 2FA code. Please try again.';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        return;
+      }
+
+      // --- 2FA Login Success Flow ---
+      if (data.user) {
+        setUser(data.user);
+        document.cookie = `auth_token=${data.user.access_token}; path=/`;
+      }
+
+      toast.success('Login successful!');
+      setTwoFACode('');
+      setTempUserId(null);
+      setShow2FAInput(false);
+      setError('');
+      
+      router.push('/')
+
+    } catch (error) {
+      console.error('Network error during 2FA login:', error);
+      const errorMessage = 'Network error. Please check your connection.';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  // --- END NEW 2FA HANDLER ---
+
+  // --- CONDITIONAL RENDERING for 2FA ---
+  if (show2FAInput) {
+    return (
+      <div className="flex flex-col gap-6 items-center justify-center">
+        <div className='flex flex-col gap-2 sm:gap-3 items-center justify-center text-center'>
+          <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold'>
+            Verify Your Identity
+          </h1>
+          <h2 className='text-sm sm:text-base md:text-lg text-center max-w-md lg:max-w-lg'>
+            Open your Google Authenticator app and enter the 6-digit code.
+          </h2>
+        </div>
+        
+        <form 
+          className='w-full gap-4 sm:gap-6 flex flex-col items-center justify-center'
+          onSubmit={handle2FALoginVerify}
+        >
+          <input 
+            type="text" 
+            name="2fa-code"
+            placeholder='XXXXXX'
+            maxLength={6}
+            className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out text-center tracking-[0.5em]' 
+            value={twoFACode}
+            disabled={isLoading}
+            onChange={(e) => {
+              setTwoFACode(e.target.value.replace(/[^0-9]/g, '')) // Only allow numbers
+              if (error) setError('')
+            }}
+          />
+          
+          {error && (
+            <div className="w-full text-center text-red-500 text-sm bg-red-50 p-2 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 items-center justify-center w-full'>
+            <button 
+              type="submit"
+              disabled={isLoading || twoFACode.length < 6}
+              className={`w-full p-3 sm:p-4 rounded-2xl transition-all duration-300 ease-in-out text-sm sm:text-base ${
+                isLoading || twoFACode.length < 6
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-100 text-black hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer'
+              }`}
+            >
+              {isLoading ? 'Verifying...' : 'Verify'}
+            </button>
+          </div>
+          
+          <div className='flex gap-2 items-center justify-center'>
+            <h3 
+              className='text-xs sm:text-sm text-gray-500 hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'
+              onClick={() => {
+                setShow2FAInput(false);
+                setTempUserId(null);
+                setError('');
+                setPassword('');
+              }}
+            > 
+              Back to login
+            </h3>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // --- Original Sign In Form ---
   return (
     <div className="flex flex-col gap-6 items-center justify-center">
       <div className='flex flex-col gap-2 sm:gap-3 items-center justify-center text-center'>

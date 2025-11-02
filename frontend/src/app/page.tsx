@@ -1,103 +1,312 @@
-'use client';
+'use client'
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+function FlyingSaucer() {
+  const [isClient, setIsClient] = useState(false);
 
-// Imports
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useUserStore } from '../store/userStore';
-import './globals.css'; 
-
-// Constants
-const DEFAULT_PROFILE_IMAGE = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
-
-/**
- * The main Home component (or Dashboard)
- */
-export default function Home() {
-  const router = useRouter();
-  const user = useUserStore((state) => state.user);
-  const clearUser = useUserStore((state) => state.clearUser);
-  const hasHydrated = useUserStore((state) => state._hasHydrated);
-
-  console.log("image url:", user?.profile_img);
-  
-
-  // 1. Client-Side Redirection Logic
   useEffect(() => {
-    // Wait until Zustand has finished loading state from localStorage
-    if (!hasHydrated) return;
-    
-    console.log("Home user:", user);
+    setIsClient(true);
+  }, []);
 
-    // If no user object exists, redirect to sign-in page
-    if (!user) {
-      router.replace('/signIn');
+  // Generate consistent random values only on client
+  const getParticleAnimation = (index: number) => {
+    if (!isClient) {
+      return {
+        initial: { x: 200, y: 300, opacity: 0 },
+        animate: { x: [200, 250, 200], y: [300, 250, 300], opacity: [0, 0.9, 0],
+           scale: [0.5, 1.5, 0.5] }
+      };
     }
-    
-  }, [user, hasHydrated, router]);
-  
-  // Display loading or waiting for hydration
-  if (!hasHydrated || !user) {
-    return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-black text-white">
-            <p>Loading user session...</p>
-        </div>
-    );
-  }
 
-  // 2. Logout Handler
-  const handleLogout = () => {
-    clearUser();
-    // Clear the JWT token on logout
-    localStorage.removeItem('jwt_token'); 
-    router.replace('/signIn');
+    // Use index as seed for more predictable but varied results
+    const seed1 = (index * 17) % 100;
+    const seed2 = (index * 23) % 100; 
+    const seed3 = (index * 31) % 100;
+    
+    return {
+      initial: {
+        x: (seed1 / 100) * 400 + 100,
+        y: (seed2 / 100) * 300 + 200,
+        opacity: 0,
+      },
+      animate: {
+        x: [
+          (seed1 / 100) * 400 + 100,
+          (seed2 / 100) * 500 + 50,
+          (seed3 / 100) * 400 + 100
+        ],
+        y: [
+          (seed2 / 100) * 300 + 200,
+          (seed3 / 100) * 200 + 150,
+          (seed1 / 100) * 300 + 200
+        ],
+        opacity: [0, 0.9, 0],
+        scale: [0.5, 1.5, 0.5]
+      }
+    };
   };
 
-  // 3. Render authenticated dashboard content
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-900 p-8 text-white">
-      
-      <div className="border border-gray-700 bg-gray-800 p-8 rounded-2xl shadow-xl max-w-lg w-full">
-        <h1 className="text-4xl font-extrabold text-center mb-6 text-blue-400">Welcome to the Dashboard!</h1>
-        
-        <div className='flex flex-col items-center justify-center'>
-            <img
-                src={`http://localhost:4444` + user.profile_img || DEFAULT_PROFILE_IMAGE}
-                alt="Profile"
-                // width={150}
-                // height={150}
-                className=" w-32 h-32 sm:w-36 sm:h-36 rounded-full mx-auto mb-6 border-4 border-white object-cover"
-            />
-          
-            <h2 className="text-3xl font-bold mb-4">{user.username}</h2>
+    <div className="absolute left-0 top-0 w-full h-full pointer-events-none overflow-hidden">
+      {/* Main Big UFO */}
+      <motion.div
+        className="absolute"
+        initial={{ 
+          x: "15vw", 
+          y: "50vh",
+          rotate: 0 
+        }}
+        animate={{ 
+          x: ["15vw", "25vw", "10vw", "20vw", "15vw"],
+          y: ["50vh", "35vh", "60vh", "40vh", "50vh"],
+          rotate: [0, -10, 5, -5, 0]
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+          times: [0, 0.25, 0.5, 0.75, 1]
+        }}
+      >
+        {/* UFO Body */}
+        <div className="relative">
+          {/* Main large disc */}
+          <motion.div
+            className="w-80 h-32 bg-gradient-to-b from-gray-200 via-gray-400 to-gray-700 rounded-full relative shadow-2xl border border-gray-500"
+            animate={{
+              scale: [1, 1.02, 1],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            style={{
+              background: 'linear-gradient(to bottom, #e5e7eb 0%, #9ca3af 30%, #6b7280 70%, #374151 100%)',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), inset 0 -5px 15px rgba(0, 0, 0, 0.3)'
+            }}
+          >
+            {/* Top dome */}
+            <div 
+              className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-48 h-24 rounded-full shadow-xl"
+              style={{
+                background: 'linear-gradient(to bottom, #f3f4f6 0%, #d1d5db 50%, #9ca3af 100%)',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4), inset 0 -3px 10px rgba(0, 0, 0, 0.2)'
+              }}
+            ></div>
             
-            <div className="w-full space-y-2 text-left text-lg">
-                <p><strong>Full Name:</strong> {user.fullname}</p>
-                <p><strong>Email:</strong> {user.email}</p>
-                <p><strong>ID:</strong> {user.id_user}</p>
-                <p><strong>Languages:</strong> {user.languages || 'N/A'}</p>
-                <p><strong>Bio:</strong> {user.bio || 'Not set.'}</p>
-                
-                <p className={`font-semibold ${user.is2FAEnabled ? 'text-green-400' : 'text-yellow-400'}`}>
-                    <strong>2FA Enabled:</strong> {user.is2FAEnabled ? 'Yes ✅' : 'No ⚠️'}
-                </p>
-                
-                {/* Displaying token is for debugging/testing only */}
-                <p className="text-sm text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap pt-2">
-                    **Token:** {user.access_token ? user.access_token.substring(0, 30) + '...' : 'N/A'}
-                </p>
-                 <p className="text-sm text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap pt-2">
-                    **Refresh Token:** {user.refresh_token ? user.refresh_token.substring(0, 30) + '...' : 'N/A'}
-                </p>
+            {/* Large windows around the dome */}
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex space-x-6">
+              <motion.div 
+                className="w-6 h-6 bg-cyan-300 rounded-full shadow-lg"
+                animate={{
+                  opacity: [0.4, 1, 0.4],
+                  boxShadow: [
+                    "0 0 10px rgba(0, 255, 255, 0.4)",
+                    "0 0 25px rgba(0, 255, 255, 1)",
+                    "0 0 10px rgba(0, 255, 255, 0.4)"
+                  ]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              ></motion.div>
+              <motion.div 
+                className="w-6 h-6 bg-cyan-300 rounded-full shadow-lg"
+                animate={{
+                  opacity: [1, 0.4, 1],
+                  boxShadow: [
+                    "0 0 25px rgba(0, 255, 255, 1)",
+                    "0 0 10px rgba(0, 255, 255, 0.4)",
+                    "0 0 25px rgba(0, 255, 255, 1)"
+                  ]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 0.4
+                }}
+              ></motion.div>
+              <motion.div 
+                className="w-6 h-6 bg-cyan-300 rounded-full shadow-lg"
+                animate={{
+                  opacity: [0.4, 1, 0.4],
+                  boxShadow: [
+                    "0 0 10px rgba(0, 255, 255, 0.4)",
+                    "0 0 25px rgba(0, 255, 255, 1)",
+                    "0 0 10px rgba(0, 255, 255, 0.4)"
+                  ]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 0.8
+                }}
+              ></motion.div>
+              <motion.div 
+                className="w-6 h-6 bg-cyan-300 rounded-full shadow-lg"
+                animate={{
+                  opacity: [1, 0.4, 1],
+                  boxShadow: [
+                    "0 0 25px rgba(0, 255, 255, 1)",
+                    "0 0 10px rgba(0, 255, 255, 0.4)",
+                    "0 0 25px rgba(0, 255, 255, 1)"
+                  ]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 1.2
+                }}
+              ></motion.div>
             </div>
-            
-            <button 
-                onClick={handleLogout}
-                className="mt-8 w-full px-6 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition duration-300 shadow-md"
-            >
-                Logout
-            </button>
+
+            {/* Bottom lights array */}
+            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-4">
+              {[...Array(8)].map((_, i) => (
+                <motion.div 
+                  key={i}
+                  className="w-3 h-3 bg-yellow-300 rounded-full"
+                  animate={{
+                    opacity: [0.2, 1, 0.2],
+                    scale: [0.7, 1.3, 0.7],
+                    boxShadow: [
+                      "0 0 8px rgba(255, 255, 0, 0.3)",
+                      "0 0 20px rgba(255, 255, 0, 1)",
+                      "0 0 8px rgba(255, 255, 0, 0.3)"
+                    ]
+                  }}
+                  transition={{
+                    duration: 1.2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: i * 0.15
+                  }}
+                ></motion.div>
+              ))}
+            </div>
+
+            {/* Side detail rings */}
+            <div className="absolute top-1/2 left-4 transform -translate-y-1/2 w-4 h-8 bg-gradient-to-b from-gray-500 to-gray-700 rounded-full opacity-60"></div>
+            <div className="absolute top-1/2 right-4 transform -translate-y-1/2 w-4 h-8 bg-gradient-to-b from-gray-500 to-gray-700 rounded-full opacity-60"></div>
+          </motion.div>
+
+          {/* Large tractor beam effect */}
+          <motion.div
+            className="absolute top-full left-1/2 transform -translate-x-1/2"
+            style={{
+              width: 0,
+              height: 0,
+              borderLeft: '60px solid transparent',
+              borderRight: '60px solid transparent',
+              borderTop: '80px solid rgba(0, 255, 255, 0.08)',
+            }}
+            animate={{
+              opacity: [0, 0.7, 0],
+              scaleY: [0.3, 1, 0.3],
+              scaleX: [0.6, 1.4, 0.6]
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          ></motion.div>
+
+          {/* Secondary beam layer */}
+          <motion.div
+            className="absolute top-full left-1/2 transform -translate-x-1/2"
+            style={{
+              width: 0,
+              height: 0,
+              borderLeft: '40px solid transparent',
+              borderRight: '40px solid transparent',
+              borderTop: '60px solid rgba(255, 255, 255, 0.05)',
+            }}
+            animate={{
+              opacity: [0, 0.5, 0],
+              scaleY: [0.5, 1.2, 0.5],
+              scaleX: [0.8, 1.2, 0.8]
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5
+            }}
+          ></motion.div>
         </div>
-      </div>
+      </motion.div>
+
+      {/* Enhanced floating energy particles - Only render on client */}
+      {/* {isClient && [...Array(12)].map((_, i) => {
+        const animation = getParticleAnimation(i);
+        return (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-cyan-300 rounded-full"
+            style={{
+              boxShadow: '0 0 8px rgba(0, 255, 255, 0.8)'
+            }}
+            initial={animation.initial}
+            animate={animation.animate}
+            transition={{
+              duration: 8 + (i % 6),  // Use index for variation
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.5
+            }}
+          />
+        );
+      })} */}
+
+      {/* Ambient glow effect around UFO area */}
+      <motion.div
+        className="absolute"
+        initial={{
+          x: "20vw",
+          y: "50vh"
+        }}
+        animate={{
+          x: ["20vw", "30vw", "15vw", "25vw", "20vw"],
+          y: ["50vh", "35vh", "60vh", "40vh", "50vh"]
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+          times: [0, 0.25, 0.5, 0.75, 1]
+        }}
+      >
+        <motion.div
+          className="w-96 h-96 rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(0, 255, 255, 0.03) 0%, transparent 70%)'
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        ></motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
+export default function Fly() {
+  return (
+    <div className="  w-100 h-100 border border-emerald-300 relative">
+      <FlyingSaucer className="scale-50 top-[-100%]" />
     </div>
   );
 }

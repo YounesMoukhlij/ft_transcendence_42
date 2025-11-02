@@ -19,6 +19,9 @@ import {
     updateUserInfo,
     updateUserPassword,
     update2FA,
+    generate2FA,        // <-- NEW
+    verifyAndEnable2FA, // <-- NEW
+    loginVerify2FA      // <-- NEW
 } from '../modules/userAuth.module.js';
 
 
@@ -41,8 +44,17 @@ export default async function routes(fastify, options) {
     // setting routes
     fastify.post('/updateUserInfo', { preHandler: [fastify.authenticate] }, updateUserInfo);
     fastify.post('/updateUserPassword', { preHandler: [fastify.authenticate] }, updateUserPassword);
+    
+    // --- MODIFIED 2FA Routes ---
+    
+    // This route is now only for *disabling* 2FA
     fastify.post('/update2FA', { preHandler: [fastify.authenticate] }, update2FA);
     
+    // Step 1 of enabling 2FA (setup)
+    fastify.post('/2fa/generate', { preHandler: [fastify.authenticate] }, generate2FA);
+    
+    // Step 2 of enabling 2FA (setup)
+    fastify.post('/2fa/verify', { preHandler: [fastify.authenticate] }, verifyAndEnable2FA);
 
 
 
@@ -54,6 +66,11 @@ export default async function routes(fastify, options) {
 
     fastify.post('/login', login);
     fastify.post('/refreshToken', refreshToken);
+
+    // --- NEW: 2FA LOGIN VERIFICATION ---
+    // This route is called after /login, /GoogleAuth, or /42Auth
+    // if 2FA is required.
+    fastify.post('/2fa/login-verify', loginVerify2FA);
    
     // ====== GOOGLE OAUTH ROUTES ======
     // Step 1: Initiate OAuth flow
@@ -67,7 +84,5 @@ export default async function routes(fastify, options) {
     fastify.get('/auth/42', Initiate42Auth);
     // Step 2: 42 redirects here with code
     fastify.get('/42Auth', FortyTwoAuth);
-
-
 
 }
