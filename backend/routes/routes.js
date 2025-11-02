@@ -19,9 +19,11 @@ import {
     updateUserInfo,
     updateUserPassword,
     update2FA,
-    generate2FA,        // <-- NEW
-    verifyAndEnable2FA, // <-- NEW
-    loginVerify2FA      // <-- NEW
+    generate2FA,        
+    verifyAndEnable2FA, 
+    loginVerify2FA,
+    leaderboard      
+
 } from '../modules/userAuth.module.js';
 
 
@@ -40,6 +42,9 @@ export default async function routes(fastify, options) {
     fastify.get('/getUserById/:id', getUserById);
     fastify.get('/getUserByEmail/:email', getUserByEmail);
     fastify.delete('/DeleteUserById/:id', DeleteUserById);
+
+    //leaderboard
+    fastify.get('/leaderboard', leaderboard);
 
     // setting routes
     fastify.post('/updateUserInfo', { preHandler: [fastify.authenticate] }, updateUserInfo);

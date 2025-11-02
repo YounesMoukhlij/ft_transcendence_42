@@ -36,8 +36,22 @@ const OAUTH42_SECRET = 's-s4t2ud-fb27f3cc416474264811ebc3fa53dc8ced53c29c11703ce
 const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
 const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
-// ... (EmailJS config commented out)
 
+//leaderboard
+
+export async function leaderboard(request, reply)
+{
+    // Implementation for leaderboard
+    try {
+        const leaderboardUsers = request.server.db
+            .prepare("SELECT username, profile_img, xp FROM users ORDER BY xp DESC")
+            .all();
+        return reply.code(200).send({ success: true, leaderboard: leaderboardUsers });
+    } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+        return reply.code(500).send({ success: false, message: "Error fetching leaderboard" });
+    }
+}
 // token function generator (FIXED)
 export function generateToken(username, email, id_user) {
     console.log("generateToken called with:", { username, email, id_user });
@@ -742,6 +756,7 @@ export async function GoogleAuth(request, reply) {
                 googleUser.name.split(" ")[0] + Math.floor(Math.random() * 1000),
                 googleUser.name,
                 googleUser.email, 
+                // bigger profile image from google
                 googleUser.picture,
                 1,
             );

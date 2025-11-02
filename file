@@ -501,7 +501,7 @@ const ProfileSettingsPage = () => {
   }
   // --- END NEW ---
 
-  const tabs:Record<string, string> = {
+  const tabs:Record<string, React.ReactNode> = {
     profile: 'Profile',
     security: 'Security',
     help: 'Help',
