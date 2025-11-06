@@ -31,8 +31,8 @@ const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a4
 const GOOGLE_CLIENT_SECRET = "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";
 const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
-const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
-const OAUTH42_SECRET = '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';
+const OAUTH42_UID = 'u-s4t2ud-597f20fdf6b8c3f0e29faa1913958951a09f41e7d5a50727a779d37aed7a25cb';
+const OAUTH42_SECRET = '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';
 const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
 const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
