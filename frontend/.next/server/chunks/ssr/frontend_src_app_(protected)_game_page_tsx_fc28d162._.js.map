@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///goinfre/abechcha/refac/frontend/src/app/%28protected%29/game/page.tsx"],"sourcesContent":["\n'use client';\nimport ModeSwiper from \"../../components/ModeSwiper\";\n\n\nexport default function GamePage() {\n  return (\n    <div className=\" flex flex-col items-center justify-center h-[100%] w-[100%]\">\n      <ModeSwiper/>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;;;;;;AACA;;;AAIe,SAAS;IACtB,qBACE,0PAAC;QAAI,WAAU;kBACb,cAAA,0PAAC;;;;;;;;;;AAGP","debugId":null}}]
-}
