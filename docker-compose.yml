@@ -32,7 +32,7 @@ services:
     container_name: nginx
     image: nginx:0.1
     ports:
-    - "443:443"
+    - "8080:8080"
     depends_on:
       - Frontend
     restart: always
@@ -49,6 +49,7 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - monitoring
 
@@ -76,6 +77,19 @@ services:
       - prometheus
     networks:
       - monitoring
+
+  # nginx-exporter:
+  #   image: nginx/nginx-prometheus-exporter:latest
+  #   container_name: nginx-exporter
+  #   command:
+  #     - -nginx.scrape-uri=https://nginx/nginx_status
+  #     - -nginx.ssl-verify=false 
+  #   ports:
+  #     - "9113:9113"
+  #   depends_on:
+  #     - nginx
+  #   networks:
+  #     - monitoring
 
 networks:
   monitoring:
