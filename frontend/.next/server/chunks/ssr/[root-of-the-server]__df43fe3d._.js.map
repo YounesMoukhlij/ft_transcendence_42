@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 19, "column": 0}, "map": {"version":3,"sources":["file:///goinfre/alamini/Main/frontend/src/app/%28protected%29/leagues/%5Bleague%5D/page.tsx"],"sourcesContent":["import league from \"@/app/(protected)/profile/components/profileWrapper\";\n\ninterface PageProps {\n  params: Promise<{ username: string }>; // dynamic route\n}\n\n// Server component\nexport default async function TheProfile({ params }: PageProps) {\n  const { username } = await params; // unwrap the promise\n  return <UserProfile username={username} />; // pass to client component\n}\n"],"names":[],"mappings":";;;;;;AAOe,eAAe,WAAW,EAAE,MAAM,EAAa;IAC5D,MAAM,EAAE,QAAQ,EAAE,GAAG,MAAM,QAAQ,qBAAqB;IACxD,qBAAO,0PAAC;QAAY,UAAU;;;;;cAAc,2BAA2B;AACzE","debugId":null}}]
+}

@@ -1,0 +1,3 @@
+{
+  "/(protected)/profile/[username]/page": "app/(protected)/profile/[username]/page.js"
+}
