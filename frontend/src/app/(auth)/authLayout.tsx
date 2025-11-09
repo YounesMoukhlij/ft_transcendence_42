@@ -6,9 +6,7 @@ import { toast } from 'react-toastify'
 import '../globals.css'
 //zustand or recoil
 import { useUserStore } from "../../store/userStore"
-//components
-// import FlyingSaucer from '@/components/FlyingSaucer'
-// import { cookies } from 'next/headers'
+
 
 const API_URL = "http://" + process.env.NEXT_PUBLIC_BACKENDIP + ":" +  process.env.NEXT_PUBLIC_BACKENDPORT;
 

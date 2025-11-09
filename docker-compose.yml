@@ -24,6 +24,8 @@ services:
       - "4444:4444"
     networks:
       - monitoring
+    depends_on:
+      - Redis
   
   Redis:
     build:
@@ -34,8 +36,6 @@ services:
     restart: always
     ports:
       - "6370:6379"
-    depends_on:
-      - Backend
     networks:
       - monitoring
 
@@ -92,18 +92,20 @@ services:
     networks:
       - monitoring
 
-  # nginx-exporter:
-  #   image: nginx/nginx-prometheus-exporter:latest
-  #   container_name: nginx-exporter
-  #   command:
-  #     - -nginx.scrape-uri=https://nginx/nginx_status
-  #     - -nginx.ssl-verify=false 
-  #   ports:
-  #     - "9113:9113"
-  #   depends_on:
-  #     - nginx
-  #   networks:
-  #     - monitoring
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-exporter
+    restart: always
+    ports:
+      - "9113:9113"
+    command:
+      - "--nginx.scrape-uri=https://nginx:8080/nginx_status"
+      # - "--nginx.ssl-verify=false"
+    depends_on:
+      - nginx
+    networks:
+      - monitoring
+
 
 networks:
   monitoring:
