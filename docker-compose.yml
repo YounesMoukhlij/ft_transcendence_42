@@ -24,6 +24,20 @@ services:
       - "4444:4444"
     networks:
       - monitoring
+  
+  Redis:
+    build:
+      context: .
+      dockerfile: ./infra/Dockerfile.redis
+    container_name: redis
+    image: redis:0.1
+    restart: always
+    ports:
+      - "6370:6379"
+    depends_on:
+      - Backend
+    networks:
+      - monitoring
 
   nginx:
     build:

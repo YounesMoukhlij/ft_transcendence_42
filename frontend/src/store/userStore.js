@@ -95,7 +95,7 @@ export const useUserStore = create(
     const host = process.env.NEXT_PUBLIC_BACKENDIP || window.location.hostname || 'localhost'
     const port = process.env.NEXT_PUBLIC_BACKENDPORT || '4444'
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const url = `${protocol}://${host}:${port}/ws`
+    const url = 'http://localhost:4444/ws'
 
     try {
       const ws = new WebSocket(url)
