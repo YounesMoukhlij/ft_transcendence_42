@@ -52,7 +52,7 @@ async function startServer() {
     // 1. Create the Redis client
     console.log('Connecting to Redis...');
     const redisClient = createClient({
-      url: process.env.REDIS_URL || 'redis://redis:6379'
+      url: process.env.REDIS_URL || 'redis://localhost:6379'
     });
 
     // 2. Add an error listener to catch connection issues

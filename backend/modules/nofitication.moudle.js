@@ -268,3 +268,37 @@ export async function GetFriends(request, reply) {
 }
 
 
+
+
+
+export function sendGameChallenge(request , reply){
+
+  const authHeader = request.headers['authorization'];
+  const {Friend_id} = request.body;
+  if (!authHeader || !Friend_id)    // must be check if is not a freind;
+    reply.code(401).send("missing token");
+  
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+
+  try{
+    decodedObject = jwt.verify(token, SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
+
+
+  const socket = request.server.users_socket.get(Friend_id.toString());
+  if (socket){
+    const object  = {
+      username: decodedObject.username
+    };
+    socket.send(JSON.stringify({
+        type: "game_invite",
+        data: object
+    }));
+  }
+
+  return reply.send(true);
+}

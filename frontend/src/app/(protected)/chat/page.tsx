@@ -224,8 +224,12 @@ export default function ChatPage() {
   const [input, setEmoji] = useState<string>('');
   const [dropmenu, setdropmenu] = useState<boolean>(false);
   const [confirm_invite, setConfirm] = useState<boolean>(false);
-  const [display_chats, set_chats] = useState<boolean>(false);
+  const [display_chats, Set_Display_game_invite] = useState<boolean>(false);
+  const [Display_game_invite, set_chats] = useState<boolean>(false);
   const [SelectContact, SetSelectContact] = useState<boolean>(false);
+
+
+  const [Inviter, setInviter] = useState<string>('');
 
   const user = useUserStore((state) => state.user);
 
@@ -253,6 +257,14 @@ export default function ChatPage() {
       } else if (type === "status") {
         updateFriendStatus(data.status, data.friend);
         console.log(data);
+      }
+      else if (type === "game_invite") {
+        Set_Display_game_invite(true);
+        setInviter(data.username);
+        setTimeout(() => {
+          Set_Display_game_invite(false);
+        }, 3000);
+          
       }
       else if (type === "test") {
         addFriend(data);
@@ -299,7 +311,7 @@ export default function ChatPage() {
       user: user.username,
       conv_id: id,
       friend: friend, 
-      friend_id: friend_id 
+      friend_id: friend_id
     });
     Setuser_block(user.username || '');
     if (double_block < 2)
@@ -422,10 +434,43 @@ export default function ChatPage() {
     }
   }, [messages]);
 
+
+
+  function Cancel(){
+    Set_Display_game_invite(false);
+  }
+
+  function send_game_invite(friend : number){
+      try{
+        const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendGameChallenge` , {
+            Friend_id: friend,
+          },{
+          headers: {
+            Authorization: `Bearer ${user.access_token}`
+          },
+        });
+      }catch(err){
+
+      }
+  }
+
   return (
+    <>
+    {display_chats &&
+      <div className='flex w-[95%]  justify-end '>
+        <div className=' border-2 w-70'>
+          <p className='mt-1.5 text-center'>{Inviter} invite you for a game </p>
+          <div className='flex justify-around mt-2 mb-1.5'>
+            <button onClick={Cancel} className='bg-red-400 border-2 w-20'>Cancel</button>
+              <Link href="/game" key="/game">
+                  <button onClick={()=> Set_Display_game_invite(false) } className='bg-green-400 border-2 w-20'>Accept</button>
+              </Link>
+          </div>
+        </div>
+      </div>
+    }
     <div className="flex justify-center items-center h-[89vh] text-white px-2 sm:px-4 lg:px-0">
       <div className="flex w-[100vh] h-[90vh] sm:h-[95vh] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
-        
         <div className="w-full  sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
           <Test1
             friends={friends}
@@ -624,9 +669,7 @@ export default function ChatPage() {
                             </button>
                           </div>
                           <div className="text-center border h-[70%] w-[45%] bg-[rgb(14,154,54)] p-2 rounded-2xl border-solid">
-                            <Link href="/game" key="/game">
-                              <button className="text-xs sm:text-sm">Confirm</button>
-                            </Link>
+                              <button onClick={() => send_game_invite(localStorage.getItem('friend_id')) } className="text-xs sm:text-sm">Confirm</button>
                           </div>
                         </div>
                       </div>
@@ -639,5 +682,7 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+    </>
   );
+
 }
