@@ -266,7 +266,7 @@ export default function ChatPage() {
         SetInvater_img(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}` +  data.img);
         setTimeout(() => {
           Set_Display_game_invite(false);
-        }, 3000);
+        }, 4000);
           
       }
       else if (type === "test") {
@@ -409,20 +409,20 @@ export default function ChatPage() {
     set_chats(!display_chats);
   }
 
-  function handle_confirm_button() {
-    setConfirm(false);
-  }
-
-  function handle_cancel_invite() {
-    setConfirm(false);
-  }
-
   function handle_dropmenu() {
     setdropmenu(!dropmenu);
+    
+    setTimeout(() => {
+      setdropmenu(false);
+    }, 5000);
   }
 
   function handle_confirm_invite() {
     setConfirm(true);
+    
+    setTimeout(() => {
+      setConfirm(false);
+    }, 5000);
   }
 
   function move_emoji_to_input(object: EmojiClickData) {
@@ -443,7 +443,7 @@ export default function ChatPage() {
     Set_Display_game_invite(false);
   }
 
-  function send_game_invite(friend : number){
+  function send_game_invite(friend : string){
       try{
         const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendGameChallenge` , {
             Friend_id: friend,
@@ -493,22 +493,36 @@ export default function ChatPage() {
         
         
         <div className=" relative flex w-full lg:w-2/3 xl:w-3/4 flex-col border rounded-[35px] border-solid bg-black overflow-hidden ">
+          {Display_game_invite && (
+            <div className="z-50 absolute flex flex-col w-full bg-gray-600 border-2 rounded-3xl overflow-hidden shadow-lg p-3 sm:p-4 items-center justify-between">
 
-          {Display_game_invite &&
-            <div className='z-50 absolute flex w-full h-20 bg-gray-600 justify-center border-2 rounded-4xl overflow-hidden'>
-              <div className=' w-[90%] flex items-center'>
-                <img className='w-16 h-16 rounded-[50%] mr-3.5' src={Inviter_img}/>
-                <p className='text-3xl'>{Inviter_username} invite you for a 1 vs 1 game </p>
+
+              <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
+                <img
+                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full mr-3"
+                  src={Inviter_img}
+                  alt="Inviter"
+                />
+                <p className="text-base sm:text-lg md:text-2xl lg:text-3xl text-white text-center sm:text-left">
+                  {Inviter_username} invited you for a 1 vs 1 game
+                </p>
               </div>
-              <div className='flex w-[10%] justify-between  items-center'>
-                <Link href="/game" key="/game">
-                  <button className='bg-green-500 border-2 w-10 h-10 flex justify-center items-center'><GiCheckMark size={30}/></button>
-                </Link>
-                <button onClick={Cancel} className='bg-red-500 border-2 w-10 h-10 flex justify-center items-center'><HiXMark size={30} /></button>
-            </div>
-          </div>
-          }
           
+              <div className="flex gap-3 sm:gap-4 justify-center sm:justify-end w-full sm:w-auto">
+                <Link href="/game" key="/game">
+                  <button className="bg-green-500 hover:bg-green-600 transition border-2 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex justify-center items-center">
+                    <GiCheckMark size={24} className="sm:size-28 md:size-30 text-white" />
+                  </button>
+                </Link>
+                <button
+                  onClick={Cancel}
+                  className="bg-red-500 hover:bg-red-600 transition border-2 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex justify-center items-center">
+                  <HiXMark size={24} className="sm:size-28 md:size-30 text-white" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {SelectContact && (
             <div className="flex items-center h-[8%] sm:h-[9%] rounded-t-[35px] ml-0.5 bg-[#3a3638] justify-between px-2 sm:px-4">
               <div className="flex h-3/5 self-center">
@@ -694,3 +708,5 @@ export default function ChatPage() {
   );
 
 }
+
+

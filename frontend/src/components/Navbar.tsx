@@ -92,6 +92,9 @@ export default function Navbar()
   function showNotification(){
     setNotificationIndex(!notificationIndex);
     SetunseenCount(0);
+    setTimeout(() => {
+      setNotificationIndex(false);
+    }, 5000);
     // i need to set the index is_seen in funcking db
   }
 
@@ -215,7 +218,12 @@ export default function Navbar()
             </div>
           {notificationIndex &&
             <div className='testt absolute flex flex-col top-22 rounded-2xl right-30 h-52 w-80  bg-black text-white border-2  overflow-y-scroll gap-2'>
-             {
+             
+              {notificatiion.length === 0 ? (
+                <div className="text-center text-gray-300 py-4">
+                  No notifications
+                </div>
+              ):(
                notificatiion.map((item , index)=>(
                    <div  key={index} className=' index flex flex-col border-t border-gray-300 '>
                     <div  className='flex '>
@@ -230,14 +238,13 @@ export default function Navbar()
                    <button  onClick={() =>DelteFriendRequest(item.notify_id)}  className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
                   </div>
                 </div>
-               ))
-             }
+               )))
+              }
             </div>
           }
-
-            <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
-                <IoNotificationsOutline onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
-                <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
+          <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
+              <IoNotificationsOutline onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
+              <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
             </div>
             <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>
               <span ref={profileIconRef}>
