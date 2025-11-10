@@ -14,6 +14,8 @@ import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 import  {useUserStore}  from '../../../store/userStore';
 import getFormattedDate from './tools'
 import { stat } from 'fs';
+import { GiCheckMark } from "react-icons/gi";
+import { HiXMark } from "react-icons/hi2";
 
 interface Friend {
   username: string;
@@ -224,13 +226,13 @@ export default function ChatPage() {
   const [input, setEmoji] = useState<string>('');
   const [dropmenu, setdropmenu] = useState<boolean>(false);
   const [confirm_invite, setConfirm] = useState<boolean>(false);
-  const [display_chats, Set_Display_game_invite] = useState<boolean>(false);
-  const [Display_game_invite, set_chats] = useState<boolean>(false);
+  const [display_chats, set_chats] = useState<boolean>(false);
+  const [Display_game_invite, Set_Display_game_invite] = useState<boolean>(false);
   const [SelectContact, SetSelectContact] = useState<boolean>(false);
 
 
-  const [Inviter, setInviter] = useState<string>('');
-
+  const [Inviter_username, setInviter_usernmae] = useState<string>('');
+  const [Inviter_img , SetInvater_img] =  useState<string>(''); 
   const user = useUserStore((state) => state.user);
 
 
@@ -260,7 +262,8 @@ export default function ChatPage() {
       }
       else if (type === "game_invite") {
         Set_Display_game_invite(true);
-        setInviter(data.username);
+        setInviter_usernmae(data.username);
+        SetInvater_img(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}` +  data.img);
         setTimeout(() => {
           Set_Display_game_invite(false);
         }, 3000);
@@ -456,19 +459,6 @@ export default function ChatPage() {
 
   return (
     <>
-    {display_chats &&
-      <div className='flex w-[95%]  justify-end '>
-        <div className=' border-2 w-70'>
-          <p className='mt-1.5 text-center'>{Inviter} invite you for a game </p>
-          <div className='flex justify-around mt-2 mb-1.5'>
-            <button onClick={Cancel} className='bg-red-400 border-2 w-20'>Cancel</button>
-              <Link href="/game" key="/game">
-                  <button onClick={()=> Set_Display_game_invite(false) } className='bg-green-400 border-2 w-20'>Accept</button>
-              </Link>
-          </div>
-        </div>
-      </div>
-    }
     <div className="flex justify-center items-center h-[89vh] text-white px-2 sm:px-4 lg:px-0">
       <div className="flex w-[100vh] h-[90vh] sm:h-[95vh] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
         <div className="w-full  sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
@@ -478,13 +468,14 @@ export default function ChatPage() {
             setRoom={setRoom}
             setImg={setImg}
             SetSelectContact={SetSelectContact}
-          />
+            />
         </div>
         <div className="flex self-start lg:hidden fixed top-4 left-4 z-50">
           <button onClick={handle_chats_display} className="p-2 mt-10 bg-amber-700  rounded-lg">
             <FaArrowRight />
           </button>
         </div>
+        
         {display_chats && (
           <div className="lg:hidden fixed inset-0 z-40">
             <div className="absolute inset-0 bg-black/50" onClick={handle_chats_display}></div>
@@ -499,7 +490,24 @@ export default function ChatPage() {
             </div>
           </div>
         )}
-        <div className="flex w-full lg:w-2/3 xl:w-3/4 flex-col border rounded-[35px] border-solid bg-black ">
+        
+        
+        <div className=" relative flex w-full lg:w-2/3 xl:w-3/4 flex-col border rounded-[35px] border-solid bg-black overflow-hidden ">
+
+          {Display_game_invite &&
+            <div className='z-50 absolute flex w-full h-20 bg-gray-600 justify-center border-2 rounded-4xl overflow-hidden'>
+              <div className=' w-[90%] flex items-center'>
+                <img className='w-16 h-16 rounded-[50%] mr-3.5' src={Inviter_img}/>
+                <p className='text-3xl'>{Inviter_username} invite you for a 1 vs 1 game </p>
+              </div>
+              <div className='flex w-[10%] justify-between  items-center'>
+                <Link href="/game" key="/game">
+                  <button className='bg-green-500 border-2 w-10 h-10 flex justify-center items-center'><GiCheckMark size={30}/></button>
+                </Link>
+                <button onClick={Cancel} className='bg-red-500 border-2 w-10 h-10 flex justify-center items-center'><HiXMark size={30} /></button>
+            </div>
+          </div>
+          }
           
           {SelectContact && (
             <div className="flex items-center h-[8%] sm:h-[9%] rounded-t-[35px] ml-0.5 bg-[#3a3638] justify-between px-2 sm:px-4">

@@ -289,15 +289,27 @@ export function sendGameChallenge(request , reply){
   }
 
 
-  const socket = request.server.users_socket.get(Friend_id.toString());
-  if (socket){
-    const object  = {
-      username: decodedObject.username
-    };
-    socket.send(JSON.stringify({
-        type: "game_invite",
-        data: object
-    }));
+
+  try{
+    const query = request.server.db.prepare('SELECT profile_img FROM users where id_user = ?');
+    const result = query.get(decodedObject.id_user);
+
+
+
+    const socket = request.server.users_socket.get(Friend_id.toString());
+    if (socket){
+      const object  = {
+        username: decodedObject.username,
+        img: result.profile_img
+      };
+      socket.send(JSON.stringify({
+          type: "game_invite",
+          data: object
+      }));
+    }
+  }catch(err){
+    console.log(err);
+    return reply.code(500).send(false);
   }
 
   return reply.send(true);
