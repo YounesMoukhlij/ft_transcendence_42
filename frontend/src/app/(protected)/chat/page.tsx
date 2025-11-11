@@ -17,7 +17,9 @@ import { stat } from 'fs';
 import { GiCheckMark } from "react-icons/gi";
 import { HiXMark } from "react-icons/hi2";
 
+
 interface Friend {
+  id_user: string,
   username: string;
   profile_img: string;
   LastMessage: string;
@@ -37,7 +39,8 @@ function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, s
   setShow(!show)
 }
 
-async function fetchData(friend_id: number , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
+
+async function fetchData(friend_id: string , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
   const { user , updateLastMessage} = useUserStore.getState();
 
   localStorage.setItem('room_select', title);
@@ -70,8 +73,8 @@ async function fetchData(friend_id: number , title: string, setDboubleBlock: (nu
 }
 
 type FreindsListProps = {
-  id_user: number,
-  friend_id: number,
+  id_user: string,
+  friend_id: string,
   photo: string;
   title: string;
   message: string;
@@ -126,11 +129,13 @@ interface Test1Props {
   setRoom: (room: string) => void;
   setImg: (img: string) => void;
   SetSelectContact: (selected: boolean) => void;
+
 }
 
 function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test1Props) {
   const [searchTerm, setSearchTerm] = useState<string>('');
   
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
@@ -151,48 +156,42 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test
           <FaSearch className="text-[rgb(179,173,173)]" size={20} />
         </button>
       </div>
-      <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[35vh] sm:h-[40vh] md:h-[45vh] lg:h-[48vh]">
-        {
-          searchTerm.length > 0
-            ? friends
-              .filter(friend =>
-                friend.username.toLowerCase().startsWith(searchTerm.toLowerCase())
-              )
-              .sort((a, b) => a.username.localeCompare(b.username))
-              .map((friend, index) => (
-                <div key={index}>
-                  <FreindsList
-                    friend_id={friend.id_user}
-                    photo={friend.profile_img}
-                    title={friend.username}
-                    message={friend.LastMessage}
-                    status={friend.status}
-                    setConversation={setMessages}
-                    setRoom={setRoom}
-                    setimg={setImg}
-                    SetSelectContact={SetSelectContact}
-                  />
-                </div>
-              ))
-            : friends
-              .sort((a, b) => new Date(b.LastMessageTime).getTime() - new Date(a.LastMessageTime).getTime())
-              .map((friend, index) => (
-                  console.log("heeeeel  , " , friend.status),
-                <div key={index}>
-                  <FreindsList
-                    friend_id={friend.id_user}
-                    photo={friend.profile_img}
-                    title={friend.username}
-                    message={friend.LastMessage}
-                    status={friend.status}
-                    setConversation={setMessages}
-                    setRoom={setRoom}
-                    setimg={setImg}
-                    SetSelectContact={SetSelectContact}
-                  />
-                </div>
-              ))
-        }
+    <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[35vh] sm:h-[40vh] md:h-[45vh] lg:h-[48vh]">
+    {searchTerm.length > 0
+      ? (
+        [...friends].filter(friend => friend.username.toLowerCase().startsWith(searchTerm.toLowerCase()))
+        .sort((a, b) => a.username.localeCompare(b.username))
+        .map((friend, index) => (
+          <div key={index}>
+            <FreindsList
+              friend_id={friend.id_user}
+              photo={friend.profile_img}
+              title={friend.username}
+              message={friend.LastMessage}
+              status={friend.status}
+              setConversation={setMessages}
+              setRoom={setRoom}
+              setimg={setImg}
+              SetSelectContact={SetSelectContact}
+            />
+          </div>
+        ))
+      ): ([...friends].sort((a, b) => new Date(b.LastMessageTime || 0) - new Date(a.LastMessageTime|| 0)) .map((friend, index) => (
+          <div key={index}>
+            <FreindsList
+              friend_id={friend.id_user}
+              photo={friend.profile_img}
+              title={friend.username}
+              message={friend.LastMessage}
+              status={friend.status}
+              setConversation={setMessages}
+              setRoom={setRoom}
+              setimg={setImg}
+              SetSelectContact={SetSelectContact}
+            />
+          </div>
+        )))
+      }
       </div>
     </div>
   );
@@ -237,10 +236,6 @@ export default function ChatPage() {
 
 
   useEffect(() => {
-    connect();
-  }, []);
-
-  useEffect(() => {
     if (!socket) return;
 
     socket.onmessage = (event: MessageEvent) => {
@@ -266,11 +261,14 @@ export default function ChatPage() {
         SetInvater_img(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}` +  data.img);
         setTimeout(() => {
           Set_Display_game_invite(false);
-        }, 4000);
+        }, 5000);
           
       }
       else if (type === "test") {
         addFriend(data);
+      }
+      else if (type === "start_game") {
+        <Link href="/game" key="/game"></Link>
       }
     };
   }, [socket]);
@@ -444,7 +442,8 @@ export default function ChatPage() {
   }
 
   function send_game_invite(friend : string){
-      try{
+    try{
+        setConfirm(false);
         const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendGameChallenge` , {
             Friend_id: friend,
           },{
@@ -468,7 +467,7 @@ export default function ChatPage() {
             setRoom={setRoom}
             setImg={setImg}
             SetSelectContact={SetSelectContact}
-            />
+          />
         </div>
         <div className="flex self-start lg:hidden fixed top-4 left-4 z-50">
           <button onClick={handle_chats_display} className="p-2 mt-10 bg-amber-700  rounded-lg">
@@ -678,20 +677,20 @@ export default function ChatPage() {
                     <IoSend onClick={handleSend} className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 cursor-pointer" />
                   </div>
                   {confirm_invite && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
+                    <div className="absolute inset-0 flex items-center justify-center z-50 px-4">
                       <div className="absolute inset-0 bg-black/50" onClick={() => setConfirm(false)}></div>
                       <div className="relative flex flex-col justify-between w-full max-w-sm sm:max-w-md lg:max-w-lg h-32 sm:h-36 bg-gray-500 text-center border p-3 sm:p-4 rounded-2xl border-solid">
                         <p className="text-xs sm:text-sm lg:text-base">
                           You are about to request a game session with {room}
                         </p>
                         <div className="flex items-end justify-between h-1/2 px-2">
-                          <div className="text-center w-[45%] h-[70%] border bg-[rgb(201,49,38)] p-2 rounded-2xl border-solid">
-                            <button onClick={() => setConfirm(false)} className="text-xs sm:text-sm">
+                          <div className="text-center w-[45%] h-[70%] border bg-[rgb(201,49,38)] flex justify-center rounded-2xl border-solid items-center">
+                            <button onClick={() => setConfirm(false)} className="w-full h-full text-xs sm:text-sm">
                               Cancel
                             </button>
                           </div>
-                          <div className="text-center border h-[70%] w-[45%] bg-[rgb(14,154,54)] p-2 rounded-2xl border-solid">
-                              <button onClick={() => send_game_invite(localStorage.getItem('friend_id')) } className="text-xs sm:text-sm">Confirm</button>
+                          <div className="text-center border h-[70%] w-[45%] bg-[rgb(14,154,54)] flex justify-center  rounded-2xl border-solid items-center">
+                              <button onClick={() => send_game_invite(localStorage.getItem('friend_id')) } className="text-xs sm:text-sm w-full h-full">Confirm</button>
                           </div>
                         </div>
                       </div>
