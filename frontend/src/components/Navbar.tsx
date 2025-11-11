@@ -120,6 +120,7 @@ export default function Navbar()
           }
         );
         setNotification(result.data);
+        console.log("hererer=================>" , result.data);
       } catch (error) {
         console.error('Failed to fetch notifications', error);
       }
@@ -216,86 +217,118 @@ export default function Navbar()
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
-          {notificationIndex &&
-            <div className='testt absolute flex flex-col top-22 rounded-2xl right-30 h-52 w-80  bg-black text-white border-2  overflow-y-scroll gap-2'>
-              {
-                notificatiion.length === 0 ? (
-                  <div className="text-center text-gray-400 py-6 text-lg font-medium">
-                    No notifications
-                  </div>
-                ) : (
-                  notificatiion.map((item, index) => (
-                    item.title === "game challenge" ? (
-                      <div
-                        key={index}
-                        className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
-                      >
-                        <img
-                          src={item.sender_profile_img}
-                          alt="profile"
-                          className="w-12 h-12 rounded-full border border-gray-600"
-                        />
-                        <div className="flex flex-col flex-1">
-                          <p className="text-lg font-semibold text-white">
-                            {item.sender_username}
-                          </p>
-                          <p className="text-sm text-gray-400">
-                            invited you to a <span className="text-blue-400 font-medium">1 vs 1 game</span>
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => AcceptGameChallenge(item)}
-                            className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            onClick={() => RejectGameChallenge(item.notify_id)}
-                            className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                          >
-                            Decline
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div
-                        key={index}
-                        className="flex flex-col border-t border-gray-700 py-3 px-2 bg-black/40 hover:bg-black/60 rounded-xl transition"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <img
-                              src={item.sender_profile_img}
-                              alt="profile"
-                              className="w-12 h-12 rounded-full border border-gray-600"
-                            />
-                            <p className="text-white text-lg ml-3">{item.sender_username}</p>
-                          </div>
-                          <p className="text-gray-400 text-sm">1d</p>
-                        </div>
-                    
-                        <div className="flex justify-between mt-3">
-                          <button
-                            onClick={() => AcceptFriendRequest(item)}
-                            className="w-[48%] bg-green-600 hover:bg-green-500 text-white py-1.5 rounded-lg border border-green-400"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            onClick={() => DelteFriendRequest(item.notify_id)}
-                            className="w-[48%] bg-gray-100 hover:bg-gray-200 text-black py-1.5 rounded-lg border border-white"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  ))
-                )
-              }
-            </div>
+          {notificationIndex && (
+  <div className="absolute flex flex-col top-22 right-30 h-52 w-80 rounded-2xl bg-black text-white border-2 overflow-y-scroll scrollbar-hide gap-2 p-2 ">
+    {notificatiion.length === 0 ? (
+      <div className="text-center text-gray-400 py-6 text-lg font-medium">
+        No notifications
+      </div>
+    ) : (
+      [...notificatiion]
+        .map((item, index) => {
+          if (item.title === "game challenge") {
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
+              >
+                <img
+                  src={item.sender_profile_img}
+                  alt="profile"
+                  className="w-12 h-12 rounded-full border border-gray-600"
+                />
+                <div className="flex flex-col flex-1">
+                  <p className="text-lg font-semibold text-white">
+                    {item.sender_username}
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    invited you to a{" "}
+                    <span className="text-blue-400 font-medium">1 vs 1 game</span>
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => AcceptGameChallenge(item)}
+                    className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => RejectGameChallenge(item.notify_id)}
+                    className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            );
           }
+
+          if (item.title === "friend request accepted") {
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-3 border border-green-700 bg-green-900/20 rounded-xl hover:bg-green-800/30 transition"
+              >
+                <img
+                  src={item.sender_profile_img}
+                  alt="profile"
+                  className="w-12 h-12 rounded-full border border-green-500"
+                />
+                <div className="flex flex-col">
+                  <p className="text-white text-lg font-medium">
+                    {item.sender_username}
+                  </p>
+                  <p className="text-green-400 text-sm">
+                    accepted your friend request 
+                  </p>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={index}
+              className="flex flex-col border-t border-gray-700 py-3 px-2 bg-black/40 hover:bg-black/60 rounded-xl transition"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <img
+                    src={item.sender_profile_img}
+                    alt="profile"
+                    className="w-12 h-12 rounded-full border border-gray-600"
+                  />
+                  <p className="text-white text-lg ml-3">
+                    {item.sender_username}
+                  </p>
+                </div>
+                <p className="text-gray-400 text-sm">
+                  {item.timeAgo || "1d"}
+                </p>
+              </div>
+
+              <div className="flex justify-between mt-3">
+                <button
+                  onClick={() => AcceptFriendRequest(item)}
+                  className="w-[48%] bg-green-600 hover:bg-green-500 text-white py-1.5 rounded-lg border border-green-400"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => DelteFriendRequest(item.notify_id)}
+                  className="w-[48%] bg-gray-100 hover:bg-gray-200 text-black py-1.5 rounded-lg border border-white"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          );
+        })
+    )}
+  </div>
+)}
+
           <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
               <IoNotificationsOutline onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
               <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
