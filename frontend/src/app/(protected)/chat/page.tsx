@@ -16,7 +16,7 @@ import getFormattedDate from './tools'
 import { stat } from 'fs';
 import { GiCheckMark } from "react-icons/gi";
 import { HiXMark } from "react-icons/hi2";
-
+import { redirect } from 'next/navigation';
 
 interface Friend {
   id_user: string,
@@ -216,6 +216,14 @@ interface EmojiClickData {
   emoji: string;
 }
 
+
+
+interface InviterData {
+  id: number;
+  username: string;
+  img: string;
+}
+
 export default function ChatPage() {
   const { friends, addFriend, removeFriend, setFriends, updateFriendStatus, updateLastMessage } = useUserStore();
   const { messages, setMessages, addMessage, room, setRoom, profile_img, setImg } = useUserStore();
@@ -230,8 +238,7 @@ export default function ChatPage() {
   const [SelectContact, SetSelectContact] = useState<boolean>(false);
 
 
-  const [Inviter_username, setInviter_usernmae] = useState<string>('');
-  const [Inviter_img , SetInvater_img] =  useState<string>(''); 
+  const [InviterData, setInviterData] = useState<InviterData | any >({});
   const user = useUserStore((state) => state.user);
 
 
@@ -257,8 +264,9 @@ export default function ChatPage() {
       }
       else if (type === "game_invite") {
         Set_Display_game_invite(true);
-        setInviter_usernmae(data.username);
-        SetInvater_img(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}` +  data.img);
+        setInviterData(data);
+
+        console.log(data);
         setTimeout(() => {
           Set_Display_game_invite(false);
         }, 5000);
@@ -268,7 +276,9 @@ export default function ChatPage() {
         addFriend(data);
       }
       else if (type === "start_game") {
-        <Link href="/game" key="/game"></Link>
+        console.log(type);
+        console.log(data);
+        redirect("/game");
       }
     };
   }, [socket]);
@@ -441,6 +451,21 @@ export default function ChatPage() {
     Set_Display_game_invite(false);
   }
 
+  function startGame(friend: string){
+    try{
+      const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/startGame`, {
+        Friend_id: friend,
+      },{
+        headers: {
+          Authorization: `Bearer ${user.access_token}`
+        },
+      })
+    }catch(err){
+
+    }
+
+  }
+
   function send_game_invite(friend : string){
     try{
         setConfirm(false);
@@ -499,18 +524,18 @@ export default function ChatPage() {
               <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
                 <img
                   className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full mr-3"
-                  src={Inviter_img}
+                  src={InviterData.img}
                   alt="Inviter"
                 />
                 <p className="text-base sm:text-lg md:text-2xl lg:text-3xl text-white text-center sm:text-left">
-                  {Inviter_username} invited you for a 1 vs 1 game
+                  {InviterData.username} invited you for a 1 vs 1 game
                 </p>
               </div>
           
               <div className="flex gap-3 sm:gap-4 justify-center sm:justify-end w-full sm:w-auto">
                 <Link href="/game" key="/game">
                   <button className="bg-green-500 hover:bg-green-600 transition border-2 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex justify-center items-center">
-                    <GiCheckMark size={24} className="sm:size-28 md:size-30 text-white" />
+                    <GiCheckMark onClick={()=> startGame(InviterData.id)} size={24} className="sm:size-28 md:size-30 text-white" />
                   </button>
                 </Link>
                 <button

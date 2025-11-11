@@ -1,4 +1,3 @@
-const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 import jwt from 'jsonwebtoken';
 
 
@@ -13,7 +12,7 @@ export async function GetNotification(request, reply) {
   let decodedObject;
 
   try{
-    decodedObject = jwt.verify(token, SECRET);
+    decodedObject = jwt.verify(token, process.env.SECRET);
   }
   catch(err){
     return reply.code(401).send("Invalid token");
@@ -45,7 +44,7 @@ export async function DeleteFriendRequest(request , reply){
 
   let decodedObject;
   try{
-    decodedObject = jwt.verify(token, SECRET);
+    decodedObject = jwt.verify(token, process.env.SECRET);
   }
   catch(err){
     return reply.code(401).send("Invalid token");
@@ -87,7 +86,7 @@ export async function sendRequestFriend(request, reply) {
   
   
   try{
-    decodedObject = jwt.verify(token, SECRET);
+    decodedObject = jwt.verify(token, process.env.SECRET);
   }catch(err){
     return reply.code(401).send("invalid token ");
   }
@@ -152,7 +151,7 @@ export async function AddFriend( request  , reply){
   
   
   try{
-    decodedObject = jwt.verify(token, SECRET);
+    decodedObject = jwt.verify(token, process.env.SECRET);
   }catch(err){
     return reply.code(401).send("invalid token ");
   }
@@ -282,7 +281,7 @@ export function sendGameChallenge(request , reply){
   let decodedObject;
 
   try{
-    decodedObject = jwt.verify(token, SECRET);
+    decodedObject = jwt.verify(token, process.env.SECRET);
   }
   catch(err){
     return reply.code(401).send("Invalid token");
@@ -291,20 +290,93 @@ export function sendGameChallenge(request , reply){
 
 
   try{
+    const title = "game challenge";
     const query = request.server.db.prepare('SELECT profile_img FROM users where id_user = ?');
     const result = query.get(decodedObject.id_user);
 
+    const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
+
+    insertQuery.run(Friend_id, title, decodedObject.id_user, "game challenge");
 
 
     const socket = request.server.users_socket.get(Friend_id.toString());
+
+
     if (socket){
+
+      const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
+      const result = query1.get(decodedObject.id_user);
+
+
+      const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
+      const res = query2.get(Friend_id, decodedObject.id_user);
+
+
       const object  = {
         username: decodedObject.username,
-        img: result.profile_img
+        img: "http://" + process.env.HOST + ":" + process.env.PORT + result.profile_img,    // problem in default and custumazze images
+        id: decodedObject.id_user
       };
       socket.send(JSON.stringify({
           type: "game_invite",
           data: object
+      }));
+
+      const object_notify = {
+        getter_user: Friend_id,
+        sender_user: decodedObject.id_user,
+        sender_username: decodedObject.username,
+        title: title,
+        sender_profile_img: result.profile_img,
+        notify_id: res.notify_id
+      };
+
+      socket.send(JSON.stringify({
+        type: "notify",
+        data: object_notify
+      }));
+
+    }
+  }catch(err){
+    console.log(err);
+    return reply.code(500).send(false);
+  }
+
+  return reply.send(true);
+}
+
+
+
+
+
+export function AcceptGameChallenge(request , reply){
+
+  const authHeader = request.headers['authorization'];
+  const {Friend_id} = request.body;
+
+  if (!authHeader || !Friend_id)
+    reply.code(401).send("missing token");
+  
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+
+  try{
+    decodedObject = jwt.verify(token, process.env.SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
+
+  try{
+
+    const socket = request.server.users_socket.get(Friend_id.toString());
+    if (socket){
+      const object  = {
+      };
+      
+      socket.send(JSON.stringify({
+        type: "start_game",
+        data: object
       }));
     }
   }catch(err){

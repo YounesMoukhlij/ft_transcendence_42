@@ -8,17 +8,12 @@ import { fileURLToPath } from 'url';
 import cors from '@fastify/cors';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
-
-
-
-
-
-// startServer();
-
+import dotenv from 'dotenv';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 
-const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,30 +24,29 @@ const uploadsDir = path.join(__dirname, 'uploads');
 
 const app = fastify({
   logger: true, 
-  bodyLimit: 10 * 1024 * 1024, // 10MB
+  bodyLimit: 10 * 1024 * 1024,
 });
 
-// Initialize SQLite Database
+
 const db = new Database('Database.db');
 app.decorate('db', db);
     const wss = new WebSocketServer({ server: app.server, path: '/ws' });
     const users_socket = new Map();
     app.decorate('users_socket', users_socket);
 
-// --- Main Server Function ---
+
 async function startServer() {
   try {
-    // --- NEW --- Create the 'uploads' directory if it doesn't exist
+
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
       app.log.info('Uploads directory created at:', uploadsDir);
     }
 
-    // --- Redis Client Setup ---
-    // 1. Create the Redis client
+
     console.log('Connecting to Redis...');
     const redisClient = createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379'
+      url: process.env.REDIS_URL
     });
 
     // 2. Add an error listener to catch connection issues
@@ -94,7 +88,7 @@ async function startServer() {
           return reply.code(401).send({ error: 'Missing or invalid token' });
         }
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, SECRET);
+        const decoded = jwt.verify(token, process.env.SECRET);
         request.user = decoded;
       } catch (err) {
         console.error('JWT error:', err.message);
@@ -166,7 +160,7 @@ async function startServer() {
     });
   });
 
-    await app.listen({ port: 4444, host: '0.0.0.0' });
+    await app.listen({ port: process.env.PORT, host: '0.0.0.0' });
 
   } catch (err) {
     app.log.error(err);

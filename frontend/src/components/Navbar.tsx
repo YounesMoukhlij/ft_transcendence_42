@@ -218,27 +218,81 @@ export default function Navbar()
             </div>
           {notificationIndex &&
             <div className='testt absolute flex flex-col top-22 rounded-2xl right-30 h-52 w-80  bg-black text-white border-2  overflow-y-scroll gap-2'>
-             
-              {notificatiion.length === 0 ? (
-                <div className="text-center text-gray-300 py-4">
-                  No notifications
-                </div>
-              ):(
-               notificatiion.map((item , index)=>(
-                   <div  key={index} className=' index flex flex-col border-t border-gray-300 '>
-                    <div  className='flex '>
-                      <div className='h-[4.5rem] w-[4.5rem] pl-0.5 pt-2 '> <img  className='rounded-[50%] h-full w-full 'src={item.sender_profile_img} alt="profile" /></div>
-                      <div className='flex w-full justify-between'>
-                        <div className='ml-[0.5rem] '> <p className='text-2xl'>{item.sender_username}</p></div>
-                        <div className=''> <p className='text-1.5xl'>1d</p></div>
-                      </div>
-                    </div>
-                  <div className='flex w-[70%] h-[3rem] ml-[25%] mt-[-14%] items-center justify-between'>
-                   <button  onClick={()=> AcceptFriendRequest(item)} className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
-                   <button  onClick={() =>DelteFriendRequest(item.notify_id)}  className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
+              {
+                notificatiion.length === 0 ? (
+                  <div className="text-center text-gray-400 py-6 text-lg font-medium">
+                    No notifications
                   </div>
-                </div>
-               )))
+                ) : (
+                  notificatiion.map((item, index) => (
+                    item.title === "game challenge" ? (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
+                      >
+                        <img
+                          src={item.sender_profile_img}
+                          alt="profile"
+                          className="w-12 h-12 rounded-full border border-gray-600"
+                        />
+                        <div className="flex flex-col flex-1">
+                          <p className="text-lg font-semibold text-white">
+                            {item.sender_username}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            invited you to a <span className="text-blue-400 font-medium">1 vs 1 game</span>
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => AcceptGameChallenge(item)}
+                            className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => RejectGameChallenge(item.notify_id)}
+                            className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        key={index}
+                        className="flex flex-col border-t border-gray-700 py-3 px-2 bg-black/40 hover:bg-black/60 rounded-xl transition"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <img
+                              src={item.sender_profile_img}
+                              alt="profile"
+                              className="w-12 h-12 rounded-full border border-gray-600"
+                            />
+                            <p className="text-white text-lg ml-3">{item.sender_username}</p>
+                          </div>
+                          <p className="text-gray-400 text-sm">1d</p>
+                        </div>
+                    
+                        <div className="flex justify-between mt-3">
+                          <button
+                            onClick={() => AcceptFriendRequest(item)}
+                            className="w-[48%] bg-green-600 hover:bg-green-500 text-white py-1.5 rounded-lg border border-green-400"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => DelteFriendRequest(item.notify_id)}
+                            className="w-[48%] bg-gray-100 hover:bg-gray-200 text-black py-1.5 rounded-lg border border-white"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  ))
+                )
               }
             </div>
           }
