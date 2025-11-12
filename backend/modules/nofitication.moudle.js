@@ -324,8 +324,44 @@ export function NotificationSeen(request , reply){
 
 
 
+// export function SendTyping (request , reply){
+  
+//   const authHeader = request.headers['authorization'];
+//   const {Friend_id} = request.body;
 
+//   console.log("============================================>1212121212121XDDDDDDDDDDDDDDDDD ");
 
+//   if (!authHeader || !Friend_id)
+//     reply.code(401).send("missing token");
+  
+//   const token = authHeader.split(' ')[1];
+//   let decodedObject;
+
+//   try{
+//     decodedObject = jwt.verify(token, process.env.SECRET);
+//   }
+//   catch(err){
+//     return reply.code(401).send("Invalid token");
+//   }
+
+//   try
+//   {
+//     const socket = request.server.users_socket.get(Friend_id.toString());
+//     if (socket){
+//       const object = {
+//       };
+//       socket.send(JSON.stringify({
+//         type: "is_typing",
+//         data: object
+//       }));
+//     }
+
+//   reply.code(200).send(true);
+//   }catch(err){
+
+//   }
+
+// }
 
 
 

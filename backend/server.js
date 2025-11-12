@@ -136,20 +136,21 @@ async function startServer() {
 
   let id = 0;
 
+    
     socket.once('message', (msg) => {
+      
+      
       id = msg.toString();
 
-      console.log("connect " , id);
       users_socket.set(id, socket);
 
-      console.log("here new user ==============>" , id);
       statusSahre(id , 1);
+
 
       const query = db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
       query.run(1 , id);
 
     
-
       socket.on('close', () => {
         statusSahre(id , 0);
 
@@ -160,7 +161,7 @@ async function startServer() {
     });
   });
 
-    await app.listen({ port: process.env.PORT, host: '0.0.0.0' });
+  await app.listen({ port: process.env.PORT, host: '0.0.0.0' });
 
   } catch (err) {
     app.log.error(err);

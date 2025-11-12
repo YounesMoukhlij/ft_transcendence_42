@@ -49,6 +49,7 @@ export default async function routes(fastify, options) {
     fastify.post('/sendGameChallenge' , sendGameChallenge);
     fastify.post('/startGame' , AcceptGameChallenge);
     fastify.post('/NotificationSeen' , NotificationSeen);
+    // fastify.post('/SendTyping' ,SendTyping );
 
 
 

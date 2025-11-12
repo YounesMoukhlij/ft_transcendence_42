@@ -170,13 +170,17 @@ export async function Xprank(request, reply) {
 
 
 export async function IsOnline(request , reply){
+
+
   const username = request.query.username;
   const socket = request.server.users_socket.get(username);
+
+
   try {
     if(socket)
-      reply.send(true);
+      reply.code(200).send(true);
     else
-      reply.send(false);
+      reply.code(200).send(false);
 
   } catch (err) {
     reply.code(500).send(err);

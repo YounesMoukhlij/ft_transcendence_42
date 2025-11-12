@@ -222,7 +222,7 @@ interface InviterData {
 }
 
 export default function ChatPage() {
-  const { friends, addFriend, removeFriend, setFriends, updateFriendStatus, updateLastMessage } = useUserStore();
+  const { friends, addFriend, removeFriend, setFriends, updateFriendStatus, updateLastMessage  } = useUserStore();
   const { messages, setMessages, addMessage, room, setRoom, profile_img, setImg } = useUserStore();
   const { setDboubleBlock, double_block, Setuser_block, user_block } = useUserStore();
   const { connect, socket } = useUserStore();
@@ -238,10 +238,12 @@ export default function ChatPage() {
   const [InviterData, setInviterData] = useState<InviterData | any >({});
   const user = useUserStore((state) => state.user);
 
+  const [isTyping , SETIsTyping] = useState<boolean>(false);
 
   useEffect(() => {
     if (!socket) return;
 
+    // socket.send(JSON.stringify({ event: 'isTyping', value: false }));
     socket.onmessage = (event: MessageEvent) => {
       
       const { type, data } = JSON.parse(event.data);
@@ -275,6 +277,9 @@ export default function ChatPage() {
       else if (type === "start_game") {
         redirect("/game");
       }
+      // else if (type === "is_typing"){
+      //   SETIsTyping(true);
+      // }
     };
   }, [socket]);
 
@@ -284,7 +289,6 @@ export default function ChatPage() {
         const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
           params: { username: user.username }
         });
-
 
         setFriends(res.data);
       } catch (err) {
@@ -366,6 +370,21 @@ export default function ChatPage() {
     });
     removeFriend(friend);
   }
+
+
+  // async function SendTyping(){
+  //   await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/SendTyping`,
+  //     {
+  //       Friend_id: localStorage.getItem('friend_id')
+  //     },{
+  //     headers: {
+  //       Authorization: `Bearer ${user.access_token}`
+  //     }
+  //   }
+  //   )
+  // }
+
+
 
   const handleSend = async () => {
     if (input.trim().length == 0){
@@ -544,14 +563,13 @@ export default function ChatPage() {
           {SelectContact && (
             <div className="flex items-center h-[8%] sm:h-[9%] rounded-t-[35px] ml-0.5 bg-[#3a3638] justify-between px-2 sm:px-4">
               <div className="flex h-3/5 self-center">
-                <img 
-                  className="rounded-[50%] w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" 
-                  src={profile_img || undefined} 
-                  alt='image'
-                />
+                <img  className="rounded-[50%] w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"  src={profile_img || undefined} alt='image'/>
+                <div className='felx felx-col'>
                 <p className="self-center text-[0.8rem] sm:text-[1rem] md:text-[1.2rem] lg:text-[1.5rem] pl-[1rem]">
                   {room}
                 </p>
+                {isTyping &&  <p className='text-green-400 pl-[1rem]'>typing...</p>}
+                </div>
               </div>
               
               <div className="relative">

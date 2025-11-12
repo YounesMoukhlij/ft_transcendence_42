@@ -80,12 +80,18 @@ export const useUserStore = create(
           : f
       ),
     })),
+
+
+
+  
   updateFriendStatus: (status, friend) => 
     set((state) => ({
       friends: state.friends.map((f) =>
         f.id_user == friend ? { ...f, status } : f
       ),
     })),
+  
+
   
   setFriends: (friends) => set({ friends }),
   connect: () => {
@@ -116,6 +122,7 @@ export const useUserStore = create(
       console.error('Failed to construct WebSocket', e)
     }
   },
+
   //end
 
 
