@@ -189,9 +189,13 @@ export async function AddFriend( request  , reply){
         const setQuery = request.server.db.prepare("INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)")
         const result = setQuery.run(Freind_id, title, decodedObject.id_user, "friend request accepted");
 
+
+
+
+        console.log("fffffffffffffffffffffffff=>" , res);
         const notifyObject = {
           sender_profile_img: res.profile_img,
-          sender_user: res.username,
+          sender_username: res.username,
           title: title,
           sender_user: decodedObject.id_user,
           notify_id: result.lastInsertRowid

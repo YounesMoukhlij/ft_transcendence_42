@@ -496,9 +496,9 @@ export default function ChatPage() {
 
   return (
     <>
-    <div className="flex justify-center items-center h-[89vh] text-white px-2 sm:px-4 lg:px-0">
-      <div className="flex w-[100vh] h-[90vh] sm:h-[95vh] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
-        <div className="w-full  sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
+    <div className=" relative flex justify-center items-center h-[90%] text-white px-2 sm:px-4 lg:px-0">
+      <div className="relative flex w-full h-full sm:h-[95%] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
+        <div className="w-full sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
           <Test1
             friends={friends}
             setMessages={setMessages}
@@ -507,16 +507,16 @@ export default function ChatPage() {
             SetSelectContact={SetSelectContact}
           />
         </div>
-        <div className="flex self-start lg:hidden fixed top-4 left-4 z-50">
-          <button onClick={handle_chats_display} className="p-2 mt-10 bg-amber-700  rounded-lg">
-            <FaArrowRight />
+        <div className="flex self-start lg:hidden absolut  z-50 bg-red-500">
+          <button onClick={handle_chats_display} className="p-1">
+            <FaArrowRight size={20}/>
           </button>
         </div>
         
         {display_chats && (
-          <div className="lg:hidden fixed inset-0 z-40">
-            <div className="absolute inset-0 bg-black/50" onClick={handle_chats_display}></div>
-            <div className="absolute left-0 top-0 w-4/5 sm:w-3/5 h-full flex flex-col border bg-[black] p-2 rounded-r-[35px] border-solid">
+          <div className="lg:hidden">
+            <div className="z-30 absolute h-full w-[60%]  rounded-4xl " onClick={handle_chats_display}></div>
+            <div className="z-30 absolute  w-4/5 sm:w-3/5 h-full flex flex-col border bg-[black] p-2 rounded-r-[35px] border-solid">
               <Test1
                 friends={friends}
                 setMessages={setMessages}
@@ -529,11 +529,10 @@ export default function ChatPage() {
         )}
         
         
-        <div className=" relative flex w-full lg:w-2/3 xl:w-3/4 flex-col border rounded-[35px] border-solid bg-black overflow-hidden ">
+        <div className="relative flex-1  flex flex-col border rounded-[35px] border-solid bg-black overflow-hidden ">
           {Display_game_invite && (
-            <div className="z-50 absolute flex flex-col w-full bg-gray-600 border-2 rounded-3xl overflow-hidden shadow-lg p-3 sm:p-4 items-center justify-between">
-
-
+            <div className="z-50 absolute inset-x-2 top-6 mx-auto max-w-3xl bg-gray-600 border-2 rounded-3xl overflow-hidden shadow-lg p-3 sm:p-4 flex flex-col items-center justify-between">
+              
               <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
                 <img
                   className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full mr-3"
@@ -572,7 +571,7 @@ export default function ChatPage() {
                 </div>
               </div>
               
-              <div className="relative">
+              <div className="relative ">
                 <button className="flex p-2" onClick={handle_dropmenu}>
                   <SlOptions className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
                 </button>

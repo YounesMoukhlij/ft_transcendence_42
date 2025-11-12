@@ -158,6 +158,7 @@ export default function Navbar()
     const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
+        console.log(data);
         setNotification(prev => [{ 
           sender_user: data.sender_user,
           title: data.title,
