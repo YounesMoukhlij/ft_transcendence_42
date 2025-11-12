@@ -1,5 +1,5 @@
 import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction ,DeblockFunction , unfriend } from '../modules/user.module.js';
-import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest , sendGameChallenge, AcceptGameChallenge } from '../modules/nofitication.moudle.js';
+import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
     getAllUsers,
@@ -48,6 +48,7 @@ export default async function routes(fastify, options) {
     fastify.delete('/DeleteUserById/:id', DeleteUserById);
     fastify.post('/sendGameChallenge' , sendGameChallenge);
     fastify.post('/startGame' , AcceptGameChallenge);
+    fastify.post('/NotificationSeen' , NotificationSeen);
 
 
 

@@ -178,9 +178,27 @@ export async function AddFriend( request  , reply){
           id_user: res.id_user,
           status:1
         };
+
         socket.send(JSON.stringify({
             type: "test",
             data: object
+        }));
+
+
+        const title = "friend request accepted";
+        const setQuery = request.server.db.prepare("INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)")
+        const result = setQuery.run(Freind_id, title, decodedObject.id_user, "friend request accepted");
+
+        const notifyObject = {
+          sender_profile_img: res.profile_img,
+          sender_user: res.username,
+          title: title,
+          sender_user: decodedObject.id_user,
+          notify_id: result.lastInsertRowid
+        };
+        socket.send(JSON.stringify({
+            type: "notify",
+            data: notifyObject
         }));
       }
 
@@ -265,6 +283,52 @@ export async function GetFriends(request, reply) {
     return reply.code(500).send({ error: "Internal Server Error" });
   }
 }
+
+
+
+
+
+
+export function NotificationSeen(request , reply){
+  const authHeader = request.headers['authorization'];
+
+
+
+  if (!authHeader)
+    reply.code(401).send("missing token");
+  
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+
+  try{
+    decodedObject = jwt.verify(token, process.env.SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
+
+
+
+
+  try{
+    const query = request.server.db.prepare("UPDATE notification SET is_seen = ? WHERE getter_user = ?");
+    query.run(1 , decodedObject.id_user);
+
+
+    reply.code(200).send(true);
+  }catch(err){
+
+  }
+}
+
+
+
+
+
+
+
+
+
 
 
 

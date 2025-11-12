@@ -55,7 +55,7 @@ export default function Navbar()
     });
   }
 
-  async function AcceptFriendRequest(item){
+  async function AcceptFriendRequest(item : any){
 
     toast.success('Accepted');
 
@@ -76,8 +76,8 @@ export default function Navbar()
   );
   if (res.status === 200)
     addFriend(object);
-  setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== item.notify_id));
-
+  
+  setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
     await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: item.notify_id,
@@ -92,10 +92,22 @@ export default function Navbar()
   function showNotification(){
     setNotificationIndex(!notificationIndex);
     SetunseenCount(0);
-    setTimeout(() => {
-      setNotificationIndex(false);
-    }, 5000);
-    // i need to set the index is_seen in funcking db
+    // setTimeout(() => {
+    //   setNotificationIndex(false);
+    // }, 5000);
+
+    try{
+      axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/NotificationSeen`,
+      {},
+      {
+        headers:{
+          Authorization: `Bearer ${user.access_token}`
+        }
+      }
+    );
+    }catch(err){
+
+    }
   }
 
 
@@ -119,8 +131,8 @@ export default function Navbar()
             }
           }
         );
-        setNotification(result.data);
-        console.log("hererer=================>" , result.data);
+        setNotification(result.data.reverse());
+        console.log(result.data);
       } catch (error) {
         console.error('Failed to fetch notifications', error);
       }
@@ -146,7 +158,15 @@ export default function Navbar()
     const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
-        setNotification(prev => [...prev, {sender_user: data.sender_user,sender_username:data.sender_username , sender_profile_img: data.sender_profile_img ,notify_id: data.notify_id }]); 
+        setNotification(prev => [{ 
+          sender_user: data.sender_user,
+          title: data.title,
+          sender_username: data.sender_username,
+          sender_profile_img: data.sender_profile_img,
+          notify_id: data.notify_id
+         },
+        ...prev
+      ]);
       }
     };
   
@@ -218,7 +238,7 @@ export default function Navbar()
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
           {notificationIndex && (
-  <div className="absolute flex flex-col top-22 right-30 h-52 w-80 rounded-2xl bg-black text-white border-2 overflow-y-scroll scrollbar-hide gap-2 p-2 ">
+  <div className=" testt absolute flex flex-col top-22 right-30 h-52 w-96 rounded-2xl bg-black text-white border-2 overflow-y-scroll gap-2 p-2 ">
     {notificatiion.length === 0 ? (
       <div className="text-center text-gray-400 py-6 text-lg font-medium">
         No notifications

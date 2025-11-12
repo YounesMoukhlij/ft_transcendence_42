@@ -85,11 +85,8 @@ type FreindsListProps = {
   SetSelectContact: (selected: boolean) => void;
 };
 
-const FreindsList = ({friend_id ,  photo, title, message = "test", status, setConversation, setRoom, setimg, SetSelectContact  }: FreindsListProps) => {
+const FreindsList = ({friend_id ,  photo, title, message , status, setConversation, setRoom, setimg, SetSelectContact  }: FreindsListProps) => {
   const { setDboubleBlock, double_block, Setuser_block, user_block , } = useUserStore();
-
-
-  
   const Get_Conversation = async () => {
     setRoom(title);
     setimg(photo);
@@ -276,8 +273,6 @@ export default function ChatPage() {
         addFriend(data);
       }
       else if (type === "start_game") {
-        console.log(type);
-        console.log(data);
         redirect("/game");
       }
     };
@@ -292,7 +287,6 @@ export default function ChatPage() {
 
 
         setFriends(res.data);
-        console.log(res.data);
       } catch (err) {
         console.log(err);
       }
@@ -602,7 +596,7 @@ export default function ChatPage() {
                 <img className="w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64" src="/animation.gif" alt="animation" />
               </div>
             )}
-            {messages?.length > 0 && SelectContact && (
+            { SelectContact && (
               <div className="flex w-[90%] sm:w-[80%] lg:w-[25rem] bg-[rgb(168,147,104)] self-center mt-4 sm:mt-8 p-3 sm:p-4 rounded-[10px]">
                 <p className="text-xs sm:text-sm">
                   The messages are end to end encrypted. Only people in this chat can read this conversation, so enjoy with your friend.
