@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext, Player, TournamentMatch } from '@/components/GameContext';
 import PingPongGame from '@/components/PingPongGame';
-import { getWebSocket } from '@/components/globalSocket';
 import { FaUser, FaUpload, FaCrown, FaTrophy, FaGamepad, FaSearch, FaCheck, FaTimes as FaReject, FaClock } from 'react-icons/fa';
 
 // Move PlayerRegistration outside to prevent re-creation

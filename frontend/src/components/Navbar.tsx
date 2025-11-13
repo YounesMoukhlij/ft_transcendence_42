@@ -32,6 +32,25 @@ export default function Navbar()
 
 
 
+function isTimeValid(targetTimeString : any) {
+
+
+
+  const [datePart, timePart] = targetTimeString.split(' ');
+  const [yy, mm, dd] = datePart.split('-').map(Number);
+  const [hours, minutes, seconds] = timePart.split(':').map(Number);
+
+  const fullYear = 2000 + yy;
+
+  const targetTime = new Date(fullYear, mm - 1, dd, hours, minutes, seconds);
+  const now = new Date();
+
+  const diffSeconds = (now - targetTime) / 1000;
+
+  return diffSeconds <= 15;
+}
+
+
   useEffect(() => {
     setUsername({username: user?.username});
   }, []);
@@ -175,13 +194,13 @@ useEffect(() => {
     const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
-        console.log(data);
         setNotification(prev => [{ 
           sender_user: data.sender_user,
           title: data.title,
           sender_username: data.sender_username,
           sender_profile_img: data.sender_profile_img,
-          notify_id: data.notify_id
+          notify_id: data.notify_id, 
+          expired: data.expired
          },
         ...prev
       ]);
@@ -239,7 +258,7 @@ useEffect(() => {
         }
       `}</style>
 
-      <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[10vh] bg-transparent">
+      <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[4vh] bg-transparent">
         <div className="flex justify-between items-center">
           <div className="flex flex-row items-center gap-1 md:gap-2">
             {/* <GiPingPongBat
@@ -284,21 +303,25 @@ useEffect(() => {
                     <span className="text-blue-400 font-medium">1 vs 1 game</span>
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => AcceptGameChallenge(item)}
-                    className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => RejectGameChallenge(item.notify_id)}
-                    className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                  >
-                    Decline
-                  </button>
+                { isTimeValid(item.expired) ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => AcceptGameChallenge(item)}
+                      className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => RejectGameChallenge(item.notify_id)}
+                      className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                ) : (
+                  <div className='flex justify-center '><p>expired</p></div>
+                )}
                 </div>
-              </div>
             );
           }
 

@@ -106,6 +106,7 @@ CREATE TABLE notification (
     title INTEGER NOT NULL,
     notifyBody TEXT NOT NULL,
     is_seen BOOLEAN DEFAULT FALSE,
+    expired DATETIME,
     is_game_invite BOOLEAN DEFAULT FALSE,
     deadline DATETIME
     -- FOREIGN KEY (getter_user) REFERENCES users(id_user),

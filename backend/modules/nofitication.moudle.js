@@ -1,5 +1,21 @@
 import jwt from 'jsonwebtoken';
 
+  function ft_getTime() {
+  const now = new Date();
+  
+  const pad = (n) => n.toString().padStart(2, '0');
+
+  const year = now.getFullYear().toString().slice(-2); // 21
+  const month = pad(now.getMonth() + 1); // 01–12
+  const day = pad(now.getDate()); // 01–31
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+
 
 export async function GetNotification(request, reply) {
 
@@ -68,9 +84,6 @@ export async function DeleteFriendRequest(request , reply){
 export async function sendRequestFriend(request, reply) {
 
   const { friend_id} = request.body;
-
-
-
 
   const authHeader = request.headers['authorization'];
   
@@ -160,6 +173,8 @@ export async function AddFriend( request  , reply){
 
 
   try{
+
+    console.log(decodedObject.id_user , Freind_id);
       const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
       Fquery.run(decodedObject.id_user , Freind_id);
 
@@ -186,13 +201,9 @@ export async function AddFriend( request  , reply){
 
 
         const title = "friend request accepted";
-        const setQuery = request.server.db.prepare("INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)")
+        const setQuery = request.server.db.prepare("INSERT INTO notification (getter_user, title, sender_user, notifyBody ) VALUES (?, ?, ?, ?)")
         const result = setQuery.run(Freind_id, title, decodedObject.id_user, "friend request accepted");
 
-
-
-
-        console.log("fffffffffffffffffffffffff=>" , res);
         const notifyObject = {
           sender_profile_img: res.profile_img,
           sender_username: res.username,
@@ -208,6 +219,7 @@ export async function AddFriend( request  , reply){
 
       reply.code(200).send("");
     }catch(err){
+      console.log(err);
       reply.code(500);
   }
 }
@@ -374,7 +386,7 @@ export function NotificationSeen(request , reply){
 
 
 
-export function sendGameChallenge(request , reply){
+export  function sendGameChallenge(request , reply){
 
   const authHeader = request.headers['authorization'];
   const {Friend_id} = request.body;
@@ -392,26 +404,27 @@ export function sendGameChallenge(request , reply){
   }
 
 
-
+  
   try{
     const title = "game challenge";
     const query = request.server.db.prepare('SELECT profile_img FROM users where id_user = ?');
     const result = query.get(decodedObject.id_user);
-
-    const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
-
-    insertQuery.run(Friend_id, title, decodedObject.id_user, "game challenge");
-
-
+    
+    const ExpiredTime =  ft_getTime();
+    const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody , expired) VALUES (?, ?, ?, ? , ?)`);
+    
+    insertQuery.run(Friend_id, title, decodedObject.id_user, "game challenge" , ExpiredTime);
+    
+    
     const socket = request.server.users_socket.get(Friend_id.toString());
-
-
+    
+    
     if (socket){
-
+      
       const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
       const result = query1.get(decodedObject.id_user);
-
-
+      
+      
       const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
       const res = query2.get(Friend_id, decodedObject.id_user);
 
@@ -432,7 +445,8 @@ export function sendGameChallenge(request , reply){
         sender_username: decodedObject.username,
         title: title,
         sender_profile_img: result.profile_img,
-        notify_id: res.notify_id
+        notify_id: res.notify_id,
+        expired: ExpiredTime
       };
 
       socket.send(JSON.stringify({

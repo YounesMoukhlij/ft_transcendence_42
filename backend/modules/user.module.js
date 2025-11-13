@@ -16,9 +16,7 @@ export async function getConversationId(request, reply) {
     return reply.code(403).send("");
   
   
-  console.log("hetrere ===============================> ", );
   const decodedObject = jwt.verify(token, process.env.SECRET);
-  console.log("hetrere ===============================> ", decodedObject);
 
 
 

@@ -495,8 +495,8 @@ export default function ChatPage() {
 
   return (
     <>
-    <div className=" relative flex justify-center items-center h-[90%] text-white px-2 sm:px-4 lg:px-0">
-      <div className="relative flex w-full h-full sm:h-[95%] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
+    <div className=" relative flex justify-center items-center h-full text-white px-2 sm:px-4 lg:px-0">
+      <div className="relative flex w-full h-full sm:h-[90%] lg:w-[90%] lg:h-[90%] gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
         <div className="w-full sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
           <Test1
             friends={friends}

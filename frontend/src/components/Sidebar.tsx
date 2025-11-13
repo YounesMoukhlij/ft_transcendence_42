@@ -21,7 +21,7 @@ export default function Sidebar()
   return (
     <>
       {/* Desktop Sidebar - Hidden on mobile since navigation is in hamburger menu */}
-      <aside className=" hidden md:flex w-[14vw] lg:w-[10%] h-full items-center justify-center bg-transparent rounded-3xl p-1 md:p-2">
+      <aside className=" hidden md:flex  h-full items-center justify-center bg-transparent rounded-3xl p-1 md:p-2">
         <div className="relative border-2 border-white  overflow-hidden h-[10%] md:h-[50%] gap-8 md:gap-12 m-1 md:m-3 bg-black rounded-3xl p-2 md:p-5 flex flex-col items-center justify-center ">
           {navItems.map((item) => (
             <Link href={item.path} key={item.path}>
