@@ -37,6 +37,23 @@ export default function Navbar()
   }, []);
 
 
+  const menuRef = useRef(null);
+  const buttonRef = useRef(null);
+useEffect(() => {
+  const handleClickOutside = (event : any) => {
+    if (menuRef.current && !menuRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {
+      setNotificationIndex(false); 
+    }
+  };
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
+
+
+
+
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -239,7 +256,7 @@ export default function Navbar()
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
           {notificationIndex && (
-    <div className=" testt z-50 absolute flex flex-col top-22 right-30 h-52 w-96 rounded-2xl bg-black text-white border-2 overflow-y-scroll gap-2 p-2 ">
+    <div  ref={menuRef} className=" testt z-50 absolute flex flex-col top-22 right-30 h-52 w-96 rounded-2xl bg-black text-white border-2 overflow-y-scroll gap-2 p-2 ">
     {notificatiion.length === 0 ? (
       <div className="text-center text-gray-400 py-6 text-lg font-medium">
         No notifications
@@ -350,8 +367,8 @@ export default function Navbar()
   </div>
 )}
 
-          <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
-              <IoNotificationsOutline onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
+          <div ref={buttonRef} className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
+              <IoNotificationsOutline  onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
               <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
             </div>
             <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>

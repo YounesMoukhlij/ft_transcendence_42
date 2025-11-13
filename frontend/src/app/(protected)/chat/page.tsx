@@ -13,7 +13,6 @@ import { FaArrowRight } from "react-icons/fa";
 import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 import  {useUserStore}  from '../../../store/userStore';
 import getFormattedDate from './tools'
-import { stat } from 'fs';
 import { GiCheckMark } from "react-icons/gi";
 import { HiXMark } from "react-icons/hi2";
 import { redirect } from 'next/navigation';
