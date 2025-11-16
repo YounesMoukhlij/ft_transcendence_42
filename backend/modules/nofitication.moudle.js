@@ -431,7 +431,7 @@ export  function sendGameChallenge(request , reply){
 
       const object  = {
         username: decodedObject.username,
-        img: "http://" + process.env.HOST + ":" + process.env.PORT + result.profile_img,    // problem in default and custumazze images
+        img: result.profile_img,    // problem in default and custumazze images
         id: decodedObject.id_user
       };
       socket.send(JSON.stringify({

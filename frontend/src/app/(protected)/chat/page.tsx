@@ -528,13 +528,13 @@ export default function ChatPage() {
         )}
         
         
-        <div className="relative flex-1  flex flex-col border rounded-[35px] border-solid bg-black overflow-hidden ">
+        <div className="relative flex-1 bg-black flex flex-col border rounded-[35px] border-solid overflow-hidden ">
           {Display_game_invite && (
-            <div className="z-50 absolute inset-x-2 top-6 mx-auto max-w-3xl bg-gray-600 border-2 rounded-3xl overflow-hidden shadow-lg p-3 sm:p-4 flex flex-col items-center justify-between">
+            <div className="z-50 w-full  absolute h-[8%] sm:h-[9%] bg-gray-700 border-2 rounded-3xl overflow-hidden shadow-lg  flex flex-col items-center justify-between">
               
-              <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
+              <div className="flex h-full items-center w-full sm:w-auto mb-3 sm:mb-0">
                 <img
-                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full mr-3"
+                  className="w-12 h-full md:w-16 md:h-16 rounded-full mr-3"
                   src={InviterData.img}
                   alt="Inviter"
                 />
