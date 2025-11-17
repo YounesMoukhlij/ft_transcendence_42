@@ -169,10 +169,10 @@ const ProfileTab = ({
         <button
           onClick={handleSaveProfile}
           disabled={isLoading}
-          className={`px-4 py-3 rounded-xl font-semibold text-sm sm:text-base transition hover:cursor-pointer ${
+          className={`px-2 py-2 w-1/3  rounded-xl font-semibold text-sm sm:text-base transition hover:cursor-pointer ${
             isLoading
             ? 'bg-gray-600 cursor-not-allowed opacity-50'
-            : 'border border-white hover:bg-gray-500 hover:text-white '
+            : 'border border-gray-500 hover:bg-gray-500 hover:text-white'
           }`}
         >
           {isLoading ? 'Saving...' : 'Save Profile Changes'}
@@ -180,10 +180,10 @@ const ProfileTab = ({
         <button
           onClick={() => setIsDeleteDialogOpen(true)}
           disabled={isLoading}
-          className={`px-4 py-3 rounded-xl font-semibold text-sm sm:text-base transition hover:cursor-pointer ${
+          className={`px-4 py-2 w-1/3 rounded-xl font-semibold text-sm sm:text-base transition hover:cursor-pointer ${
             isLoading
             ? 'bg-gray-600 cursor-not-allowed opacity-50'
-            : 'border border-red-600 text-white hover:bg-red-500 '
+            : 'border border-red-600 text-white hover:bg-red-500'
           }`}
         >
           Delete Account

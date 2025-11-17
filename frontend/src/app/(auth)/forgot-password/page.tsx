@@ -3,6 +3,7 @@ import { useState } from 'react';
 import React from 'react';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
+import { Lock } from 'lucide-react'
 
 // Define step constants for clarity
 const STEPS = {
@@ -190,8 +191,8 @@ const ForgotPasswordPage = () => {
   return (
     <div className="flex items-center justify-center max-h-screen p-4 sm:p-6 md:p-8 lg:p-10">
       <div className="w-full max-w-sm sm:max-w-md p-6 sm:p-8 md:p-10 space-y-4 sm:space-y-6 rounded-lg md:rounded-xl shadow-md sm:shadow-lg md:shadow-xl">
-        <div className="w-full max-w-[180px] sm:max-w-[220px] md:max-w-xs mx-auto mb-2 sm:mb-4">
-          <img src="https://media1.tenor.com/m/5ot5ADGxJdAAAAAd/hello.gif" alt="Logo" className="w-full h-auto rounded-lg" />
+        <div className="w-full max-w-[180px] sm:max-w-[220px] md:max-w-xs mx-auto mb-2 sm:mb-4 flex justify-center">
+          <Lock size={60} className=" text-gray-300  " />
         </div>
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 sm:mb-3 md:mb-4">

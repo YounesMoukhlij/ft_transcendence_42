@@ -91,6 +91,7 @@ async function startServer() {
         request.user = decoded;
       } catch (err) {
         console.error('JWT error:', err.message);
+        // remove the token from the cookies if invalid
         return reply.code(401).send({ error: 'Unauthorized' });
       }
     });

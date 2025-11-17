@@ -2,14 +2,12 @@
 import Link from 'next/link';
 import { Trophy, User } from 'lucide-react';
 
-// --- Re-using your constants for consistency ---
 const API_URL = 'http://localhost:4444';
 const BACK_API = 'http://localhost:4444';
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 
-// --- Helper function from your settings page to handle image paths ---
+
 const getProfileImageUrl = (currentImg) => {
-    console.log('Current Image:', currentImg);
   if (!currentImg) {
     return defaultProfileImg;
   }
