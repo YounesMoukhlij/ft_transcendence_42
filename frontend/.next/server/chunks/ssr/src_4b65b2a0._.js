@@ -619,10 +619,30 @@ const ProfileTab = ({ user, formData, handleInputChange, languages, isPasswordAu
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "md:col-span-2 scrollbar-hide",
                         children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                className: "text-gray-400 text-sm mb-1 block",
-                                children: "Bio"
-                            }, void 0, false, {
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                className: "flex justify-between items-center mb-1",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                        className: "text-gray-400 text-sm mb-1 block",
+                                        children: "Bio"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(protected)/settings/components/profile/page.tsx",
+                                        lineNumber: 150,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-right text-xs text-gray-500",
+                                        children: [
+                                            formData.bio ? formData.bio.length : 0,
+                                            " / 200"
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(protected)/settings/components/profile/page.tsx",
+                                        lineNumber: 151,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
                                 fileName: "[project]/src/app/(protected)/settings/components/profile/page.tsx",
                                 lineNumber: 149,
                                 columnNumber: 11
@@ -633,10 +653,11 @@ const ProfileTab = ({ user, formData, handleInputChange, languages, isPasswordAu
                                 value: formData.bio,
                                 onChange: handleInputChange,
                                 placeholder: "Tell us about yourself...",
-                                className: "w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white resize-none overflow-hidden"
+                                className: "w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white resize-none overflow-hidden",
+                                maxLength: 200
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/components/profile/page.tsx",
-                                lineNumber: 150,
+                                lineNumber: 155,
                                 columnNumber: 11
                             }, this)
                         ]
@@ -661,7 +682,7 @@ const ProfileTab = ({ user, formData, handleInputChange, languages, isPasswordAu
                         children: isLoading ? 'Saving...' : 'Save Profile Changes'
                     }, void 0, false, {
                         fileName: "[project]/src/app/(protected)/settings/components/profile/page.tsx",
-                        lineNumber: 163,
+                        lineNumber: 169,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -671,13 +692,13 @@ const ProfileTab = ({ user, formData, handleInputChange, languages, isPasswordAu
                         children: "Delete Account"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(protected)/settings/components/profile/page.tsx",
-                        lineNumber: 174,
+                        lineNumber: 180,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(protected)/settings/components/profile/page.tsx",
-                lineNumber: 162,
+                lineNumber: 168,
                 columnNumber: 7
             }, this)
         ]
@@ -983,7 +1004,7 @@ const SecurityTab = ({ formData, handleInputChange, isPasswordAuth, authMethod, 
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: `flex items-center justify-between p-2 border border-gray-500 rounded-xl ${!isPasswordAuth ? 'opacity-50 cursor-not-allowed' : ''}`,
+                                className: `flex items-center justify-between p-2 border border-gray-500 rounded-xl `,
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "flex items-center gap-3",
@@ -1029,7 +1050,7 @@ const SecurityTab = ({ formData, handleInputChange, isPasswordAuth, authMethod, 
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$protected$292f$settings$2f$components$2f$SwitchButton$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
                                         label: is2FAEnabled ? 'Enabled' : 'Disabled',
                                         checked: is2FAEnabled,
-                                        onChange: ()=>isPasswordAuth && handleToggle2FA()
+                                        onChange: ()=>handleToggle2FA()
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(protected)/settings/components/security/page.tsx",
                                         lineNumber: 119,
@@ -1040,18 +1061,6 @@ const SecurityTab = ({ formData, handleInputChange, isPasswordAuth, authMethod, 
                                 fileName: "[project]/src/app/(protected)/settings/components/security/page.tsx",
                                 lineNumber: 111,
                                 columnNumber: 11
-                            }, this),
-                            !isPasswordAuth && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                className: "text-sm text-gray-400 mt-2",
-                                children: [
-                                    "Two-Factor Authentication settings are managed through your external provider (",
-                                    authMethod === 1 ? 'Google' : '42',
-                                    ") or are disabled for OAuth accounts."
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/src/app/(protected)/settings/components/security/page.tsx",
-                                lineNumber: 128,
-                                columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
@@ -1096,7 +1105,6 @@ const __TURBOPACK__default__export__ = SecurityTab;
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-// settings/components/help/page.tsx
 __turbopack_context__.s({
     "default": (()=>__TURBOPACK__default__export__)
 });
@@ -1117,7 +1125,7 @@ const HelpTab = ()=>{
                         children: "Help & Support"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                        lineNumber: 10,
+                        lineNumber: 9,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1125,13 +1133,13 @@ const HelpTab = ()=>{
                         children: "Get help with your account and application"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                        lineNumber: 11,
+                        lineNumber: 10,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                lineNumber: 9,
+                lineNumber: 8,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1147,14 +1155,14 @@ const HelpTab = ()=>{
                                         size: 20
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                        lineNumber: 18,
+                                        lineNumber: 17,
                                         columnNumber: 13
                                     }, this),
                                     "Frequently Asked Questions"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                lineNumber: 17,
+                                lineNumber: 16,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1167,7 +1175,7 @@ const HelpTab = ()=>{
                                                 children: "How do I reset my password?"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                                lineNumber: 23,
+                                                lineNumber: 22,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1175,13 +1183,13 @@ const HelpTab = ()=>{
                                                 children: "Go to the Security tab and use the password reset form. You'll need to provide your current password and set a new one."
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                                lineNumber: 24,
+                                                lineNumber: 23,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                        lineNumber: 22,
+                                        lineNumber: 21,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1191,7 +1199,7 @@ const HelpTab = ()=>{
                                                 children: "What is Two-Factor Authentication?"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                                lineNumber: 29,
+                                                lineNumber: 28,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1199,13 +1207,13 @@ const HelpTab = ()=>{
                                                 children: "2FA adds an extra layer of security by requiring a verification code from your mobile device when signing in."
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                                lineNumber: 30,
+                                                lineNumber: 29,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                        lineNumber: 28,
+                                        lineNumber: 27,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1215,7 +1223,7 @@ const HelpTab = ()=>{
                                                 children: "Can I change my username?"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                                lineNumber: 35,
+                                                lineNumber: 34,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1223,25 +1231,25 @@ const HelpTab = ()=>{
                                                 children: "Yes, you can change your username in the Profile tab. Note that your old username may become available for others."
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                                lineNumber: 36,
+                                                lineNumber: 35,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                        lineNumber: 34,
+                                        lineNumber: 33,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                lineNumber: 21,
+                                lineNumber: 20,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                        lineNumber: 16,
+                        lineNumber: 15,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1252,7 +1260,7 @@ const HelpTab = ()=>{
                                 children: "Contact Support"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                lineNumber: 45,
+                                lineNumber: 44,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1260,7 +1268,7 @@ const HelpTab = ()=>{
                                 children: "If you need further assistance, please contact our support team:"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                lineNumber: 46,
+                                lineNumber: 45,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1268,7 +1276,15 @@ const HelpTab = ()=>{
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                         className: "text-white",
-                                        children: "📧 Email: support@ponggame.com"
+                                        children: "📧 Email: zmoumni@support.com"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
+                                        lineNumber: 49,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-white",
+                                        children: "🕒 Response Time: 24-48 hours"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
                                         lineNumber: 50,
@@ -1276,7 +1292,7 @@ const HelpTab = ()=>{
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                         className: "text-white",
-                                        children: "🕒 Response Time: 24-48 hours"
+                                        children: "📞 Phone: (+212) 684 255 367 (abechcha)"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
                                         lineNumber: 51,
@@ -1285,13 +1301,13 @@ const HelpTab = ()=>{
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                                lineNumber: 49,
+                                lineNumber: 48,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                        lineNumber: 44,
+                        lineNumber: 43,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1320,7 +1336,7 @@ const HelpTab = ()=>{
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                 className: "text-white",
-                                                children: "1.0.0"
+                                                children: "1.0.1"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
                                                 lineNumber: 61,
@@ -1344,7 +1360,7 @@ const HelpTab = ()=>{
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                 className: "text-white",
-                                                children: "November 2024"
+                                                children: "November 2025"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
                                                 lineNumber: 65,
@@ -1371,13 +1387,13 @@ const HelpTab = ()=>{
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-                lineNumber: 14,
+                lineNumber: 13,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(protected)/settings/components/help/page.tsx",
-        lineNumber: 8,
+        lineNumber: 7,
         columnNumber: 5
     }, this);
 };

@@ -108,7 +108,7 @@ const SecurityTab = ({
           <h3 className="text-lg font-semibold mb-4">Security Preferences</h3>
 
           {/* 2FA Toggle */}
-          <div className={`flex items-center justify-between p-2 border border-gray-500 rounded-xl ${!isPasswordAuth ? 'opacity-50 cursor-not-allowed' : ''}`}>
+          <div className={`flex items-center justify-between p-2 border border-gray-500 rounded-xl `}>
             <div className="flex items-center gap-3">
               <Shield size={20} className="text-gray-400" />
               <div>
@@ -119,16 +119,16 @@ const SecurityTab = ({
             <SwitchButton
               label={is2FAEnabled ? 'Enabled' : 'Disabled'}
               checked={is2FAEnabled}
-              onChange={() => isPasswordAuth && handleToggle2FA()}
+              onChange={() =>  handleToggle2FA()}
             />
           </div>
 
-          {/* Message for OAuth users */}
+          {/* Message for OAuth users
           {!isPasswordAuth && (
             <p className="text-sm text-gray-400 mt-2">
               Two-Factor Authentication settings are managed through your external provider ({authMethod === 1 ? 'Google' : '42'}) or are disabled for OAuth accounts.
             </p>
-          )}
+          )} */}
         </div>
       </div>
 

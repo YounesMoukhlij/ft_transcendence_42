@@ -111,8 +111,8 @@ export async function AddUser(request, reply) {
 
         const hashedPassword = await hashPassword(password);
         const query = request.server.db
-            .prepare("INSERT INTO users (username, email, password, profile_img) VALUES (?, ?, ?, ?)");
-        const result = query.run(username, email, hashedPassword, DEFAULT_PROFILE_IMAGE);
+            .prepare("INSERT INTO users (username, fullname, email, password, profile_img) VALUES (?, ?, ?, ?, ?)");
+        const result = query.run(username, username, email, hashedPassword, DEFAULT_PROFILE_IMAGE);
 
         return reply.code(201).send({
             success: true,

@@ -1,4 +1,3 @@
-// settings/components/help/page.tsx
 'use client'
 import React from 'react'
 import { HelpCircle } from 'lucide-react'
@@ -47,8 +46,9 @@ const HelpTab = () => {
             If you need further assistance, please contact our support team:
           </p>
           <div className="space-y-2">
-            <p className="text-white">📧 Email: support@ponggame.com</p>
+            <p className="text-white">📧 Email: zmoumni@support.com</p>
             <p className="text-white">🕒 Response Time: 24-48 hours</p>
+            <p className='text-white'>📞 Phone: (+212) 684 255 367 (abechcha)</p>
           </div>
         </div>
 
@@ -58,11 +58,11 @@ const HelpTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-400">Version</p>
-              <p className="text-white">1.0.0</p>
+              <p className="text-white">1.0.1</p>
             </div>
             <div>
               <p className="text-gray-400">Last Updated</p>
-              <p className="text-white">November 2024</p>
+              <p className="text-white">November 2025</p>
             </div>
           </div>
         </div>

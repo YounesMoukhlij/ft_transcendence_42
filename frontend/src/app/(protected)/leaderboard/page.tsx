@@ -4,6 +4,7 @@ import { Trophy, User } from 'lucide-react';
 
 // --- Re-using your constants for consistency ---
 const API_URL = 'http://localhost:4444';
+const BACK_API = 'http://localhost:4444';
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 
 // --- Helper function from your settings page to handle image paths ---
@@ -13,7 +14,7 @@ const getProfileImageUrl = (currentImg) => {
     return defaultProfileImg;
   }
   if (currentImg && currentImg.startsWith('/uploads/')) {
-    return `${API_URL}${currentImg}`;
+    return `${BACK_API}${currentImg}`;
   }
   
   return currentImg;
@@ -41,7 +42,7 @@ const LeaderboardItem = ({ player, rank }) => (
             <div className="flex items-center gap-4">
                 <div className={`text-gray-400 font-semibold text-lg ${rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-400' : rank === 3 ? 'text-yellow-800' : 'text-white'}`}># {rank}</div>
                 <img
-                    src={player.profile_img}
+                    src={getProfileImageUrl(player.profile_img)}
                     alt={player.username}
                     className={`w-12 h-12 rounded-full object-cover border-2 border-gray-600 ${rank === 1 ? 'border-yellow-400' : rank === 2 ? 'border-gray-400' : rank === 3 ? 'border-yellow-800' : ''}`}
                 />

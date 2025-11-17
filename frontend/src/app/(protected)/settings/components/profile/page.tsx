@@ -146,7 +146,12 @@ const ProfileTab = ({
 
         {/* Bio */}
         <div className="md:col-span-2 scrollbar-hide">
-          <label className="text-gray-400 text-sm mb-1 block">Bio</label>
+          <span className="flex justify-between items-center mb-1">
+            <label className="text-gray-400 text-sm mb-1 block">Bio</label>
+              <p className="text-right text-xs text-gray-500">
+                {formData.bio ? formData.bio.length : 0} / 200
+              </p>
+            </span>
           <textarea
             name="bio"
             rows={4}
@@ -154,6 +159,7 @@ const ProfileTab = ({
             onChange={handleInputChange}
             placeholder="Tell us about yourself..."
             className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white resize-none overflow-hidden"
+            maxLength={200}
           />
         </div>
       </div>
