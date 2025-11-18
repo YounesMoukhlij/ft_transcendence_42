@@ -3,23 +3,27 @@ import jwt from 'jsonwebtoken';
 
 export async function getConversationId(request, reply) {
 
+  
+  
+  const authHeader = request.headers['authorization'];
+  const token = authHeader.split(' ')[1];
+  
+  let decodedObject;
+
+  
+  try{
+    decodedObject = jwt.verify(token, process.env.SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Unauthorized");
+  }
+
+
   const Friend_id = request.body.friend_id;
 
   
-  const authHeader = request.headers['authorization'];
-
-
-  
-  const token = authHeader.split(' ')[1];
-  
-  if (!Friend_id || !authHeader || !token)
-    return reply.code(403).send("");
-  
-  
-  const decodedObject = jwt.verify(token, process.env.SECRET);
-
-
-
+  if (!Friend_id)
+    return reply.code(400).send("missing params");
 
   const caseOne = Friend_id + ',' + decodedObject.id_user;
   const caseTwo = decodedObject.id_user + ',' + Friend_id;

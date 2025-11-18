@@ -43,30 +43,30 @@ async function fetchData(friend_id: string , title: string, setDboubleBlock: (nu
   const { user , updateLastMessage} = useUserStore.getState();
 
   localStorage.setItem('room_select', title);
-  localStorage.setItem('friend_id' , friend_id);
   try {
     const convRes = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,{
       friend_id: friend_id
     },
     {
-        headers: {
-          Authorization: `Bearer ${user.access_token}`
-        }
-    }
-  );
-
+      headers: {
+        Authorization: `Bearer ${user.access_token}`
+      }
+    });
     localStorage.setItem('conversationId', convRes.data.conversation_id);
     setDboubleBlock(convRes.data.is_double_block);
     Setuser_block(convRes.data.block_user);
-
+    
     const msgsRes = await axios.post(
       `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`,
       { id: convRes.data.conversation_id }
     );
-
+    
     updateLastMessage(msgsRes.data[msgsRes.data.length - 1]?.message);
     return msgsRes.data;
+    
   } catch (err) {
+    if (err.response.status === 401)
+      redirect('/signIn');
     console.error('Error fetching conversation or messages:', err);
   }
 }
@@ -285,12 +285,19 @@ export default function ChatPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
-          params: { username: user.username }
-        });
+        const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, 
+        {
+          params: { username: user.username },
+          headers: {
+            Authorization: `Bearer ${user.access_token}`
+          }
+        }
+      );
 
         setFriends(res.data);
       } catch (err) {
+        if (err.response.status === 401)
+          redirect('/signIn');
         console.log(err);
       }
     };
@@ -495,7 +502,7 @@ export default function ChatPage() {
 
   return (
     <>
-    <div className=" relative flex justify-center items-center h-full text-white px-2 sm:px-4 lg:px-0">
+    <div className=" relative flex justify-center items-center h-full  text-white px-2 sm:px-4 lg:px-0">
       <div className="relative flex w-full h-full sm:h-[90%] lg:w-[90%] lg:h-[90%] gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
         <div className="w-full sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
           <Test1

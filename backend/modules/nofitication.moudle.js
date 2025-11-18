@@ -226,10 +226,21 @@ export async function AddFriend( request  , reply){
 
 
 export async function GetFriends(request, reply) {
-  const username = request.query.username;
 
+  const authHeader = request.headers['authorization'];
+  let decodedObject;
+  try{
+    const token = authHeader.split(' ')[1];
+    decodedObject = jwt.verify(token, process.env.SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
+
+
+  const username = request.query.username;
   if (!username) {
-    return reply.code(400).send({ error: "Username is required" });
+    return reply.code(400).send("Missing params");
   }
 
 
