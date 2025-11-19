@@ -1,56 +1,68 @@
 import jwt from 'jsonwebtoken';
+import { freemem } from 'os';
 
 
 export async function getConversationId(request, reply) {
-
-  
-  
-  const authHeader = request.headers['authorization'];
-  const token = authHeader.split(' ')[1];
-  
-  let decodedObject;
-
-  
-  try{
-    decodedObject = jwt.verify(token, process.env.SECRET);
-  }
-  catch(err){
-    return reply.code(401).send("Unauthorized");
-  }
-
-
-  const Friend_id = request.body.friend_id;
-
-  
-  if (!Friend_id)
-    return reply.code(400).send("missing params");
-
-  const caseOne = Friend_id + ',' + decodedObject.id_user;
-  const caseTwo = decodedObject.id_user + ',' + Friend_id;
-
-
-
-
-
   try {
-    const query = request.server.db.prepare("SELECT * FROM room WHERE members = ?");
 
-    let result = query.get(caseOne);
+    const authHeader = request.headers['authorization'];
+    if (!authHeader) 
+      return reply.code(401).send({ error: "unauthorized: Missing token" });
 
-    if (!result) {
-      result = query.get(caseTwo);
+    const parts = authHeader.split(" ");
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
+      return reply.code(401).send({ error: "unauthorized: invalid header" });
     }
 
-    if (result) {
-      return reply.send(result);
-    } else {
-      reply.code(404).send({ error: "Conversation not found" });
+    const token = parts[1];
+
+    let decodedObject;
+    try {
+      decodedObject = jwt.verify(token, process.env.SECRET);
+    } catch (err) {
+      return reply.code(401).send({ error: "unauthorized: invalid token" });
     }
-  } catch (err) {
-    console.error("Database error:", err);
-    reply.code(500).send({ error: "Internal server error" });
+
+
+    if (!request.body) {
+      return reply.code(400).send({ error: "Invalid body format" });
+    }
+
+    const { friend_id } = request.body;
+    if (!friend_id) {
+      return reply.code(400).send({ error: "Missing friend id" });
+    }
+
+
+    const caseOne = friend_id + "," + decodedObject.id_user;
+    const caseTwo = decodedObject.id_user + "," + friend_id;
+
+
+    try {
+      const query = request.server.db.prepare("SELECT * FROM room WHERE members = ?" );
+      let result = query.get(caseOne);
+
+      if (!result) {
+        result = query.get(caseTwo);
+      }
+
+      if (result) {
+        return reply.send(result);
+      }
+
+      return reply.code(404).send({ error: "conversation not found" });
+
+    } catch (dberr) {
+      console.error("database error: can't execute query", dberr);
+      return reply.code(500).send({ error: "internal server error" });
+    }
+
+  } catch (Error) {
+    console.error("Unexpected error:", Error);
+    return reply.code(400).send({ error: "Bad Request: Unexpected error" });
   }
 }
+
 
 
 
