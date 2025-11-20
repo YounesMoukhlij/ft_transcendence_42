@@ -1,6 +1,5 @@
 -- Users table
 
-
 CREATE TABLE users (
     id_user INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
@@ -15,7 +14,7 @@ CREATE TABLE users (
     password TEXT,
     languages TEXT DEFAULT 'en',
     status BOOLEAN DEFAULT FALSE,
-    auth_method INTEGER DEFAULT 0, -- 0: local, 1: google, 2: Intra42 
+    auth_method INTEGER DEFAULT 0, -- 0: local, 1: google, 2: Intra42
     twoFA_enabled BOOLEAN DEFAULT FALSE,
     twoFA_secret TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -57,7 +56,7 @@ CREATE TABLE game_history (
     type TEXT DEFAULT 'casual',          -- 'casual' or 'tournament'
     tournament_id INTEGER,                -- FK if it's a tournament match
     tournament_round TEXT,                -- optional, e.g., 'Quarter-Final'
-    
+
     -- General data
     game_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     duration INTEGER,                     -- in seconds or minutes
@@ -106,6 +105,7 @@ CREATE TABLE notification (
     title INTEGER NOT NULL,
     notifyBody TEXT NOT NULL,
     is_seen BOOLEAN DEFAULT FALSE,
+    expired DATETIME,
     is_game_invite BOOLEAN DEFAULT FALSE,
     deadline DATETIME
     -- FOREIGN KEY (getter_user) REFERENCES users(id_user),

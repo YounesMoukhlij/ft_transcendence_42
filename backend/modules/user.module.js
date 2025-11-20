@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
+
 
 export async function getConversationId(request, reply) {
 
@@ -16,9 +16,7 @@ export async function getConversationId(request, reply) {
     return reply.code(403).send("");
   
   
-  console.log("hetrere ===============================> ", );
-  const decodedObject = jwt.verify(token, SECRET);
-  console.log("hetrere ===============================> ", decodedObject);
+  const decodedObject = jwt.verify(token, process.env.SECRET);
 
 
 
@@ -85,7 +83,7 @@ export async function sendMsg(request, reply) {
   const token = authHeader.split(' ')[1];
   let decodedObject;
 
-  decodedObject = jwt.verify(token, SECRET);
+  decodedObject = jwt.verify(token, process.env.SECRET);
 
 
 
@@ -170,13 +168,17 @@ export async function Xprank(request, reply) {
 
 
 export async function IsOnline(request , reply){
+
+
   const username = request.query.username;
   const socket = request.server.users_socket.get(username);
+
+
   try {
     if(socket)
-      reply.send(true);
+      reply.code(200).send(true);
     else
-      reply.send(false);
+      reply.code(200).send(false);
 
   } catch (err) {
     reply.code(500).send(err);

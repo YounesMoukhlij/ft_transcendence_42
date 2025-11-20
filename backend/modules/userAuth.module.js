@@ -27,7 +27,6 @@ const pipeline = promisify(stream.pipeline);
 // Constants
 const DEFAULT_PROFILE_IMAGE = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg";
 const GOOGLE_CLIENT_ID = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com";
-const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 const GOOGLE_CLIENT_SECRET = "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";
 const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
@@ -53,7 +52,7 @@ export function generateToken(username, email, id_user) {
     }
 
     const payload = { username, email, id_user };
-    const token = jwt.sign(payload, SECRET, { expiresIn: '2h' });
+    const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '2h' });
     console.log(" >> Token generated successfully for user:", username, email, id_user);
     return token;
 }
@@ -64,7 +63,7 @@ export function generateRefreshToken(username, email, id_user) {
         throw new Error("Username, email, and user ID are required to generate refresh token");
     }
     const payload = { username, email, id_user };
-    const refreshToken = jwt.sign(payload, SECRET, { expiresIn: '7d' }); // Refresh token valid for 7 days
+    const refreshToken = jwt.sign(payload, process.env.SECRET, { expiresIn: '7d' }); // Refresh token valid for 7 days
     console.log(" >> Refresh token generated successfully for user:", { username, email, id_user });
     return refreshToken;
 }
@@ -477,7 +476,7 @@ export async function refreshToken(request, reply) {
     }
 
     try {
-        const decoded = jwt.verify(refreshToken, SECRET);
+        const decoded = jwt.verify(refreshToken, process.env.SECRET);
         const user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(decoded.id_user);
 
         // --- Start of New Detailed Logging ---
@@ -1006,7 +1005,7 @@ export async function verifyCode(request, reply) {
         const user = request.server.db.prepare("SELECT id_user, username, email FROM users WHERE email = ?").get(email);
         const resetToken = jwt.sign(
             { id_user: user.id_user, email: user.email, purpose: 'password-reset' },
-            SECRET,
+             process.env.SECRET,
             { expiresIn: '5m' } // This token is only valid for 5 minutes
         );
 
@@ -1028,7 +1027,7 @@ export async function resetPasswordWithToken(request, reply) {
 
     try {
         // Verify the temporary token.
-        const decoded = jwt.verify(resetToken, SECRET);
+        const decoded = jwt.verify(resetToken,  process.env.SECRET);
 
         // Extra check to ensure this token was for password reset.
         if (decoded.purpose !== 'password-reset') {

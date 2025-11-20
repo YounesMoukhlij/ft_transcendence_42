@@ -1,4 +1,3 @@
-const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 import jwt from 'jsonwebtoken';
 
 export async function getMatchHistory(request, reply) {
@@ -11,7 +10,7 @@ export async function getMatchHistory(request, reply) {
     let decodedObject;
   
     try{
-      decodedObject = jwt.verify(token, SECRET);
+      decodedObject = jwt.verify(token, process.env.SECRET);
     }
     catch(err){
       return reply.code(401).send("Invalid token");

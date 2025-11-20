@@ -1,5 +1,20 @@
-const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 import jwt from 'jsonwebtoken';
+
+  function ft_getTime() {
+  const now = new Date();
+  
+  const pad = (n) => n.toString().padStart(2, '0');
+
+  const year = now.getFullYear().toString().slice(-2); // 21
+  const month = pad(now.getMonth() + 1); // 01–12
+  const day = pad(now.getDate()); // 01–31
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 
 
 export async function GetNotification(request, reply) {
@@ -13,7 +28,7 @@ export async function GetNotification(request, reply) {
   let decodedObject;
 
   try{
-    decodedObject = jwt.verify(token, SECRET);
+    decodedObject = jwt.verify(token, process.env.SECRET);
   }
   catch(err){
     return reply.code(401).send("Invalid token");
@@ -45,7 +60,7 @@ export async function DeleteFriendRequest(request , reply){
 
   let decodedObject;
   try{
-    decodedObject = jwt.verify(token, SECRET);
+    decodedObject = jwt.verify(token, process.env.SECRET);
   }
   catch(err){
     return reply.code(401).send("Invalid token");
@@ -70,9 +85,6 @@ export async function sendRequestFriend(request, reply) {
 
   const { friend_id} = request.body;
 
-
-
-
   const authHeader = request.headers['authorization'];
   
 
@@ -87,7 +99,7 @@ export async function sendRequestFriend(request, reply) {
   
   
   try{
-    decodedObject = jwt.verify(token, SECRET);
+    decodedObject = jwt.verify(token, process.env.SECRET);
   }catch(err){
     return reply.code(401).send("invalid token ");
   }
@@ -152,7 +164,7 @@ export async function AddFriend( request  , reply){
   
   
   try{
-    decodedObject = jwt.verify(token, SECRET);
+    decodedObject = jwt.verify(token, process.env.SECRET);
   }catch(err){
     return reply.code(401).send("invalid token ");
   }
@@ -161,6 +173,8 @@ export async function AddFriend( request  , reply){
 
 
   try{
+
+    console.log(decodedObject.id_user , Freind_id);
       const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
       Fquery.run(decodedObject.id_user , Freind_id);
 
@@ -179,14 +193,33 @@ export async function AddFriend( request  , reply){
           id_user: res.id_user,
           status:1
         };
+
         socket.send(JSON.stringify({
             type: "test",
             data: object
+        }));
+
+
+        const title = "friend request accepted";
+        const setQuery = request.server.db.prepare("INSERT INTO notification (getter_user, title, sender_user, notifyBody ) VALUES (?, ?, ?, ?)")
+        const result = setQuery.run(Freind_id, title, decodedObject.id_user, "friend request accepted");
+
+        const notifyObject = {
+          sender_profile_img: res.profile_img,
+          sender_username: res.username,
+          title: title,
+          sender_user: decodedObject.id_user,
+          notify_id: result.lastInsertRowid
+        };
+        socket.send(JSON.stringify({
+            type: "notify",
+            data: notifyObject
         }));
       }
 
       reply.code(200).send("");
     }catch(err){
+      console.log(err);
       reply.code(500);
   }
 }
@@ -268,3 +301,206 @@ export async function GetFriends(request, reply) {
 }
 
 
+
+
+
+
+export function NotificationSeen(request , reply){
+  const authHeader = request.headers['authorization'];
+
+
+
+  if (!authHeader)
+    reply.code(401).send("missing token");
+  
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+
+  try{
+    decodedObject = jwt.verify(token, process.env.SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
+
+
+
+
+  try{
+    const query = request.server.db.prepare("UPDATE notification SET is_seen = ? WHERE getter_user = ?");
+    query.run(1 , decodedObject.id_user);
+
+
+    reply.code(200).send(true);
+  }catch(err){
+
+  }
+}
+
+
+
+
+// export function SendTyping (request , reply){
+  
+//   const authHeader = request.headers['authorization'];
+//   const {Friend_id} = request.body;
+
+//   console.log("============================================>1212121212121XDDDDDDDDDDDDDDDDD ");
+
+//   if (!authHeader || !Friend_id)
+//     reply.code(401).send("missing token");
+  
+//   const token = authHeader.split(' ')[1];
+//   let decodedObject;
+
+//   try{
+//     decodedObject = jwt.verify(token, process.env.SECRET);
+//   }
+//   catch(err){
+//     return reply.code(401).send("Invalid token");
+//   }
+
+//   try
+//   {
+//     const socket = request.server.users_socket.get(Friend_id.toString());
+//     if (socket){
+//       const object = {
+//       };
+//       socket.send(JSON.stringify({
+//         type: "is_typing",
+//         data: object
+//       }));
+//     }
+
+//   reply.code(200).send(true);
+//   }catch(err){
+
+//   }
+
+// }
+
+
+
+
+
+
+
+
+export  function sendGameChallenge(request , reply){
+
+  const authHeader = request.headers['authorization'];
+  const {Friend_id} = request.body;
+  if (!authHeader || !Friend_id)    // must be check if is not a freind;
+    reply.code(401).send("missing token");
+  
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+
+  try{
+    decodedObject = jwt.verify(token, process.env.SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
+
+
+  
+  try{
+    const title = "game challenge";
+    const query = request.server.db.prepare('SELECT profile_img FROM users where id_user = ?');
+    const result = query.get(decodedObject.id_user);
+    
+    const ExpiredTime =  ft_getTime();
+    const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody , expired) VALUES (?, ?, ?, ? , ?)`);
+    
+    insertQuery.run(Friend_id, title, decodedObject.id_user, "game challenge" , ExpiredTime);
+    
+    
+    const socket = request.server.users_socket.get(Friend_id.toString());
+    
+    
+    if (socket){
+      
+      const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
+      const result = query1.get(decodedObject.id_user);
+      
+      
+      const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
+      const res = query2.get(Friend_id, decodedObject.id_user);
+
+
+      const object  = {
+        username: decodedObject.username,
+        img: "http://" + process.env.HOST + ":" + process.env.PORT + result.profile_img,    // problem in default and custumazze images
+        id: decodedObject.id_user
+      };
+      socket.send(JSON.stringify({
+          type: "game_invite",
+          data: object
+      }));
+
+      const object_notify = {
+        getter_user: Friend_id,
+        sender_user: decodedObject.id_user,
+        sender_username: decodedObject.username,
+        title: title,
+        sender_profile_img: result.profile_img,
+        notify_id: res.notify_id,
+        expired: ExpiredTime
+      };
+
+      socket.send(JSON.stringify({
+        type: "notify",
+        data: object_notify
+      }));
+
+    }
+  }catch(err){
+    console.log(err);
+    return reply.code(500).send(false);
+  }
+
+  return reply.send(true);
+}
+
+
+
+
+
+export function AcceptGameChallenge(request , reply){
+
+  const authHeader = request.headers['authorization'];
+  const {Friend_id} = request.body;
+
+  if (!authHeader || !Friend_id)
+    reply.code(401).send("missing token");
+  
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+
+  try{
+    decodedObject = jwt.verify(token, process.env.SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
+
+  try{
+
+    const socket = request.server.users_socket.get(Friend_id.toString());
+    if (socket){
+      const object  = {
+      };
+      
+      socket.send(JSON.stringify({
+        type: "start_game",
+        data: object
+      }));
+    }
+  }catch(err){
+    console.log(err);
+    return reply.code(500).send(false);
+  }
+
+  return reply.send(true);
+}
