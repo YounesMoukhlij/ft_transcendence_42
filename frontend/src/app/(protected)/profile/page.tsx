@@ -13,7 +13,7 @@ export default function UserProfile() {
   const [profile, setProfile] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  console.log(user.access_token);
+  console.log(user?.access_token);
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user?.access_token) {

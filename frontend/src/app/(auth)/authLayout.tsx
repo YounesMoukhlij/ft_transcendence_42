@@ -6,11 +6,9 @@ import { toast } from 'react-toastify'
 import '../globals.css'
 //zustand or recoil
 import { useUserStore } from "../../store/userStore"
-//components
-// import FlyingSaucer from '@/components/FlyingSaucer'
-// import { cookies } from 'next/headers'
 
-const API_URL = 'http://LOCALHOST:4444'
+
+const API_URL = "http://" + process.env.NEXT_PUBLIC_BACKENDIP + ":" +  process.env.NEXT_PUBLIC_BACKENDPORT;
 
 export default function AuthLayout() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -41,7 +39,7 @@ export default function AuthLayout() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       <div className="relative flex min-h-screen w-full">
-        
+
         <motion.div
           className="hidden md:block absolute w-1/2 h-screen z-10"
           initial={false}
@@ -119,7 +117,7 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
 
   const validateForm = () => {
     const { username, email, password, confirmPassword } = formData
-    
+
     if (!username.trim() || !email.trim() || !password || !confirmPassword) {
       const errorMessage = 'All fields are required'
       setError(errorMessage)
@@ -162,7 +160,7 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
 
     try {
       const { confirmPassword, ...userData } = formData
-      
+
       const response = await fetch(`${API_URL}/AddUser`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,14 +180,14 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
       }
 
       // No need to set the user state here; they must sign in first.
-      toast.success('Account created successfully! Please sign in.') 
+      toast.success('Account created successfully! Please sign in.')
       setFormData({ username: '', email: '', password: '', confirmPassword: '' })
-      
+
       onToggle()
       setTimeout(() => {
         router.push('/signIn')
       }, 1500)
-      
+
     } catch (error) {
       console.error('Error during sign up:', error)
       toast.error('An unexpected error occurred')
@@ -208,38 +206,38 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
           Please fill in the details below to create an account.
         </p>
       </div>
-      
-      <form 
+
+      <form
         className='w-full gap-4 sm:gap-6 flex flex-col items-center justify-center'
         onSubmit={handleSignUp}
       >
-        <input 
-          type="text" 
+        <input
+          type="text"
           placeholder='Username'
-          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
+          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out'
           disabled={isLoading}
           value={formData.username}
           onChange={handleInputChange('username')}
         />
-        
-        <input 
-          type="email" 
+
+        <input
+          type="email"
           placeholder='Email'
-          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
+          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out'
           disabled={isLoading}
           value={formData.email}
           onChange={handleInputChange('email')}
         />
-        
-        <input 
-          type="password" 
+
+        <input
+          type="password"
           placeholder='Password'
-          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
+          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out'
           disabled={isLoading}
           value={formData.password}
           onChange={handleInputChange('password')}
         />
-        
+
         <input
           type='password'
           placeholder='Confirm Password'
@@ -255,26 +253,26 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
           </div>
         )}
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={isLoading}
           className={`w-full p-3 sm:p-4 rounded-2xl text-white text-sm sm:text-base font-semibold transition-all duration-300 ease-in-out ${
-            isLoading 
-              ? 'bg-gray-300 cursor-not-allowed' 
+            isLoading
+              ? 'bg-gray-300 cursor-not-allowed'
               : 'bg-gray-500 hover:bg-gray-400'
           }`}
         >
           {isLoading ? 'Creating Account...' : 'Sign Up'}
         </button>
-        
+
         <div className='flex gap-2 items-center justify-center'>
           <h3 className='text-xs sm:text-sm text-gray-500'>
-            Already have an account? 
+            Already have an account?
           </h3>
-          <h3 
+          <h3
             className='text-xs sm:text-sm hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'
             onClick={onToggle}
-          > 
+          >
             Sign In
           </h3>
         </div>
@@ -295,9 +293,9 @@ function SignInForm({ onToggle }: SignInFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const setUser = useUserStore((state) => state.setUser)
-  
+
   // Ref to prevent OAuth effects from running twice in Strict Mode
-  const googleAuthEffectRef = useRef(false) 
+  const googleAuthEffectRef = useRef(false)
   const fortyTwoAuthEffectRef = useRef(false)
 
 
@@ -336,7 +334,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
       const fetchUserData = async () => {
         try {
           const response = await fetch(`${API_URL}/getUserById/${userId}`)
-          
+
           if (!response.ok) {
             toast.error('Failed to retrieve user data')
             router.replace('/signIn')
@@ -344,29 +342,29 @@ function SignInForm({ onToggle }: SignInFormProps) {
           }
 
           const userData = await response.json()
-          
+
           console.log('Google OAuth user data:', userData)
-          
+
           // Update global user state (Zustand)
           setUser(userData, userData.refresh_token) //
           // set auth_token cookie? (handled in middleware)
           document.cookie = `auth_token=${userData.access_token}; 4`;
-          
+
           // Display success message based on whether user is new
-          const message = isNewUser === 'true' 
+          const message = isNewUser === 'true'
             ? `Welcome ${userData.username}! Account created successfully.`
             : `Welcome back, ${userData.username}!`
-          
+
           toast.success(message)
-          
+
           // Clean URL first to prevent re-running
           router.replace('/signIn')
-          
+
           // Redirect to home after a short delay
           setTimeout(() => {
             router.push('/')
           }, 1500)
-          
+
         } catch (err) {
           console.error('Failed to fetch user data:', err)
           toast.error('Failed to retrieve user information')
@@ -374,28 +372,28 @@ function SignInForm({ onToggle }: SignInFormProps) {
         }
       }
 
-      fetchUserData()
+      // fetchUserData()
     }
-    
+
   }, [searchParams, router, setUser]) // Added dependencies
 
   const handleGoogleAuth = () => {
     // Redirect to backend OAuth initiation
     window.location.href = `${API_URL}/auth/google`
   }
-  
+
   // Handle 42 OAuth callback
   useEffect(() => {
     const fortyTwoAuth = searchParams.get('42Auth')
     const userId = searchParams.get('userId')
     const isNewUser = searchParams.get('isNewUser')
     const authError = searchParams.get('error')
-    
+
     // Skip if no OAuth parameters present
     if (!fortyTwoAuth && !authError) {
       return
     }
-    
+
     // Prevents double execution in React Strict Mode (Dev)
     if (fortyTwoAuthEffectRef.current) {
       return
@@ -420,7 +418,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
       const fetchUserData = async () => {
         try {
           const response = await fetch(`${API_URL}/getUserById/${userId}`)
-          
+
           if (!response.ok) {
             toast.error('Failed to retrieve user data')
             router.replace('/signIn')
@@ -428,30 +426,30 @@ function SignInForm({ onToggle }: SignInFormProps) {
           }
 
           const userData = await response.json()
-          
+
           console.log('42 OAuth user data:', userData)
-          
+
           // Update global user state (Zustand)
           setUser(userData, userData.refresh_token) //
           // set auth_token cookie? (handled in middleware)
           document.cookie = `auth_token=${userData.access_token}; path=/`;
-          
-          
+
+
           // Display success message based on whether user is new
-          const message = isNewUser === 'true' 
+          const message = isNewUser === 'true'
             ? `Welcome ${userData.username}! Account created successfully.`
             : `Welcome back, ${userData.username}!`
-          
+
           toast.success(message)
-          
+
           // Clean URL first to prevent re-running
           router.replace('/signIn')
-          
+
           // Redirect to home after a short delay
           setTimeout(() => {
             router.push('/')
           }, 1500)
-          
+
         } catch (err) {
           console.error('Failed to fetch user data:', err)
           toast.error('Failed to retrieve user information')
@@ -461,7 +459,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
 
       fetchUserData()
     }
-    
+
   }, [searchParams, router, setUser]) // Added dependencies
 
   const handle42Auth = () => {
@@ -490,9 +488,9 @@ function SignInForm({ onToggle }: SignInFormProps) {
       const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: username.trim(), 
-          password: password 
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password
         }),
       })
 
@@ -507,7 +505,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
 
       console.log('Login response data:', data.user)
       if (data.user) {
-        // zustand 
+        // zustand
         setUser(data.user) //
         // set auth_token cookie? (handled in middleware)
         document.cookie = `auth_token=${data.user.access_token}; path=/`;
@@ -518,11 +516,11 @@ function SignInForm({ onToggle }: SignInFormProps) {
       setUsername('')
       setPassword('')
       setError('')
-      
+
       setTimeout(() => {
         router.push('/')
       }, 1000)
-      
+
     } catch (error) {
       console.error('Network error during login:', error)
       const errorMessage = 'Network error. Please check your connection.'
@@ -546,16 +544,16 @@ function SignInForm({ onToggle }: SignInFormProps) {
           Sign in and let the games begin!
         </h2>
       </div>
-      
-      <form 
+
+      <form
         className='w-full gap-4 sm:gap-6 flex flex-col items-center justify-center'
         onSubmit={handleSubmit}
       >
-        <input 
-          type="text" 
+        <input
+          type="text"
           name="username"
-          placeholder='Username' 
-          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
+          placeholder='Username'
+          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out'
           value={username}
           disabled={isLoading}
           onChange={(e) => {
@@ -563,12 +561,12 @@ function SignInForm({ onToggle }: SignInFormProps) {
             if (error) setError('')
           }}
         />
-        
-        <input 
-          type="password" 
+
+        <input
+          type="password"
           name="password"
-          placeholder='Password' 
-          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out' 
+          placeholder='Password'
+          className='w-full p-3 sm:p-4 pl-5 rounded-2xl border outline-0 focus:border-gray-500 bg-gray-100 text-black text-sm sm:text-base transition-all duration-300 ease-in-out'
           value={password}
           disabled={isLoading}
           onChange={(e) => {
@@ -576,7 +574,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
             if (error) setError('')
           }}
         />
-        
+
         <div className='flex items-start w-full'>
           <h3 className='text-xs sm:text-sm text-gray-500 hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'
               onClick={() => router.push('/forgot-password')}
@@ -584,7 +582,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
             Forgot your password?
           </h3>
         </div>
-        
+
         {error && (
           <div className="w-full text-center text-red-500 text-sm bg-red-50 p-2 rounded-lg">
             {error}
@@ -592,20 +590,20 @@ function SignInForm({ onToggle }: SignInFormProps) {
         )}
 
         <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 items-center justify-center w-full'>
-          <button 
+          <button
             type="submit"
             disabled={isLoading}
             className={`w-full p-3 sm:p-4 rounded-2xl transition-all duration-300 ease-in-out text-sm sm:text-base ${
-              isLoading 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              isLoading
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-100 text-black hover:bg-gray-400 hover:text-white hover:shadow-lg hover:scale-105 cursor-pointer'
             }`}
           >
             {isLoading ? 'Signing In...' : 'Login'}
           </button>
-          
+
           <div className='flex gap-2 w-full sm:w-auto'>
-            <button 
+            <button
               type="button"
               disabled={isLoading}
               onClick={handleGoogleAuth}
@@ -618,8 +616,8 @@ function SignInForm({ onToggle }: SignInFormProps) {
                 <path d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251" fill="#EB4335"/>
               </svg>
             </button>
-            
-            <button 
+
+            <button
               type="button"
               disabled={isLoading}
               onClick={handle42Auth}
@@ -634,15 +632,15 @@ function SignInForm({ onToggle }: SignInFormProps) {
             </button>
           </div>
         </div>
-        
+
         <div className='flex gap-2 items-center justify-center'>
           <h3 className='text-xs sm:text-sm text-gray-500'>
             Don&apos;t have an account?
           </h3>
-          <h3 
+          <h3
             className='text-xs sm:text-sm hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'
             onClick={onToggle}
-          > 
+          >
             Sign up
           </h3>
         </div>

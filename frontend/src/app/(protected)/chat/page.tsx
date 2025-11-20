@@ -13,9 +13,12 @@ import { FaArrowRight } from "react-icons/fa";
 import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 import  {useUserStore}  from '../../../store/userStore';
 import getFormattedDate from './tools'
-import { stat } from 'fs';
+import { GiCheckMark } from "react-icons/gi";
+import { HiXMark } from "react-icons/hi2";
+import { redirect } from 'next/navigation';
 
 interface Friend {
+  id_user: string,
   username: string;
   profile_img: string;
   LastMessage: string;
@@ -35,7 +38,8 @@ function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, s
   setShow(!show)
 }
 
-async function fetchData(friend_id: number , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
+
+async function fetchData(friend_id: string , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
   const { user , updateLastMessage} = useUserStore.getState();
 
   localStorage.setItem('room_select', title);
@@ -68,8 +72,8 @@ async function fetchData(friend_id: number , title: string, setDboubleBlock: (nu
 }
 
 type FreindsListProps = {
-  id_user: number,
-  friend_id: number,
+  id_user: string,
+  friend_id: string,
   photo: string;
   title: string;
   message: string;
@@ -80,11 +84,8 @@ type FreindsListProps = {
   SetSelectContact: (selected: boolean) => void;
 };
 
-const FreindsList = ({friend_id ,  photo, title, message = "test", status, setConversation, setRoom, setimg, SetSelectContact  }: FreindsListProps) => {
+const FreindsList = ({friend_id ,  photo, title, message , status, setConversation, setRoom, setimg, SetSelectContact  }: FreindsListProps) => {
   const { setDboubleBlock, double_block, Setuser_block, user_block , } = useUserStore();
-
-
-  
   const Get_Conversation = async () => {
     setRoom(title);
     setimg(photo);
@@ -124,11 +125,13 @@ interface Test1Props {
   setRoom: (room: string) => void;
   setImg: (img: string) => void;
   SetSelectContact: (selected: boolean) => void;
+
 }
 
 function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test1Props) {
   const [searchTerm, setSearchTerm] = useState<string>('');
   
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
@@ -149,48 +152,42 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test
           <FaSearch className="text-[rgb(179,173,173)]" size={20} />
         </button>
       </div>
-      <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[35vh] sm:h-[40vh] md:h-[45vh] lg:h-[48vh]">
-        {
-          searchTerm.length > 0
-            ? friends
-              .filter(friend =>
-                friend.username.toLowerCase().startsWith(searchTerm.toLowerCase())
-              )
-              .sort((a, b) => a.username.localeCompare(b.username))
-              .map((friend, index) => (
-                <div key={index}>
-                  <FreindsList
-                    friend_id={friend.id_user}
-                    photo={friend.profile_img}
-                    title={friend.username}
-                    message={friend.LastMessage}
-                    status={friend.status}
-                    setConversation={setMessages}
-                    setRoom={setRoom}
-                    setimg={setImg}
-                    SetSelectContact={SetSelectContact}
-                  />
-                </div>
-              ))
-            : friends
-              .sort((a, b) => new Date(b.LastMessageTime).getTime() - new Date(a.LastMessageTime).getTime())
-              .map((friend, index) => (
-                  console.log("heeeeel  , " , friend.status),
-                <div key={index}>
-                  <FreindsList
-                    friend_id={friend.id_user}
-                    photo={friend.profile_img}
-                    title={friend.username}
-                    message={friend.LastMessage}
-                    status={friend.status}
-                    setConversation={setMessages}
-                    setRoom={setRoom}
-                    setimg={setImg}
-                    SetSelectContact={SetSelectContact}
-                  />
-                </div>
-              ))
-        }
+    <div className="body-of-chat flex flex-col overflow-scroll bg-black rounded-[40px] scrollbar-hide h-[35vh] sm:h-[40vh] md:h-[45vh] lg:h-[48vh]">
+    {searchTerm.length > 0
+      ? (
+        [...friends].filter(friend => friend.username.toLowerCase().startsWith(searchTerm.toLowerCase()))
+        .sort((a, b) => a.username.localeCompare(b.username))
+        .map((friend, index) => (
+          <div key={index}>
+            <FreindsList
+              friend_id={friend.id_user}
+              photo={friend.profile_img}
+              title={friend.username}
+              message={friend.LastMessage}
+              status={friend.status}
+              setConversation={setMessages}
+              setRoom={setRoom}
+              setimg={setImg}
+              SetSelectContact={SetSelectContact}
+            />
+          </div>
+        ))
+      ): ([...friends].sort((a, b) => new Date(b.LastMessageTime || 0) - new Date(a.LastMessageTime|| 0)) .map((friend, index) => (
+          <div key={index}>
+            <FreindsList
+              friend_id={friend.id_user}
+              photo={friend.profile_img}
+              title={friend.username}
+              message={friend.LastMessage}
+              status={friend.status}
+              setConversation={setMessages}
+              setRoom={setRoom}
+              setimg={setImg}
+              SetSelectContact={SetSelectContact}
+            />
+          </div>
+        )))
+      }
       </div>
     </div>
   );
@@ -215,8 +212,16 @@ interface EmojiClickData {
   emoji: string;
 }
 
+
+
+interface InviterData {
+  id: number;
+  username: string;
+  img: string;
+}
+
 export default function ChatPage() {
-  const { friends, addFriend, removeFriend, setFriends, updateFriendStatus, updateLastMessage } = useUserStore();
+  const { friends, addFriend, removeFriend, setFriends, updateFriendStatus, updateLastMessage  } = useUserStore();
   const { messages, setMessages, addMessage, room, setRoom, profile_img, setImg } = useUserStore();
   const { setDboubleBlock, double_block, Setuser_block, user_block } = useUserStore();
   const { connect, socket } = useUserStore();
@@ -225,18 +230,19 @@ export default function ChatPage() {
   const [dropmenu, setdropmenu] = useState<boolean>(false);
   const [confirm_invite, setConfirm] = useState<boolean>(false);
   const [display_chats, set_chats] = useState<boolean>(false);
+  const [Display_game_invite, Set_Display_game_invite] = useState<boolean>(false);
   const [SelectContact, SetSelectContact] = useState<boolean>(false);
 
+
+  const [InviterData, setInviterData] = useState<InviterData | any >({});
   const user = useUserStore((state) => state.user);
 
-
-  useEffect(() => {
-    connect();
-  }, []);
+  const [isTyping , SETIsTyping] = useState<boolean>(false);
 
   useEffect(() => {
     if (!socket) return;
 
+    // socket.send(JSON.stringify({ event: 'isTyping', value: false }));
     socket.onmessage = (event: MessageEvent) => {
       
       const { type, data } = JSON.parse(event.data);
@@ -254,9 +260,25 @@ export default function ChatPage() {
         updateFriendStatus(data.status, data.friend);
         console.log(data);
       }
+      else if (type === "game_invite") {
+        Set_Display_game_invite(true);
+        setInviterData(data);
+
+        console.log(data);
+        setTimeout(() => {
+          Set_Display_game_invite(false);
+        }, 5000);
+          
+      }
       else if (type === "test") {
         addFriend(data);
       }
+      else if (type === "start_game") {
+        redirect("/game");
+      }
+      // else if (type === "is_typing"){
+      //   SETIsTyping(true);
+      // }
     };
   }, [socket]);
 
@@ -267,9 +289,7 @@ export default function ChatPage() {
           params: { username: user.username }
         });
 
-
         setFriends(res.data);
-        console.log(res.data);
       } catch (err) {
         console.log(err);
       }
@@ -299,7 +319,7 @@ export default function ChatPage() {
       user: user.username,
       conv_id: id,
       friend: friend, 
-      friend_id: friend_id 
+      friend_id: friend_id
     });
     Setuser_block(user.username || '');
     if (double_block < 2)
@@ -350,6 +370,21 @@ export default function ChatPage() {
     removeFriend(friend);
   }
 
+
+  // async function SendTyping(){
+  //   await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/SendTyping`,
+  //     {
+  //       Friend_id: localStorage.getItem('friend_id')
+  //     },{
+  //     headers: {
+  //       Authorization: `Bearer ${user.access_token}`
+  //     }
+  //   }
+  //   )
+  // }
+
+
+
   const handleSend = async () => {
     if (input.trim().length == 0){
       setEmoji('');
@@ -394,20 +429,20 @@ export default function ChatPage() {
     set_chats(!display_chats);
   }
 
-  function handle_confirm_button() {
-    setConfirm(false);
-  }
-
-  function handle_cancel_invite() {
-    setConfirm(false);
-  }
-
   function handle_dropmenu() {
     setdropmenu(!dropmenu);
+    
+    setTimeout(() => {
+      setdropmenu(false);
+    }, 5000);
   }
 
   function handle_confirm_invite() {
     setConfirm(true);
+    
+    setTimeout(() => {
+      setConfirm(false);
+    }, 5000);
   }
 
   function move_emoji_to_input(object: EmojiClickData) {
@@ -422,11 +457,47 @@ export default function ChatPage() {
     }
   }, [messages]);
 
+
+
+  function Cancel(){
+    Set_Display_game_invite(false);
+  }
+
+  function startGame(friend: string){
+    try{
+      const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/startGame`, {
+        Friend_id: friend,
+      },{
+        headers: {
+          Authorization: `Bearer ${user.access_token}`
+        },
+      })
+    }catch(err){
+
+    }
+
+  }
+
+  function send_game_invite(friend : string){
+    try{
+        setConfirm(false);
+        const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendGameChallenge` , {
+            Friend_id: friend,
+          },{
+          headers: {
+            Authorization: `Bearer ${user.access_token}`
+          },
+        });
+      }catch(err){
+
+      }
+  }
+
   return (
-    <div className="flex justify-center items-center h-[89vh] text-white px-2 sm:px-4 lg:px-0">
-      <div className="flex w-[100vh] h-[90vh] sm:h-[95vh] lg:w-4/5 lg:h-4/5 gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
-        
-        <div className="w-full  sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
+    <>
+    <div className=" relative flex justify-center items-center h-full text-white px-2 sm:px-4 lg:px-0">
+      <div className="relative flex w-full h-full sm:h-[90%] lg:w-[90%] lg:h-[90%] gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
+        <div className="w-full sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
           <Test1
             friends={friends}
             setMessages={setMessages}
@@ -435,15 +506,16 @@ export default function ChatPage() {
             SetSelectContact={SetSelectContact}
           />
         </div>
-        <div className="flex self-start lg:hidden fixed top-4 left-4 z-50">
-          <button onClick={handle_chats_display} className="p-2 mt-10 bg-amber-700  rounded-lg">
-            <FaArrowRight />
+        <div className="flex self-start lg:hidden absolut  z-50 bg-red-500">
+          <button onClick={handle_chats_display} className="p-1">
+            <FaArrowRight size={20}/>
           </button>
         </div>
+        
         {display_chats && (
-          <div className="lg:hidden fixed inset-0 z-40">
-            <div className="absolute inset-0 bg-black/50" onClick={handle_chats_display}></div>
-            <div className="absolute left-0 top-0 w-4/5 sm:w-3/5 h-full flex flex-col border bg-[black] p-2 rounded-r-[35px] border-solid">
+          <div className="lg:hidden">
+            <div className="z-30 absolute h-full w-[60%]  rounded-4xl " onClick={handle_chats_display}></div>
+            <div className="z-30 absolute  w-4/5 sm:w-3/5 h-full flex flex-col border bg-[black] p-2 rounded-r-[35px] border-solid">
               <Test1
                 friends={friends}
                 setMessages={setMessages}
@@ -454,22 +526,51 @@ export default function ChatPage() {
             </div>
           </div>
         )}
-        <div className="flex w-full lg:w-2/3 xl:w-3/4 flex-col border rounded-[35px] border-solid bg-black ">
+        
+        
+        <div className="relative flex-1  flex flex-col border rounded-[35px] border-solid bg-black overflow-hidden ">
+          {Display_game_invite && (
+            <div className="z-50 absolute inset-x-2 top-6 mx-auto max-w-3xl bg-gray-600 border-2 rounded-3xl overflow-hidden shadow-lg p-3 sm:p-4 flex flex-col items-center justify-between">
+              
+              <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
+                <img
+                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full mr-3"
+                  src={InviterData.img}
+                  alt="Inviter"
+                />
+                <p className="text-base sm:text-lg md:text-2xl lg:text-3xl text-white text-center sm:text-left">
+                  {InviterData.username} invited you for a 1 vs 1 game
+                </p>
+              </div>
           
+              <div className="flex gap-3 sm:gap-4 justify-center sm:justify-end w-full sm:w-auto">
+                <Link href="/game" key="/game">
+                  <button className="bg-green-500 hover:bg-green-600 transition border-2 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex justify-center items-center">
+                    <GiCheckMark onClick={()=> startGame(InviterData.id)} size={24} className="sm:size-28 md:size-30 text-white" />
+                  </button>
+                </Link>
+                <button
+                  onClick={Cancel}
+                  className="bg-red-500 hover:bg-red-600 transition border-2 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex justify-center items-center">
+                  <HiXMark size={24} className="sm:size-28 md:size-30 text-white" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {SelectContact && (
             <div className="flex items-center h-[8%] sm:h-[9%] rounded-t-[35px] ml-0.5 bg-[#3a3638] justify-between px-2 sm:px-4">
               <div className="flex h-3/5 self-center">
-                <img 
-                  className="rounded-[50%] w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" 
-                  src={profile_img || undefined} 
-                  alt='image'
-                />
+                <img  className="rounded-[50%] w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"  src={profile_img || undefined} alt='image'/>
+                <div className='felx felx-col'>
                 <p className="self-center text-[0.8rem] sm:text-[1rem] md:text-[1.2rem] lg:text-[1.5rem] pl-[1rem]">
                   {room}
                 </p>
+                {isTyping &&  <p className='text-green-400 pl-[1rem]'>typing...</p>}
+                </div>
               </div>
               
-              <div className="relative">
+              <div className="relative ">
                 <button className="flex p-2" onClick={handle_dropmenu}>
                   <SlOptions className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
                 </button>
@@ -511,7 +612,7 @@ export default function ChatPage() {
                 <img className="w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64" src="/animation.gif" alt="animation" />
               </div>
             )}
-            {messages?.length > 0 && SelectContact && (
+            { SelectContact && (
               <div className="flex w-[90%] sm:w-[80%] lg:w-[25rem] bg-[rgb(168,147,104)] self-center mt-4 sm:mt-8 p-3 sm:p-4 rounded-[10px]">
                 <p className="text-xs sm:text-sm">
                   The messages are end to end encrypted. Only people in this chat can read this conversation, so enjoy with your friend.
@@ -611,22 +712,20 @@ export default function ChatPage() {
                     <IoSend onClick={handleSend} className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 cursor-pointer" />
                   </div>
                   {confirm_invite && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
+                    <div className="absolute inset-0 flex items-center justify-center z-50 px-4">
                       <div className="absolute inset-0 bg-black/50" onClick={() => setConfirm(false)}></div>
                       <div className="relative flex flex-col justify-between w-full max-w-sm sm:max-w-md lg:max-w-lg h-32 sm:h-36 bg-gray-500 text-center border p-3 sm:p-4 rounded-2xl border-solid">
                         <p className="text-xs sm:text-sm lg:text-base">
                           You are about to request a game session with {room}
                         </p>
                         <div className="flex items-end justify-between h-1/2 px-2">
-                          <div className="text-center w-[45%] h-[70%] border bg-[rgb(201,49,38)] p-2 rounded-2xl border-solid">
-                            <button onClick={() => setConfirm(false)} className="text-xs sm:text-sm">
+                          <div className="text-center w-[45%] h-[70%] border bg-[rgb(201,49,38)] flex justify-center rounded-2xl border-solid items-center">
+                            <button onClick={() => setConfirm(false)} className="w-full h-full text-xs sm:text-sm">
                               Cancel
                             </button>
                           </div>
-                          <div className="text-center border h-[70%] w-[45%] bg-[rgb(14,154,54)] p-2 rounded-2xl border-solid">
-                            <Link href="/game" key="/game">
-                              <button className="text-xs sm:text-sm">Confirm</button>
-                            </Link>
+                          <div className="text-center border h-[70%] w-[45%] bg-[rgb(14,154,54)] flex justify-center  rounded-2xl border-solid items-center">
+                              <button onClick={() => send_game_invite(localStorage.getItem('friend_id')) } className="text-xs sm:text-sm w-full h-full">Confirm</button>
                           </div>
                         </div>
                       </div>
@@ -639,5 +738,9 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+    </>
   );
+
 }
+
+

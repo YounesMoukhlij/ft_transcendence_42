@@ -24,14 +24,17 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
               return "bronze-theme"
             }
           }
-          
-          
+
+  const safeName = (userStats?.name ?? "Player").toUpperCase()
+  const safeRankLabel = (userStats?.rankType ?? "bronze").toUpperCase()
+
+
           return (
            <div
   className={ getRankClass(userStats.rankType) + " w-full mx-auto artistic-background shadow-2xl p-8 flex items-center justify-between space-x-8"}
 >
         <div className="flex-grow flex items-center justify-start space-x-4 z-20">
-            
+
 
             <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center text-3xl text-gray-500 shadow-lg border border-yellow-700/50">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
@@ -40,13 +43,13 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
                 </svg>
             </div>
 
-          
+
             <div>
-                <h2 className="text-3xl font-extrabold text-white">
-                   {userStats.name.toUpperCase()}
-                </h2>
+        <h2 className="text-3xl font-extrabold text-white">
+           {safeName}
+        </h2>
                 <h1 className="font-extrabold text-lg gold-highlight uppercase tracking-widest font-sans">
-                    {userStats.rankType.toUpperCase()} LEAGUE
+          {safeRankLabel} LEAGUE
                 </h1>
             </div>
 
@@ -54,7 +57,7 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
 
 
         <div className="flex-shrink-0 flex items-center space-x-8 text-right z-20">
-            
+
             <div className="flex flex-col items-center">
                 <span className="text-4xl font-extrabold gold-highlight">
                     {userStats.winRate}%
@@ -72,7 +75,7 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
                     Current Streak
                 </span>
             </div>
-            
+
         </div>
     </div>
   )

@@ -1,3 +1,4 @@
+// Force rebuild
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -32,9 +33,45 @@ export default function Navbar()
 
 
 
+function isTimeValid(targetTimeString : any) {
+
+
+
+  const [datePart, timePart] = targetTimeString.split(' ');
+  const [yy, mm, dd] = datePart.split('-').map(Number);
+  const [hours, minutes, seconds] = timePart.split(':').map(Number);
+
+  const fullYear = 2000 + yy;
+
+  const targetTime = new Date(fullYear, mm - 1, dd, hours, minutes, seconds);
+  const now = new Date();
+
+  const diffSeconds = (now - targetTime) / 1000;
+
+  return diffSeconds <= 15;
+}
+
+
   useEffect(() => {
     setUsername({username: user?.username});
   }, []);
+
+
+  const menuRef = useRef(null);
+  const buttonRef = useRef(null);
+useEffect(() => {
+  const handleClickOutside = (event : any) => {
+    if (menuRef.current && !menuRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {
+      setNotificationIndex(false); 
+    }
+  };
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
+
+
 
 
 
@@ -55,7 +92,7 @@ export default function Navbar()
     });
   }
 
-  async function AcceptFriendRequest(item){
+  async function AcceptFriendRequest(item : any){
 
     toast.success('Accepted');
 
@@ -76,8 +113,8 @@ export default function Navbar()
   );
   if (res.status === 200)
     addFriend(object);
-  setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== item.notify_id));
-
+  
+  setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
     await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: item.notify_id,
@@ -92,7 +129,22 @@ export default function Navbar()
   function showNotification(){
     setNotificationIndex(!notificationIndex);
     SetunseenCount(0);
-    // i need to set the index is_seen in funcking db
+    // setTimeout(() => {
+    //   setNotificationIndex(false);
+    // }, 5000);
+
+    try{
+      axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/NotificationSeen`,
+      {},
+      {
+        headers:{
+          Authorization: `Bearer ${user.access_token}`
+        }
+      }
+    );
+    }catch(err){
+
+    }
   }
 
 
@@ -116,7 +168,8 @@ export default function Navbar()
             }
           }
         );
-        setNotification(result.data);
+        setNotification(result.data.reverse());
+        console.log(result.data);
       } catch (error) {
         console.error('Failed to fetch notifications', error);
       }
@@ -125,9 +178,13 @@ export default function Navbar()
 
   }, [user]);
 
-  useEffect( ()=>{
-    connect();
-  }, [])
+  const _hasHydrated = useUserStore(state => state._hasHydrated);
+
+  useEffect(() => {
+    if (_hasHydrated && user) {
+      connect();
+    }
+  }, [_hasHydrated, user, connect]);
 
   const [unseenCount , SetunseenCount] = useState(0);
 
@@ -142,7 +199,16 @@ export default function Navbar()
     const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
-        setNotification(prev => [...prev, {sender_user: data.sender_user,sender_username:data.sender_username , sender_profile_img: data.sender_profile_img ,notify_id: data.notify_id }]); 
+        setNotification(prev => [{ 
+          sender_user: data.sender_user,
+          title: data.title,
+          sender_username: data.sender_username,
+          sender_profile_img: data.sender_profile_img,
+          notify_id: data.notify_id, 
+          expired: data.expired
+         },
+        ...prev
+      ]);
       }
     };
   
@@ -197,7 +263,7 @@ export default function Navbar()
         }
       `}</style>
 
-      <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[10vh] bg-transparent">
+      <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[4vh] bg-transparent">
         <div className="flex justify-between items-center">
           <div className="flex flex-row items-center gap-1 md:gap-2">
             {/* <GiPingPongBat
@@ -213,31 +279,125 @@ export default function Navbar()
             <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
               <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
             </div>
-          {notificationIndex &&
-            <div className='testt absolute flex flex-col top-22 rounded-2xl right-30 h-52 w-80  bg-black text-white border-2  overflow-y-scroll gap-2'>
-             {
-               notificatiion.map((item , index)=>(
-                   <div  key={index} className=' index flex flex-col border-t border-gray-300 '>
-                    <div  className='flex '>
-                      <div className='h-[4.5rem] w-[4.5rem] pl-0.5 pt-2 '> <img  className='rounded-[50%] h-full w-full 'src={item.sender_profile_img} alt="profile" /></div>
-                      <div className='flex w-full justify-between'>
-                        <div className='ml-[0.5rem] '> <p className='text-2xl'>{item.sender_username}</p></div>
-                        <div className=''> <p className='text-1.5xl'>1d</p></div>
-                      </div>
-                    </div>
-                  <div className='flex w-[70%] h-[3rem] ml-[25%] mt-[-14%] items-center justify-between'>
-                   <button  onClick={()=> AcceptFriendRequest(item)} className='w-[48%] text-white bg-black  h-[70%] border-2 border-white'>Confirm</button>
-                   <button  onClick={() =>DelteFriendRequest(item.notify_id)}  className='w-[48%] text-black bg-white h-[70%] border-2 border-white'>Delete</button>
-                  </div>
+          {notificationIndex && (
+    <div  ref={menuRef} className=" testt z-50 absolute flex flex-col top-22 right-30 h-52 w-96 rounded-2xl bg-black text-white border-2 overflow-y-scroll gap-2 p-2 ">
+    {notificatiion.length === 0 ? (
+      <div className="text-center text-gray-400 py-6 text-lg font-medium">
+        No notifications
+      </div>
+    ) : (
+      [...notificatiion]
+        .map((item, index) => {
+          if (item.title === "game challenge") {
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
+              >
+                <img
+                  src={item.sender_profile_img}
+                  alt="profile"
+                  className="w-12 h-12 rounded-full border border-gray-600"
+                />
+                <div className="flex flex-col flex-1">
+                  <p className="text-lg font-semibold text-white">
+                    {item.sender_username}
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    invited you to a{" "}
+                    <span className="text-blue-400 font-medium">1 vs 1 game</span>
+                  </p>
                 </div>
-               ))
-             }
-            </div>
+                { isTimeValid(item.expired) ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => AcceptGameChallenge(item)}
+                      className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => RejectGameChallenge(item.notify_id)}
+                      className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                ) : (
+                  <div className='flex justify-center '><p>expired</p></div>
+                )}
+                </div>
+            );
           }
 
-            <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
-                <IoNotificationsOutline onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
-                <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
+          if (item.title === "friend request accepted") {
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-3 border border-green-700 bg-green-900/20 rounded-xl hover:bg-green-800/30 transition"
+              >
+                <img
+                  src={item.sender_profile_img}
+                  alt="profile"
+                  className="w-12 h-12 rounded-full border border-green-500"
+                />
+                <div className="flex flex-col">
+                  <p className="text-white text-lg font-medium">
+                    {item.sender_username}
+                  </p>
+                  <p className="text-green-400 text-sm">
+                    accepted your friend request 
+                  </p>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={index}
+              className="flex flex-col border-t border-gray-700 py-3 px-2 bg-black/40 hover:bg-black/60 rounded-xl transition"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <img
+                    src={item.sender_profile_img}
+                    alt="profile"
+                    className="w-12 h-12 rounded-full border border-gray-600"
+                  />
+                  <p className="text-white text-lg ml-3">
+                    {item.sender_username}
+                  </p>
+                </div>
+                <p className="text-gray-400 text-sm">
+                  {item.timeAgo || "1d"}
+                </p>
+              </div>
+
+              <div className="flex justify-between mt-3">
+                <button
+                  onClick={() => AcceptFriendRequest(item)}
+                  className="w-[48%] bg-green-600 hover:bg-green-500 text-white py-1.5 rounded-lg border border-green-400"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => DelteFriendRequest(item.notify_id)}
+                  className="w-[48%] bg-gray-100 hover:bg-gray-200 text-black py-1.5 rounded-lg border border-white"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          );
+        })
+    )}
+  </div>
+)}
+
+          <div ref={buttonRef} className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
+              <IoNotificationsOutline  onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
+              <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
             </div>
             <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>
               <span ref={profileIconRef}>

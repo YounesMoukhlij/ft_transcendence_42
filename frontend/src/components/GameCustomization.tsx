@@ -31,7 +31,7 @@ const paddleColors = [
 
 interface GameCustomizationProps {
   onBack: () => void;
-  onStartGame: () => void;
+  onStartGame: (customization: { tableBg: string; ballColor: string; paddleColor: string; }) => void;
 }
 
 const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGame }) => {
@@ -45,8 +45,9 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
 
   const handleStartGame = () => {
     if (isReady) {
-      setCustomisation({ tableBg, ballColor, paddleColor });
-      onStartGame();
+      const customization = { tableBg, ballColor, paddleColor };
+      setCustomisation(customization);
+      onStartGame(customization);
     }
   };
 

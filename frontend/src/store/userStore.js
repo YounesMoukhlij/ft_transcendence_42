@@ -80,6 +80,10 @@ export const useUserStore = create(
           : f
       ),
     })),
+
+
+
+  
   updateFriendStatus: (status, friend) => 
     set((state) => ({
       friends: state.friends.map((f) =>
@@ -87,10 +91,17 @@ export const useUserStore = create(
       ),
     })),
   
+
+  
   setFriends: (friends) => set({ friends }),
   connect: () => {
-    if (get().socket) return;
-    if (typeof window === 'undefined') return; 
+    if (get().socket || typeof window === 'undefined') return;
+
+    const user = get().user;
+    if (!user) {
+      console.log("User not available, not connecting to websocket");
+      return;
+    }
 
     const host = process.env.NEXT_PUBLIC_BACKENDIP || window.location.hostname || 'localhost'
     const port = process.env.NEXT_PUBLIC_BACKENDPORT || '4444'
@@ -101,7 +112,13 @@ export const useUserStore = create(
       const ws = new WebSocket(url)
       ws.onopen = () => {
         console.log('Connected', url)
-        ws.send(get().user.id_user || '')
+        const message = {
+          type: 'initial',
+          payload: {
+            id: user.id_user
+          }
+        };
+        ws.send(JSON.stringify(message));
         set({ isConnect: true })
       }
       ws.onclose = () => {
@@ -116,13 +133,14 @@ export const useUserStore = create(
       console.error('Failed to construct WebSocket', e)
     }
   },
+
   //end
 
 
       // Actions
-      setUser: (userObj) => set({ user: userObj }),
+      setUser: (userObj) => set({ user: userObj, username: userObj?.username, token: userObj?.token }),
       getUser: () => get().user,
-      clearUser: () => set({ user: null }),
+      clearUser: () => set({ user: null, username: null, token: null }),
       
       // 👈 Action to set the flag
       setHasHydrated: (state) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
 export interface Player {
   name: string;
@@ -16,10 +16,12 @@ export interface GameCustomisation {
 }
 
 export interface GameState {
-  mode: 'ai' | 'local' | 'tournament' | null;
+  mode: 'ai' | 'local' | 'tournament' | 'remote' | null;
   players: Player[];
   customisation: GameCustomisation;
   roomCode?: string;
+  isHost?: boolean;
+  gameRoom?: { id: string };
 }
 
 interface GameContextType {
@@ -56,26 +58,26 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     },
   });
 
-  const setGameMode = (mode: GameState['mode']) => {
+  const setGameMode = useCallback((mode: GameState['mode']) => {
     setGameState(prev => {
       const newState = { ...prev, mode };
       return newState;
     });
-  };
+  }, []);
 
-  const setPlayers = (players: Player[]) => {
+  const setPlayers = useCallback((players: Player[]) => {
     setGameState(prev => ({ ...prev, players }));
-  };
+  }, []);
 
-  const setCustomisation = (customisation: GameCustomisation) => {
+  const setCustomisation = useCallback((customisation: GameCustomisation) => {
     setGameState(prev => ({ ...prev, customisation }));
-  };
+  }, []);
 
-  const setRoomCode = (roomCode: string) => {
+  const setRoomCode = useCallback((roomCode: string) => {
     setGameState(prev => ({ ...prev, roomCode }));
-  };
+  }, []);
 
-  const resetGameState = () => {
+  const resetGameState = useCallback(() => {
     setGameState({
       mode: null,
       players: [],
@@ -85,7 +87,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         paddleColor: null,
       },
     });
-  };
+  }, []);
 
   return (
     <GameContext.Provider
