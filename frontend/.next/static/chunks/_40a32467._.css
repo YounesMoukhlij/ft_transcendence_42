@@ -888,8 +888,6 @@
     --color-red-500: oklch(63.7% .237 25.331);
     --color-red-600: oklch(57.7% .245 27.325);
     --color-orange-500: oklch(70.5% .213 47.604);
-    --color-amber-200: oklch(92.4% .12 95.746);
-    --color-amber-300: oklch(87.9% .169 91.605);
     --color-amber-400: oklch(82.8% .189 84.429);
     --color-yellow-300: oklch(90.5% .182 98.111);
     --color-yellow-400: oklch(85.2% .199 91.936);
@@ -1231,6 +1229,10 @@
     top: 10%;
   }
 
+  .top-\[25\%\] {
+    top: 25%;
+  }
+
   .top-\[60\%\] {
     top: 60%;
   }
@@ -1273,6 +1275,10 @@
 
   .bottom-0 {
     bottom: calc(var(--spacing) * 0);
+  }
+
+  .bottom-20 {
+    bottom: calc(var(--spacing) * 20);
   }
 
   .bottom-25 {
@@ -1461,10 +1467,6 @@
 
   .aspect-\[16\/6\] {
     aspect-ratio: 16 / 6;
-  }
-
-  .h-1\/4 {
-    height: 25%;
   }
 
   .h-2 {
@@ -1799,10 +1801,6 @@
     width: 350px;
   }
 
-  .w-auto {
-    width: auto;
-  }
-
   .w-fit {
     width: fit-content;
   }
@@ -1996,6 +1994,10 @@
     justify-content: flex-end;
   }
 
+  .justify-evenly {
+    justify-content: space-evenly;
+  }
+
   .gap-1 {
     gap: calc(var(--spacing) * 1);
   }
@@ -2142,11 +2144,6 @@
     border-radius: var(--radius-xl);
   }
 
-  .rounded-b-full {
-    border-bottom-right-radius: 3.40282e38px;
-    border-bottom-left-radius: 3.40282e38px;
-  }
-
   .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
@@ -2271,14 +2268,6 @@
 
   .bg-\[rgb\(201\,49\,38\)\] {
     background-color: #c93126;
-  }
-
-  .bg-amber-200 {
-    background-color: var(--color-amber-200);
-  }
-
-  .bg-amber-300 {
-    background-color: var(--color-amber-300);
   }
 
   .bg-black {
@@ -2515,10 +2504,6 @@
 
   .p-6 {
     padding: calc(var(--spacing) * 6);
-  }
-
-  .p-7 {
-    padding: calc(var(--spacing) * 7);
   }
 
   .p-8 {
@@ -3621,12 +3606,6 @@
   }
 
   @media (width >= 48rem) {
-    .md\:h-\[50\%\] {
-      height: 50%;
-    }
-  }
-
-  @media (width >= 48rem) {
     .md\:w-1\/2 {
       width: 50%;
     }
@@ -3950,6 +3929,11 @@ body {
 
 .dark-space-bg {
   background: radial-gradient(#0a0a23 0%, #000 100%);
+}
+
+.tooltip-container {
+  display: inline-block;
+  position: relative;
 }
 
 @property --tw-translate-x {

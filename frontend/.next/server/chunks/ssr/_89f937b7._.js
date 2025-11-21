@@ -50,7 +50,8 @@ const ForgotPasswordPage = ()=>{
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:4444/forgotPassword', {
+            // const response = await fetch('http://localhost:4444/forgotPassword', {
+            const response = await fetch(`${("TURBOPACK compile-time value", "http://localhost:4444")}/forgotPassword`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -79,7 +80,7 @@ const ForgotPasswordPage = ()=>{
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:4444/verifyCode', {
+            const response = await fetch(`${("TURBOPACK compile-time value", "http://localhost:4444")}/verifyResetCode`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -122,7 +123,7 @@ const ForgotPasswordPage = ()=>{
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:4444/resetPasswordWithToken', {
+            const response = await fetch(`${("TURBOPACK compile-time value", "http://localhost:4444")}/resetPasswordWithToken`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -156,7 +157,7 @@ const ForgotPasswordPage = ()=>{
                             children: "Enter your gmail to receive a verification code."
                         }, void 0, false, {
                             fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                            lineNumber: 146,
+                            lineNumber: 147,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -173,7 +174,7 @@ const ForgotPasswordPage = ()=>{
                                     disabled: loading
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                                    lineNumber: 150,
+                                    lineNumber: 151,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -183,13 +184,13 @@ const ForgotPasswordPage = ()=>{
                                     children: loading ? 'Sending...' : 'Send Code'
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                                    lineNumber: 151,
+                                    lineNumber: 152,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                            lineNumber: 149,
+                            lineNumber: 150,
                             columnNumber: 13
                         }, this)
                     ]
@@ -206,14 +207,14 @@ const ForgotPasswordPage = ()=>{
                                     children: email
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                                    lineNumber: 161,
+                                    lineNumber: 162,
                                     columnNumber: 42
                                 }, this),
                                 ". It expires in 1 minute."
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                            lineNumber: 160,
+                            lineNumber: 161,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -231,7 +232,7 @@ const ForgotPasswordPage = ()=>{
                                     disabled: loading
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                                    lineNumber: 164,
+                                    lineNumber: 165,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -241,13 +242,13 @@ const ForgotPasswordPage = ()=>{
                                     children: loading ? 'Verifying...' : 'Verify Code'
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                                    lineNumber: 165,
+                                    lineNumber: 166,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                            lineNumber: 163,
+                            lineNumber: 164,
                             columnNumber: 13
                         }, this)
                     ]
@@ -260,7 +261,7 @@ const ForgotPasswordPage = ()=>{
                             children: "Code verified. Please enter your new password."
                         }, void 0, false, {
                             fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                            lineNumber: 174,
+                            lineNumber: 175,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -277,7 +278,7 @@ const ForgotPasswordPage = ()=>{
                                     disabled: loading
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                                    lineNumber: 178,
+                                    lineNumber: 179,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -290,7 +291,7 @@ const ForgotPasswordPage = ()=>{
                                     disabled: loading
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                                    lineNumber: 179,
+                                    lineNumber: 180,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -300,13 +301,13 @@ const ForgotPasswordPage = ()=>{
                                     children: loading ? 'Resetting...' : 'Reset Password'
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                                    lineNumber: 180,
+                                    lineNumber: 181,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                            lineNumber: 177,
+                            lineNumber: 178,
                             columnNumber: 13
                         }, this)
                     ]
@@ -327,12 +328,12 @@ const ForgotPasswordPage = ()=>{
                         className: " text-gray-300  "
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                        lineNumber: 195,
+                        lineNumber: 196,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                    lineNumber: 194,
+                    lineNumber: 195,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -342,30 +343,30 @@ const ForgotPasswordPage = ()=>{
                         children: "Forgot Password"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                        lineNumber: 198,
+                        lineNumber: 199,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                    lineNumber: 197,
+                    lineNumber: 198,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     children: renderFormContent()
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-                    lineNumber: 202,
+                    lineNumber: 203,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-            lineNumber: 193,
+            lineNumber: 194,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/(auth)/forgot-password/page.tsx",
-        lineNumber: 192,
+        lineNumber: 193,
         columnNumber: 5
     }, this);
 };

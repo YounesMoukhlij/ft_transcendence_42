@@ -8,8 +8,7 @@ import { fileURLToPath } from 'url';
 import cors from '@fastify/cors';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis'; // Import the Redis client
-
-// --- NEW --- Import plugins for file uploads and serving static files
+//Import plugins for file uploads and serving static files
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 
@@ -84,7 +83,7 @@ async function startServer() {
       try {
         const authHeader = request.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-          return reply.code(401).send({ error: 'Missing or invalid token' });
+          return reply.code(401).send({ error: 'Missing or invalid token'});
         }
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, SECRET);

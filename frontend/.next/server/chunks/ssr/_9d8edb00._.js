@@ -22,7 +22,6 @@ __turbopack_context__.n(__turbopack_context__.i("[project]/src/app/layout.tsx [a
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-// app/leaderboard/page.tsx
 __turbopack_context__.s({
     "default": (()=>LeaderboardPage)
 });
@@ -33,7 +32,6 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 ;
 ;
 ;
-const API_URL = 'http://localhost:4444';
 const BACK_API = 'http://localhost:4444';
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 const getProfileImageUrl = (currentImg)=>{
@@ -48,7 +46,7 @@ const getProfileImageUrl = (currentImg)=>{
 // --- Simplified data fetching function ---
 async function getLeaderboardData() {
     // Fetch the default leaderboard (e.g., page 1, limit 10)
-    const res = await fetch(`${API_URL}/leaderboard`, {
+    const res = await fetch(`${BACK_API}/leaderboard`, {
         cache: 'no-store'
     });
     if (!res.ok) {
@@ -74,7 +72,7 @@ const LeaderboardItem = ({ player, rank })=>/*#__PURE__*/ (0, __TURBOPACK__impor
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                            lineNumber: 41,
+                            lineNumber: 39,
                             columnNumber: 17
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
@@ -83,7 +81,7 @@ const LeaderboardItem = ({ player, rank })=>/*#__PURE__*/ (0, __TURBOPACK__impor
                             className: `w-12 h-12 rounded-full object-cover border-2 border-gray-600 ${rank === 1 ? 'border-yellow-400' : rank === 2 ? 'border-gray-400' : rank === 3 ? 'border-yellow-800' : ''}`
                         }, void 0, false, {
                             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                            lineNumber: 42,
+                            lineNumber: 40,
                             columnNumber: 17
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -92,18 +90,18 @@ const LeaderboardItem = ({ player, rank })=>/*#__PURE__*/ (0, __TURBOPACK__impor
                                 children: player.username
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                                lineNumber: 48,
+                                lineNumber: 46,
                                 columnNumber: 21
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                            lineNumber: 47,
+                            lineNumber: 45,
                             columnNumber: 17
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                    lineNumber: 40,
+                    lineNumber: 38,
                     columnNumber: 13
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -116,23 +114,23 @@ const LeaderboardItem = ({ player, rank })=>/*#__PURE__*/ (0, __TURBOPACK__impor
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                        lineNumber: 54,
+                        lineNumber: 52,
                         columnNumber: 17
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                    lineNumber: 53,
+                    lineNumber: 51,
                     columnNumber: 13
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-            lineNumber: 38,
+            lineNumber: 36,
             columnNumber: 9
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-        lineNumber: 37,
+        lineNumber: 35,
         columnNumber: 5
     }, this);
 async function LeaderboardPage() {
@@ -161,14 +159,14 @@ async function LeaderboardPage() {
                                     color: 'white'
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                                    lineNumber: 79,
+                                    lineNumber: 77,
                                     columnNumber: 13
                                 }, this),
                                 "Leaderboard"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                            lineNumber: 78,
+                            lineNumber: 76,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -176,13 +174,13 @@ async function LeaderboardPage() {
                             children: "See who's on top of the game"
                         }, void 0, false, {
                             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                            lineNumber: 82,
+                            lineNumber: 80,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                    lineNumber: 77,
+                    lineNumber: 75,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -193,7 +191,7 @@ async function LeaderboardPage() {
                             children: error
                         }, void 0, false, {
                             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                            lineNumber: 90,
+                            lineNumber: 88,
                             columnNumber: 13
                         }, this),
                         !error && leaderboard.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -203,7 +201,7 @@ async function LeaderboardPage() {
                                     size: 48
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                                    lineNumber: 95,
+                                    lineNumber: 93,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -211,7 +209,7 @@ async function LeaderboardPage() {
                                     children: "No players found"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                                    lineNumber: 96,
+                                    lineNumber: 94,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -219,13 +217,13 @@ async function LeaderboardPage() {
                                     children: "The leaderboard is currently empty."
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                                    lineNumber: 97,
+                                    lineNumber: 95,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                            lineNumber: 94,
+                            lineNumber: 92,
                             columnNumber: 13
                         }, this),
                         !error && leaderboard.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -235,29 +233,29 @@ async function LeaderboardPage() {
                                     rank: index + 1
                                 }, player.username, false, {
                                     fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                                    lineNumber: 104,
+                                    lineNumber: 102,
                                     columnNumber: 17
                                 }, this))
                         }, void 0, false, {
                             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                            lineNumber: 102,
+                            lineNumber: 100,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-                    lineNumber: 88,
+                    lineNumber: 86,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-            lineNumber: 75,
+            lineNumber: 73,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/(protected)/leaderboard/page.tsx",
-        lineNumber: 74,
+        lineNumber: 72,
         columnNumber: 5
     }, this);
 }

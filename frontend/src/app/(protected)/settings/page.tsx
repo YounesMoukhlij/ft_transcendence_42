@@ -1,25 +1,22 @@
-// settings/page.tsx
 'use client'
 import React, { useState, useRef, useEffect } from 'react'
-import {
-  User,
-  Shield,
-  HelpCircle
-} from 'lucide-react'
+import { User, Shield, HelpCircle} from 'lucide-react'
 import { useUserStore } from '../../../store/userStore'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 
-// Import the separated components
+// helper components
 import DeleteConfirmationDialog from './components/DeleteConfirmationDialog'
 import TwoFAModal from './components/TwoFAModal'
 import ProfileTab from './components/profile/page'
 import SecurityTab from './components/security/page'
 import HelpTab from './components/help/page'
 
+import Loading from '@/components/loading/page'
+
 // Define the base URL of your backend API
-const API_URL = 'http://localhost:4444'
-const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
+// const process.env.NEXT_PUBLIC_BACK_API = 'http://localhost:4444'
+// const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
 
 const ProfileSettingsPage = () => {
   const user = useUserStore((state) => state.user)
@@ -91,12 +88,12 @@ const ProfileSettingsPage = () => {
   if (!user) {
     return (
       <div className="min-h-screen w-full bg-black text-white flex items-center justify-center">
-        <p>Loading user data...</p>
+        <Loading />
       </div>
     )
   }
 
-  // --- ALL HANDLERS REMAIN IN THE PARENT COMPONENT ---
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -147,8 +144,8 @@ const ProfileSettingsPage = () => {
       if (imageFile) {
         dataToSave.append('profile_image', imageFile, imageFile.name)
       }
-
-      const response = await fetch(`${API_URL}/updateUserInfo`, {
+      console.log('from env============');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/updateUserInfo`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${user.access_token}`
@@ -207,7 +204,7 @@ const ProfileSettingsPage = () => {
 
     try {
       if (formData.newPassword.trim() !== '') {
-        const response = await fetch(`${API_URL}/updateUserPassword`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/updateUserPassword`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -246,7 +243,7 @@ const ProfileSettingsPage = () => {
     if (is2FAEnabled) {
       // Disable 2FA
       try {
-        const response = await fetch(`${API_URL}/update2FA`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/update2FA`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -271,7 +268,7 @@ const ProfileSettingsPage = () => {
     } else {
       // Enable 2FA (Step 1: Generate)
       try {
-        const response = await fetch(`${API_URL}/2fa/generate`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/2fa/generate`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${user.access_token}` }
         })
@@ -295,7 +292,7 @@ const ProfileSettingsPage = () => {
   const handleVerify2FA = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`${API_URL}/2fa/verify`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/2fa/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -325,7 +322,7 @@ const ProfileSettingsPage = () => {
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     try {
-      const response = await fetch(`${API_URL}/DeleteUserById/${user.id_user}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/DeleteUserById/${user.id_user}`, {
         method: 'DELETE'
       })
       const data = await response.json()
@@ -364,9 +361,9 @@ const ProfileSettingsPage = () => {
     if (previewImage) {
       return previewImage
     }
-    const currentImg = user.profile_img || defaultProfileImg
+    const currentImg = user.profile_img || process.env.NEXT_PUBLIC_DEFAULT_PROFILE_IMG
     if (currentImg && currentImg.startsWith('/uploads/')) {
-      return `${API_URL}${currentImg}`
+      return `${process.env.NEXT_PUBLIC_BACK_API}${currentImg}`
     }
     return currentImg
   }

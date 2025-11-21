@@ -1,8 +1,7 @@
-// settings/components/security/page.tsx
 'use client'
 import React from 'react'
 import { Lock, Shield } from 'lucide-react'
-import SwitchButton from '../SwitchButton' // Import the SwitchButton
+import SwitchButton from '../SwitchButton'
 
 interface SecurityTabProps {
   formData: any
@@ -122,13 +121,6 @@ const SecurityTab = ({
               onChange={() =>  handleToggle2FA()}
             />
           </div>
-
-          {/* Message for OAuth users
-          {!isPasswordAuth && (
-            <p className="text-sm text-gray-400 mt-2">
-              Two-Factor Authentication settings are managed through your external provider ({authMethod === 1 ? 'Google' : '42'}) or are disabled for OAuth accounts.
-            </p>
-          )} */}
         </div>
       </div>
 

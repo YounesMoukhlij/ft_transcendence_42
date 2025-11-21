@@ -1,8 +1,6 @@
-// app/leaderboard/page.tsx
 import Link from 'next/link';
 import { Trophy, User } from 'lucide-react';
 
-const API_URL = 'http://localhost:4444';
 const BACK_API = 'http://localhost:4444';
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 
@@ -21,7 +19,7 @@ const getProfileImageUrl = (currentImg) => {
 // --- Simplified data fetching function ---
 async function getLeaderboardData() {
   // Fetch the default leaderboard (e.g., page 1, limit 10)
-  const res = await fetch(`${API_URL}/leaderboard`, {
+  const res = await fetch(`${BACK_API}/leaderboard`, {
     cache: 'no-store',
   });
 

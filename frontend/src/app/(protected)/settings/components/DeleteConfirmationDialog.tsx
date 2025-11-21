@@ -1,4 +1,3 @@
-// settings/components/DeleteConfirmationDialog.tsx
 'use client'
 import React from 'react'
 

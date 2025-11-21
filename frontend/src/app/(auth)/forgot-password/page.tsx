@@ -39,9 +39,10 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
+    
     try {
-      const response = await fetch('http://localhost:4444/forgotPassword', {
+      // const response = await fetch('http://localhost:4444/forgotPassword', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/forgotPassword`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -71,7 +72,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:4444/verifyCode', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/verifyResetCode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -115,7 +116,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:4444/resetPasswordWithToken', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/resetPasswordWithToken`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetToken, newPassword }),

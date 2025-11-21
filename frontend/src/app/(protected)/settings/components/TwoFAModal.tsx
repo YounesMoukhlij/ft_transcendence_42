@@ -1,7 +1,6 @@
-// settings/components/TwoFAModal.tsx
 'use client'
 import React from 'react'
-import { QRCodeSVG } from 'qrcode.react' // Import QR code generator
+import { QRCodeSVG } from 'qrcode.react' // QRcode generator
 
 interface TwoFAModalProps {
   isOpen: boolean
@@ -80,7 +79,7 @@ const TwoFAModal = ({
             disabled={isLoading || verificationCode.length < 6}
             className="flex-1 px-6 py-3 rounded-xl font-semibold text-sm sm:text-base border border-white hover:bg-gray-500 hover:text-white disabled:bg-gray-600 disabled:opacity-50 cursor-pointer"
           >
-            {isLoading ? 'Verifying...' : 'Verify & Enable'}
+            {isLoading ? 'Verifying...' : 'Enable'}
           </button>
         </div>
       </div>

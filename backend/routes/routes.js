@@ -38,7 +38,7 @@ export default async function routes(fastify, options) {
    
     // User management routes
     fastify.post('/AddUser', AddUser);
-    fastify.get('/getAllUsers', getAllUsers);
+    fastify.get('/getAllUsers',{ preHandler: [fastify.authenticate] }, getAllUsers);
     fastify.get('/getUserById/:id', getUserById);
     fastify.get('/getUserByEmail/:email', getUserByEmail);
     fastify.delete('/DeleteUserById/:id', DeleteUserById);

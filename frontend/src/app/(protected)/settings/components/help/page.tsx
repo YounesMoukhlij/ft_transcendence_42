@@ -11,7 +11,6 @@ const HelpTab = () => {
       </div>
 
       <div className="space-y-6">
-        {/* FAQ Section */}
         <div className="bg-black rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <HelpCircle size={20} />

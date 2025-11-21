@@ -1,4 +1,3 @@
-// settings/components/SwitchButton.tsx
 'use client'
 import React from 'react'
 

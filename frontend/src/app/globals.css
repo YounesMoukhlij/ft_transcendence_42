@@ -30,3 +30,10 @@ body {
 .dark-space-bg {
     background: radial-gradient(ellipse at center, #0a0a23 0%, #000000 100%);
 }
+
+
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+    
+}

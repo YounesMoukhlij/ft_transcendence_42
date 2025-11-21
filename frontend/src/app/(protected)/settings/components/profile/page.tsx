@@ -2,11 +2,11 @@
 'use client'
 import React from 'react'
 import { Camera, Globe, ChevronDown } from 'lucide-react'
-import { User } from '../../../store/userStore' // Assuming User type is exported from your store
+import { User } from '../../../store/userStore' 
 
 interface ProfileTabProps {
-  user: User // Pass the user object
-  formData: any // Pass the form data
+  user: User
+  formData: any 
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
   languages: { id: string; label: string; flag: string }[]
   isPasswordAuth: boolean
@@ -59,9 +59,8 @@ const ProfileTab = ({
         />
       </div>
 
-      {/* Profile Form */}
       <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Language Selector */}
+
         <div className="md:col-span-2">
           <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
             <div>
