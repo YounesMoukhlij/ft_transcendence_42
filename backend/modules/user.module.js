@@ -1,10 +1,20 @@
 import jwt from 'jsonwebtoken';
-import { freemem } from 'os';
+
+
+export async function test(request , reply){
+
+  
+  reply.code(201).send(`hello ${request.user.id_user}`);
+}
+
+
+
+
+
 
 
 export async function getConversationId(request, reply) {
   try {
-
     const authHeader = request.headers['authorization'];
     if (!authHeader) 
       return reply.code(401).send({ error: "unauthorized: Missing token" });

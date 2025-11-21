@@ -11,7 +11,7 @@ import { createClient } from 'redis';
 import dotenv from 'dotenv';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
-
+import fastifyJwt from '@fastify/jwt';
 
 dotenv.config();
 
@@ -28,12 +28,14 @@ const app = fastify({
 });
 
 
+
 const db = new Database('Database.db');
 app.decorate('db', db);
     const wss = new WebSocketServer({ server: app.server, path: '/ws' });
     const users_socket = new Map();
     app.decorate('users_socket', users_socket);
 
+app.register(fastifyJwt, { secret: process.env.SECRET});
 
 async function startServer() {
   try {
@@ -74,6 +76,7 @@ async function startServer() {
       root: uploadsDir,
       prefix: '/uploads/', // The URL prefix to access the files
     });
+
     // --- END NEW ---
 
     // --- NEW --- Register fastify-multipart to handle file uploads

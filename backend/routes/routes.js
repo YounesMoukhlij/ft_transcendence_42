@@ -1,4 +1,4 @@
-import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction ,DeblockFunction , unfriend } from '../modules/user.module.js';
+import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction ,DeblockFunction , unfriend  , test} from '../modules/user.module.js';
 import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
@@ -23,23 +23,35 @@ import {
 import { getUserStats, getUserStatsbyUsername } from '../modules/profile.module.js';
 import { getMatchHistory } from '../modules/matchHistory.module.js';
 import { getLeagueStats } from '../modules/leagues.module.js';
-
-
-
-
-
-
-
-
-
-
+// import { jwtVerify } from '@fastify/jwt'
 
 
 
 export default async function routes(fastify, options) {
-    // Existing routes
+
+   fastify.addHook('onRequest' , async (request , reply) => {
+      const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser"];
+
+  const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
+  console.log("PATHNAME:", pathname);
+
+  if (publicRoutes.includes(pathname)) return;
+
+
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    return reply.code(401).send({ message: "la Unauthorized" });
+  }
+   });
+   fastify.get('/test', test);
+
+
+
 
    
+
+
     // User management routes
     fastify.post('/AddUser', AddUser);
     fastify.get('/getAllUsers', getAllUsers);
