@@ -41,7 +41,6 @@ export default async function routes(fastify, options) {
     // Existing routes
 
    
-    // User management routes
     fastify.post('/AddUser', AddUser);
     fastify.get('/getAllUsers', getAllUsers);
     fastify.get('/getUserById/:id', getUserById);

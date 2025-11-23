@@ -286,7 +286,10 @@ export default function ChatPage() {
     const fetchData = async () => {
       try {
         const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
-          params: { username: user.username }
+          params: { username: user.username },
+          headers: {
+            Authorization: `Bearer ${user.access_token}`
+          }
         });
 
 
