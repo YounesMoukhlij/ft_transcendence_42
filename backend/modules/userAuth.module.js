@@ -32,6 +32,7 @@ const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
 const OAUTH42_UID = 'u-s4t2ud-01e87a03a09e02d62810377699ab4a504ac5e3a2db759fe2d575f1c82cc9db95';
 const OAUTH42_SECRET = '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';
+const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
 const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
 // const EMAILJS_CONFIG = {
