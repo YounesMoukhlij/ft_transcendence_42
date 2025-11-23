@@ -43,30 +43,30 @@ async function fetchData(friend_id: string , title: string, setDboubleBlock: (nu
   const { user , updateLastMessage} = useUserStore.getState();
 
   localStorage.setItem('room_select', title);
+  localStorage.setItem('friend_id' , friend_id);
   try {
     const convRes = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,{
       friend_id: friend_id
     },
     {
-      headers: {
-        Authorization: `Bearer ${user.access_token}`
-      }
-    });
+        headers: {
+          Authorization: `Bearer ${user.access_token}`
+        }
+    }
+  );
+
     localStorage.setItem('conversationId', convRes.data.conversation_id);
     setDboubleBlock(convRes.data.is_double_block);
     Setuser_block(convRes.data.block_user);
-    
+
     const msgsRes = await axios.post(
       `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`,
       { id: convRes.data.conversation_id }
     );
-    
+
     updateLastMessage(msgsRes.data[msgsRes.data.length - 1]?.message);
     return msgsRes.data;
-    
   } catch (err) {
-    if (err.response.status === 401)
-      redirect('/signIn');
     console.error('Error fetching conversation or messages:', err);
   }
 }
@@ -254,7 +254,7 @@ export default function ChatPage() {
         setDboubleBlock(data.is_double_block);
         Setuser_block(data.block_user);
       } else if (type === "unfriend") {
-        removeFriend(data.username);
+        removeFriend(data.id_user);
         SetSelectContact(false);
       } else if (type === "status") {
         updateFriendStatus(data.status, data.friend);
@@ -285,19 +285,14 @@ export default function ChatPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, 
-        {
-          params: { username: user.username },
-          headers: {
-            Authorization: `Bearer ${user.access_token}`
-          }
-        }
-      );
+        const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
+          params: { username: user.username }
+        });
+
 
         setFriends(res.data);
+        console.log("THis is friends:", res.data);
       } catch (err) {
-        if (err.response.status === 401)
-          redirect('/signIn');
         console.log(err);
       }
     };
@@ -364,7 +359,7 @@ export default function ChatPage() {
     }
   }
 
-  async function handleUnfriend(friend: string, removeFriend: (username: string) => void) {
+  async function handleUnfriend(friend: string, removeFriend: (id_user: number) => void) {
     const id = window.localStorage.getItem('conversationId');
     SetSelectContact(false);
     const friend_id = localStorage.getItem("friend_id");
@@ -374,7 +369,7 @@ export default function ChatPage() {
       friend: friend,
       friend_id: friend_id
     });
-    removeFriend(friend);
+    removeFriend(Number(friend_id));
   }
 
 
@@ -502,7 +497,7 @@ export default function ChatPage() {
 
   return (
     <>
-    <div className=" relative flex justify-center items-center h-full  text-white px-2 sm:px-4 lg:px-0">
+    <div className=" relative flex justify-center items-center h-full text-white px-2 sm:px-4 lg:px-0">
       <div className="relative flex w-full h-full sm:h-[90%] lg:w-[90%] lg:h-[90%] gap-[2%] sm:gap-[3%] lg:gap-[5%] ">
         <div className="w-full sm:w-2/5 lg:w-1/3 xl:w-1/4 h-full hidden lg:flex flex-col border bg-black p-2 rounded-[35px] border-solid">
           <Test1
@@ -535,13 +530,13 @@ export default function ChatPage() {
         )}
         
         
-        <div className="relative flex-1 bg-black flex flex-col border rounded-[35px] border-solid overflow-hidden ">
+        <div className="relative flex-1  flex flex-col border rounded-[35px] border-solid bg-black overflow-hidden ">
           {Display_game_invite && (
-            <div className="z-50 w-full  absolute h-[8%] sm:h-[9%] bg-gray-700 border-2 rounded-3xl overflow-hidden shadow-lg  flex flex-col items-center justify-between">
+            <div className="z-50 absolute inset-x-2 top-6 mx-auto max-w-3xl bg-gray-600 border-2 rounded-3xl overflow-hidden shadow-lg p-3 sm:p-4 flex flex-col items-center justify-between">
               
-              <div className="flex h-full items-center w-full sm:w-auto mb-3 sm:mb-0">
+              <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
                 <img
-                  className="w-12 h-full md:w-16 md:h-16 rounded-full mr-3"
+                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full mr-3"
                   src={InviterData.img}
                   alt="Inviter"
                 />

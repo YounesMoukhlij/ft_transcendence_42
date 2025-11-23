@@ -1,7 +1,6 @@
 "use client";
-import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
-
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 function getFormattedDate() {
   try {
@@ -24,133 +23,210 @@ export const useUserStore = create(
       user: null,
       _hasHydrated: false,
 
+      // Connection
+      socket: null,
+      isConnect: false,
 
-      
-      //for me 
-  socket: null,
-  isConnect: false,
-  username: null,
-  token: null,
-  friends: [],
-  messages: [],
-  room: "",
-  profile_img: "",
-  double_block: 0,
-  user_block: "",
-  
-  removeFriend: (usernameToRemove) => set((state) => ({
-    friends: state.friends.filter((u) => u.username !== usernameToRemove),
-  })),
-  setDboubleBlock: (num) => set({ double_block: num }),
-  Setuser_block: (UserBlock) => set({ user_block: UserBlock }),
-  setMessages: (messagesArray) => set({ messages: messagesArray }),
-  addMessage: (data) => set((state) => {
-    const time = getFormattedDate()
-    return {
-      messages: [
-        ...state.messages,
-        {
-          sender: data.sender,
-          conv_id: data.conv_id,
-          message: data.message,
-          created_at: time,
-          isSeen: data.isSeen,
-        },
-      ],
-    }
-  }),
-  
-  setRoom: (room) => set({ room }),
-  
-  setImg: (img) => set({ profile_img: img }),
-  
-  addFriend: (friend) =>
-    set((state) => ({
-      friends: [...state.friends, friend],
-    })),
-  updateLastMessage: (message, friend) =>
-    set((state) => ({
-      friends: state.friends.map((f) =>
-        f.username === friend
-          ? {
-              ...f,
-              LastMessage: message,
-              LastMessageTime: new Date().toISOString(), 
+      // Profile
+      username: null,
+      token: null,
+      profile_img: "",
+      friends: [],
+      room: "",
+
+      // Blocking
+      double_block: 0,
+      user_block: "",
+
+      // Messages
+      messages: [],
+
+      // Friend requests
+      pendingRequests: [],
+      sentRequests: [],
+
+      // ----------------------
+      //   SOCKET CONNECTION
+      // ----------------------
+
+      connect: () => {
+        if (get().socket) return;
+        if (typeof window === "undefined") return;
+
+        const protocol =
+          window.location.protocol === "https:" ? "wss" : "ws";
+        const url = `${protocol}://localhost:4444/ws`;
+
+        try {
+          const ws = new WebSocket(url);
+
+          ws.onopen = () => {
+            const id = get().user?.id_user;
+
+            if (!id) {
+              console.error("User ID missing, cannot register socket");
+              return;
             }
-          : f
-      ),
-    })),
+
+            ws.send(String(id));
+            set({ isConnect: true });
+            console.log("Connected WS", url);
+          };
+
+          ws.onclose = () => {
+            console.log("Disconnected WS");
+            set({ isConnect: false, socket: null });
+          };
+
+          ws.onerror = (err) => console.error("WebSocket error", err);
+
+          set({ socket: ws });
+        } catch (err) {
+          console.error("Failed to create WebSocket:", err);
+        }
+      },
+
+      // Auto-connect after hydration
+      initConnection: () => {
+        const id = get().user?.id_user;
+        if (id) get().connect();
+      },
+
+      // ----------------------
+      //   FRIENDS
+      // ----------------------
+
+      setFriends: (friends) => set({ friends }),
+
+      addFriend: (friend) =>
+        set((state) => ({
+          friends: [...state.friends, friend],
+        })),
+
+      removeFriend: (id_user) =>
+        set((state) => ({
+          friends: state.friends.filter(
+            (u) => u.id_user !== id_user
+          ),
+        })),
+
+      updateFriendStatus: (status, friendId) =>
+        set((state) => ({
+          friends: state.friends.map((f) =>
+            f.id_user === friendId ? { ...f, status } : f
+          ),
+        })),
+
+      // ----------------------
+      //   FRIEND REQUESTS
+      // ----------------------
+
+      addPendingRequests: (friend) =>
+        set((state) => ({
+          pendingRequests: [...state.pendingRequests, friend],
+        })),
 
 
+  addPendingRequestsArray: (friendsArray) =>
+  set(() => ({
+    pendingRequests: [...friendsArray], // creates a new array, no accumulation
+  })),
 
-  
-  updateFriendStatus: (status, friend) => 
-    set((state) => ({
-      friends: state.friends.map((f) =>
-        f.id_user == friend ? { ...f, status } : f
-      ),
-    })),
-  
+      removePendingRequests: (id) =>
+        set((state) => ({
+          pendingRequests: state.pendingRequests.filter(
+            (u) => u.sender_user !== id
+          ),
+        })),
 
-  
-  setFriends: (friends) => set({ friends }),
-  connect: () => {
-    if (get().socket) return;
-    if (typeof window === 'undefined') return; 
+      addSentRequests: (friend) =>
+        set((state) => ({
+          sentRequests: [...state.sentRequests, friend],
+        })),
 
-    const host = process.env.NEXT_PUBLIC_BACKENDIP || window.location.hostname || 'localhost'
-    const port = process.env.NEXT_PUBLIC_BACKENDPORT || '4444'
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const url = 'http://localhost:4444/ws'
+  addSentRequestsArray: (friendsArray) =>
+  set(() => ({
+    sentRequests: [...friendsArray], // creates a new array, no accumulation
+  })),
 
-    try {
-      const ws = new WebSocket(url)
-      ws.onopen = () => {
-        console.log('Connected', url)
-        ws.send(get().user.id_user || '')
-        set({ isConnect: true })
-      }
-      ws.onclose = () => {
-        console.log('Disconnected')
-        set({ isConnect: false, socket: null })
-      }
-      ws.onerror = (e) => {
-        console.error('WebSocket error', e)
-      }
-      set({ socket: ws })
-    } catch (e) {
-      console.error('Failed to construct WebSocket', e)
-    }
-  },
+      removeSentRequests: (id) =>
+        set((state) => ({
+          sentRequests: state.sentRequests.filter(
+            (u) => u.getter_user !== id
+          ),
+        })),
 
-  //end
+      // ----------------------
+      //   MESSAGES
+      // ----------------------
 
+      setMessages: (messagesArray) => set({ messages: messagesArray }),
 
-      // Actions
+      addMessage: (data) =>
+        set((state) => {
+          const time = getFormattedDate();
+          return {
+            messages: [
+              ...state.messages,
+              {
+                sender: data.sender,
+                conv_id: data.conv_id,
+                message: data.message,
+                created_at: time,
+                isSeen: data.isSeen,
+              },
+            ],
+          };
+        }),
+
+      updateLastMessage: (message, friendUsername) =>
+        set((state) => ({
+          friends: state.friends.map((f) =>
+            f.username === friendUsername
+              ? {
+                  ...f,
+                  LastMessage: message,
+                  LastMessageTime: new Date().toISOString(),
+                }
+              : f
+          ),
+        })),
+
+      // ----------------------
+      //   OTHER
+      // ----------------------
+
+      setRoom: (room) => set({ room }),
+      setImg: (img) => set({ profile_img: img }),
+      setDboubleBlock: (num) => set({ double_block: num }),
+      Setuser_block: (u) => set({ user_block: u }),
+
+      // User auth
       setUser: (userObj) => set({ user: userObj }),
       getUser: () => get().user,
       clearUser: () => set({ user: null }),
-      
-      // 👈 Action to set the flag
-      setHasHydrated: (state) => {
-        set({
-          _hasHydrated: state
-        });
-      },
+
+      // Hydration flag
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
+
     {
-      name: 'user-storage',
+      name: "user-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ user: state.user }),
+
+      // what to persist
+      partialize: (state) => ({
+        user: state.user,
+        friends: state.friends,
+        profile_img: state.profile_img,
+      }),
+
       onRehydrateStorage: (state) => {
-        return (rehydratedState, error) => {
-          if (error) {
-            console.error('An error occurred during hydration:', error)
-          } else {
-            state.setHasHydrated(true)
-          }
-        }
-      }
+        return (rehydrated, error) => {
+          state.setHasHydrated(true);
+          if (!error) state.initConnection();
+        };
+      },
     }
   )
-)
+);

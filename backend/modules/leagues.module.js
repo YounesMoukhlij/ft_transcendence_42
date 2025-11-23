@@ -17,7 +17,7 @@ export async function getLeagueStats(request, reply) {
     return reply.code(401).send("Invalid token");
   }
   const league = request.params.league;
-  console.log("-----------------------------------------\n");
+  // console.log("-----------------------------------------\n");
 
   let minExp = 0;
   let maxExp = 0;
@@ -68,7 +68,7 @@ export async function getLeagueStats(request, reply) {
     });
 
 
-    console.log(leagueStats);
+    // console.log(leagueStats);
    
     return reply.send(leagueStats);
   } catch (err) {

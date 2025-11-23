@@ -16,10 +16,7 @@ export function MatchStats({duration, longestRally, maxSpeed, avgRally} : MatchS
   return (
     <div className="flex justify-center items-center mt-4  p-4 bg-background">
       <div className="w-full max-w-lg rounded-3xl  bg-background shadow-lg ">
-        {/* <h2 className="text-white text-2xl font-bold tracking-wider mb-6 uppercase text-center">
-          Match Report
-        </h2> */}
-
+      
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
           {/* Longest Rally Card */}
           <div className="border rounded-2xl p-6 text-center relative overflow-hidden">

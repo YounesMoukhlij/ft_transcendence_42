@@ -1,15 +1,6 @@
 import jwt from 'jsonwebtoken';
 
 
-export async function test(request , reply){
-
-  
-  reply.code(201).send(`hello ${request.user.id_user}`);
-}
-
-
-
-
 
 
 
@@ -327,10 +318,9 @@ export async function unfriend(request, reply) {
 
 
 
-
     if (socket){
-
       const data = {
+        id_user : user1Id,
         username: user
       };
 

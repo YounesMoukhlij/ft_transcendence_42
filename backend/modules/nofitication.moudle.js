@@ -66,8 +66,84 @@ export async function DeleteFriendRequest(request , reply){
     return reply.code(401).send("Invalid token");
   }
 
+
+  const firstQuery = request.server.db.prepare("select getter_user, sender_user from notification where notify_id = ?");
+  const response = firstQuery.get(notify_id);
+
+
+  const socket = request.server.users_socket.get(response.sender_user.toString());
+
+  if (socket)
+  {
+   const object = {
+    getter_user : response.getter_user,
+    sender_user : response.sender_user
+   }
+    socket.send(JSON.stringify({
+        type: "rejected",
+        data: object
+      }));
+
+  }
+
   try{
     const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ? AND getter_user = ?');
+    const result =  query.run(notify_id , decodedObject.id_user );
+    if (result.changes === 0){
+      return reply.code(404).send("notification not found or not authorized");
+    }
+
+    return reply.code(200).send("Friend request deleted successfully");
+
+  }catch(err){
+    console.log("There is an error:", err);
+    reply.code(500);
+  }
+}
+
+export async function cancelFriendRequest(request , reply){
+
+
+  const notify_id = request.query.id;
+  const authHeader = request.headers['authorization'];
+
+  if (!authHeader || !notify_id)
+    reply.code(400).send("Missing params");
+  
+  const token = authHeader.split(' ')[1];
+
+  let decodedObject;
+  try{
+    decodedObject = jwt.verify(token, process.env.SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
+
+
+  const firstQuery = request.server.db.prepare("select getter_user, sender_user from notification where notify_id = ?");
+  const response = firstQuery.get(notify_id);
+
+
+  const socket = request.server.users_socket.get(response.getter_user.toString());
+    console.log("Here is response : ",response);
+
+  if (socket)
+  {
+    console.log("socket is alive");
+   const object = {
+    getter_user : response.getter_user,
+    sender_user : response.sender_user
+   }
+    socket.send(JSON.stringify({
+        type: "canceled request",
+        data: object
+      }));
+
+  }
+
+  try{
+    const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ? AND sender_user = ?');
     const result =  query.run(notify_id , decodedObject.id_user );
     if (result.changes === 0){
       return reply.code(404).send("notification not found or not authorized");
@@ -115,7 +191,8 @@ export async function sendRequestFriend(request, reply) {
     return reply.code(200).send(true);
   
     const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
-    insertQuery.run(friend_id, title, decodedObject.id_user, "request friend");
+    const result = insertQuery.run(friend_id, title, decodedObject.id_user, "request friend");
+    const insertedId = result.lastInsertRowid;
 
     
     if (socket) {
@@ -140,7 +217,7 @@ export async function sendRequestFriend(request, reply) {
       }));
     }
 
-    return reply.code(200);
+    return reply.code(200).send(insertedId);
 
   } catch (err) {
     console.log(err);
@@ -170,6 +247,10 @@ export async function AddFriend( request  , reply){
   }
   
   const socket = request.server.users_socket.get(Freind_id.toString());
+  if (!socket)
+  {
+    console.log("socket is dead!");
+  }
 
 
   try{
@@ -203,6 +284,9 @@ export async function AddFriend( request  , reply){
         const title = "friend request accepted";
         const setQuery = request.server.db.prepare("INSERT INTO notification (getter_user, title, sender_user, notifyBody ) VALUES (?, ?, ?, ?)")
         const result = setQuery.run(Freind_id, title, decodedObject.id_user, "friend request accepted");
+
+        const deleteQuery = request.server.db.prepare("Delete from notification where getter_user = ? AND sender_user = ? AND title = ?");
+        const deleteResult = deleteQuery.run(decodedObject.id_user, Freind_id, "request friend");
 
         const notifyObject = {
           sender_profile_img: res.profile_img,
@@ -474,10 +558,6 @@ export  function sendGameChallenge(request , reply){
   return reply.send(true);
 }
 
-
-
-
-
 export function AcceptGameChallenge(request , reply){
 
   const authHeader = request.headers['authorization'];
@@ -514,4 +594,31 @@ export function AcceptGameChallenge(request , reply){
   }
 
   return reply.send(true);
+}
+
+export function GetSentRequests(request , reply){
+
+  const authHeader = request.headers['authorization'];
+
+  if (!authHeader )
+    reply.code(401).send("missing token");
+  
+  const token = authHeader.split(' ')[1];
+  let decodedObject;
+
+  try{
+    decodedObject = jwt.verify(token, process.env.SECRET);
+  }
+  catch(err){
+    return reply.code(401).send("Invalid token");
+  }
+
+  try{
+      const query = request.server.db.prepare(`select * from notification where sender_user =?`);
+      const result = query.all(decodedObject.id_user);
+      return reply.send(result);
+  }catch(err){
+    console.log(err);
+    return reply.code(500).send(false);
+  }
 }

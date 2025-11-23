@@ -25,7 +25,7 @@ export async function getUserStatsbyUsername(request, reply) {
 
   try {
     const query = request.server.db.prepare(
-      "SELECT username, fullname, xp, profile_img as avatar FROM users WHERE username = ?"
+      "SELECT id_user as id, username, fullname, xp, profile_img as avatar FROM users WHERE username = ?"
     );
     const userStats = query.get(username);
 
@@ -89,7 +89,7 @@ export async function getUserStatsbyUsername(request, reply) {
       const recentMatchesQuery = request.server.db.prepare(
         `select game_history_id as id, (select username from users where id_user=user_win) as winner, (select username from users where id_user=user_lose) as loser, win_score
 , lose_score, game_date, duration from game_history where user_win=(select id_user from users 
-          where username=?) OR user_lose=(select id_user from users where username=?) ORDER BY game_history_id DESC limit 4;`
+          where username=?) OR user_lose=(select id_user from users where username=?) ORDER BY game_date DESC limit 4;`
       );
 
       const recentMatches = recentMatchesQuery.all(username, username);
@@ -140,11 +140,11 @@ export async function getUserStats(request, reply) {
   }
  
   const username = decodedObject.username;
-
+  
 
   try {
     const query = request.server.db.prepare(
-      "SELECT username, fullname, xp, profile_img as avatar FROM users WHERE username = ?"
+      "SELECT id_user as id, username, fullname, xp, profile_img as avatar FROM users WHERE username = ?"
     );
     const userStats = query.get(username);
 
@@ -208,7 +208,7 @@ export async function getUserStats(request, reply) {
       const recentMatchesQuery = request.server.db.prepare(
         `select game_history_id as id, (select username from users where id_user=user_win) as winner, (select username from users where id_user=user_lose) as loser, win_score
 , lose_score, game_date, duration from game_history where user_win=(select id_user from users 
-          where username=?) OR user_lose=(select id_user from users where username=?) ORDER BY game_history_id DESC limit 4;`
+          where username=?) OR user_lose=(select id_user from users where username=?) ORDER BY game_date DESC limit 4;;`
       );
 
       const recentMatches = recentMatchesQuery.all(username, username);

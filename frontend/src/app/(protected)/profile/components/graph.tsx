@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { CardContent } from "./ui/card"
 interface PerformanceData {
-  month: string
+  key: string
   wins: number
   losses: number
 }
@@ -21,6 +21,8 @@ export function IllustrationGraph({ data }: ChartProps) {
   const [winsPathLength, setWinsPathLength] = useState(0);
   const [lossesPathLength, setLossesPathLength] = useState(0);
   const [hover, setHover] = useState<string | null>(null);
+  const [opacityHover, setOpacityHover] = useState<"win" | "loss" |  null>(null);
+
 
   // Responsive observer --------------
   useEffect(() => {
@@ -37,12 +39,11 @@ export function IllustrationGraph({ data }: ChartProps) {
   useEffect(() => {
     if (winsPathRef.current) {
       setWinsPathLength(winsPathRef.current.getTotalLength());
-      console.log("Wins Length: "+ winsPathRef.current.getTotalLength());
     }
     if (lossesPathRef.current) {
       setLossesPathLength(lossesPathRef.current.getTotalLength());
     }
-  }, [size]);
+  }, [size, data]);
 
   // ------------- Path animation   ---------------------
     useEffect(() => {
@@ -66,31 +67,63 @@ export function IllustrationGraph({ data }: ChartProps) {
       return () => clearTimeout(timer);
     }, []);
 
-  
-  const width = size.width > 235 ? size.width : 235;
-  const height = 250
-  const padding = 40
 
-  const maxValue = Math.max(...data.map(d => Math.max(d.wins, d.losses)))
-  const xStep = (width - padding * 2) / data.length
+
+
+     useEffect(() => {
+    // Don't animate if there's no data yet
+    if (!data || data.length === 0) {
+      setAnimationProgress(0);
+      return;
+    }});
+
+  
+  const width : number = size.width > 235 ? size.width : 235;
+  const height : number = 250
+  const padding : number = 40
+
+  const maxValue = Math.max(...(data?.map(d => Math.max(d.wins, d.losses)) || [0]));
+  const xStep = (width - padding * 2) / data?.length || 0;
 
   // Scale helpers
-  const getX = (i: number) => padding + i * xStep + padding // added padding 
-  const getY = (v: number) =>
-    height - padding - (v / maxValue) * (height - padding * 2)
+  const getX = (i: number, key : string) => {
+
+      let result = padding + i * xStep + padding;
+    
+      if (key == "wins")
+      {
+        return result -= 10;
+      }
+      if (isNaN(i) || isNaN(result))
+      {
+        return (0);
+      }
+      return  result;
+  }  
+  const getY = (v: number) => {
+      let operation = ( v / maxValue);
+      if (isNaN(operation))
+        operation = 0;
+
+      let result = height - padding - operation * (height - padding * 2);
+      if (isNaN(v) || isNaN(result))
+      {
+        return 0;
+      }
+      return result;
+  }
 
   // Line path generator
   const makePath = (key: "wins" | "losses") =>
-    data
-      .map(
-        (d, i) => `${i === 0 ? "M" : "L"} ${getX(i)},${getY(d[key])}`
+    data?.map(
+        (d, i) => `${i === 0 ? "M" : "L"} ${getX(i, key)},${getY(d[key])}`
       )
       .join(" ")
 
   const ticks = Array.from({ length: 5 }, (_, i) => Math.round((maxValue / 4) * i));
+  console.log(ticks);
 
   return (
-
 
     <CardContent > 
     <div ref={ref} className="flex flex-col items-center p-4">
@@ -104,9 +137,8 @@ export function IllustrationGraph({ data }: ChartProps) {
       >
         {/* Grid lines */}
         {ticks.map((t, i) => {
-          const y = getY(t);
+          const y : number = getY(t) || 0;
           return (
-        
               <g key={i}>
                  <>
                 <line key={i}
@@ -152,16 +184,19 @@ export function IllustrationGraph({ data }: ChartProps) {
         <path
           ref={winsPathRef}
           d={makePath("wins")}
+          className={opacityHover != null && opacityHover != "win" ? "opacity-30 transition-opacity duration-300" : "opacity-100 transition-opacity duration-300" }
           stroke="#10b981"
           strokeWidth={2.5}
           fill="none"
           strokeDasharray={winsPathLength}
           strokeDashoffset={winsPathLength * (1 - animationProgress)} // using the offset to hide the full length one dash, then removing the offset from 1 to 0
+          onMouseEnter={() => setOpacityHover("win")}
+          onMouseLeave={() => setOpacityHover(null)}
         />
-        {data.map((d, i) => (
+        {data?.map((d, i) => (
           <circle
             key={i}
-            cx={getX(i)}
+            cx={getX(i, "wins")}
             cy={getY(d.wins)}
             r={hover == "win" + i ? 6 : 4}
             fill="#10b981"
@@ -180,17 +215,20 @@ export function IllustrationGraph({ data }: ChartProps) {
         <path
           ref={lossesPathRef}
           d={makePath("losses")}
+          className={opacityHover != null && opacityHover != "loss" ? "opacity-30 transition-opacity duration-300" : "opacity-100 transition-opacity duration-300" }
           stroke="#ef4444"
           strokeWidth={2.5}
           fill="none"
           strokeDasharray={lossesPathLength}
           strokeDashoffset={lossesPathLength * (1 - animationProgress)}
+          onMouseEnter={() => setOpacityHover("loss")}
+          onMouseLeave={() => setOpacityHover(null)}
         />
-        {data.map((d, i) => (
+        {data?.map((d, i) => (
           <g key={i}>
           <circle
           key={i}
-          cx={getX(i)}
+          cx={getX(i, "nan")}
           cy={getY(d.losses)}
           r={hover == "loss" + i ? 6 : 4}
           fill="#ef4444"
@@ -206,7 +244,7 @@ export function IllustrationGraph({ data }: ChartProps) {
           <>
          <text className={hover == "loss" + i ? "fill-destructive stroke-destructive stroke-1" : "hidden"}
                 key={i}
-                x={getX(i)}
+                x={getX(i, "nan")}
                 y={getY(d.losses) - 10}
                 textAnchor="middle">
                 
@@ -216,7 +254,7 @@ export function IllustrationGraph({ data }: ChartProps) {
               <>
              <text className={hover == "win" + i ? "fill-[#10b981] stroke-[#10b981] stroke-1" : "hidden"}
                 key={i}
-                x={getX(i)}
+                x={getX(i, "wins")}
                 y={getY(d.wins) - 10}
                 textAnchor="middle">
                 
@@ -227,25 +265,33 @@ export function IllustrationGraph({ data }: ChartProps) {
         ))}
 
         {/* Labels */}
-        {data.map((d, i) => (
+        {data?.map((d, i) => (
           <text
             key={i}
-            x={getX(i)}
+            x={getX(i, "nan")}
             y={height - padding + 18}
             textAnchor="middle"
             className="fill-gray-400 text-xs font-medium"
           >
-            {d.month}
+            {d.key}
           </text>
         ))}
       </svg>
        <div className="flex gap-6 mt-2 text-sm text-gray-300">
           <div className="flex items-center gap-1">
-            <span className="w-3 h-3 bg-red-500 inline-block rounded-sm"></span>
+            <span
+              className="w-3 h-3 bg-red-500 inline-block rounded-sm cursor-pointer"
+              onMouseEnter={() => setOpacityHover("loss")}
+              onMouseLeave={() => setOpacityHover(null)}
+             >
+             </span>
             Losses
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-3 h-3 bg-green-500 inline-block rounded-sm"></span>
+            <span className="w-3 h-3 bg-green-500 inline-block rounded-sm cursor-pointer"
+              onMouseEnter={() => setOpacityHover("win")}
+              onMouseLeave={() => setOpacityHover(null)}
+            ></span>
             Wins
           </div>
         </div>

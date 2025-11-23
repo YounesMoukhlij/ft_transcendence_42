@@ -30,9 +30,8 @@ const GOOGLE_CLIENT_ID = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.goo
 const GOOGLE_CLIENT_SECRET = "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";
 const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
-const OAUTH42_UID = 'u-s4t2ud-597f20fdf6b8c3f0e29faa1913958951a09f41e7d5a50727a779d37aed7a25cb';
-const OAUTH42_SECRET = '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';
-const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
+const OAUTH42_UID = 'u-s4t2ud-01e87a03a09e02d62810377699ab4a504ac5e3a2db759fe2d575f1c82cc9db95';
+const OAUTH42_SECRET = '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';
 const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
 // const EMAILJS_CONFIG = {

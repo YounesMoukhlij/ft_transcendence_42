@@ -10,6 +10,7 @@ import { Toaster, toast } from 'sonner';
 import  {useUserStore}  from '../store/userStore';
 
 import '../app/(protected)/chat/page.css'
+import { removeRequestMeta } from 'next/dist/server/request-meta';
 
 export default function Navbar()
 {
@@ -24,7 +25,7 @@ export default function Navbar()
   
   const setUsername = useUserStore.setState;
   const socket = useUserStore((state) => state.socket);
-  const {addFriend, removeFriend , setFriends} = useUserStore();
+  const {addFriend, removeFriend , setFriends, addPendingRequests, addPendingRequestsArray,  addSentRequests, removePendingRequests, removeSentRequests} = useUserStore();
 
   
   
@@ -80,8 +81,10 @@ useEffect(() => {
   
   async function DelteFriendRequest(notify_id){
     toast.error('Deleted');
+    const sender_id = notificatiion.filter(item => item.notify_id == notify_id)[0].sender_user;
+    console.log("sender id: ", sender_id);
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
-    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
+    const res =  await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: notify_id,
       },
@@ -89,6 +92,10 @@ useEffect(() => {
         Authorization: `Bearer ${user.access_token}`
       }
     });
+    if (res.status == 200)
+    {
+      removePendingRequests(sender_id);
+    }
   }
 
   async function AcceptFriendRequest(item : any){
@@ -111,18 +118,24 @@ useEffect(() => {
     }
   );
   if (res.status === 200)
+  {
+    removePendingRequests(item.sender_user); 
     addFriend(object);
+  } 
   
   setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
-    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
-      params:{
-        id: item.notify_id,
-      },
-      headers: {
-        Authorization: `Bearer ${user.access_token}`
-      }
-    });
+    // await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
+    //   params:{
+    //     id: item.notify_id,
+    //   },
+    //   headers: {
+    //     Authorization: `Bearer ${user.access_token}`
+    //   }
+    // });
   };
+
+
+
 
 
   function showNotification(){
@@ -169,6 +182,11 @@ useEffect(() => {
         );
         setNotification(result.data.reverse());
         console.log(result.data);
+        console.log("Hereee ");
+        console.log(result.data.filter(object => object.title == "request friend"))
+        addPendingRequestsArray(result.data.filter(object => object.title == "request friend"));
+
+
       } catch (error) {
         console.error('Failed to fetch notifications', error);
       }
@@ -194,6 +212,24 @@ useEffect(() => {
     const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
+        console.log("Notification data: ", data);
+        if (data.title == "request friend")
+        {
+          console.log("Notification data: ", data);
+          addPendingRequests({
+            sender_user: data.sender_user,
+            sender_username: data.sender_username,
+            notify_id : data.notify_id,
+          });
+        }
+        else if (data.title == "friend request accepted")
+        {
+          removeSentRequests(data.sender_user);
+          addFriend({
+            id_user : data.sender_user,
+          });
+        }
+        
         setNotification(prev => [{ 
           sender_user: data.sender_user,
           title: data.title,
@@ -204,6 +240,18 @@ useEffect(() => {
          },
         ...prev
       ]);
+      }
+      else if (type == "unfriend")
+      {
+        removeFriend(data.id_user);
+      }
+      else if (type == "rejected")
+      {
+        removeSentRequests(data.getter_user);
+      }
+      else if (type == "canceled request")
+      {
+        removePendingRequests(data.sender_user);
       }
     };
   

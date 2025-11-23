@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState} from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import { Progress } from "./ui/progress"
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Target, TrendingUp, Calendar, Award, BarChart3, Activity, Clock, Zap, Star, Trophy } from "lucide-react"
 import { PerformanceChart } from "./performance-chart"
 import { MatchHistoryTable } from "./match-history-table"
@@ -14,29 +13,19 @@ import { StatsOverview } from "./stats-overview"
 import { PlayerBanner } from "./player-banner"
 import { RankBanner } from "./rank-banner"
 import { useCountUp, formatDuration } from "../hooks/useCountUp"
-import { notFound } from "next/navigation"
 import { User } from "@/types/user"
-
-
-
-
-
-
-// Mock data for demonstration
-
-const performanceData = [
-  { month: "Jul", wins: 12, losses: 14 },
-  { month: "Aug", wins: 15, losses: 3 },
-  { month: "Sep", wins: 18, losses: 5 },
-  { month: "Oct", wins: 35, losses: 20 },
-  { month: "Nov", wins: 25, losses: 8 },
-  { month: "Dec", wins: 28, losses: 7 },
-  { month: "Jan", wins: 12, losses: 20 },
-]
 
 
 interface ProfileProps {
   user: User
+}
+
+
+function resolveImage(path: string) {
+  if (path.startsWith("/uploads")) {
+    return `http://localhost:${process.env.NEXT_PUBLIC_BACKENDPORT}${path}`;
+  }
+  return path;
 }
 
 export  function Profile({user} : ProfileProps)  {
@@ -55,8 +44,10 @@ const getRank = (): "gold" | "silver" | "bronze" => {
 };
 
   const userStats = {
-  name: user.fullname,
-  avatar: user.avatar,
+  id : user.id,
+  username : user.username,
+  fullName: user.fullname,
+  avatar: resolveImage(user.avatar),
   rankType: getRank(),
   experience: user.xp,
   expForLevel: 1000,
@@ -64,14 +55,13 @@ const getRank = (): "gold" | "silver" | "bronze" => {
   totalMatches: user.totalMatches,
   wins: user.wins,
   losses: user.losses,
-  winRate: user.winRate,
+  winRate: user.winRate || 0,
   currentStreak: user.currentStreak,
   totalTournaments: 4,
   tournamentsWon: 2,
   bestStreak: 12,
-  averageScore: user.averageScore,
+  averageScore: user.averageScore || 0,
   level: Math.floor(user.xp / 1000),
-  Friends : ["Josh", "Kim", "Ben"],
   bronzePlayers: user.bronzePlayers,
   silverPlayers : user.silverPlayers,
   goldPlayers : user.goldPlayers,
@@ -82,41 +72,8 @@ const recentMatches = user.recentMatches;
 const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel / 10, 700); 
 
 
-  
-
-
-
-
-
   return (
     <div className="min-h-screen ">
-      {/* <header className="border-b border-border bg-card/30 backdrop-blur-md">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
-                  <Zap className="w-6 h-6 text-primary" />
-                </div>
-                <h1 className="text-2xl font-bold text-foreground">Galaxy Pong</h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={userStats.avatar || "/placeholder.svg"} alt={userStats.name} />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-              <div className="text-right">
-                <p className="font-semibold text-foreground flex items-center gap-2">
-                  {userStats.name}
-                </p>
-                <p className="text-sm text-muted-foreground">Level {userStats.level}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header> */}
-
       <div className="container mx-auto ">
         <div className="mb-8">
           <PlayerBanner userStats={userStats} />
@@ -134,11 +91,11 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
           </div> 
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-card/50 backdrop-blur-sm border border-border/50">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 ">
+          <TabsList className="grid w-full grid-cols-3 bg-card/50 backdrop-blur-sm border border-border/50 ">
             <TabsTrigger
               value="overview"
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer"
               onClick={() => {setOverviewV(true); setAnalyticsV(false); setMatchHistoryV(false);}}
             >
               <BarChart3 className="w-4 h-4" />
@@ -146,7 +103,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
             </TabsTrigger>
             <TabsTrigger
               value="matches"
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer"
               onClick={() => {setOverviewV(false); setMatchHistoryV(true); setAnalyticsV(false); }}
             >
               <Calendar className="w-4 h-4" />
@@ -154,7 +111,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
             </TabsTrigger>
             <TabsTrigger
               value="performance"
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer"
               onClick={() => {setOverviewV(false); setMatchHistoryV(false); setAnalyticsV(true);}}
             >
               <TrendingUp className="w-4 h-4" />
@@ -263,7 +220,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
           </TabsContent>
 
           <TabsContent data-show={AnalyticsV} value="performance" className="space-y-6 transition-all duration-300 opacity-0 scale-95  data-[show=true]:opacity-100 data-[show=true]:scale-100">
-            <PerformanceChart data={performanceData} />
+            <PerformanceChart username={userStats.username}/>
           </TabsContent>
         </Tabs>
       </div>

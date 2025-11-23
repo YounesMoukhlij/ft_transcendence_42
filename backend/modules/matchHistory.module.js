@@ -31,7 +31,7 @@ export async function getMatchHistory(request, reply) {
         touches_lose, max_points_streak_lose, max_leading_time_lose
         from game_history where user_win=(select id_user from users where username=?) 
         OR user_lose=(select id_user from users where username=?)
-        ORDER BY game_history_id DESC;`
+        ORDER BY game_date DESC;`
       );
 
       const MatchHistory = MatchHistoryQuery.all(username, username);
@@ -64,7 +64,7 @@ MatchHistory.forEach(match => {
     match.hostLeadingTime = isWinner ? match.max_leading_time_win : match.max_leading_time_lose;
     match.guestLeadingTime = isWinner ? match.max_leading_time_lose : match.max_leading_time_win;
 });
-   
+    // console.log(MatchHistory);
     return reply.send(MatchHistory);
   } catch (err) {
     console.log(err);

@@ -5,22 +5,65 @@ import { IllustrationGraph } from "./graph"
 import { IllustrationChart } from "./chart"
 import { TrendingUp} from "lucide-react"
 import { Button } from "./ui/button"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useUserStore } from "@/store/userStore"
+import axios from "axios"
+
 
 
 interface PerformanceData {
-  month: string
+  key: string
   wins: number
   losses: number
 }
 
 interface PerformanceChartProps {
-  data: PerformanceData[]
+  username : string
 }
 
-export function PerformanceChart({ data }: PerformanceChartProps) {
+
+export function PerformanceChart({username }: PerformanceChartProps) {
 
   const [illustration, setIllustration] = useState<"graph" | "chart">("graph");
+
+
+  const { user: currentUser } = useUserStore();
+  const [performaceData, setPerformanceData] = useState<PerformanceData[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const targetUsername = username;
+  useEffect(() => {
+    const fetchPlayerProgressData = async () => {
+      if (!currentUser?.access_token) {
+        setError("You must be logged in to view profiles");
+        return;
+      }
+      if (!targetUsername) {
+        setError("Username is missing");
+        return;
+      }
+
+      try {
+        const res = await axios.get<PerformanceData[]>(
+          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getPlayerProgress/${targetUsername}`,
+          {
+            headers: { Authorization: `Bearer ${currentUser.access_token}` },
+          }
+        );
+        console.log("Data is received: ", res.data);
+        setPerformanceData(res.data);
+      } catch (err) {
+        console.error(err);
+        setError(`Failed to load profile for ${targetUsername}`);
+      }
+    };
+
+    fetchPlayerProgressData();
+  }, [targetUsername, currentUser]);
+
+
+
+
   return (
     <Card>
       <CardHeader>
@@ -30,7 +73,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
           <TrendingUp className="w-5 h-5 " />
           Performance Trends
         </CardTitle>
-           <CardDescription>Monthly wins and losses over time</CardDescription>
+           <CardDescription>Weakly wins and losses over time</CardDescription>
         </div>
         <div>
           <Button data-state={illustration} onClick={()=> setIllustration("graph")}  variant="normal"  className="rounded data-[state=graph]:bg-primary mr-1">
@@ -44,7 +87,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
           </div>
       </CardHeader>
       {
-        illustration == "graph" ? <IllustrationGraph data={data} /> : <IllustrationChart  data={data} /> 
+        illustration == "graph" ? <IllustrationGraph data={performaceData} /> : <IllustrationChart  data={performaceData} /> 
       }
     </Card>
   )

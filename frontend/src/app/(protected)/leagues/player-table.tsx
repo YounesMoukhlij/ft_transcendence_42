@@ -8,6 +8,7 @@ import { Badge } from "@/app/(protected)/profile/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/(protected)/profile/components/ui/table"
 import { Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import Link from "next/link"
+import "./style.css"
 
 interface Player {
   id: string
@@ -35,7 +36,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
 
 
-  // const players = useMemo(() => generatePlayers(league), [league]) // we will not need this when we use API
+
   const players = data;
   const filteredAndSortedPlayers = useMemo(() => {
     let filtered = players?.filter((player) => player.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -128,11 +129,11 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border overflow-hidden">
+        <div className="rounded-lg border border-border my_league_table">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/70">
-                <TableHead className="text-muted-foreground font-semibold">
+              <TableRow className="bg-muted/20 hover:bg-muted/30 p-10">
+                <TableHead className="text-muted-foreground font-semibold ">
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("name")}

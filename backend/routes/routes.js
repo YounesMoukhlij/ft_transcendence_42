@@ -1,5 +1,5 @@
-import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction ,DeblockFunction , unfriend  , test} from '../modules/user.module.js';
-import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen } from '../modules/nofitication.moudle.js';
+import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction ,DeblockFunction , unfriend } from '../modules/user.module.js';
+import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
     getAllUsers,
@@ -23,35 +23,24 @@ import {
 import { getUserStats, getUserStatsbyUsername } from '../modules/profile.module.js';
 import { getMatchHistory } from '../modules/matchHistory.module.js';
 import { getLeagueStats } from '../modules/leagues.module.js';
-// import { jwtVerify } from '@fastify/jwt'
+import { getPlayerProgress } from '../modules/playerProgress.js';
+
+
+
+
+
+
+
+
+
+
 
 
 
 export default async function routes(fastify, options) {
-
-   fastify.addHook('onRequest' , async (request , reply) => {
-      const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser"];
-
-  const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
-  console.log("PATHNAME:", pathname);
-
-  if (publicRoutes.includes(pathname)) return;
-
-
-  try {
-    await request.jwtVerify();
-  } catch (err) {
-    return reply.code(401).send({ message: "la Unauthorized" });
-  }
-   });
-   fastify.get('/test', test);
-
-
-
+    // Existing routes
 
    
-
-
     // User management routes
     fastify.post('/AddUser', AddUser);
     fastify.get('/getAllUsers', getAllUsers);
@@ -78,6 +67,8 @@ export default async function routes(fastify, options) {
     fastify.post('/block' , blockFunction);
     fastify.post('/Deblock' , DeblockFunction);
     fastify.delete('/DeleteFriendRequest' , DeleteFriendRequest);
+    fastify.delete('/cancelFriendRequest', cancelFriendRequest);
+    fastify.get('/getSentRequests', GetSentRequests);
 
     // setting routes
     fastify.post('/updateUserInfo', { preHandler: [fastify.authenticate] }, updateUserInfo);
@@ -129,4 +120,9 @@ export default async function routes(fastify, options) {
   // MatchHistory
 
   fastify.get('/getMatchHistory/:username', getMatchHistory);
+
+
+  // PLayer Progress (7days)
+  fastify.get('/getPlayerProgress/:username', getPlayerProgress);
+
 }

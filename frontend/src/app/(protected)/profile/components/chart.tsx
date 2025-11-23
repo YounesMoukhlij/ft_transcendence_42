@@ -3,7 +3,7 @@ import { CardContent } from "./ui/card"
 import { useRef, useEffect, useState } from "react"
 
 interface PerformanceData {
-  month: string
+  key: string
   wins: number
   losses: number
 }
@@ -61,8 +61,20 @@ export function IllustrationChart({ data }: ChartProps) {
   const xStep = (width - padding * 2) / data.length;
   
   const getX = (i: number) => padding + i * xStep;
-  const getY = (v: number) => height - padding - (v / maxValue) * (height - padding * 2);
-  const getHeight = (v: number) => (v / maxValue) * (height - padding * 2);
+  const getY = (v: number) =>
+  {
+    let operation = ( v / maxValue);
+    if (isNaN(operation))
+      operation = 0;
+    return (height - padding - operation * (height - padding * 2));
+  } 
+  const getHeight = (v: number) =>
+  {
+    let operation = ( v / maxValue);
+    if (isNaN(operation))
+      operation = 0;
+    return (operation * (height - padding * 2));
+  } 
   
   // Animated height for bars
   const getAnimatedHeight = (v: number) => getHeight(v) * animationProgress;
@@ -112,12 +124,12 @@ export function IllustrationChart({ data }: ChartProps) {
           {data.map((d, i) => (
             <text
               key={i}
-              x={getX(i) + padding}
+              x={getX(i) + barWidth +  padding / 2}
               y={height - padding + 20}
               textAnchor="middle"
               className="fill-gray-400 text-xs"
             >
-              {d.month}
+              {d.key}
             </text>
           ))}
           
@@ -132,7 +144,7 @@ export function IllustrationChart({ data }: ChartProps) {
                 height={getAnimatedHeight(d.losses)}
                 fill="#ef4444"
                 rx={2}
-                className={hover != null && hover != "loss" + i ? "opacity-50 transition-opacity duration-300" : "opacity-100 transition-opacity duration-300" }
+                className={hover != null && (hover != "loss" + i && hover != "lossall" ) ? "opacity-50 transition-opacity duration-300" : "opacity-100 transition-opacity duration-300" }
                 onMouseEnter={() => setHover("loss" + i)}
                 onMouseLeave={() => setHover(null)}
               />
@@ -151,7 +163,7 @@ export function IllustrationChart({ data }: ChartProps) {
                 width={barWidth}
                 height={getAnimatedHeight(d.wins)}
                 fill="#3b82f6"
-                className={hover != null && hover != "win" + i ? "opacity-50 transition-opacity duration-300" : "opacity-100 transition-opacity duration-300" }
+                className={hover != null && (hover != "win" + i && hover != "winall" )? "opacity-50 transition-opacity duration-300" : "opacity-100 transition-opacity duration-300" }
                 onMouseEnter={() => setHover("win" + i)}
                 onMouseLeave={() => setHover(null)} 
                 rx={2}
@@ -190,11 +202,16 @@ export function IllustrationChart({ data }: ChartProps) {
         {/* Legend */}
         <div className="flex gap-6 mt-2 text-sm text-gray-300">
           <div className="flex items-center gap-1">
-            <span className="w-3 h-3 bg-red-500 inline-block rounded-sm"></span>
+            <span className="w-3 h-3 bg-red-500 inline-block rounded-sm cursor-pointer"
+            onMouseEnter={() => setHover("lossall")}
+            onMouseLeave={() => setHover(null)}></span>
             Losses
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-3 h-3 bg-blue-500 inline-block rounded-sm"></span>
+            <span className="w-3 h-3 bg-blue-500 inline-block rounded-sm cursor-pointer"
+            onMouseEnter={() => setHover("winall")}
+            onMouseLeave={() => setHover(null)}
+            ></span>
             Wins
           </div>
         </div>
