@@ -57,8 +57,11 @@ function isTimeValid(targetTimeString : any) {
   }, []);
 
 
-  const menuRef = useRef(null);
-  const buttonRef = useRef(null);
+const menuRef = useRef(null);
+const buttonRef = useRef(null);
+
+
+
 useEffect(() => {
   const handleClickOutside = (event : any) => {
     if (menuRef.current && !menuRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {

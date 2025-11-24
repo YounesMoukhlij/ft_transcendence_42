@@ -1,6 +1,6 @@
 "use client";
 import axios from 'axios';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import './page.css'
 import { FaSearch } from "react-icons/fa";
@@ -37,6 +37,7 @@ interface Message {
 function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, show: boolean) {
   setShow(!show)
 }
+
 
 
 async function fetchData(friend_id: string , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
@@ -236,8 +237,33 @@ export default function ChatPage() {
 
   const [InviterData, setInviterData] = useState<InviterData | any >({});
   const user = useUserStore((state) => state.user);
-
   const [isTyping , SETIsTyping] = useState<boolean>(false);
+
+
+
+  const menuRef = useRef(null);
+  const buttonRef = useRef(null);
+
+
+
+  useEffect(() => {
+    const handleClickOutside = (event : any) => {
+      if (menuRef.current && !menuRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {
+        setShow(false);
+        set_chats(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+
+
+
+
+
+
 
   useEffect(() => {
     if (!socket) return;
@@ -511,14 +537,14 @@ export default function ChatPage() {
             SetSelectContact={SetSelectContact}
           />
         </div>
-        <div className="flex self-start lg:hidden absolut  z-50 bg-red-500">
-          <button onClick={handle_chats_display} className="p-1">
+        <div ref={buttonRef} className="flex self-start lg:hidden absolut  z-50 bg-red-500">
+          <button    onClick={handle_chats_display} className="p-1">
             <FaArrowRight size={20}/>
           </button>
         </div>
         
         {display_chats && (
-          <div className="lg:hidden">
+          <div ref={menuRef} className="lg:hidden">
             <div className="z-30 absolute h-full w-[60%]  rounded-4xl " onClick={handle_chats_display}></div>
             <div className="z-30 absolute  w-4/5 sm:w-3/5 h-full flex flex-col border bg-[black] p-2 rounded-r-[35px] border-solid">
               <Test1
@@ -690,11 +716,11 @@ export default function ChatPage() {
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
                   
                   <div className="relative">
-                    <button onClick={() => handle_Emojis(setShow, show)}>
-                      <BsEmojiSmile className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
+                    <button ref={buttonRef} onClick={() => handle_Emojis(setShow, show)}>
+                      <BsEmojiSmile  className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
                     </button>
                     {show && (
-                      <div className="absolute left-0 bottom-12 sm:left-[10%] sm:bottom-16 z-50">
+                      <div ref={menuRef} className="absolute left-0 bottom-12 sm:left-[10%] sm:bottom-16 z-50">
                         <EmojiPicker onEmojiClick={move_emoji_to_input} />
                       </div>
                     )}
