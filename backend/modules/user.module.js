@@ -186,10 +186,8 @@ export async function Xprank(request, reply) {
 
 export async function IsOnline(request , reply){
 
-
   const username = request.query.username;
   const socket = request.server.users_socket.get(username);
-
 
   try {
     if(socket)

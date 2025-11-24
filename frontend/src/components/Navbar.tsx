@@ -205,6 +205,7 @@ useEffect(() => {
 
 
       } catch (error) {
+        alert("here");
         console.error('Failed to fetch notifications', error);
       }
     }

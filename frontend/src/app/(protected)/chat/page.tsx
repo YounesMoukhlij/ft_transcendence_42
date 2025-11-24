@@ -62,7 +62,12 @@ async function fetchData(friend_id: string , title: string, setDboubleBlock: (nu
 
     const msgsRes = await axios.post(
       `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`,
-      { id: convRes.data.conversation_id }
+      { id: convRes.data.conversation_id },
+        {
+          headers: {
+            Authorization: `Bearer ${user.access_token}` 
+          }
+        }
     );
 
     updateLastMessage(msgsRes.data[msgsRes.data.length - 1]?.message);
@@ -394,7 +399,13 @@ export default function ChatPage() {
       conv_id: id,
       friend: friend,
       friend_id: friend_id
-    });
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${user.access_token}` 
+      }
+    }
+  );
     removeFriend(Number(friend_id));
   }
 
@@ -424,8 +435,9 @@ export default function ChatPage() {
     try {
       const data = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/IsOnline`, {
         params: {
-          username: friend
-        }
+          username: friend,
+        },
+        headers: {Authorization: `Bearer ${user.access_token}` }
       })
 
       const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, {

@@ -35,7 +35,7 @@ app.decorate('db', db);
     const users_socket = new Map();
     app.decorate('users_socket', users_socket);
 
-// app.register(fastifyJwt, { secret: process.env.SECRET});
+app.register(fastifyJwt, { secret: process.env.SECRET});
 
 async function startServer() {
   try {

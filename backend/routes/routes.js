@@ -35,11 +35,24 @@ import { getPlayerProgress } from '../modules/playerProgress.js';
 
 
 
-
-
 export default async function routes(fastify, options) {
-    // Existing routes
 
+
+  fastify.addHook('onRequest' , async (request , reply) => {
+    const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser"];
+
+    const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
+
+    if (publicRoutes.includes(pathname)) return;
+    try {
+      await request.jwtVerify();
+    } catch (err) {
+      return reply.code(401).send({ message: "unauthorized" });
+    }
+  });
+
+
+  
    
     fastify.post('/AddUser', AddUser);
     fastify.get('/getAllUsers', getAllUsers);

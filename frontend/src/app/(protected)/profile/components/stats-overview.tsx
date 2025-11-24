@@ -213,6 +213,10 @@ const handleUnfriend = async () =>
           conv_id : conv_id,
           friend: userStats.username,
           friend_id: userStats.id,
+        },{
+          headers: {
+            Authorization: `Bearer ${currentUser.access_token}` 
+          }
         }
       );
 

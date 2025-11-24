@@ -52,8 +52,11 @@ export default function UserProfile({ params }: UserProfileProps) {
      
       try {
         const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
-          params: { username: currentUser.username }
-        });
+          params: { username: currentUser.username },
+          headers: { Authorization: `Bearer ${currentUser.access_token}` }
+        }
+          
+      );
 
         setFriends(res.data);
       } catch (err) {
