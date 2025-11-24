@@ -103,8 +103,8 @@ export const useUserStore = create(
       return;
     }
 
-    const host = process.env.NEXT_PUBLIC_BACKENDIP || window.location.hostname || 'localhost'
-    const port = process.env.NEXT_PUBLIC_BACKENDPORT || '4444'
+    const host = process.env.NEXT_PUBLIC_BACKEND_IP || window.location.hostname || 'localhost'
+    const port = process.env.NEXT_PUBLIC_BACKEND_PORT || '4444'
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const url = `${protocol}://${host}:${port}/ws`
 

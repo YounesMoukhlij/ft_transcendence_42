@@ -55,7 +55,9 @@ const getRank = (): "gold" | "silver" | "bronze" => {
 };
 
   const userStats = {
-  name: user.fullname,
+  id : user.id,
+  username : user.username,
+  fullName: user.fullname,
   avatar: user.avatar,
   rankType: getRank(),
   experience: user.xp,
@@ -78,12 +80,8 @@ const getRank = (): "gold" | "silver" | "bronze" => {
 }
 
 const recentMatches = user.recentMatches;
-  
-const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel / 10, 700); 
 
-
-  
-
+const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel / 10, 700);
 
 
 
@@ -131,7 +129,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
           </div>
           <div className="transform hover:scale-105 transition duration-300 ease-in-out cursor-pointer">
             <RankBanner rank="gold" title="Gold League" description="Elite Players" count={userStats.goldPlayers} />
-          </div> 
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

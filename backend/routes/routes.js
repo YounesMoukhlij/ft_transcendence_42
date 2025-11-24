@@ -23,6 +23,7 @@ import {
 import { getUserStats, getUserStatsbyUsername } from '../modules/profile.module.js';
 import { getMatchHistory } from '../modules/matchHistory.module.js';
 import { getLeagueStats } from '../modules/leagues.module.js';
+import { saveGameCustomization, getGameCustomization } from '../modules/game.module.js';
 
 
 
@@ -117,4 +118,8 @@ export default async function routes(fastify, options) {
   // MatchHistory
 
   fastify.get('/getMatchHistory/:username', getMatchHistory);
+
+  // Game customization
+  fastify.post('/saveGameCustomization', { preHandler: [fastify.authenticate] }, saveGameCustomization);
+  fastify.get('/getGameCustomization', { preHandler: [fastify.authenticate] }, getGameCustomization);
 }

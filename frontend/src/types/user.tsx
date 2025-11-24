@@ -3,6 +3,7 @@
 
 export interface User
 {
+  id : number,
   username: string,
   fullname: string,
   avatar: string,
@@ -47,7 +48,7 @@ export interface GameDetails
     host: string,
     guest: string,
     game_date: string,
-  
+
     duration: number,
     longest_rally: number,
     average_rally: number,

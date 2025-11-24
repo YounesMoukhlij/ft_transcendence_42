@@ -82,7 +82,7 @@ useEffect(() => {
   async function DelteFriendRequest(notify_id){
     toast.error('Deleted');
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
-    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
+    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/DeleteFriendRequest` , {
       params:{
         id: notify_id,
       },
@@ -103,7 +103,7 @@ useEffect(() => {
       id_user: item.sender_user,
       status:0,
     }
-    const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{
+    const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/AddFriend`,{
       Freind_id: item.sender_user ,
     },{
       headers: {
@@ -115,7 +115,7 @@ useEffect(() => {
     addFriend(object);
   
   setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
-    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
+    await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/DeleteFriendRequest` , {
       params:{
         id: item.notify_id,
       },
@@ -134,7 +134,7 @@ useEffect(() => {
     // }, 5000);
 
     try{
-      axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/NotificationSeen`,
+      axios.post(`http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/NotificationSeen`,
       {},
       {
         headers:{
@@ -161,7 +161,7 @@ useEffect(() => {
     async function get_notify() {
       try {
         const result = await axios.get(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetNotification`,
+          `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/GetNotification`,
           {
             headers:{
               Authorization: `Bearer ${user.access_token}`,

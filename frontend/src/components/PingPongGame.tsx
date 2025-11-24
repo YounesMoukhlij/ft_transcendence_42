@@ -11,24 +11,54 @@ const GAME_HEIGHT = 600;
 const GAME_WIDTH = 800;
 const PADDLE_WIDTH = 16;
 const BALL_RADIUS = 10;
+const WINNING_SCORE = 10;
 
-const PingPongGame: React.FC<{ serverGameState: ServerGameState | null, opponentLeft: boolean }> = ({ serverGameState, opponentLeft }) => {
+interface PingPongGameProps {
+  serverGameState: ServerGameState | null;
+  opponentLeft: boolean;
+  setServerGameState: (state: ServerGameState) => void;
+  rematchDeclinedMessage: string;
+  setRematchDeclinedMessage: (message: string) => void;
+  rematchOffer: boolean;
+  handleAcceptRematch: () => void;
+}
+
+const PingPongGame: React.FC<PingPongGameProps> = ({ 
+  serverGameState, 
+  opponentLeft, 
+  setServerGameState,
+  rematchDeclinedMessage,
+  setRematchDeclinedMessage,
+  rematchOffer,
+  handleAcceptRematch
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { gameState } = useGameContext();
   const { user, socket } = useUserStore();
   const router = useRouter();
 
   const [winner, setWinner] = useState<string | null>(null);
+  const [rematchRequested, setRematchRequested] = useState(false);
 
   useEffect(() => {
     if (serverGameState) {
-      if (serverGameState.player1.score >= 10) {
+      if (serverGameState.player1.score >= WINNING_SCORE) {
         setWinner(serverGameState.player1.username);
-      } else if (serverGameState.player2.score >= 10) {
+      } else if (serverGameState.player2.score >= WINNING_SCORE) {
         setWinner(serverGameState.player2.username);
       }
     }
   }, [serverGameState]);
+
+  useEffect(() => {
+    // If the game state comes in and scores are 0, it's a new game/rematch
+    if (serverGameState && serverGameState.player1.score === 0 && serverGameState.player2.score === 0) {
+        setWinner(null);
+        setRematchRequested(false);
+        setRematchDeclinedMessage('');
+    }
+}, [serverGameState, setRematchDeclinedMessage]);
+
 
   // Handle keyboard input for paddle movement
   useEffect(() => {
@@ -130,6 +160,14 @@ const PingPongGame: React.FC<{ serverGameState: ServerGameState | null, opponent
     router.push('/game');
   };
 
+  const handleRematchRequest = () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'rematch:request' }));
+      setRematchRequested(true);
+      setRematchDeclinedMessage('');
+    }
+  };
+
   if (opponentLeft) {
     return (
       <div className="text-white text-center">
@@ -141,10 +179,27 @@ const PingPongGame: React.FC<{ serverGameState: ServerGameState | null, opponent
   
   if (winner) {
     return (
-      <div className="text-white text-center">
-        <h2>Game Over</h2>
-        <p className="text-2xl mt-4">{winner} is the winner!</p>
-        <button onClick={handleExit} className="mt-4 px-4 py-2 bg-blue-500 rounded">Back to Game Lobby</button>
+      <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
+        <h2 className="text-4xl font-bold mb-4">Game Over</h2>
+        <p className="text-2xl mt-4 mb-6">{winner} is the winner!</p>
+        
+        {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage}</p>}
+
+        {rematchOffer ? (
+          <button onClick={handleAcceptRematch} className="mt-4 px-6 py-3 bg-yellow-500 rounded-lg text-lg hover:bg-yellow-600 transition-colors">
+            Accept Rematch
+          </button>
+        ) : rematchRequested ? (
+          <p className="text-yellow-400">Waiting for opponent to accept...</p>
+        ) : (
+          <button onClick={handleRematchRequest} className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors">
+            Request Rematch
+          </button>
+        )}
+
+        <button onClick={handleExit} className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors">
+          Back to Game Lobby
+        </button>
       </div>
     );
   }

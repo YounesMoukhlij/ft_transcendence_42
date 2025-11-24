@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import { useUserStore } from '@/store/userStore';
@@ -18,11 +18,27 @@ export default function RemoteGameRoomPage() {
   const [serverGameState, setServerGameState] = useState<ServerGameState | null>(null);
   const [opponentLeft, setOpponentLeft] = useState(false);
   const [error, setError] = useState('');
+  const [rematchOffer, setRematchOffer] = useState(false);
+  const [rematchDeclinedMessage, setRematchDeclinedMessage] = useState('');
 
   useEffect(() => {
     document.title = 'Online Multiplayer Ping Pong';
     setGameMode('remote');
   }, [setGameMode]);
+
+  const handleAcceptRematch = useCallback(() => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'rematch:accept' }));
+      setRematchOffer(false);
+    }
+  }, [socket]);
+
+  const handleDeclineRematch = useCallback(() => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'rematch:decline' }));
+      setRematchOffer(false);
+    }
+  }, [socket]);
 
   useEffect(() => {
     if (!socket) {
@@ -40,6 +56,17 @@ export default function RemoteGameRoomPage() {
           case 'opponentLeft':
             setOpponentLeft(true);
             break;
+          case 'rematch:offer':
+            setRematchOffer(true);
+            break;
+          case 'rematch:declined':
+            setRematchDeclinedMessage('Your opponent declined the rematch.');
+            break;
+          case 'rematch:start':
+            setServerGameState(message.payload);
+            setRematchOffer(false);
+            setRematchDeclinedMessage('');
+            break;
           default:
             console.log('Unhandled game message:', message);
         }
@@ -53,7 +80,7 @@ export default function RemoteGameRoomPage() {
     return () => {
       socket.removeEventListener('message', handleMessage);
     };
-  }, [socket]);
+  }, [socket, handleAcceptRematch, handleDeclineRematch]);
 
   const leaveRoom = () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -93,7 +120,15 @@ export default function RemoteGameRoomPage() {
           </button>
         </div>
       </div>
-      <PingPongGame serverGameState={serverGameState} opponentLeft={opponentLeft} />
+      <PingPongGame 
+        serverGameState={serverGameState} 
+        opponentLeft={opponentLeft} 
+        setServerGameState={setServerGameState}
+        rematchDeclinedMessage={rematchDeclinedMessage}
+        setRematchDeclinedMessage={setRematchDeclinedMessage}
+        rematchOffer={rematchOffer}
+        handleAcceptRematch={handleAcceptRematch}
+      />
     </div>
   );
 }

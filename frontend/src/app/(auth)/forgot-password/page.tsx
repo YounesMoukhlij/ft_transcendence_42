@@ -10,6 +10,8 @@ const STEPS = {
   RESET_PASSWORD: 'RESET_PASSWORD'
 };
 
+const API_URL = `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`;
+
 const ForgotPasswordPage = () => {
   // State for multi-step form logic
   const [currentStep, setCurrentStep] = useState(STEPS.ENTER_EMAIL);
@@ -36,7 +38,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/forgotPassword`, {
+      const response = await fetch(`${API_URL}/forgotPassword`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -66,7 +68,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/verifyCode`, {
+      const response = await fetch(`${API_URL}/verifyCode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -110,7 +112,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/resetPasswordWithToken`, {
+      const response = await fetch(`${API_URL}/resetPasswordWithToken`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetToken, newPassword }),

@@ -1,7 +1,8 @@
 
 interface PlayerBannerProps {
   userStats: {
-    name: string
+    username : string
+    fullName: string
     avatar: string
     rankType: "bronze" | "silver" | "gold"
     winRate: number
@@ -25,9 +26,6 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
             }
           }
 
-  const safeName = (userStats?.name ?? "Player").toUpperCase()
-  const safeRankLabel = (userStats?.rankType ?? "bronze").toUpperCase()
-
 
           return (
            <div
@@ -45,11 +43,11 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
 
 
             <div>
-        <h2 className="text-3xl font-extrabold text-white">
-           {safeName}
-        </h2>
+                <h2 className="text-3xl font-extrabold text-white">
+                   {userStats.fullName?.toUpperCase()}
+                </h2>
                 <h1 className="font-extrabold text-lg gold-highlight uppercase tracking-widest font-sans">
-          {safeRankLabel} LEAGUE
+                    {userStats.rankType.toUpperCase()} LEAGUE
                 </h1>
             </div>
 

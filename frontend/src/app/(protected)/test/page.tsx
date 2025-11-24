@@ -7,7 +7,7 @@ import "../chat/page.css"
 import { title } from "process";
 import { useUserStore } from '../../../store/userStore';
 
-
+const API_URL = `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`;
 
 const LeaderBord = ({users}) =>{
   const user = useUserStore((state) => state.user);
@@ -16,7 +16,7 @@ const LeaderBord = ({users}) =>{
     
 
     try {
-      await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendRequestFriend` , { 
+      await axios.post(`${API_URL}/sendRequestFriend` , { 
           friend_id: object.id_user
         },{
           headers:{
@@ -76,7 +76,7 @@ export default function SettingsPage() {
     const fetchData = async () => {
       try {
         const data = await axios.get(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Xprank`,
+          `${API_URL}/Xprank`,
           {
             params: {
               user: user.username,

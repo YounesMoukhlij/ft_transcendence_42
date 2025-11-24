@@ -140,8 +140,32 @@ async function startServer() {
     const GAME_HEIGHT = 600;
     const PADDLE_HEIGHT = 100;
     const BALL_RADIUS = 10;
+    const WINNING_SCORE = 10;
 
-    function updateGameState(room) {
+    function saveGameResult(gameState) {
+        const { player1, player2 } = gameState;
+        let winner, loser;
+    
+        if (player1.score >= WINNING_SCORE) {
+            winner = player1;
+            loser = player2;
+        } else {
+            winner = player2;
+            loser = player1;
+        }
+    
+        try {
+            const stmt = db.prepare(
+                'INSERT INTO game_history (user_win, user_lose, win_score, lose_score, type) VALUES (?, ?, ?, ?, ?)'
+            );
+            stmt.run(winner.id, loser.id, winner.score, loser.score, 'casual');
+            app.log.info(`Game result saved: ${winner.username} vs ${loser.username}`);
+        } catch (error) {
+            app.log.error('Error saving game result:', error);
+        }
+    }
+
+    function updateGameState(room, roomCode) {
         const state = room.gameState;
 
         // Move paddles
@@ -190,6 +214,16 @@ async function startServer() {
             state.player1.score++;
             resetBall(state);
         }
+
+        // Check for winner
+        if (state.player1.score >= WINNING_SCORE || state.player2.score >= WINNING_SCORE) {
+            saveGameResult(state);
+            const intervalId = gameIntervals.get(roomCode);
+            if (intervalId) {
+                clearInterval(intervalId);
+                gameIntervals.delete(roomCode);
+            }
+        }
     }
 
     function resetBall(state) {
@@ -201,7 +235,7 @@ async function startServer() {
 
     function startGame(roomCode, room) {
         const intervalId = setInterval(() => {
-            updateGameState(room);
+            updateGameState(room, roomCode);
             const gameStatePayload = {
                 type: 'gameState',
                 payload: room.gameState
@@ -224,6 +258,9 @@ async function startServer() {
     socket.on('message', (msg) => {
         try {
             const message = JSON.parse(msg);
+            const roomCode = socket.roomCode;
+            const room = rooms.get(roomCode);
+
             switch (message.type) {
                 case 'initial':
                     id = message.payload.id;
@@ -246,29 +283,30 @@ async function startServer() {
 
                     if (opponentIndex > -1) {
                         const opponent = waitingPool.splice(opponentIndex, 1)[0];
-                        const roomCode = Math.random().toString(36).substring(7);
+                        const newRoomCode = Math.random().toString(36).substring(7);
 
                         const players = [
                             { username: player.username, socket: player.socket, id: player.id },
                             { username: opponent.username, socket: opponent.socket, id: opponent.id },
                         ];
                         
-                        socket.roomCode = roomCode;
-                        opponent.socket.roomCode = roomCode;
+                        socket.roomCode = newRoomCode;
+                        opponent.socket.roomCode = newRoomCode;
 
-                        const room = {
+                        const newRoom = {
                             players,
+                            rematchRequestedBy: null,
                             gameState: {
                                 player1: { id: player.id, username: player.username, y: GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, dy: 0, score: 0, customization: player.customization },
                                 player2: { id: opponent.id, username: opponent.username, y: GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, dy: 0, score: 0, customization: opponent.customization },
                                 ball: { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2, dx: 5, dy: 5 },
                             }
                         };
-                        rooms.set(roomCode, room);
+                        rooms.set(newRoomCode, newRoom);
 
-                        console.log('Match found, starting game in room:', roomCode);
+                        console.log('Match found, starting game in room:', newRoomCode);
                         const matchDetails = {
-                            roomCode,
+                            roomCode: newRoomCode,
                             players: [
                                 { username: player.username, customization: player.customization },
                                 { username: opponent.username, customization: opponent.customization }
@@ -279,7 +317,7 @@ async function startServer() {
                             p.socket.send(JSON.stringify({ type: 'matchFound', payload: matchDetails }));
                         });
 
-                        startGame(roomCode, room);
+                        startGame(newRoomCode, newRoom);
 
                     } else {
                         waitingPool.push(player);
@@ -288,12 +326,10 @@ async function startServer() {
                     break;
                 
                 case 'paddleMove':
-                    const { direction } = message.payload;
-                    const roomCode = socket.roomCode;
-                    const room = rooms.get(roomCode);
                     if (room) {
                         const playerToUpdate = room.gameState.player1.id === id ? room.gameState.player1 : room.gameState.player2;
                         if (playerToUpdate) {
+                            const { direction } = message.payload;
                             if (direction === 'up') {
                                 playerToUpdate.dy = -8;
                             } else if (direction === 'down') {
@@ -305,20 +341,58 @@ async function startServer() {
                     }
                     break;
 
+                case 'rematch:request':
+                    if (room) {
+                        const opponent = room.players.find(p => p.id !== id);
+                        if (room.rematchRequestedBy === opponent.id) {
+                            // Opponent already requested, start rematch
+                            room.gameState.player1.score = 0;
+                            room.gameState.player2.score = 0;
+                            resetBall(room.gameState);
+                            room.rematchRequestedBy = null;
+                            room.players.forEach(p => p.socket.send(JSON.stringify({ type: 'rematch:start', payload: room.gameState })));
+                            startGame(roomCode, room);
+                        } else {
+                            room.rematchRequestedBy = id;
+                            opponent.socket.send(JSON.stringify({ type: 'rematch:offer' }));
+                        }
+                    }
+                    break;
+
+                case 'rematch:accept':
+                    if (room && room.rematchRequestedBy) {
+                        room.gameState.player1.score = 0;
+                        room.gameState.player2.score = 0;
+                        resetBall(room.gameState);
+                        room.rematchRequestedBy = null;
+                        room.players.forEach(p => p.socket.send(JSON.stringify({ type: 'rematch:start', payload: room.gameState })));
+                        startGame(roomCode, room);
+                    }
+                    break;
+
+                case 'rematch:decline':
+                    if (room) {
+                        const opponent = room.players.find(p => p.id !== id);
+                        if (opponent && opponent.socket.readyState === opponent.socket.OPEN) {
+                            opponent.socket.send(JSON.stringify({ type: 'rematch:declined' }));
+                        }
+                        room.rematchRequestedBy = null;
+                    }
+                    break;
+
                 case 'leaveRoom':
-                    const { roomCode: leaveRoomCode } = message.payload;
-                    if (rooms.has(leaveRoomCode)) {
-                        const room = rooms.get(leaveRoomCode);
-                        room.players = room.players.filter(p => p.socket !== socket);
+                    if (rooms.has(roomCode)) {
+                        const roomToLeave = rooms.get(roomCode);
+                        roomToLeave.players = roomToLeave.players.filter(p => p.socket !== socket);
                         
-                        const intervalId = gameIntervals.get(leaveRoomCode);
+                        const intervalId = gameIntervals.get(roomCode);
                         if (intervalId) {
                             clearInterval(intervalId);
-                            gameIntervals.delete(leaveRoomCode);
+                            gameIntervals.delete(roomCode);
                         }
-                        rooms.delete(leaveRoomCode);
+                        rooms.delete(roomCode);
 
-                        room.players.forEach(p => {
+                        roomToLeave.players.forEach(p => {
                             p.socket.send(JSON.stringify({ type: 'playerLeft', payload: { username: 'A player' } }));
                         });
                     }

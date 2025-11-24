@@ -22,7 +22,7 @@ export default function UserProfile() {
       }
 
       try {
-        const url = `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getUserStats`;
+        const url = `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/getUserStats`;
 
         const res = await axios.get<User>(url, {
           headers: {

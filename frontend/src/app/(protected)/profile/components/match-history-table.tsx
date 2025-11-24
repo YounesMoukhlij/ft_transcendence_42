@@ -36,7 +36,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
 
       try {
         const res = await axios.get<GameDetails[]>(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMatchHistory/${targetUsername}`,
+          `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/getMatchHistory/${targetUsername}`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }

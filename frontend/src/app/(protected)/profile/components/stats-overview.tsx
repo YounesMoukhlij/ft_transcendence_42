@@ -4,9 +4,15 @@ import { Trophy, TrendingUp, Users } from "lucide-react"
 import { Button } from "./ui/button"
 import { useState } from "react"
 import { useCountUp } from "../hooks/useCountUp"
+import { useUserStore } from "@/store/userStore";
+import axios from "axios"
+
+const API_URL = `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`;
 
 interface UserStats {
-  name: string
+  id: number,
+  username: string
+  fullName: string
   avatar: string
   winRate: number
   totalMatches: number
@@ -21,16 +27,106 @@ interface UserStats {
 interface StatsOverviewProps {
   userStats: UserStats
 }
+interface Friend {
+  id_user: number;
+  username: string;
+  profile_img: string;
+  status: number;
+  LastMessage?: string;
+  LastMessageTime?: string;
+}
+
+interface User {
+  id_user: number;
+  username: string;
+  profile_img: string;
+}
+
+
+
+
+
+
 
 export function StatsOverview({ userStats }: StatsOverviewProps) {
-const [isFriend, setIsFriend] = useState<boolean>(false);
+const { user: currentUser, friends, addFriend, removeFriend } = useUserStore();
+
 const _winRate = useCountUp(userStats.winRate, 700);
 const _totalMatches = useCountUp(userStats.totalMatches, 700);
 const _wins = useCountUp(userStats.wins, 700);
 const _avgPoints = useCountUp(Math.round(userStats.averageScore * 100) / 100, 700);
 
 
+// 1. isSelfProfile
+const isSelfProfile: boolean =
+  currentUser?.username === userStats.username;
 
+
+
+// 3. isFriend
+const isFriend: boolean = friends?.some(
+  (f: Friend) => f.username === userStats.username
+);
+
+
+const handleAddFriend = async () => {
+  try {
+    await axios.post(
+      `${API_URL}/sendRequestFriend`,
+      { friend_id: userStats.id },
+      {
+        headers: {
+          Authorization: `Bearer ${currentUser?.access_token}`,
+        },
+      }
+    );
+    console.log("Friend request sent");
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const handleUnfriend = async () =>
+{
+   try {
+      //  Get conversation ID
+      const conversation_id = await axios.post(
+        `${API_URL}/getConversationId`,
+        { friend_id: userStats.id },
+        {
+          headers: {
+            Authorization: `Bearer ${currentUser?.access_token}`,
+          },
+        }
+      );
+
+      const conv_id : number = conversation_id.data.conversation_id;
+      console.log("Conversation ID:", conv_id);
+
+      //  Unfriend
+      await axios.post(
+        `${API_URL}/unfriend`,
+        {
+          user: currentUser.username,
+          conv_id : conv_id,
+          friend: userStats.username,
+          friend_id: userStats.id,
+        }
+      );
+
+      console.log("Unfriend done");
+
+      // //  Update Zustand
+      removeFriend(userStats.username);
+
+    } catch (err) {
+      console.log(err);
+    }
+}
+
+
+
+console.log(userStats.username, " is friend with ", currentUser?.username , " ", isFriend, "with ID: ", userStats.id);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -47,14 +143,23 @@ const _avgPoints = useCountUp(Math.round(userStats.averageScore * 100) / 100, 70
             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trophy className="w-10 h-10 text-primary" />
             </div>
-            <h3 className="font-bold text-lg">{userStats.name}</h3>
-            <Button variant="outline"
-                  className="w-fullmt-2 mr-2 bg-transparent border-primary text-primary hover:bg-primary hover:text-primary-foreground cosmic-glow rounded-xxl">
+            <h3 className="font-bold text-lg">{userStats.fullName}</h3>
+
+
+            {
+              !isSelfProfile &&
+             <>
+            <Button
+              onClick={!isFriend ? handleAddFriend : handleUnfriend}
+              variant="outline"
+              className="w-fullmt-2 mr-2 bg-transparent border-primary text-primary hover:bg-primary hover:text-primary-foreground cosmic-glow rounded-xxl">
               {isFriend ? "Unfriend" : "Add Friend"}
             </Button>
              <Button variant="destructive" className="mt-2">
               message
             </Button>
+            </>
+             }
           </div>
         </CardContent>
       </Card>

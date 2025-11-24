@@ -17,6 +17,8 @@ import { GiCheckMark } from "react-icons/gi";
 import { HiXMark } from "react-icons/hi2";
 import { redirect } from 'next/navigation';
 
+const API_URL = `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`;
+
 interface Friend {
   id_user: string,
   username: string;
@@ -45,7 +47,7 @@ async function fetchData(friend_id: string , title: string, setDboubleBlock: (nu
   localStorage.setItem('room_select', title);
   localStorage.setItem('friend_id' , friend_id);
   try {
-    const convRes = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,{
+    const convRes = await axios.post(`${API_URL}/getConversationId`,{
       friend_id: friend_id
     },
     {
@@ -60,7 +62,7 @@ async function fetchData(friend_id: string , title: string, setDboubleBlock: (nu
     Setuser_block(convRes.data.block_user);
 
     const msgsRes = await axios.post(
-      `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`,
+      `${API_URL}/getMsgs`,
       { id: convRes.data.conversation_id }
     );
 
@@ -285,7 +287,7 @@ export default function ChatPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
+        const res = await axios.get(`${API_URL}/GetFriends`, {
           params: { username: user.username }
         });
 
@@ -315,7 +317,7 @@ export default function ChatPage() {
     const friend_id = localStorage.getItem("friend_id");
     if (double_block == 2 || (double_block == 1 && user_block === user.username))
       return;
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`, {
+    await axios.post(`${API_URL}/block`, {
       user: user.username,
       conv_id: id,
       friend: friend, 
@@ -336,7 +338,7 @@ export default function ChatPage() {
 
     const friend_id = localStorage.getItem("friend_id");
     const id = localStorage.getItem('conversationId');
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock`, {
+    await axios.post(`${API_URL}/Deblock`, {
       user: user.username,
       conv_id: id,
       friend: friend,
@@ -361,7 +363,7 @@ export default function ChatPage() {
     const id = window.localStorage.getItem('conversationId');
     SetSelectContact(false);
     const friend_id = localStorage.getItem("friend_id");
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`, {
+    await axios.post(`${API_URL}/unfriend`, {
       user: user.username,
       conv_id: id,
       friend: friend,
@@ -372,7 +374,7 @@ export default function ChatPage() {
 
 
   // async function SendTyping(){
-  //   await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/SendTyping`,
+  //   await axios.post(`${API_URL}/SendTyping`,
   //     {
   //       Friend_id: localStorage.getItem('friend_id')
   //     },{
@@ -394,13 +396,13 @@ export default function ChatPage() {
     const friend_id = localStorage.getItem('friend_id');
     const id = localStorage.getItem('conversationId');
     try {
-      const data = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/IsOnline`, {
+      const data = await axios.get(`${API_URL}/IsOnline`, {
         params: {
           username: friend
         }
       })
 
-      const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, {
+      const res = await axios.post(`${API_URL}/sendMsg`, {
           user:user.username,
           input, id, friend , friend_id
         },{
@@ -465,7 +467,7 @@ export default function ChatPage() {
 
   function startGame(friend: string){
     try{
-      const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/startGame`, {
+      const res = axios.post(`${API_URL}/startGame`, {
         Friend_id: friend,
       },{
         headers: {
@@ -481,7 +483,7 @@ export default function ChatPage() {
   function send_game_invite(friend : string){
     try{
         setConfirm(false);
-        const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendGameChallenge` , {
+        const res = axios.post(`${API_URL}/sendGameChallenge` , {
             Friend_id: friend,
           },{
           headers: {

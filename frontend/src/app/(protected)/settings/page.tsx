@@ -6,7 +6,7 @@ import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 
 // Define the base URL of your backend API
-const API_URL = "http://" + process.env.NEXT_PUBLIC_BACKENDIP + ":" + process.env.NEXT_PUBLIC_BACKENDPORT;;
+const API_URL = "http://" + process.env.NEXT_PUBLIC_BACKEND_IP + ":" + process.env.NEXT_PUBLIC_BACKEND_PORT;
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
 
 

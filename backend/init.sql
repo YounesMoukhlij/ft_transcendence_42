@@ -134,3 +134,12 @@ CREATE TABLE tournaments (
     description TEXT,
     blockchain_hash TEXT             -- optional, store hash of results on-chain
 );
+
+CREATE TABLE game_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId INTEGER UNIQUE NOT NULL,
+    tableBg TEXT,
+    ballColor TEXT,
+    paddleColor TEXT,
+    FOREIGN KEY (userId) REFERENCES users(id_user)
+);

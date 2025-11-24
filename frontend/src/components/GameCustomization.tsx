@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from './GameContext';
+import { useUserStore } from '../store/userStore';
+import axios from 'axios';
 
 const tableBackgrounds = [
   { name: 'Classic Green', value: '#15803d', type: 'color' },
@@ -37,6 +39,8 @@ interface GameCustomizationProps {
 
 const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGame, isSocketConnected }) => {
   const { gameState, setCustomisation } = useGameContext();
+  const { user } = useUserStore();
+  const token = user?.token;
 
   const [tableBg, setTableBg] = useState<string | null>(null);
   const [ballColor, setBallColor] = useState<string | null>(null);
@@ -44,10 +48,48 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
 
   const isReady = tableBg && ballColor && paddleColor;
 
+  const axiosInstance = axios.create({
+    baseURL: `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  useEffect(() => {
+    const fetchCustomization = async () => {
+      try {
+        const response = await axiosInstance.get('/getGameCustomization');
+        if (response.data) {
+          const { tableBg, ballColor, paddleColor } = response.data;
+          setTableBg(tableBg);
+          setBallColor(ballColor);
+          setPaddleColor(paddleColor);
+          // Update the game context immediately
+          setCustomisation({ tableBg, ballColor, paddleColor });
+        }
+      } catch (error) {
+        console.error('Error fetching game customization:', error);
+      }
+    };
+
+    if (token) {
+      fetchCustomization();
+    }
+  }, [token, setCustomisation]);
+
+  const saveCustomization = async (customization: { tableBg: string; ballColor: string; paddleColor: string; }) => {
+    try {
+      await axiosInstance.post('/saveGameCustomization', customization);
+    } catch (error) {
+      console.error('Error saving game customization:', error);
+    }
+  };
+
   const handleStartGame = () => {
     if (isReady) {
       const customization = { tableBg, ballColor, paddleColor };
       setCustomisation(customization);
+      saveCustomization(customization);
       onStartGame(customization);
     }
   };

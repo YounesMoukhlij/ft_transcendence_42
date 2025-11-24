@@ -33,7 +33,7 @@ useEffect(() => {
 
       try {
         const res = await axios.get(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getLeaguesStats/${targetleague}`,
+          `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/getLeaguesStats/${targetleague}`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }

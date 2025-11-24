@@ -8,7 +8,7 @@ import '../globals.css'
 import { useUserStore } from "../../store/userStore"
 
 
-const API_URL = "http://" + process.env.NEXT_PUBLIC_BACKENDIP + ":" +  process.env.NEXT_PUBLIC_BACKENDPORT;
+const API_URL = "http://" + process.env.NEXT_PUBLIC_BACKEND_IP + ":" +  process.env.NEXT_PUBLIC_BACKEND_PORT;
 
 export default function AuthLayout() {
   const [isSignUp, setIsSignUp] = useState(false)
