@@ -92,7 +92,6 @@ export default function CustomizePage() {
         return;
       }
       if (!socket) {
-        alert('Socket not connected. Please try again.');
         return;
       }
       setCustomisation(customization);
@@ -142,7 +141,7 @@ export default function CustomizePage() {
 
   return (
     <div className="h-full w-full  flex items-center justify-center p-4">
-      <GameCustomization onBack={handleBack} onStartGame={handleStartGame} />
+      <GameCustomization onBack={handleBack} onStartGame={handleStartGame} isSocketConnected={!!socket} />
     </div>
   );
 }

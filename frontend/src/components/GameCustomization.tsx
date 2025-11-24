@@ -32,10 +32,11 @@ const paddleColors = [
 interface GameCustomizationProps {
   onBack: () => void;
   onStartGame: (customization: { tableBg: string; ballColor: string; paddleColor: string; }) => void;
+  isSocketConnected?: boolean;
 }
 
-const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGame }) => {
-  const { setCustomisation } = useGameContext();
+const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGame, isSocketConnected }) => {
+  const { gameState, setCustomisation } = useGameContext();
 
   const [tableBg, setTableBg] = useState<string | null>(null);
   const [ballColor, setBallColor] = useState<string | null>(null);
@@ -284,7 +285,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           </button>
           <button
             onClick={handleStartGame}
-            disabled={!isReady}
+            disabled={!isReady || (gameState.mode === 'remote' && !isSocketConnected)}
             className={`pb-2 cursor-pointer bg-black border-2 border-white hover:bg-white hover:text-black px-6 py-2 rounded-xl text-base font-bold transition-all duration-300
               ${isReady ? 'hover:scale-105' : 'cursor-not-allowed'}`}
             style={{
@@ -303,7 +304,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
               textShadow: '0 1px 2px rgba(0,0,0,0.3)'
             }}
           >
-            Start Game
+            {gameState.mode === 'remote' && !isSocketConnected ? 'Connecting...' : 'Start Game'}
           </button>
         </div>
 
