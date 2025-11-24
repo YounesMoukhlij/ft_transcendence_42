@@ -25,7 +25,7 @@ export default function Navbar()
   
   const setUsername = useUserStore.setState;
   const socket = useUserStore((state) => state.socket);
-  const {addFriend, removeFriend , setFriends, addPendingRequests, addPendingRequestsArray,  addSentRequests, removePendingRequests, removeSentRequests} = useUserStore();
+  const {addFriend, removeFriend ,friends , addPendingRequests, addPendingRequestsArray, removePendingRequests, removeSentRequests} = useUserStore();
 
   
   
@@ -33,10 +33,10 @@ export default function Navbar()
 
 
 
-function isTimeValid(targetTimeString : any) {
+function isTimeValid(item: any) {
 
 
-
+  const targetTimeString = item.expired;
   const [datePart, timePart] = targetTimeString.split(' ');
   const [yy, mm, dd] = datePart.split('-').map(Number);
   const [hours, minutes, seconds] = timePart.split(':').map(Number);
@@ -48,13 +48,30 @@ function isTimeValid(targetTimeString : any) {
 
   const diffSeconds = (now - targetTime) / 1000;
 
+
+  if (diffSeconds <= 15) {
+
+  setTimeout(() => {
+    const newExpired = ((d => (
+      d.setFullYear(d.getFullYear() - 1),
+      `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getFullYear()).slice(-2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`
+      ))(
+        new Date(item.expired.replace(/(\d+)-(\d+)-(\d+)/, "20$3-$2-$1"))
+      ));
+
+     setNotification(prev =>
+        prev.map(it => it.id === item.id ? { ...it, expired: newExpired } : it)
+      );
+     return false;
+    }, diffSeconds * 10000);
+  }
   return diffSeconds <= 15;
 }
 
 
-  useEffect(() => {
-    setUsername({username: user?.username});
-  }, []);
+useEffect(() => {
+  setUsername({username: user?.username});
+}, []);
 
 
 const menuRef = useRef(null);
@@ -184,9 +201,6 @@ useEffect(() => {
           }
         );
         setNotification(result.data.reverse());
-        console.log(result.data);
-        console.log("Hereee ");
-        console.log(result.data.filter(object => object.title == "request friend"))
         addPendingRequestsArray(result.data.filter(object => object.title == "request friend"));
 
 
@@ -196,9 +210,9 @@ useEffect(() => {
     }
     get_notify();
 
-  }, [user]);
+  }, [user , friends]);
 
-  useEffect( ()=>{
+  useEffect( () => {
     connect();
   }, [])
 
@@ -266,6 +280,16 @@ useEffect(() => {
   }, [socket]);
   
 
+
+
+  function AcceptGameChallenge(item){
+    setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+  }
+
+  function RejectGameChallenge(item ){
+    setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+
+  }
 
   // Close mobile menu when clicking outside the list
   useEffect(() => {
@@ -354,7 +378,7 @@ useEffect(() => {
                     <span className="text-blue-400 font-medium">1 vs 1 game</span>
                   </p>
                 </div>
-                { isTimeValid(item.expired) ? (
+                {isTimeValid(item) ? (
                   <div className="flex gap-2">
                     <button
                       onClick={() => AcceptGameChallenge(item)}
@@ -363,7 +387,7 @@ useEffect(() => {
                       Accept
                     </button>
                     <button
-                      onClick={() => RejectGameChallenge(item.notify_id)}
+                      onClick={() => RejectGameChallenge(item)}
                       className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
                     >
                       Decline

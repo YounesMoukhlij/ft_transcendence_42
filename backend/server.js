@@ -136,12 +136,9 @@ async function startServer() {
 }
     // --- WebSocket Server Setup ---
   wss.on('connection', (socket) => {
-
-  let id = 0;
-
+    let id = -1;
     
     socket.once('message', (msg) => {
-      
       
       id = msg.toString();
 

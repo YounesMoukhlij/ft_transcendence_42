@@ -268,7 +268,6 @@ export default function ChatPage() {
   useEffect(() => {
     if (!socket) return;
 
-    // socket.send(JSON.stringify({ event: 'isTyping', value: false }));
     socket.onmessage = (event: MessageEvent) => {
       
       const { type, data } = JSON.parse(event.data);
@@ -302,9 +301,7 @@ export default function ChatPage() {
       else if (type === "start_game") {
         redirect("/game");
       }
-      // else if (type === "is_typing"){
-      //   SETIsTyping(true);
-      // }
+
     };
   }, [socket]);
 
