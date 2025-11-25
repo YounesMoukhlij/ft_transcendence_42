@@ -1,5 +1,5 @@
 import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction ,DeblockFunction , unfriend } from '../modules/user.module.js';
-import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests } from '../modules/nofitication.moudle.js';
+import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests , DeleteNotification } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
     getAllUsers,
@@ -18,6 +18,7 @@ import {
     updateUserInfo,
     updateUserPassword,
     update2FA,
+    leaderboard
 } from '../modules/userAuth.module.js';
 
 import { getUserStats, getUserStatsbyUsername } from '../modules/profile.module.js';
@@ -39,7 +40,7 @@ export default async function routes(fastify, options) {
 
 
   fastify.addHook('onRequest' , async (request , reply) => {
-    const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser"];
+    const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser" , "/getUserById/1"];
 
     const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
 
@@ -53,7 +54,7 @@ export default async function routes(fastify, options) {
 
 
   
-   
+
     fastify.post('/AddUser', AddUser);
     fastify.get('/getAllUsers', getAllUsers);
     fastify.get('/getUserById/:id', getUserById);
@@ -64,7 +65,7 @@ export default async function routes(fastify, options) {
     fastify.post('/NotificationSeen' , NotificationSeen);
     // fastify.post('/SendTyping' ,SendTyping );
 
-
+    fastify.get('/leaderboard', leaderboard);
 
     fastify.post('/getConversationId', getConversationId);
     fastify.get('/Xprank' , Xprank);
@@ -81,11 +82,12 @@ export default async function routes(fastify, options) {
     fastify.delete('/DeleteFriendRequest' , DeleteFriendRequest);
     fastify.delete('/cancelFriendRequest', cancelFriendRequest);
     fastify.get('/getSentRequests', GetSentRequests);
+    fastify.delete('/DeleteNotification' , DeleteNotification);
 
     // setting routes
-    fastify.post('/updateUserInfo', { preHandler: [fastify.authenticate] }, updateUserInfo);
-    fastify.post('/updateUserPassword', { preHandler: [fastify.authenticate] }, updateUserPassword);
-    fastify.post('/update2FA', { preHandler: [fastify.authenticate] }, update2FA);
+    fastify.post('/updateUserInfo', updateUserInfo);
+    fastify.post('/updateUserPassword', updateUserPassword);
+    fastify.post('/update2FA', update2FA);
     
 
 

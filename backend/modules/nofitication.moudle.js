@@ -40,7 +40,6 @@ export async function DeleteFriendRequest(request , reply){
     reply.code(400).send("Missing params");
   
 
-
   const firstQuery = request.server.db.prepare("select getter_user, sender_user from notification where notify_id = ?");
   const response = firstQuery.get(notify_id);
 
@@ -56,7 +55,7 @@ export async function DeleteFriendRequest(request , reply){
     socket.send(JSON.stringify({
         type: "rejected",
         data: object
-      }));
+    }));
 
   }
 
@@ -492,5 +491,19 @@ export function GetSentRequests(request , reply){
   }catch(err){
     console.log(err);
     return reply.code(500).send(false);
+  }
+}
+
+
+
+export function DeleteNotification(request , reply){
+
+  const notifyId = request.query.notifyId;
+  console.log("here=======>" , notifyId);
+  reply.code(200).send(true);
+  try{
+
+  }catch(err){
+    reply.code(500).send(false);
   }
 }

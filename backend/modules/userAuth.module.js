@@ -43,6 +43,19 @@ const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 // };
 
 
+export async function leaderboard(request, reply)
+{
+    // Implementation for leaderboard
+    try {
+        const leaderboardUsers = request.server.db
+            .prepare("SELECT username, profile_img, xp FROM users ORDER BY xp DESC")
+            .all();
+        return reply.code(200).send({ success: true, leaderboard: leaderboardUsers });
+    } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+        return reply.code(500).send({ success: false, message: "Error fetching leaderboard" });
+    }
+}
 
 // token function generator (FIXED)
 export function generateToken(username, email, id_user) {

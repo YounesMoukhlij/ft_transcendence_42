@@ -205,7 +205,6 @@ useEffect(() => {
 
 
       } catch (error) {
-        alert("here");
         console.error('Failed to fetch notifications', error);
       }
     }
@@ -283,8 +282,17 @@ useEffect(() => {
 
 
 
-  function AcceptGameChallenge(item){
-    setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+  async function  AcceptGameChallenge(item){
+    const res = await  axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteNotification`,
+      {
+        params: {notifyId: item.notify_id},
+        headers:{
+          Authorization: `Bearer ${user.access_token}`
+        }
+      }
+    );
+    if (res.status == 200)
+      setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
   }
 
   function RejectGameChallenge(item ){
