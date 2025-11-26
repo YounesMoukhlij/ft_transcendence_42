@@ -38,8 +38,9 @@ interface GameCustomizationProps {
 }
 
 const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGame, isSocketConnected }) => {
+  const router = useRouter();
   const { gameState, setCustomisation } = useGameContext();
-  const { user } = useUserStore();
+  const { user, clearUser } = useUserStore();
   const token = user?.token;
 
   const [tableBg, setTableBg] = useState<string | null>(null);
@@ -68,6 +69,10 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           setCustomisation({ tableBg, ballColor, paddleColor });
         }
       } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          clearUser();
+          router.push('/login');
+        }
         console.error('Error fetching game customization:', error);
       }
     };
@@ -75,12 +80,16 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
     if (token) {
       fetchCustomization();
     }
-  }, [token, setCustomisation]);
+  }, [token, setCustomisation, clearUser, router]);
 
   const saveCustomization = async (customization: { tableBg: string; ballColor: string; paddleColor: string; }) => {
     try {
       await axiosInstance.post('/saveGameCustomization', customization);
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        clearUser();
+        router.push('/login');
+      }
       console.error('Error saving game customization:', error);
     }
   };

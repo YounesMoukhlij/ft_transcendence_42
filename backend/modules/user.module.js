@@ -5,17 +5,17 @@ export async function getConversationId(request, reply) {
 
   const Friend_id = request.body.friend_id;
 
-  
+
   const authHeader = request.headers['authorization'];
 
 
-  
+
   const token = authHeader.split(' ')[1];
-  
+
   if (!Friend_id || !authHeader || !token)
     return reply.code(403).send("");
-  
-  
+
+
   const decodedObject = jwt.verify(token, process.env.SECRET);
 
 
@@ -138,7 +138,7 @@ export async function Xprank(request, reply) {
 
     const friendsQuery = request.server.db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ? UNION SELECT user_id FROM friends WHERE friend_id = ?`);
     const friendsResult = friendsQuery.all(currentUserId, currentUserId);
-    
+
 
 
     const friends = [...new Set(friendsResult.map((entry) => entry.friend_id))];
@@ -147,7 +147,7 @@ export async function Xprank(request, reply) {
     const usersWithStatus = users.map((user) => {
 
 
-      let friendStatus = 'not friend'; 
+      let friendStatus = 'not friend';
 
       if (friends.includes(user.id_user)) {
         friendStatus = 'friend';
@@ -209,7 +209,7 @@ export async function blockFunction(request , reply){
     query.run(user , conv_id);
 
 
-    
+
     if (socket){
         const querydata = request.server.db.prepare(`SELECT * from room WHERE conversation_id = ?`);
         const data = querydata.get(conv_id);
@@ -221,7 +221,7 @@ export async function blockFunction(request , reply){
     }
 
     reply.send(true);
-    
+
   }catch(err){
     reply.code(500);
     console.log(err);
@@ -242,7 +242,7 @@ export async function DeblockFunction(request , reply){
     const result = query.all(conv_id);
 
 
-    
+
     if (result[0].is_double_block === 2){
       const query = request.server.db.prepare(`UPDATE room SET is_double_block = ?, block_user = ? WHERE conversation_id = ?`);
       query.run(1, friend, conv_id);
@@ -252,7 +252,7 @@ export async function DeblockFunction(request , reply){
       const query = request.server.db.prepare(`UPDATE room SET is_double_block = ?, block_user = ? WHERE conversation_id = ?`);
       query.run( 0 , '' ,conv_id);
     }
-    
+
     if (socket){
 
       const querydata = request.server.db.prepare(`SELECT * from room WHERE conversation_id = ?`);
@@ -264,10 +264,10 @@ export async function DeblockFunction(request , reply){
       }));
     }
 
-  
+
     reply.code(200);
 
-    
+
   }catch(err){
     reply.code(500);
     console.log(err);
@@ -279,7 +279,7 @@ export async function DeblockFunction(request , reply){
 export async function unfriend(request, reply) {
 
   const { user, friend, conv_id , friend_id } = request.body;
-  
+
   try {
     const socket = request.server.users_socket.get(friend_id.toString());
 

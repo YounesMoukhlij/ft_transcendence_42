@@ -9,6 +9,23 @@ export interface Player {
   id?: string;
 }
 
+export interface TournamentMatch {
+  id: number;
+  round: number;
+  player1?: Player;
+  player2?: Player;
+  winner?: Player;
+  status: 'pending' | 'playing' | 'finished';
+}
+
+export interface Tournament {
+  type: 'local' | 'remote';
+  playerCount: 4;
+  status: 'setup' | 'playing' | 'finished';
+  currentMatch: number;
+  bracket: TournamentMatch[];
+}
+
 export interface GameCustomisation {
   tableBg: string | null;
   ballColor: string | null;
@@ -22,6 +39,7 @@ export interface GameState {
   roomCode?: string;
   isHost?: boolean;
   gameRoom?: { id: string };
+  tournament?: Tournament;
 }
 
 interface GameContextType {
@@ -31,6 +49,8 @@ interface GameContextType {
   setCustomisation: (customisation: GameCustomisation) => void;
   setRoomCode: (roomCode: string) => void;
   resetGameState: () => void;
+  setTournament: (tournament: Tournament) => void;
+  updateTournamentMatch: (matchId: number, updates: Partial<TournamentMatch>) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -56,6 +76,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       ballColor: null,
       paddleColor: null,
     },
+    tournament: undefined,
   });
 
   const setGameMode = useCallback((mode: GameState['mode']) => {
@@ -86,6 +107,30 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         ballColor: null,
         paddleColor: null,
       },
+      tournament: undefined,
+    });
+  }, []);
+
+  const setTournament = useCallback((tournament: Tournament) => {
+    setGameState(prev => ({ ...prev, tournament }));
+  }, []);
+
+  const updateTournamentMatch = useCallback((matchId: number, updates: Partial<TournamentMatch>) => {
+    setGameState(prev => {
+      if (!prev.tournament) return prev;
+      const newBracket = prev.tournament.bracket.map(match => {
+        if (match.id === matchId) {
+          return { ...match, ...updates };
+        }
+        return match;
+      });
+      return {
+        ...prev,
+        tournament: {
+          ...prev.tournament,
+          bracket: newBracket,
+        },
+      };
     });
   }, []);
 
@@ -98,6 +143,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         setCustomisation,
         setRoomCode,
         resetGameState,
+        setTournament,
+        updateTournamentMatch,
       }}
     >
       {children}

@@ -8,12 +8,16 @@ import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettin
 import Link from 'next/link';
 import axios from 'axios';
 import { Toaster, toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import  {useUserStore}  from '../store/userStore';
 
 import '../app/(protected)/chat/page.css'
 
 export default function Navbar()
 {
+  const router = useRouter();
+  const { clearUser } = useUserStore();
+
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationIndex, setNotificationIndex] = useState(false);
@@ -156,7 +160,7 @@ useEffect(() => {
 
   useEffect(() => {
 
-    if (!user)
+    if (!user || !user.access_token)
         return ;
     async function get_notify() {
       try {
@@ -169,14 +173,17 @@ useEffect(() => {
           }
         );
         setNotification(result.data.reverse());
-        console.log(result.data);
       } catch (error) {
+        if (axios.isAxiosError(error) && error.response && error.response.status === 401) {
+          clearUser();
+          router.push('/login');
+        }
         console.error('Failed to fetch notifications', error);
       }
     }
     get_notify();
 
-  }, [user]);
+  }, [user, clearUser, router]);
 
   const _hasHydrated = useUserStore(state => state._hasHydrated);
 

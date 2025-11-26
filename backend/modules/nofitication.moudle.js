@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
   function ft_getTime() {
   const now = new Date();
-  
+
   const pad = (n) => n.toString().padStart(2, '0');
 
   const year = now.getFullYear().toString().slice(-2); // 21
@@ -23,7 +23,7 @@ export async function GetNotification(request, reply) {
 
   if (!authHeader)
     reply.code(401).send("missing token");
-  
+
   const token = authHeader.split(' ')[1];
   let decodedObject;
 
@@ -33,7 +33,7 @@ export async function GetNotification(request, reply) {
   catch(err){
     return reply.code(401).send("Invalid token");
   }
-  
+
 
   try {
     const query = request.server.db.prepare(` SELECT n.*, u.username AS sender_username, u.profile_img AS sender_profile_img FROM notification n JOIN users u ON n.sender_user = u.id_user WHERE n.getter_user = ?`);
@@ -55,7 +55,7 @@ export async function DeleteFriendRequest(request , reply){
 
   if (!authHeader || !notify_id)
     reply.code(400).send("Missing params");
-  
+
   const token = authHeader.split(' ')[1];
 
   let decodedObject;
@@ -86,7 +86,7 @@ export async function sendRequestFriend(request, reply) {
   const { friend_id} = request.body;
 
   const authHeader = request.headers['authorization'];
-  
+
 
   if ( !friend_id || !authHeader) {
     return reply.code(400).send("missing params");
@@ -95,15 +95,15 @@ export async function sendRequestFriend(request, reply) {
 
   const token = authHeader.split(' ')[1];
   let decodedObject;
-  
-  
-  
+
+
+
   try{
     decodedObject = jwt.verify(token, process.env.SECRET);
   }catch(err){
     return reply.code(401).send("invalid token ");
   }
-  
+
   const socket = request.server.users_socket.get(friend_id.toString());
 
   try {
@@ -113,19 +113,19 @@ export async function sendRequestFriend(request, reply) {
 
   if (exists)
     return reply.code(200).send(true);
-  
+
     const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
     insertQuery.run(friend_id, title, decodedObject.id_user, "request friend");
 
-    
+
     if (socket) {
-      
+
       const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
       const result = query1.get(decodedObject.id_user);
-      
+
       const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
       const res = query2.get(friend_id, decodedObject.id_user);
-      
+
       const object = {
         getter_user: friend_id,
         sender_user: decodedObject.id_user,
@@ -151,24 +151,24 @@ export async function sendRequestFriend(request, reply) {
 
 
 export async function AddFriend( request  , reply){
-  
+
   const { Freind_id } = request.body;
-  
+
   const authHeader = request.headers['authorization'];
-  
+
   if ( !authHeader || !Freind_id)
     return reply.code(400),send(false);
-  
+
   const token = authHeader.split(' ')[1];
   let decodedObject;
-  
-  
+
+
   try{
     decodedObject = jwt.verify(token, process.env.SECRET);
   }catch(err){
     return reply.code(401).send("invalid token ");
   }
-  
+
   const socket = request.server.users_socket.get(Freind_id.toString());
 
 
@@ -243,54 +243,16 @@ export async function GetFriends(request, reply) {
 
     const userId = user.id_user;
 
-    const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id FROM friends WHERE friend_id = ?`);
-    const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id FROM friends WHERE user_id = ?`);
-
-    const friends1 = getFriendsStmt1.all(userId).map(row => row.user_id);
-    const friends2 = getFriendsStmt2.all(userId).map(row => row.friend_id);
-
-    const allFriendIds = [...new Set([...friends1, ...friends2])];
-
-    if (allFriendIds.length === 0) {
-      return reply.send([]);
-    }
-
-    const placeholders = allFriendIds.map(() => '?').join(', ');
-    const getFriendDetailsStmt = request.server.db.prepare(`
-      SELECT id_user, username, email, fullname, profile_img, xp, access_token, status 
-      FROM users
-      WHERE id_user IN (${placeholders})
+    const getFriendsStmt = request.server.db.prepare(`
+      SELECT u.id_user, u.username, u.profile_img as avatar
+      FROM users u
+      JOIN friends f ON (u.id_user = f.user_id OR u.id_user = f.friend_id)
+      WHERE (f.user_id = ? OR f.friend_id = ?) AND u.id_user != ?
     `);
 
-    const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
+    const friendDetails = getFriendsStmt.all(userId, userId, userId);
 
-    const getLastMessageStmt = request.server.db.prepare(`
-      SELECT message, created_at
-      FROM message
-      WHERE conv_id = ?
-      ORDER BY created_at DESC
-      LIMIT 1
-    `);
-
-    for (const friend of friendDetails) {
-      const getConvIdStmt = request.server.db.prepare(`
-        SELECT conversation_id
-        FROM room
-        WHERE (members LIKE ? OR members LIKE ?)
-        LIMIT 1
-      `);
-
-      const case1 = `%${username},${friend.username}%`;
-      const case2 = `%${friend.username},${username}%`;
-
-      const convIdRow = getConvIdStmt.get(case1, case2);
-
-      if (convIdRow) {
-        const lastMessage = getLastMessageStmt.get(convIdRow.conversation_id);
-        friend.LastMessage = lastMessage ? lastMessage.message : "Say Hello";
-        friend.LastMessageTime = lastMessage ? lastMessage.created_at : "0000-01-01 00:00:00"
-      }
-    }
+    // The last message logic is not needed for the tournament page
 
     return reply.send(friendDetails);
 
@@ -312,7 +274,7 @@ export function NotificationSeen(request , reply){
 
   if (!authHeader)
     reply.code(401).send("missing token");
-  
+
   const token = authHeader.split(' ')[1];
   let decodedObject;
 
@@ -341,7 +303,7 @@ export function NotificationSeen(request , reply){
 
 
 // export function SendTyping (request , reply){
-  
+
 //   const authHeader = request.headers['authorization'];
 //   const {Friend_id} = request.body;
 
@@ -349,7 +311,7 @@ export function NotificationSeen(request , reply){
 
 //   if (!authHeader || !Friend_id)
 //     reply.code(401).send("missing token");
-  
+
 //   const token = authHeader.split(' ')[1];
 //   let decodedObject;
 
@@ -392,7 +354,7 @@ export  function sendGameChallenge(request , reply){
   const {Friend_id} = request.body;
   if (!authHeader || !Friend_id)    // must be check if is not a freind;
     reply.code(401).send("missing token");
-  
+
   const token = authHeader.split(' ')[1];
   let decodedObject;
 
@@ -404,27 +366,27 @@ export  function sendGameChallenge(request , reply){
   }
 
 
-  
+
   try{
     const title = "game challenge";
     const query = request.server.db.prepare('SELECT profile_img FROM users where id_user = ?');
     const result = query.get(decodedObject.id_user);
-    
+
     const ExpiredTime =  ft_getTime();
     const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody , expired) VALUES (?, ?, ?, ? , ?)`);
-    
+
     insertQuery.run(Friend_id, title, decodedObject.id_user, "game challenge" , ExpiredTime);
-    
-    
+
+
     const socket = request.server.users_socket.get(Friend_id.toString());
-    
-    
+
+
     if (socket){
-      
+
       const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
       const result = query1.get(decodedObject.id_user);
-      
-      
+
+
       const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
       const res = query2.get(Friend_id, decodedObject.id_user);
 
@@ -474,7 +436,7 @@ export function AcceptGameChallenge(request , reply){
 
   if (!authHeader || !Friend_id)
     reply.code(401).send("missing token");
-  
+
   const token = authHeader.split(' ')[1];
   let decodedObject;
 
@@ -491,7 +453,7 @@ export function AcceptGameChallenge(request , reply){
     if (socket){
       const object  = {
       };
-      
+
       socket.send(JSON.stringify({
         type: "start_game",
         data: object
@@ -504,3 +466,4 @@ export function AcceptGameChallenge(request , reply){
 
   return reply.send(true);
 }
+

@@ -17,9 +17,9 @@ export default function ModeSwiper()
     const { setGameMode } = useGameContext();
 
     const modes = [
-      { id: 1, title: "Remote Game", description: "Play with a friend online", buttonname: "1v1 Remote", image: "/1v1.png", mode: 'remote-options' as const },
-      { id: 2, title: "Game vs AI", description: "Play against computer", buttonname: "AI", image: "/robot.png", mode: 'ai' as const },
-      { id: 3, title: "Game vs Human", description: "Play online", buttonname: "Tournament", image: "/tournament.png", mode: 'tournament' as const },
+      { id: 1, title: "Game vs Human", description: "Play online", buttonname: "Tournament", image: "/tournament.png", mode: 'tournament' as const },
+      { id: 2, title: "Remote Game", description: "Play with a friend online", buttonname: "1v1 Remote", image: "/1v1.png", mode: 'remote-options' as const },
+      { id: 3, title: "Game vs AI", description: "Play against computer", buttonname: "AI", image: "/robot.png", mode: 'ai' as const },
       { id: 4, title: "Game vs Human", description: "Play with a friend", buttonname: "1 Versus 1", image: "/1v1.png", mode: 'local' as const },
     ];
 

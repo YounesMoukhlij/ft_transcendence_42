@@ -23,7 +23,7 @@ const uploadsDir = path.join(__dirname, 'uploads');
 
 
 const app = fastify({
-  logger: true, 
+  logger: true,
   bodyLimit: 10 * 1024 * 1024,
 });
 
@@ -36,6 +36,8 @@ app.decorate('db', db);
 
 
 async function startServer() {
+  let casualWaitingPool = [];
+  let tournamentWaitingPool = [];
   try {
 
     if (!fs.existsSync(uploadsDir)) {
@@ -132,9 +134,9 @@ async function startServer() {
   }
 }
     // --- WebSocket Server Setup ---
-    const waitingPool = [];
     const rooms = new Map();
     const gameIntervals = new Map();
+    const tournaments = new Map();
 
     const GAME_WIDTH = 800;
     const GAME_HEIGHT = 600;
@@ -145,7 +147,7 @@ async function startServer() {
     function saveGameResult(gameState) {
         const { player1, player2 } = gameState;
         let winner, loser;
-    
+
         if (player1.score >= WINNING_SCORE) {
             winner = player1;
             loser = player2;
@@ -153,7 +155,7 @@ async function startServer() {
             winner = player2;
             loser = player1;
         }
-    
+
         try {
             const stmt = db.prepare(
                 'INSERT INTO game_history (user_win, user_lose, win_score, lose_score, type) VALUES (?, ?, ?, ?, ?)'
@@ -245,7 +247,7 @@ async function startServer() {
                     p.socket.send(JSON.stringify(gameStatePayload));
                 }
             });
-        }, 1000 / 60); // 60 FPS
+        }, 1000 / 60); // game b 60 FPS, change it for another fps, 60 ahsn haja 
 
         gameIntervals.set(roomCode, intervalId);
     }
@@ -279,17 +281,17 @@ async function startServer() {
                         socket: socket,
                     };
 
-                    const opponentIndex = waitingPool.findIndex(p => p.socket !== socket);
+                    const opponentIndex = casualWaitingPool.findIndex(p => p.socket !== socket);
 
                     if (opponentIndex > -1) {
-                        const opponent = waitingPool.splice(opponentIndex, 1)[0];
+                        const opponent = casualWaitingPool.splice(opponentIndex, 1)[0];
                         const newRoomCode = Math.random().toString(36).substring(7);
 
                         const players = [
                             { username: player.username, socket: player.socket, id: player.id },
                             { username: opponent.username, socket: opponent.socket, id: opponent.id },
                         ];
-                        
+
                         socket.roomCode = newRoomCode;
                         opponent.socket.roomCode = newRoomCode;
 
@@ -304,7 +306,7 @@ async function startServer() {
                         };
                         rooms.set(newRoomCode, newRoom);
 
-                        console.log('Match found, starting game in room:', newRoomCode);
+                        console.log('----> Match found, starting game in room:', newRoomCode);
                         const matchDetails = {
                             roomCode: newRoomCode,
                             players: [
@@ -320,11 +322,11 @@ async function startServer() {
                         startGame(newRoomCode, newRoom);
 
                     } else {
-                        waitingPool.push(player);
+                        casualWaitingPool.push(player);
                         socket.send(JSON.stringify({ type: 'searching', payload: 'Waiting for an opponent...' }));
                     }
                     break;
-                
+
                 case 'paddleMove':
                     if (room) {
                         const playerToUpdate = room.gameState.player1.id === id ? room.gameState.player1 : room.gameState.player2;
@@ -384,7 +386,7 @@ async function startServer() {
                     if (rooms.has(roomCode)) {
                         const roomToLeave = rooms.get(roomCode);
                         roomToLeave.players = roomToLeave.players.filter(p => p.socket !== socket);
-                        
+
                         const intervalId = gameIntervals.get(roomCode);
                         if (intervalId) {
                             clearInterval(intervalId);
@@ -395,6 +397,126 @@ async function startServer() {
                         roomToLeave.players.forEach(p => {
                             p.socket.send(JSON.stringify({ type: 'playerLeft', payload: { username: 'A player' } }));
                         });
+                    }
+                    break;
+                case 'game':
+                    switch (message.action) {
+                        case 'createTournament':
+                            const { type, playerCount, playerName, avatar, color, isPrivate } = message.payload;
+                            const newTournamentId = Math.random().toString(36).substring(2, 9);
+                            const newHostPlayer = { id, username: playerName, avatar, color };
+                            const newTournament = {
+                                id: newTournamentId,
+                                name: `${playerName}'s Tournament`,
+                                host: newHostPlayer,
+                                maxPlayers: playerCount,
+                                currentPlayers: 1,
+                                status: 'waiting',
+                                isPrivate,
+                                registeredPlayers: [newHostPlayer],
+                                type,
+                            };
+                            tournaments.set(newTournamentId, newTournament);
+                            socket.send(JSON.stringify({
+                                type: 'tournamentCreated',
+                                data: {
+                                    tournament: newTournament,
+                                    tournamentId: newTournamentId,
+                                }
+                            }));
+                            break;
+                        case 'inviteToTournament':
+                            const { friendId } = message.payload;
+                            const friendSocket = users_socket.get(friendId.toString());
+
+                            const inviteTournamentId = Math.random().toString(36).substring(2, 9);
+                            const hostUser = db.prepare("SELECT profile_img as avatar FROM users WHERE id_user = ?").get(id);
+                            const inviteHostPlayer = { id, username, socket, avatar: hostUser.avatar };
+                            const inviteTournament = {
+                                id: inviteTournamentId,
+                                name: `${username}'s Tournament`,
+                                host: inviteHostPlayer,
+                                maxPlayers: 4,
+                                currentPlayers: 1,
+                                status: 'waiting',
+                                isPrivate: true,
+                                registeredPlayers: [inviteHostPlayer],
+                                type: 'remote',
+                            };
+                            tournaments.set(inviteTournamentId, inviteTournament);
+
+                            if (friendSocket) {
+                                friendSocket.send(JSON.stringify({
+                                    type: 'tournamentInvite',
+                                    data: {
+                                        from: {
+                                            id,
+                                            username,
+                                        },
+                                        tournamentId: inviteTournamentId,
+                                    }
+                                }));
+                            }
+                            break;
+
+                        case 'acceptTournamentInvite':
+                            const { tournamentId: acceptedTournamentId } = message.payload;
+                            const acceptedTournament = tournaments.get(acceptedTournamentId);
+                            if (acceptedTournament && acceptedTournament.currentPlayers < acceptedTournament.maxPlayers) {
+                                const joiningUser = db.prepare("SELECT profile_img as avatar FROM users WHERE id_user = ?").get(id);
+                                const player = { id, username, socket, avatar: joiningUser.avatar };
+                                acceptedTournament.registeredPlayers.push(player);
+                                acceptedTournament.currentPlayers++;
+                                if (acceptedTournament.currentPlayers === acceptedTournament.maxPlayers) {
+                                    acceptedTournament.status = 'playing';
+                                }
+                                acceptedTournament.registeredPlayers.forEach(p => {
+                                    p.socket.send(JSON.stringify({
+                                        type: 'tournamentUpdated',
+                                        data: acceptedTournament,
+                                    }));
+                                });
+                            }
+                            break;
+                        case 'findRandomOpponent':
+                            // Add user to the waiting pool
+                            const player = {
+                                id,
+                                username: message.payload.playerName,
+                                avatar: message.payload.avatar,
+                                color: message.payload.color,
+                                socket: socket,
+                            };
+                            tournamentWaitingPool.push(player);
+
+                            // Check if there's a match
+                            if (tournamentWaitingPool.length >= 4) {
+                                const players = tournamentWaitingPool.splice(0, 4);
+                                const randomTournamentId = Math.random().toString(36).substring(2, 9);
+                                const randomTournament = {
+                                    id: randomTournamentId,
+                                    name: `Tournament`,
+                                    host: players[0],
+                                    maxPlayers: 4,
+                                    currentPlayers: 4,
+                                    status: 'playing',
+                                    isPrivate: false,
+                                    registeredPlayers: players,
+                                    type: 'remote',
+                                };
+                                tournaments.set(randomTournamentId, randomTournament);
+
+                                players.forEach(p => {
+                                    p.socket.send(JSON.stringify({
+                                        type: 'tournamentCreated',
+                                        data: {
+                                            tournament: randomTournament,
+                                            tournamentId: randomTournamentId,
+                                        }
+                                    }));
+                                });
+                            }
+                            break;
                     }
                     break;
             }
@@ -410,9 +532,16 @@ async function startServer() {
             query.run(0, id);
             users_socket.delete(id.toString());
 
-            const index = waitingPool.findIndex(p => p.socket === socket);
-            if (index > -1) {
-                waitingPool.splice(index, 1);
+            // Remove from casual waiting pool
+            const casualIndex = casualWaitingPool.findIndex(p => p.socket === socket);
+            if (casualIndex > -1) {
+                casualWaitingPool.splice(casualIndex, 1);
+            }
+
+            // Remove from tournament waiting pool
+            const tournamentIndex = tournamentWaitingPool.findIndex(p => p.socket === socket);
+            if (tournamentIndex > -1) {
+                tournamentWaitingPool.splice(tournamentIndex, 1);
             }
 
             if (socket.roomCode && rooms.has(socket.roomCode)) {
@@ -422,7 +551,7 @@ async function startServer() {
                     clearInterval(intervalId);
                     gameIntervals.delete(socket.roomCode);
                 }
-                
+
                 if (room) {
                     room.players = room.players.filter(p => p.socket !== socket);
                     room.players.forEach(p => {
