@@ -20,7 +20,7 @@ export default function VersusSelectionPage() {
     if (mode === 'local') {
       router.push('/game/player2');
     } else if (mode === 'remote') {
-      router.push('/game/remote');
+      router.push('/game/customize-remote');
     } else {
       router.push('/game/customize');
     }

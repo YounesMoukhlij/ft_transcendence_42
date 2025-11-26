@@ -2,548 +2,405 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useGameContext } from '../components/GameContext';
-import { FaUserCircle } from 'react-icons/fa';
-import { FaRobot } from 'react-icons/fa';
-import { FaPause, FaPlay } from 'react-icons/fa';
+import { useUserStore } from '../store/userStore';
+import { useRouter } from 'next/navigation';
+import { ServerGameState, Player } from '../types/game';
 
-interface GameState {
-  ball: {
-    x: number;
-    y: number;
-    dx: number;
-    dy: number;
-    radius: number;
-  };
-  leftPaddle: {
-    y: number;
-    height: number;
-    width: number;
-    speed: number;
-  };
-  rightPaddle: {
-    y: number;
-    height: number;
-    width: number;
-    speed: number;
-  };
-  score: {
-    left: number;
-    right: number;
-  };
-  gameStarted: boolean;
-  winner: string | null;
+const PADDLE_HEIGHT = 100;
+const GAME_HEIGHT = 600;
+const GAME_WIDTH = 800;
+const PADDLE_WIDTH = 16;
+const BALL_RADIUS = 10;
+const WINNING_SCORE = 5;
+
+// Unified Props for both Local and Remote
+interface PingPongGameProps {
+  // Remote game props
+  serverGameState?: ServerGameState | null;
+  opponentLeft?: boolean;
+  setServerGameState?: (state: ServerGameState) => void;
+  rematchDeclinedMessage?: string;
+  setRematchDeclinedMessage?: (message: string) => void;
+  rematchOffer?: boolean;
+  handleAcceptRematch?: () => void;
+  
+  // Tournament mode props
+  tournamentMode?: boolean;
+  tournamentPlayers?: Player[];
+  onTournamentMatchEnd?: (winner: Player) => void;
 }
 
-const PingPongGame: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { gameState } = useGameContext();
-  const { tableBg, paddleColor, ballColor } = gameState.customisation || {};
-  const [localGameState, setLocalGameState] = useState<GameState>({
+// Initial state for local game
+const useLocalGameState = (players: Player[]) => {
+  const [gameState, setGameState] = useState({
+    scores: { player1: 0, player2: 0 },
+    paddles: [GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2],
     ball: {
-      x: 400,
-      y: 300,
-      dx: 3,
-      dy: 2,
-      radius: 8,
+      x: GAME_WIDTH / 2,
+      y: GAME_HEIGHT / 2,
+      vx: 5,
+      vy: 5,
     },
-    leftPaddle: {
-      y: 250,
-      height: 100,
-      width: 16,
-      speed: 0,
-    },
-    rightPaddle: {
-      y: 250,
-      height: 100,
-      width: 16,
-      speed: 0,
-    },
-    score: {
-      left: 0,
-      right: 0,
-    },
-    gameStarted: false,
-    winner: null,
   });
-  const [paused, setPaused] = useState(false);
 
-  // Set canvas size to match the table size
-  const tableW = 900;
-  const tableH = 340;
-  const canvasWidth = tableW;
-  const canvasHeight = tableH;
-  const tableX = 0;
-  const tableY = 0;
-  const tableRadius = 16;
-  // Paddle and ball constants
-  const paddleWidth = 16;
-  const paddleHeight = 70; // smaller paddles
-  const ballRadius = 8;
-  // Update gameWidth/gameHeight/gameX/gameY to match table
-  const gameWidth = tableW;
-  const gameHeight = tableH;
-  const gameX = 0;
-  const gameY = 0;
+  const resetGameState = useCallback(() => {
+    setGameState({
+      scores: { player1: 0, player2: 0 },
+      paddles: [GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2],
+      ball: {
+        x: GAME_WIDTH / 2,
+        y: GAME_HEIGHT / 2,
+        vx: Math.random() > 0.5 ? 5 : -5,
+        vy: Math.random() > 0.5 ? 5 : -5,
+      },
+    });
+  }, []);
 
-  const paddleSpeed = 8;
-  const aiPaddleSpeed = 5; // Reduced from 7 to 5 to make AI slower
-  const paddleRadius = 8; // Radius for rounded corners
-  const keysPressed = useRef<Set<string>>(new Set());
+  const updateGameState = useCallback((keysPressed: { [key: string]: boolean }) => {
+    setGameState(prev => {
+      // Paddles
+      const newPaddles = [...prev.paddles];
+      if (keysPressed['w']) newPaddles[0] -= 8;
+      if (keysPressed['s']) newPaddles[0] += 8;
+      if (keysPressed['ArrowUp']) newPaddles[1] -= 8;
+      if (keysPressed['ArrowDown']) newPaddles[1] += 8;
+      newPaddles[0] = Math.max(0, Math.min(newPaddles[0], GAME_HEIGHT - PADDLE_HEIGHT));
+      newPaddles[1] = Math.max(0, Math.min(newPaddles[1], GAME_HEIGHT - PADDLE_HEIGHT));
 
-  // Add horizontal padding for paddles
-  const paddlePadding = 20;
+      // Ball
+      let { x, y, vx, vy } = prev.ball;
+      x += vx;
+      y += vy;
 
-  // Initialize game based on mode
+      // Wall collision
+      if (y - BALL_RADIUS < 0 || y + BALL_RADIUS > GAME_HEIGHT) {
+        vy = -vy;
+      }
+
+      // Paddle collision
+      if (x - BALL_RADIUS < 10 + PADDLE_WIDTH && x - BALL_RADIUS > 10 && y > newPaddles[0] && y < newPaddles[0] + PADDLE_HEIGHT) {
+        vx = -vx * 1.02;
+        x = 10 + PADDLE_WIDTH + BALL_RADIUS; // prevent sticking
+      }
+      if (x + BALL_RADIUS > GAME_WIDTH - PADDLE_WIDTH - 10 && x + BALL_RADIUS < GAME_WIDTH - 10 && y > newPaddles[1] && y < newPaddles[1] + PADDLE_HEIGHT) {
+        vx = -vx * 1.02;
+        x = GAME_WIDTH - PADDLE_WIDTH - 10 - BALL_RADIUS; // prevent sticking
+      }
+
+      const newScores = { ...prev.scores };
+      let ballReset = false;
+
+      // Score
+      if (x + BALL_RADIUS < 0) { // Ball passed left paddle
+        newScores.player2++;
+        ballReset = true;
+      } else if (x - BALL_RADIUS > GAME_WIDTH) { // Ball passed right paddle
+        newScores.player1++;
+        ballReset = true;
+      }
+
+      const newBall = ballReset
+        ? {
+            x: GAME_WIDTH / 2,
+            y: GAME_HEIGHT / 2,
+            vx: Math.random() > 0.5 ? 5 : -5,
+            vy: Math.random() > 0.5 ? 2 : -2,
+          }
+        : { x, y, vx, vy };
+
+      return {
+        scores: newScores,
+        paddles: newPaddles,
+        ball: newBall,
+      };
+    });
+  }, []);
+
+  return { ...gameState, updateGameState, resetGameState };
+};
+
+const PingPongGame: React.FC<PingPongGameProps> = ({ 
+  serverGameState, 
+  opponentLeft, 
+  setServerGameState,
+  rematchDeclinedMessage,
+  setRematchDeclinedMessage,
+  rematchOffer,
+  handleAcceptRematch,
+  tournamentMode = false,
+  tournamentPlayers = [],
+  onTournamentMatchEnd
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const keysPressed = useRef<{ [key: string]: boolean }>({});
+  const { gameState } = useGameContext();
+  const { user, socket } = useUserStore();
+  const router = useRouter();
+
+  // Unified state
+  const [winner, setWinner] = useState<string | null>(null);
+  const [rematchRequested, setRematchRequested] = useState(false);
+
+  // Local game state
+  const localPlayers = tournamentMode ? tournamentPlayers : [];
+  const { scores, paddles, ball, updateGameState, resetGameState } = useLocalGameState(localPlayers);
+
+  // Reset game state for new tournament match
   useEffect(() => {
-    const initializeGame = () => {
-      setLocalGameState(prev => ({
-        ...prev,
-        gameStarted: true,
-      }));
-    };
-    initializeGame();
-  }, [gameState.mode]);
+    if (tournamentMode) {
+      setWinner(null);
+      resetGameState();
+      keysPressed.current = {};
+    }
+  }, [tournamentPlayers, tournamentMode, resetGameState]); // Key dependency
 
-  // Handle keyboard input
+  // Keyboard controls for local and remote
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysPressed.current.add(e.key);
+      if (winner) return;
+      if (tournamentMode) {
+        keysPressed.current[e.key] = true;
+      } else { // Remote mode
+        if (e.key === 'w' || e.key === 'ArrowUp') {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'up' } }));
+          }
+        } else if (e.key === 's' || e.key === 'ArrowDown') {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'down' } }));
+          }
+        }
+      }
     };
+
     const handleKeyUp = (e: KeyboardEvent) => {
-      keysPressed.current.delete(e.key);
+        if (winner) return;
+        if (tournamentMode) {
+            keysPressed.current[e.key] = false;
+        } else { // Remote mode
+            if (
+                e.key === 'w' ||
+                e.key === 'ArrowUp' ||
+                e.key === 's' ||
+                e.key === 'ArrowDown'
+            ) {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'stop' } }));
+                }
+            }
+        }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [socket, user, winner, tournamentMode]);
 
-  // Keyboard shortcut for pause/unpause (P)
+  // Game loop for local tournament
   useEffect(() => {
-    const handlePauseKey = (e: KeyboardEvent) => {
-      if (e.key === 'p' || e.key === 'P') {
-        setPaused(prev => !prev);
+    if (!tournamentMode || winner) return;
+  
+    const gameLoop = setInterval(() => {
+      updateGameState(keysPressed.current);
+    }, 1000 / 60); // 60 FPS
+  
+    return () => clearInterval(gameLoop);
+  }, [tournamentMode, winner, updateGameState]);
+
+
+  // Check for winner in local tournament
+  useEffect(() => {
+    if (!winner && tournamentMode && onTournamentMatchEnd && localPlayers.length >= 2) {
+      if (scores.player1 >= WINNING_SCORE) {
+        setWinner(localPlayers[0].name);
+        onTournamentMatchEnd(localPlayers[0]);
+      } else if (scores.player2 >= WINNING_SCORE) {
+        setWinner(localPlayers[1].name);
+        onTournamentMatchEnd(localPlayers[1]);
       }
-    };
-    window.addEventListener('keydown', handlePauseKey);
-    return () => window.removeEventListener('keydown', handlePauseKey);
-  }, []);
+    }
+  }, [scores, tournamentMode, onTournamentMatchEnd, localPlayers, winner]);
 
-  // Game loop
-  const gameLoop = useCallback(() => {
-    if (paused || !localGameState.gameStarted || localGameState.winner) return;
-    setLocalGameState(prev => {
-      let newState = { ...prev };
-
-      // --- Paddle movement ---
-      // Left paddle (W/S)
-      if (keysPressed.current.has('w') || keysPressed.current.has('W')) {
-        newState.leftPaddle.y = Math.max(0, newState.leftPaddle.y - paddleSpeed);
+  // Check for winner in remote game
+  useEffect(() => {
+    if (!tournamentMode && serverGameState) {
+      if (serverGameState.player1.score >= WINNING_SCORE) {
+        setWinner(serverGameState.player1.username);
+      } else if (serverGameState.player2.score >= WINNING_SCORE) {
+        setWinner(serverGameState.player2.username);
       }
-      if (keysPressed.current.has('s') || keysPressed.current.has('S')) {
-        newState.leftPaddle.y = Math.min(gameHeight - paddleHeight, newState.leftPaddle.y + paddleSpeed);
-      }
-      // Right paddle (AI or Arrow keys)
-      if (gameState.mode === 'ai') {
-        // AI: Make it smoother and easier to beat
-        const paddleCenter = newState.rightPaddle.y + paddleHeight / 2;
-        const target = newState.ball.y;
+    }
+  }, [serverGameState, tournamentMode]);
 
-        // 70% of the time, AI makes mistakes
-        if (Math.random() < 0.7) {
-          // Add prediction error and delayed reaction
-          const error = (Math.random() - 0.5) * 100; // Increased error range
-          const reactionDelay = 30; // Add delay to AI reactions
-
-          if (paddleCenter < target + error - reactionDelay) {
-            newState.rightPaddle.y = Math.min(
-              gameHeight - paddleHeight,
-              newState.rightPaddle.y + (aiPaddleSpeed * 0.7) // 70% of normal speed
-            );
-          } else if (paddleCenter > target + error + reactionDelay) {
-            newState.rightPaddle.y = Math.max(
-              0,
-              newState.rightPaddle.y - (aiPaddleSpeed * 0.7)
-            );
-          }
-        } else {
-          // 30% of the time, AI plays normally but still not perfect
-          if (paddleCenter < target - 15) {
-            newState.rightPaddle.y = Math.min(
-              gameHeight - paddleHeight,
-              newState.rightPaddle.y + aiPaddleSpeed
-            );
-          } else if (paddleCenter > target + 15) {
-            newState.rightPaddle.y = Math.max(
-              0,
-              newState.rightPaddle.y - aiPaddleSpeed
-            );
-          }
-        }
-
-        // Add slight randomness less frequently (reduced from 0.2 to 0.1)
-        if (Math.random() < 0.1) {
-          // Reduced random movement magnitude (from 16 to 8)
-          newState.rightPaddle.y += (Math.random() - 0.5) * 8;
-          newState.rightPaddle.y = Math.max(
-            0,
-            Math.min(gameHeight - paddleHeight, newState.rightPaddle.y)
-          );
-        }
-      } else {
-        if (keysPressed.current.has('ArrowUp')) {
-          newState.rightPaddle.y = Math.max(0, newState.rightPaddle.y - paddleSpeed);
-        }
-        if (keysPressed.current.has('ArrowDown')) {
-          newState.rightPaddle.y = Math.min(gameHeight - paddleHeight, newState.rightPaddle.y + paddleSpeed);
-        }
-      }
-
-      // --- Ball movement ---
-      newState.ball.x += newState.ball.dx;
-      newState.ball.y += newState.ball.dy;
-
-      // --- Ball collision with top/bottom walls ---
-      if (newState.ball.y - ballRadius <= 0) {
-        newState.ball.y = ballRadius;
-        newState.ball.dy = -newState.ball.dy;
-      }
-      if (newState.ball.y + ballRadius >= gameHeight) {
-        newState.ball.y = gameHeight - ballRadius;
-        newState.ball.dy = -newState.ball.dy;
-      }
-
-      // --- Ball collision with left paddle ---
-      if (
-        newState.ball.x - ballRadius <= paddleWidth &&
-        newState.ball.x - ballRadius >= 0 &&
-        newState.ball.y + ballRadius >= newState.leftPaddle.y &&
-        newState.ball.y - ballRadius <= newState.leftPaddle.y + paddleHeight
-      ) {
-        newState.ball.x = paddleWidth + ballRadius;
-        newState.ball.dx = Math.abs(newState.ball.dx);
-        // Add a little angle based on where it hit the paddle
-        const hitPos = (newState.ball.y - (newState.leftPaddle.y + paddleHeight / 2)) / (paddleHeight / 2);
-        newState.ball.dy = 4 * hitPos;
-      }
-
-      // --- Ball collision with right paddle ---
-      if (
-        newState.ball.x + ballRadius >= gameWidth - paddleWidth &&
-        newState.ball.x + ballRadius <= gameWidth &&
-        newState.ball.y + ballRadius >= newState.rightPaddle.y &&
-        newState.ball.y - ballRadius <= newState.rightPaddle.y + paddleHeight
-      ) {
-        newState.ball.x = gameWidth - paddleWidth - ballRadius;
-        newState.ball.dx = -Math.abs(newState.ball.dx);
-        // Add a little angle based on where it hit the paddle
-        const hitPos = (newState.ball.y - (newState.rightPaddle.y + paddleHeight / 2)) / (paddleHeight / 2);
-        newState.ball.dy = 4 * hitPos;
-      }
-
-      // --- Scoring ---
-      if (newState.ball.x + ballRadius < 0) {
-        newState.score.right++;
-        newState.ball = {
-          x: gameWidth / 2,
-          y: gameHeight / 2,
-          dx: -3 * (Math.random() > 0.5 ? 1 : -1),
-          dy: (Math.random() - 0.5) * 4,
-          radius: ballRadius,
-        };
-      } else if (newState.ball.x - ballRadius > gameWidth) {
-        newState.score.left++;
-        newState.ball = {
-          x: gameWidth / 2,
-          y: gameHeight / 2,
-          dx: 3 * (Math.random() > 0.5 ? 1 : -1),
-          dy: (Math.random() - 0.5) * 4,
-          radius: ballRadius,
-        };
-      }
-
-      // --- Win condition ---
-      if (newState.score.left >= 20) {
-        newState.winner = gameState.players[0]?.name || 'Player 1';
-      } else if (newState.score.right >= 20) {
-        newState.winner = gameState.mode === 'ai' ? 'AI Opponent' : (gameState.players[1]?.name || 'Player 2');
-      }
-
-      // --- Sync paddle/ball state for rendering ---
-      newState.leftPaddle.width = paddleWidth;
-      newState.leftPaddle.height = paddleHeight;
-      newState.rightPaddle.width = paddleWidth;
-      newState.rightPaddle.height = paddleHeight;
-      newState.ball.radius = ballRadius;
-
-      return newState;
-    });
-  }, [paused, localGameState.gameStarted, localGameState.winner, gameState.mode, gameState.players]);
-
-  // Render game
-  const renderGame = useCallback(() => {
+  // Drawing logic (works for both modes)
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // --- 1. Draw table background (custom or default) ---
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    const customBg = gameState.customisation?.tableBg;
-    if (customBg) {
-      if (customBg.startsWith('linear-gradient')) {
-        const match = customBg.match(/linear-gradient\(135deg,\s*([^,]+),\s*([^,]+)(?:,\s*([^,]+))?\)/);
-        if (match) {
-          const grad = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
-          grad.addColorStop(0, match[1].trim());
-          grad.addColorStop(0.5, match[3] ? match[2].trim() : match[2].trim());
-          grad.addColorStop(1, match[3] ? match[3].trim() : match[2].trim());
-          ctx.fillStyle = grad;
-        } else {
-          ctx.fillStyle = customBg;
-        }
-      } else {
-        ctx.fillStyle = customBg;
-      }
-    } else {
-      ctx.fillStyle = 'rgba(75, 85, 99, 0.9)'; // default gray-600
-    }
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // --- 2. Draw white rounded table border only (no background fill) ---
-    ctx.save();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.roundRect(tableX, tableY, tableW, tableH, tableRadius);
-    ctx.stroke();
-    ctx.restore();
+    if (tournamentMode) {
+      const { customisation } = gameState;
+      // Local Tournament Draw
+      ctx.fillStyle = customisation?.tableBg || '#333';
+      ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // --- 3. Draw thick dashed gray center line ---
-    ctx.save();
-    ctx.setLineDash([18, 18]);
-    ctx.strokeStyle = '#bdbdbd';
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.moveTo(canvasWidth / 2, tableY + 10);
-    ctx.lineTo(canvasWidth / 2, tableY + tableH - 10);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
+      ctx.beginPath();
+      ctx.setLineDash([10, 10]);
+      ctx.moveTo(GAME_WIDTH / 2, 0);
+      ctx.lineTo(GAME_WIDTH / 2, GAME_HEIGHT);
+      ctx.strokeStyle = "#fff";
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-    // --- 4. Draw 3D paddles (custom color) ---
-    ctx.save();
-    // Left paddle
-    const leftPaddleX = gameX + paddlePadding;
-    const leftPaddleY = gameY + localGameState.leftPaddle.y;
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 4;
-    ctx.shadowOffsetY = 4;
-    ctx.beginPath();
-    ctx.roundRect(leftPaddleX, leftPaddleY, paddleWidth, paddleHeight, 8);
-    ctx.fillStyle = gameState.customisation?.paddleColor || '#f87171';
-    ctx.fill();
-    ctx.restore();
-    // Right paddle
-    const rightPaddleX = gameX + gameWidth - paddleWidth - paddlePadding;
-    const rightPaddleY = gameY + localGameState.rightPaddle.y;
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = -4;
-    ctx.shadowOffsetY = 4;
-    ctx.beginPath();
-    ctx.roundRect(rightPaddleX, rightPaddleY, paddleWidth, paddleHeight, 8);
-    ctx.fillStyle = gameState.customisation?.paddleColor || '#60a5fa';
-    ctx.fill();
-    ctx.restore();
-    ctx.restore();
+      ctx.fillStyle = customisation?.paddleColor || '#ff0000';
+      ctx.fillRect(10, paddles[0], PADDLE_WIDTH, PADDLE_HEIGHT);
 
-    // --- 5. Draw 3D ball (custom color) ---
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.4)';
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    const ballX = gameX + localGameState.ball.x;
-    const ballY = gameY + localGameState.ball.y;
-    const ballR = ballRadius;
-    ctx.beginPath();
-    ctx.arc(ballX, ballY, ballR, 0, Math.PI * 2);
-    ctx.fillStyle = gameState.customisation?.ballColor || '#fff';
-    ctx.fill();
-    ctx.restore();
+      ctx.fillStyle = customisation?.paddleColor || '#0000ff';
+      ctx.fillRect(GAME_WIDTH - PADDLE_WIDTH - 10, paddles[1], PADDLE_WIDTH, PADDLE_HEIGHT);
 
-    // --- 6. Draw large gray score ---
-    ctx.save();
-    ctx.fillStyle = '#e0e0e0';
-    ctx.font = 'bold 54px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.shadowColor = 'rgba(0,0,0,0.18)';
-    ctx.shadowBlur = 2;
-    ctx.fillText(
-      localGameState.score.left.toString(),
-      tableX + tableW * 0.18,
-      tableY + 18
-    );
-    ctx.fillText(
-      localGameState.score.right.toString(),
-      tableX + tableW * 0.82,
-      tableY + 18
-    );
-    ctx.restore();
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = customisation?.ballColor || '#fff';
+      ctx.fill();
 
-    // --- 7. Draw winner overlay if needed ---
-    if (localGameState.winner) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(tableX, tableY, tableW, tableH);
       ctx.fillStyle = '#fff';
-      ctx.font = '48px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(`${localGameState.winner} Wins!`, canvasWidth / 2, canvasHeight / 2);
-      ctx.font = '24px Arial';
-      ctx.fillText('Press R to restart', canvasWidth / 2, canvasHeight / 2 + 40);
-      ctx.restore();
+      ctx.font = '45px Arial';
+      ctx.fillText(scores.player1.toString(), GAME_WIDTH / 2 - 100, 50);
+      ctx.fillText(scores.player2.toString(), GAME_WIDTH / 2 + 60, 50);
+
+    } else if (serverGameState) {
+      // Remote Game Draw
+      const { player1, player2, ball: remoteBall } = serverGameState;
+      const p1Custom = player1.customization;
+      const p2Custom = player2.customization;
+
+      ctx.fillStyle = p1Custom?.tableBg || '#333';
+      ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+      
+      ctx.beginPath();
+      ctx.setLineDash([10, 10]);
+      ctx.moveTo(GAME_WIDTH / 2, 0);
+      ctx.lineTo(GAME_WIDTH / 2, GAME_HEIGHT);
+      ctx.strokeStyle = "#fff";
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = p1Custom?.paddleColor || '#ff0000';
+      ctx.fillRect(10, player1.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+      
+      ctx.fillStyle = p2Custom?.paddleColor || '#0000ff';
+      ctx.fillRect(GAME_WIDTH - PADDLE_WIDTH - 10, player2.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+
+      ctx.beginPath();
+      ctx.arc(remoteBall.x, remoteBall.y, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = p1Custom?.ballColor || '#fff';
+      ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '45px Arial';
+      ctx.fillText(player1.score.toString(), GAME_WIDTH / 2 - 100, 50);
+      ctx.fillText(player2.score.toString(), GAME_WIDTH / 2 + 60, 50);
     }
-  }, [localGameState, gameState.mode]);
 
-  // Game loop and rendering
-  useEffect(() => {
-    const interval = setInterval(() => {
-      gameLoop();
-    }, 16); // ~60 FPS
-    return () => clearInterval(interval);
-  }, [gameLoop]);
+  }, [serverGameState, tournamentMode, paddles, ball, scores]);
 
+  // Render loop
   useEffect(() => {
-    renderGame();
-  }, [renderGame]);
-
-  // Handle restart
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'r' && localGameState.winner) {
-        setLocalGameState({
-          ball: {
-            x: 400,
-            y: 300,
-            dx: 3,
-            dy: 2,
-            radius: 8,
-          },
-          leftPaddle: {
-            y: 250,
-            height: 100,
-            width: 16,
-            speed: 0,
-          },
-          rightPaddle: {
-            y: 250,
-            height: 100,
-            width: 16,
-            speed: 0,
-          },
-          score: {
-            left: 0,
-            right: 0,
-          },
-          gameStarted: true,
-          winner: null,
-        });
-        setPaused(false);
-      }
+    const render = () => {
+      draw();
+      requestAnimationFrame(render);
     };
-    window.addEventListener('keypress', handleKeyPress);
-    return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [localGameState.winner]);
+    const animationFrameId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [draw]);
 
+  // --- UI Rendering ---
+
+  const handleExit = () => {
+    // In tournament mode, we don't exit, the parent component handles it
+    if (!tournamentMode) {
+        router.push('/game');
+    }
+  };
+
+  const handleRematchRequest = () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'rematch:request' }));
+      setRematchRequested(true);
+      if(setRematchDeclinedMessage) setRematchDeclinedMessage('');
+    }
+  };
+
+  if (opponentLeft) {
+    return (
+      <div className="text-white text-center">
+        <h2>Your opponent has left the game.</h2>
+        <button onClick={handleExit} className="mt-4 px-4 py-2 bg-blue-500 rounded">Back to Game Lobby</button>
+      </div>
+    );
+  }
+  
+  // Winner screen for remote game
+  if (winner && !tournamentMode) {
+    return (
+      <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
+        <h2 className="text-4xl font-bold mb-4">Game Over</h2>
+        <p className="text-2xl mt-4 mb-6">{winner} is the winner!</p>
+        
+        {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage}</p>}
+
+        {rematchOffer ? (
+            handleAcceptRematch &&
+          <button onClick={handleAcceptRematch} className="mt-4 px-6 py-3 bg-yellow-500 rounded-lg text-lg hover:bg-yellow-600 transition-colors">
+            Accept Rematch
+          </button>
+        ) : rematchRequested ? (
+          <p className="text-yellow-400">Waiting for opponent to accept...</p>
+        ) : (
+          <button onClick={handleRematchRequest} className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors">
+            Request Rematch
+          </button>
+        )}
+
+        <button onClick={handleExit} className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors">
+          Back to Game Lobby
+        </button>
+      </div>
+    );
+  }
+
+  // Loading/initial state for remote game
+  if (!tournamentMode && !serverGameState) {
+    return <div className="text-white">Connecting to game...</div>;
+  }
+  
+  // Main game display
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full relative">
-      {/* Pause Button (responsive position and size) */}
-      {!paused && (
-        <div>
-          <button
-            onClick={() => setPaused(true)}
-            className="z-40 flex items-center justify-center fixed left-1/2 -translate-x-1/2 bottom-25 md:absolute md:left-1/2 md:-translate-x-1/2 md:top-10 md:bottom-auto px-3 py-2 md:px-6 md:py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 transition text-base md:text-lg font-bold"
-            style={{ minWidth: '36px', minHeight: '36px' }}
-          >
-            <FaPause className="w-4 h-4 md:w-6 md:h-6" />
-          </button>
-        </div>
-      )}
-      {/* Paused Overlay with Resume Button */}
-      {paused && (
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center z-30"
-          style={{ background: "rgba(0,0,0,0.6)" }}
-        >
-          <span className="text-4xl text-white font-bold mb-8">Paused</span>
-          <button
-            onClick={() => setPaused(false)}
-            className="px-8 py-4 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-700 transition text-2xl font-bold z-40 flex items-center justify-center"
-          >
-            <FaPlay className="w-8 h-8" />
-          </button>
-        </div>
-      )}
-      {/* Responsive player bar */}
-      <div className="absolute left-0 right-0 flex flex-wrap justify-between items-center px-2 md:px-10 lg:px-22" style={{top: 0, minHeight: '70px', pointerEvents: 'none', zIndex: 10}}>
-        {/* Left Player */}
-        <div className="flex flex-row items-center gap-2 min-w-[120px]">
-          {gameState.players && gameState.players[0]?.avatar ? (
-            <img src={gameState.players[0].avatar} alt="Player 1" className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
-          ) : (
-            <FaUserCircle className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
-          )}
-          <span className="text-white text-base xs:text-lg sm:text-xl md:text-2xl pl-2 sm:pl-5 md:pl-7 font-bold drop-shadow-md truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[180px] md:max-w-[220px]">
-            {gameState.players && gameState.players[0]?.name ? gameState.players[0].name : 'PLAYER 1'}
-          </span>
-        </div>
-        {/* Right Player */}
-        <div className="flex flex-row items-center gap-2 min-w-[120px]">
-          <span className="text-white text-base xs:text-lg sm:text-xl md:text-2xl pr-2 sm:pr-5 md:pr-7 font-bold drop-shadow-md truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[180px] md:max-w-[220px]">
-            {gameState.mode === 'ai'
-              ? 'THE MACHINIST (AI)'
-              : (gameState.players && gameState.players[1]?.name ? gameState.players[1].name : 'PLAYER 2')}
-          </span>
-          {gameState.mode === 'ai' ? (
-            <FaRobot className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-blue-300 bg-gray-700 rounded-full border-2 border-white" />
-          ) : (
-            gameState.players && gameState.players[1]?.avatar ? (
-              <img src={gameState.players[1].avatar} alt="Player 2" className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-white bg-gray-700 object-cover" />
-            ) : (
-              <FaUserCircle className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white bg-gray-700 rounded-full border-2 border-white" />
-            )
-          )}
-        </div>
+    <div className="flex flex-col items-center justify-center">
+      <div className="flex justify-between w-full max-w-4xl mb-2">
+        <span className="text-white text-xl">
+            {tournamentMode ? localPlayers[0]?.name : serverGameState?.player1.username}
+        </span>
+        <span className="text-white text-xl">
+            {tournamentMode ? localPlayers[1]?.name : serverGameState?.player2.username}
+        </span>
       </div>
-      {/* Responsive canvas with aspect ratio */}
-      <div className="mt-[90px] w-full flex justify-center">
-        <div className="w-full max-w-full flex justify-center">
-          <div className="w-full max-w-[900px] aspect-[16/6] relative">
-            <canvas
-              ref={canvasRef}
-              width={canvasWidth}
-              height={canvasHeight}
-              className="rounded-lg shadow-lg bg-transparent absolute top-0 left-0 w-full h-full min-w-[220px]"
-              style={{ background: 'transparent', maxWidth: '100%' }}
-            />
-          </div>
-        </div>
-      </div>
+      <canvas
+        ref={canvasRef}
+        width={GAME_WIDTH}
+        height={GAME_HEIGHT}
+        className="bg-gray-800 rounded-lg shadow-lg"
+      />
       <div className="mt-4 text-center text-white">
-        <p className="text-sm">
-          {gameState.mode === 'ai' ? 'Use W/S to control your paddle' :
-           'Left: W/S | Right: ↑/↓'}
-        </p>
-        <p className="text-sm mt-1">Click on P to pause / resume the game</p>
-        <p className="text-sm mt-3">First to 20 points wins!</p>
+        <p>Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
+        <p>First to {WINNING_SCORE} points wins!</p>
       </div>
     </div>
   );

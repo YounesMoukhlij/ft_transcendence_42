@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from './GameContext';
+import { useUserStore } from '../store/userStore';
+import axios from 'axios';
 
 const tableBackgrounds = [
   { name: 'Classic Green', value: '#15803d', type: 'color' },
@@ -31,11 +33,15 @@ const paddleColors = [
 
 interface GameCustomizationProps {
   onBack: () => void;
-  onStartGame: () => void;
+  onStartGame: (customization: { tableBg: string; ballColor: string; paddleColor: string; }) => void;
+  isSocketConnected?: boolean;
 }
 
-const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGame }) => {
-  const { setCustomisation } = useGameContext();
+const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGame, isSocketConnected }) => {
+  const router = useRouter();
+  const { gameState, setCustomisation } = useGameContext();
+  const { user, clearUser } = useUserStore();
+  const token = user?.token;
 
   const [tableBg, setTableBg] = useState<string | null>(null);
   const [ballColor, setBallColor] = useState<string | null>(null);
@@ -43,10 +49,57 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
 
   const isReady = tableBg && ballColor && paddleColor;
 
+  const axiosInstance = axios.create({
+    baseURL: `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  useEffect(() => {
+    const fetchCustomization = async () => {
+      try {
+        const response = await axiosInstance.get('/getGameCustomization');
+        if (response.data) {
+          const { tableBg, ballColor, paddleColor } = response.data;
+          setTableBg(tableBg);
+          setBallColor(ballColor);
+          setPaddleColor(paddleColor);
+          // Update the game context immediately
+          setCustomisation({ tableBg, ballColor, paddleColor });
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          clearUser();
+          router.push('/login');
+        }
+        console.error('Error fetching game customization:', error);
+      }
+    };
+
+    if (token) {
+      fetchCustomization();
+    }
+  }, [token, setCustomisation, clearUser, router]);
+
+  const saveCustomization = async (customization: { tableBg: string; ballColor: string; paddleColor: string; }) => {
+    try {
+      await axiosInstance.post('/saveGameCustomization', customization);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        clearUser();
+        router.push('/login');
+      }
+      console.error('Error saving game customization:', error);
+    }
+  };
+
   const handleStartGame = () => {
     if (isReady) {
-      setCustomisation({ tableBg, ballColor, paddleColor });
-      onStartGame();
+      const customization = { tableBg, ballColor, paddleColor };
+      setCustomisation(customization);
+      saveCustomization(customization);
+      onStartGame(customization);
     }
   };
 
@@ -283,7 +336,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           </button>
           <button
             onClick={handleStartGame}
-            disabled={!isReady}
+            disabled={!isReady || (gameState.mode === 'remote' && !isSocketConnected)}
             className={`pb-2 cursor-pointer bg-black border-2 border-white hover:bg-white hover:text-black px-6 py-2 rounded-xl text-base font-bold transition-all duration-300
               ${isReady ? 'hover:scale-105' : 'cursor-not-allowed'}`}
             style={{
@@ -302,7 +355,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
               textShadow: '0 1px 2px rgba(0,0,0,0.3)'
             }}
           >
-            Start Game
+            {gameState.mode === 'remote' && !isSocketConnected ? 'Connecting...' : 'Start Game'}
           </button>
         </div>
 

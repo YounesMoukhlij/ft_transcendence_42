@@ -4,7 +4,11 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext, Player, TournamentMatch } from '@/components/GameContext';
 import PingPongGame from '@/components/PingPongGame';
+import GameCustomization from '@/components/GameCustomization';
+import { getWebSocket } from '@/components/globalSocket';
+import { useUserStore } from '@/store/userStore';
 import { FaUser, FaUpload, FaCrown, FaTrophy, FaGamepad, FaSearch, FaCheck, FaTimes as FaReject, FaClock } from 'react-icons/fa';
+import axios from 'axios';
 
 // Move PlayerRegistration outside to prevent re-creation
 interface PlayerRegistrationProps {
@@ -122,17 +126,19 @@ PlayerRegistration.displayName = 'PlayerRegistration';
 
 export default function TournamentPage() {
   const router = useRouter();
-  const { gameState, setGameMode, setPlayers, setTournament, updateTournamentMatch } = useGameContext();
-  const [tournamentStep, setTournamentStep] = useState<'setup' | 'registration' | 'playing' | 'bracket' | 'finished' | 'search' | 'browse'>('setup');
+  const user = useUserStore((state) => state.user);
+  const setUser = useUserStore((state) => state.setUser);
+  const clearUser = useUserStore((state) => state.clearUser);
+  const { gameState, setGameMode, setPlayers, setTournament, updateTournamentMatch, setCustomisation } = useGameContext();
+  const [tournamentStep, setTournamentStep] = useState<'setup' | 'registration' | 'customization' | 'playing' | 'bracket' | 'finished' | 'search' | 'browse'>('setup');
   const [tournamentType, setTournamentType] = useState<'local' | 'remote'>('local');
-  const [playerCount, setPlayerCount] = useState<4 | 8>(4);
+  const [playerCount, setPlayerCount] = useState<4>(4);
   const [registeredPlayers, setRegisteredPlayers] = useState<Player[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [remoteTournament, setRemoteTournament] = useState<RemoteTournament | null>(null);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [tournamentId, setTournamentId] = useState('');
-  const [joinTournamentId, setJoinTournamentId] = useState('');
   const [tempPlayers, setTempPlayers] = useState<Player[]>([]);
   const [matchWinner, setMatchWinner] = useState<Player | null>(null);
   const [showTournamentWinnerMessage, setShowTournamentWinnerMessage] = useState(false);
@@ -142,6 +148,13 @@ export default function TournamentPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [pendingJoinRequest, setPendingJoinRequest] = useState<string | null>(null);
+  const [friends, setFriends] = useState<Player[]>([]);
+  const [tournamentInvites, setTournamentInvites] = useState<any[]>([]);
+  const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [showFriendsListModal, setShowFriendsListModal] = useState(false);
+
+
 
   // Default avatars - moved outside to prevent recreation
   const defaultAvatars = React.useMemo(() => [
@@ -153,11 +166,51 @@ export default function TournamentPage() {
     'https://cdn-icons-png.flaticon.com/512/149/149995.png'
   ], []);
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!user?.access_token) return;
+
+      try {
+        const response = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/getUserStats`, {
+          headers: {
+            Authorization: `Bearer ${user.access_token}`,
+          },
+        });
+        
+        const updatedUser = { ...user, ...response.data };
+        setUser(updatedUser);
+
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          clearUser();
+          router.push('/login');
+        }
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUser();
+  }, [user?.access_token, setUser, clearUser, router]);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      if (user) {
+        try {
+          const response = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}/GetFriends?username=${user.username}`);
+          setFriends(response.data);
+        } catch (error) {
+          console.error('Error fetching friends:', error);
+        }
+      }
+    };
+    fetchFriends();
+  }, [user]);
+
   // Initialize tempPlayers only when needed
   useEffect(() => {
     if (tournamentType === 'local') {
       setTempPlayers([
-        { name: 'Host Player', avatar: defaultAvatars[0], color: '#3B82F6', id: '1' },
+        { name: user?.username || 'Host Player', avatar: user?.avatar || defaultAvatars[0], color: '#3B82F6', id: user?.id_user?.toString() || '1' },
         ...Array(playerCount - 1).fill(null).map((_, i) => ({
           name: '',
           avatar: defaultAvatars[i + 1],
@@ -166,7 +219,7 @@ export default function TournamentPage() {
         }))
       ]);
     }
-  }, [playerCount, tournamentType, defaultAvatars]);
+  }, [playerCount, tournamentType, defaultAvatars, user]);
 
   useEffect(() => {
     setGameMode('tournament');
@@ -272,6 +325,9 @@ export default function TournamentPage() {
           case 'joinRequestError':
             alert(message.data.message);
             break;
+          case 'tournamentInvite':
+            setTournamentInvites(prev => [...prev, message.data]);
+            break;
         }
       };
 
@@ -292,6 +348,11 @@ export default function TournamentPage() {
   const currentMatch = useMemo(() => {
     return gameState.tournament?.bracket[currentMatchIndex];
   }, [gameState.tournament?.bracket, currentMatchIndex]);
+
+  const currentPlayers = useMemo(() => {
+    if (!currentMatch?.player1 || !currentMatch?.player2) return [];
+    return [currentMatch.player1, currentMatch.player2];
+  }, [currentMatch]);
 
   const nextMatch = useMemo(() => {
     const bracket = gameState.tournament?.bracket || [];
@@ -314,192 +375,9 @@ export default function TournamentPage() {
     return currentMatch.round === maxRound;
   }, [gameState.tournament?.bracket, currentMatchIndex]);
 
-  // Function to proceed to next match after modal - improved with stable dependencies
-  const proceedToNextMatch = useCallback(() => {
-    try {
-      // Hide tournament winner message first
-      setShowTournamentWinnerMessage(false);
-      setMatchWinner(null);
-
-      // Use a timeout to allow state updates to complete before finding next match
-      setTimeout(() => {
-        // Get current bracket state after timeout
-        const bracket = gameState.tournament?.bracket || [];
-
-        // Find next available match (match that has both players and is pending, excluding current match)
-        const nextMatch = bracket.find((m, index) =>
-          m.status === 'pending' &&
-          m.player1 &&
-          m.player2 &&
-          index !== currentMatchIndex
-        );
-
-        if (nextMatch) {
-          const nextIndex = bracket.findIndex(m => m.id === nextMatch.id);
-          setCurrentMatchIndex(nextIndex);
-          setTournamentStep('playing');
-        } else {
-          setTournamentStep('bracket');
-        }
-      }, 100);
-    } catch (error) {
-      console.error('Error in proceedToNextMatch:', error);
-    }
-  }, []); // Empty dependencies to prevent infinite loops
-
-  // Auto-close tournament winner message after 3 seconds and proceed to next match
-  useEffect(() => {
-    if (showTournamentWinnerMessage && matchWinner) {
-      const timer = setTimeout(() => {
-        // Inline the proceedToNextMatch logic to avoid dependency issues
-        setShowTournamentWinnerMessage(false);
-        setMatchWinner(null);
-
-        // Use another timeout to allow state updates
-        setTimeout(() => {
-          const bracket = gameState.tournament?.bracket || [];
-          const nextMatch = bracket.find((m, index) =>
-            m.status === 'pending' &&
-            m.player1 &&
-            m.player2 &&
-            index !== currentMatchIndex
-          );
-
-          if (nextMatch) {
-            const nextIndex = bracket.findIndex(m => m.id === nextMatch.id);
-            setCurrentMatchIndex(nextIndex);
-            setTournamentStep('playing');
-          } else {
-            setTournamentStep('bracket');
-          }
-        }, 100);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [showTournamentWinnerMessage, matchWinner]); // Keep minimal dependencies
-
-  const startTournament = useCallback((players?: Player[]) => {
-    if (tournamentType === 'local') {
-      // Local tournament logic - use provided players or registeredPlayers
-      const playersToUse = players || registeredPlayers;
-      if (playersToUse.length !== playerCount) return;
-
-      const bracket = createTournamentBracket(playersToUse, playerCount);
-
-      setTournament({
-        type: tournamentType,
-        playerCount,
-        status: 'playing',
-        currentMatch: 0,
-        bracket
-      });
-
-      setPlayers(playersToUse);
-      setTournamentStep('playing');
-      setCurrentMatchIndex(0);
-    } else {
-      // Remote tournament logic
-      createRemoteTournament();
-    }
-  }, [tournamentType, registeredPlayers, playerCount, setTournament, setPlayers]);
-
-  // Use useCallback to prevent function recreation
-  const updatePlayer = useCallback((index: number, field: keyof Player, value: string) => {
-    setTempPlayers(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
-    });
-  }, []);
-
-  const handlePlayerRegistrationComplete = useCallback(() => {
-    const validPlayers = tempPlayers.filter(p => p.name.trim() !== '');
-    if (validPlayers.length === playerCount) {
-      setRegisteredPlayers(validPlayers);
-      startTournament(validPlayers); // Pass players directly
-    }
-  }, [tempPlayers, playerCount, startTournament]);
-
-  const handleBackToSetup = useCallback(() => {
-    setTournamentStep('setup');
-  }, []);
-
-  // Handle game completion - improved with better guards to prevent infinite loops
-  const handleGameComplete = useCallback((winner: Player) => {
-    const currentMatch = gameState.tournament?.bracket[currentMatchIndex];
-    if (!currentMatch) {
-      return;
-    }
-
-    // Guard against multiple calls for the same match
-    if (currentMatch.status === 'finished') {
-      return;
-    }
-
-    // Guard against invalid winner
-    if (!winner || !winner.id || !winner.name) {
-      return;
-    }
-
-    // Update the match with the winner
-    updateTournamentMatch(currentMatch.id, {
-      winner,
-      status: 'finished'
-    });
-
-    // Advance winner to next round
-    const bracket = [...(gameState.tournament?.bracket || [])];
-    const maxRounds = playerCount === 4 ? 2 : 3;
-
-    if (currentMatch.round < maxRounds) {
-      const nextRound = currentMatch.round + 1;
-      const nextRoundMatches = bracket.filter(m => m.round === nextRound);
-
-      if (currentMatch.round === 1) {
-        // First round to semi-finals (or final for 4-player)
-        const matchInRound = currentMatchIndex;
-        const nextMatchIndex = Math.floor(matchInRound / 2);
-        const nextMatch = nextRoundMatches[nextMatchIndex];
-
-        if (nextMatch) {
-          const positionInNext = matchInRound % 2;
-          if (positionInNext === 0) {
-            updateTournamentMatch(nextMatch.id, { player1: winner });
-          } else {
-            updateTournamentMatch(nextMatch.id, { player2: winner });
-          }
-        }
-      } else if (currentMatch.round === 2 && maxRounds === 3) {
-        // Semi-finals to final (only for 8-player tournaments)
-        const finalMatch = nextRoundMatches[0];
-        if (finalMatch) {
-          if (!finalMatch.player1) {
-            updateTournamentMatch(finalMatch.id, { player1: winner });
-          } else if (!finalMatch.player2) {
-            updateTournamentMatch(finalMatch.id, { player2: winner });
-          }
-        }
-      }
-    }
-
-    // Show winner announcement
-    setMatchWinner(winner);
-    setShowTournamentWinnerMessage(true);
-  }, [currentMatchIndex, playerCount, updateTournamentMatch, gameState.tournament?.bracket?.length]); // Use bracket length instead of bracket object
-
-  // Calculate match players for the current tournament match - stable version
-  // const matchPlayers = useMemo(() => {
-  //   if (tournamentStep !== 'playing') return [];
-  //   const bracket = gameState.tournament?.bracket;
-  //   if (!bracket || currentMatchIndex >= bracket.length) return [];
-  //   const currentMatch = bracket[currentMatchIndex];
-  //   if (!currentMatch?.player1 || !currentMatch?.player2) return [];
-  //   return [currentMatch.player1, currentMatch.player2];
-  // }, [tournamentStep, currentMatchIndex, gameState.tournament?.bracket?.length]); // Use bracket length instead of bracket object
-
+  // Function to proceed to next match after modal
   // Memoize tournament bracket creation to avoid recreating on every render
-  const createTournamentBracket = useCallback((players: Player[], count: 4 | 8): TournamentMatch[] => {
+  const createTournamentBracket = useCallback((players: Player[], count: 4): TournamentMatch[] => {
     const bracket: TournamentMatch[] = [];
     let matchId = 1;
 
@@ -525,40 +403,150 @@ export default function TournamentPage() {
         round: 2,
         status: 'pending'
       });
-    } else {
-      // Quarter-finals
-      for (let i = 0; i < 8; i += 2) {
-        bracket.push({
-          id: matchId++,
-          round: 1,
-          player1: players[i],
-          player2: players[i + 1],
-          status: 'pending'
-        });
-      }
-      // Semi-finals
-      bracket.push({
-        id: matchId++,
-        round: 2,
-        status: 'pending'
-      });
-      bracket.push({
-        id: matchId++,
-        round: 2,
-        status: 'pending'
-      });
-      // Final
-      bracket.push({
-        id: matchId++,
-        round: 3,
-        status: 'pending'
-      });
     }
 
     return bracket;
   }, []);
 
-  const createRemoteTournament = () => {
+  const proceedToNextMatch = useCallback(() => {
+    setShowTournamentWinnerMessage(false);
+    setMatchWinner(null);
+
+    const bracket = gameState.tournament?.bracket || [];
+
+    // Find the next match that is ready to be played
+    const nextMatch = bracket.find((m, index) =>
+      m.status === 'pending' &&
+      m.player1 &&
+      m.player2 &&
+      index !== currentMatchIndex
+    );
+
+    if (nextMatch) {
+      const nextIndex = bracket.findIndex(m => m.id === nextMatch.id);
+      setCurrentMatchIndex(nextIndex);
+      setTournamentStep('playing');
+    } else {
+      // If no more matches are ready, go to the bracket view
+      setTournamentStep('bracket');
+    }
+  }, [
+    gameState.tournament?.bracket,
+    currentMatchIndex,
+    setCurrentMatchIndex,
+    setTournamentStep,
+    setMatchWinner,
+    setShowTournamentWinnerMessage
+  ]);
+  const startTournament = useCallback((players?: Player[]) => {
+    if (tournamentType === 'local') {
+      // Local tournament logic - use provided players or registeredPlayers
+      const playersToUse = players || registeredPlayers;
+      if (playersToUse.length !== playerCount) return;
+
+      const bracket = createTournamentBracket(playersToUse, playerCount);
+
+      setTournament({
+        type: tournamentType,
+        playerCount,
+        status: 'playing',
+        currentMatch: 0,
+        bracket
+      });
+
+      setPlayers(playersToUse);
+      setTournamentStep('playing');
+      setCurrentMatchIndex(0);
+    } else {
+      // Remote tournament logic
+      createRemoteTournament(true);
+    }
+  }, [tournamentType, registeredPlayers, playerCount, setTournament, setPlayers, createTournamentBracket]);
+
+  // Use useCallback to prevent function recreation
+  const updatePlayer = useCallback((index: number, field: keyof Player, value: string) => {
+    setTempPlayers(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  }, []);
+
+  const handlePlayerRegistrationComplete = useCallback(() => {
+    const validPlayers = tempPlayers.filter(p => p.name.trim() !== '');
+    if (validPlayers.length === playerCount) {
+      setRegisteredPlayers(validPlayers);
+      setTournamentStep('customization');
+    }
+  }, [tempPlayers, playerCount]);
+
+  const handleBackToSetup = useCallback(() => {
+    setTournamentStep('setup');
+  }, []);
+
+  // Handle game completion - improved with better guards to prevent infinite loops
+  const handleGameComplete = useCallback((winner: Player) => {
+    const currentMatch = gameState.tournament?.bracket[currentMatchIndex];
+    if (!currentMatch || currentMatch.status === 'finished' || !winner || !winner.id) {
+      return;
+    }
+
+    updateTournamentMatch(currentMatch.id, {
+      winner,
+      status: 'finished',
+    });
+
+    setMatchWinner(winner);
+    setShowTournamentWinnerMessage(true);
+  }, [currentMatchIndex, updateTournamentMatch, gameState.tournament?.bracket]);
+
+  // Effect to advance winner to the next round
+  useEffect(() => {
+    const bracket = gameState.tournament?.bracket;
+    if (!bracket) return;
+
+    const currentMatch = bracket[currentMatchIndex];
+
+    if (currentMatch && currentMatch.status === 'finished' && currentMatch.winner) {
+        const winner = currentMatch.winner;
+        const maxRounds = Math.max(...bracket.map(m => m.round));
+
+        if (currentMatch.round < maxRounds) {
+            const nextRound = currentMatch.round + 1;
+            
+            const roundMatches = bracket.filter(m => m.round === currentMatch.round);
+            const matchIndexInRound = roundMatches.findIndex(m => m.id === currentMatch.id);
+
+            const nextMatchIndex = Math.floor(matchIndexInRound / 2);
+            const nextRoundMatches = bracket.filter(m => m.round === nextRound);
+            const nextMatch = nextRoundMatches[nextMatchIndex];
+
+            if (nextMatch) {
+                if (nextMatch.player1?.id === winner.id || nextMatch.player2?.id === winner.id) {
+                    return;
+                }
+                const positionInNext = matchIndexInRound % 2;
+                if (positionInNext === 0 && !nextMatch.player1) {
+                  updateTournamentMatch(nextMatch.id, { player1: winner });
+                } else if (positionInNext === 1 && !nextMatch.player2) {
+                  updateTournamentMatch(nextMatch.id, { player2: winner });
+                }
+            }
+        }
+    }
+  }, [gameState.tournament?.bracket, updateTournamentMatch, currentMatchIndex, matchWinner]);
+
+  // Calculate match players for the current tournament match - stable version
+  // const matchPlayers = useMemo(() => {
+  //   if (tournamentStep !== 'playing') return [];
+  //   const bracket = gameState.tournament?.bracket;
+  //   if (!bracket || currentMatchIndex >= bracket.length) return [];
+  //   const currentMatch = bracket[currentMatchIndex];
+  //   if (!currentMatch?.player1 || !currentMatch?.player2) return [];
+  //   return [currentMatch.player1, currentMatch.player2];
+  // }, [tournamentStep, currentMatchIndex, gameState.tournament?.bracket?.length]); // Use bracket length instead of bracket object
+
+  const createRemoteTournament = (isPrivate: boolean) => {
     if (!socket) return;
 
     socket.send(JSON.stringify({
@@ -567,24 +555,10 @@ export default function TournamentPage() {
       payload: {
         type: tournamentType,
         playerCount,
-        playerName: 'Host Player', // You might want to get this from user context
-        avatar: defaultAvatars[0],
-        color: '#3B82F6'
-      }
-    }));
-  };
-
-  const joinRemoteTournament = () => {
-    if (!socket || !joinTournamentId.trim()) return;
-
-    socket.send(JSON.stringify({
-      type: 'game',
-      action: 'joinTournament',
-      payload: {
-        tournamentId: joinTournamentId.trim(),
-        playerName: 'Player', // You might want to get this from user context
-        avatar: defaultAvatars[1],
-        color: '#10B981'
+        playerName: user?.username || 'Host Player', // You might want to get this from user context
+        avatar: user?.avatar || defaultAvatars[0],
+        color: '#3B82F6',
+        isPrivate,
       }
     }));
   };
@@ -607,8 +581,8 @@ export default function TournamentPage() {
       action: 'requestJoinTournament',
       payload: {
         tournamentId: tournamentId,
-        playerName: 'Player',
-        avatar: defaultAvatars[1],
+        playerName: user?.username || 'Player',
+        avatar: user?.avatar || defaultAvatars[1],
         color: '#10B981'
       }
     }));
@@ -638,215 +612,40 @@ export default function TournamentPage() {
     }));
   };
 
-  // const handleMatchEnd = useCallback((winner: Player) => {
-  //   const bracket = gameState.tournament?.bracket || [];
-  //   const currentMatch = bracket[currentMatchIndex];
-  //   if (!currentMatch || !winner) return;
+  const acceptTournamentInvite = (tournamentId: string) => {
+    if (!socket) return;
+    socket.send(JSON.stringify({
+      type: 'game',
+      action: 'acceptTournamentInvite',
+      payload: {
+        tournamentId,
+      }
+    }));
+  };
 
-  //   // Prevent multiple calls for the same match
-  //   if (currentMatch.status === 'finished') {
-  //     console.log('Match already finished, ignoring duplicate call');
-  //     return;
-  //   }
+  const inviteToTournament = (friendId: string) => {
+    if (!socket) return;
+    socket.send(JSON.stringify({
+      type: 'game',
+      action: 'inviteToTournament',
+      payload: {
+        friendId,
+      }
+    }));
+  };
 
-  //   console.log('handleMatchEnd called for match:', currentMatch.id, 'winner:', winner.name);
-
-  //   // Update current match with winner
-  //   updateTournamentMatch(currentMatch.id, {
-  //     winner,
-  //     status: 'finished'
-  //   });
-
-  //   // Advance winner to next round immediately
-  //   const maxRounds = playerCount === 4 ? 2 : 3;
-
-  //   // Advance winner to next round if applicable
-  //   if (currentMatch.round < maxRounds) {
-  //     const nextRound = currentMatch.round + 1;
-  //     const nextRoundMatches = bracket.filter(m => m.round === nextRound);
-
-  //     if (currentMatch.round === 1) {
-  //       // First round to semi-finals (or final for 4-player)
-  //       const matchInRound = currentMatchIndex; // 0, 1 for 4-player
-  //       const nextMatchIndex = Math.floor(matchInRound / 2);
-  //       const nextMatch = nextRoundMatches[nextMatchIndex];
-
-  //       if (nextMatch) {
-  //         const positionInNext = matchInRound % 2; // 0 for player1, 1 for player2
-
-  //         if (positionInNext === 0) {
-  //           updateTournamentMatch(nextMatch.id, { player1: winner });
-  //         } else {
-  //           updateTournamentMatch(nextMatch.id, { player2: winner });
-  //         }
-  //       }
-  //     } else if (currentMatch.round === 2 && maxRounds === 3) {
-  //       // Semi-finals to final (only for 8-player tournaments)
-  //       const finalMatch = nextRoundMatches[0];
-  //       if (finalMatch) {
-  //         if (!finalMatch.player1) {
-  //           updateTournamentMatch(finalMatch.id, { player1: winner });
-  //         } else if (!finalMatch.player2) {
-  //           updateTournamentMatch(finalMatch.id, { player2: winner });
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   // Show tournament winner message
-  //   setMatchWinner(winner);
-  //   setShowTournamentWinnerMessage(true);
-  // }, [currentMatchIndex, playerCount, updateTournamentMatch, gameState.tournament?.bracket?.length]); // Use bracket length instead of bracket object
-
-  // Improved match end and progress function with stable dependencies
-  // const handleMatchEndAndProgress = useCallback((winner: Player) => {
-  //   const bracket = gameState.tournament?.bracket || [];
-  //   const currentMatch = bracket[currentMatchIndex];
-
-  //   if (!currentMatch || !winner) return;
-
-  //   // Update current match with winner
-  //   updateTournamentMatch(currentMatch.id, {
-  //     winner,
-  //     status: 'finished'
-  //   });
-
-  //   // Advance winner to next round immediately
-  //   const maxRounds = playerCount === 4 ? 2 : 3;
-
-  //   // Advance winner to next round if applicable
-  //   if (currentMatch.round < maxRounds) {
-  //     const nextRound = currentMatch.round + 1;
-  //     const nextRoundMatches = bracket.filter(m => m.round === nextRound);
-
-  //     if (currentMatch.round === 1) {
-  //       // First round to semi-finals (or final for 4-player)
-  //       const matchInRound = currentMatchIndex; // 0, 1 for 4-player
-  //       const nextMatchIndex = Math.floor(matchInRound / 2);
-  //       const nextMatch = nextRoundMatches[nextMatchIndex];
-
-  //       if (nextMatch) {
-  //         const positionInNext = matchInRound % 2; // 0 for player1, 1 for player2
-
-  //         if (positionInNext === 0) {
-  //           updateTournamentMatch(nextMatch.id, { player1: winner });
-  //         } else {
-  //           updateTournamentMatch(nextMatch.id, { player2: winner });
-  //         }
-  //       }
-  //     } else if (currentMatch.round === 2 && maxRounds === 3) {
-  //       // Semi-finals to final (only for 8-player tournaments)
-  //       const finalMatch = nextRoundMatches[0];
-  //       if (finalMatch) {
-  //         if (!finalMatch.player1) {
-  //           updateTournamentMatch(finalMatch.id, { player1: winner });
-  //         } else if (!finalMatch.player2) {
-  //           updateTournamentMatch(finalMatch.id, { player2: winner });
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   // Find and move to next available match after a short delay
-  //   setTimeout(() => {
-  //     const updatedBracket = gameState.tournament?.bracket || [];
-  //     const nextMatch = updatedBracket.find((m, index) =>
-  //       m.status === 'pending' &&
-  //       m.player1 &&
-  //       m.player2 &&
-  //       index !== currentMatchIndex
-  //     );
-
-  //     if (nextMatch) {
-  //       const nextIndex = updatedBracket.findIndex(m => m.id === nextMatch.id);
-  //       setCurrentMatchIndex(nextIndex);
-  //       // Stay in playing mode to continue with next match
-  //     } else {
-  //       setTournamentStep('bracket');
-  //     }
-  //   }, 500); // Give time for state updates
-  // }, [currentMatchIndex, playerCount, updateTournamentMatch]); // Keep stable dependencies
-
-  // Function to play next match - improved with stable dependencies
-  // const playNextMatch = useCallback(() => {
-  //   console.log('playNextMatch called');
-
-  //   // First, advance the current match winner to the next round if there is one
-  //   if (matchWinner) {
-  //     const bracket = gameState.tournament?.bracket || [];
-  //     const currentMatch = bracket[currentMatchIndex];
-
-  //     if (currentMatch && currentMatch.status === 'finished') {
-  //       const maxRounds = playerCount === 4 ? 2 : 3;
-
-  //       // Advance winner to next round if applicable
-  //       if (currentMatch.round < maxRounds) {
-  //         const nextRound = currentMatch.round + 1;
-  //         const nextRoundMatches = bracket.filter(m => m.round === nextRound);
-
-  //         if (currentMatch.round === 1) {
-  //           // First round to semi-finals (or final for 4-player)
-  //           const matchInRound = currentMatchIndex;
-  //           const nextMatchIndex = Math.floor(matchInRound / 2);
-  //           const nextMatch = nextRoundMatches[nextMatchIndex];
-
-  //           if (nextMatch) {
-  //             const positionInNext = matchInRound % 2; // 0 for player1, 1 for player2
-
-  //             if (positionInNext === 0) {
-  //               updateTournamentMatch(nextMatch.id, { player1: matchWinner });
-  //               console.log(`${matchWinner.name} advanced to match ${nextMatch.id} as player1`);
-  //             } else {
-  //               updateTournamentMatch(nextMatch.id, { player2: matchWinner });
-  //               console.log(`${matchWinner.name} advanced to match ${nextMatch.id} as player2`);
-  //             }
-  //           }
-  //         } else if (currentMatch.round === 2 && maxRounds === 3) {
-  //           // Semi-finals to final (only for 8-player tournaments)
-  //           const finalMatch = nextRoundMatches[0];
-  //           if (finalMatch) {
-  //             if (!finalMatch.player1) {
-  //               updateTournamentMatch(finalMatch.id, { player1: matchWinner });
-  //               console.log(`${matchWinner.name} advanced to final as player1`);
-  //             } else if (!finalMatch.player2) {
-  //               updateTournamentMatch(finalMatch.id, { player2: matchWinner });
-  //               console.log(`${matchWinner.name} advanced to final as player2`);
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   // Now find the next match after a short delay to allow state updates
-  //   setTimeout(() => {
-  //     const bracket = gameState.tournament?.bracket || [];
-  //     const nextMatch = bracket.find((m, index) =>
-  //       m.status === 'pending' &&
-  //       m.player1 &&
-  //       m.player2 &&
-  //       index !== currentMatchIndex
-  //     );
-
-  //     console.log('Looking for next match:', nextMatch);
-
-  //     if (nextMatch) {
-  //       const nextIndex = bracket.findIndex(m => m.id === nextMatch.id);
-  //       setCurrentMatchIndex(nextIndex);
-  //       setTournamentStep('playing');
-
-  //       console.log('Moving to next match at index:', nextIndex);
-  //     } else {
-  //       // No more matches, go to bracket view
-  //       console.log('No more matches, going to bracket view');
-  //       setTournamentStep('bracket');
-  //     }
-
-  //     // Hide tournament winner message
-  //     setShowTournamentWinnerMessage(false);
-  //     setMatchWinner(null);
-  //   }, 100);
-  // }, [matchWinner, currentMatchIndex, playerCount, updateTournamentMatch]); // Keep stable dependencies
+  const findRandomOpponent = () => {
+    if (!socket) return;
+    socket.send(JSON.stringify({
+      type: 'game',
+      action: 'findRandomOpponent',
+      payload: {
+        playerName: user?.username || 'Player',
+        avatar: user?.avatar || defaultAvatars[1],
+        color: '#10B981'
+      }
+    }));
+  };
 
   const TournamentBracket: React.FC = React.memo(() => {
     const bracket = gameState.tournament?.bracket || [];
@@ -991,7 +790,7 @@ export default function TournamentPage() {
 
             <div>
               <label className="block text-white text-xs xs:text-sm sm:text-base md:text-lg font-semibold mb-1 xs:mb-2 sm:mb-3 md:mb-4">Player Count</label>
-              <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+              <div className="grid grid-cols-1 gap-2 sm:gap-3 md:gap-4">
                 <button
                   onClick={() => setPlayerCount(4)}
                   className={`p-2 xs:p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all ${
@@ -1003,88 +802,21 @@ export default function TournamentPage() {
                   <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">4 Players</h3>
                   <p className="text-gray-300 text-xs xs:text-sm">Semi-finals → Final</p>
                 </button>
-                <button
-                  onClick={() => setPlayerCount(8)}
-                  className={`p-2 xs:p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all ${
-                    playerCount === 8
-                      ? 'border-purple-400 bg-purple-600 bg-opacity-20'
-                      : 'border-gray-600 bg-gray-800'
-                  }`}
-                >
-                  <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">8 Players</h3>
-                  <p className="text-gray-300 text-xs xs:text-sm">Quarter-finals → Semi-finals → Final</p>
-                </button>
               </div>
             </div>
 
             {/* Remote tournament options */}
             {tournamentType === 'remote' && (
-              <div className="space-y-2 sm:space-y-3">
-                <div>
-                  <label className="block text-white text-sm sm:text-base md:text-lg font-semibold mb-2 sm:mb-3">Tournament Options</label>
-                  <div className="grid grid-cols-1 gap-2">
-                    <button
-                      onClick={() => {
-                        setIsHost(true);
-                        createRemoteTournament();
-                      }}
-                      className="p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 border-green-600 bg-green-600 bg-opacity-20 hover:bg-opacity-30 transition-all"
-                    >
-                      <h3 className="text-white font-semibold mb-1 text-xs sm:text-sm">Create Tournament</h3>
-                      <p className="text-gray-300 text-xs">Host a new tournament</p>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setTournamentStep('search');
-                        searchTournaments();
-                      }}
-                      className="p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 border-yellow-600 bg-yellow-600 bg-opacity-20 hover:bg-opacity-30 transition-all"
-                    >
-                      <h3 className="text-white font-semibold mb-1 text-xs sm:text-sm">Search Tournaments</h3>
-                      <p className="text-gray-300 text-xs">Find and join open tournaments</p>
-                    </button>
-
-                    <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 border-blue-600 bg-blue-600 bg-opacity-20">
-                      <h3 className="text-white font-semibold mb-2 text-xs sm:text-sm">Join by ID</h3>
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={joinTournamentId}
-                          onChange={(e) => setJoinTournamentId(e.target.value)}
-                          placeholder="Enter Tournament ID"
-                          className="w-full px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm bg-gray-700 text-white rounded-md sm:rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <button
-                          onClick={joinRemoteTournament}
-                          disabled={!joinTournamentId.trim()}
-                          className="w-full px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-md sm:rounded-lg text-xs sm:text-sm font-semibold"
-                        >
-                          Join
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Show tournament ID if host */}
-                {isHost && tournamentId && (
-                  <div className="bg-green-900 bg-opacity-50 rounded-lg p-2 sm:p-3 border border-green-500">
-                    <h3 className="text-green-300 font-semibold mb-1 text-xs sm:text-sm">Tournament Created!</h3>
-                    <p className="text-white mb-2 text-xs">Share this ID with other players:</p>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                      <code className="bg-gray-800 px-2 py-1 sm:px-3 sm:py-2 rounded text-green-300 font-mono text-xs sm:text-sm break-all">
-                        {tournamentId}
-                      </code>
-                      <button
-                        onClick={() => navigator.clipboard.writeText(tournamentId)}
-                        className="px-2 py-1 sm:px-3 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs sm:text-sm whitespace-nowrap"
-                      >
-                        Copy
-                      </button>
-                    </div>
-                  </div>
-                )}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => {
+                    createRemoteTournament(true); // create a private tournament by default
+                    setTournamentStep('registration');
+                  }}
+                  className="w-full xs:w-auto px-4 py-2 xs:px-6 xs:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base order-1 xs:order-2"
+                >
+                  Continue
+                </button>
               </div>
             )}
           </div>
@@ -1118,26 +850,10 @@ export default function TournamentPage() {
         <div className="flex flex-col items-center justify-center h-full p-1 xs:p-2 sm:p-4 md:p-8">
           <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl mx-auto bg-gray-900 bg-opacity-90 rounded-lg xs:rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl border-2 border-purple-500 p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
             <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-purple-300 mb-3 xs:mb-4 sm:mb-6 text-center">
-              Remote Tournament Registration
+              Tournament Lobby
             </h2>
 
-            {isHost && tournamentId && (
-              <div className="bg-green-900 bg-opacity-50 rounded-lg p-2 xs:p-3 sm:p-4 border border-green-500 mb-3 xs:mb-4 sm:mb-6">
-                <h3 className="text-green-300 font-semibold mb-2 text-xs xs:text-sm sm:text-base">Tournament ID:</h3>
-                <div className="flex flex-col xs:flex-row items-start xs:items-center gap-2">
-                  <code className="bg-gray-800 px-2 py-1 xs:px-3 xs:py-2 rounded text-green-300 font-mono text-xs xs:text-sm md:text-base lg:text-lg break-all w-full xs:w-auto">
-                    {tournamentId}
-                  </code>
-                  <button
-                    onClick={() => navigator.clipboard.writeText(tournamentId)}
-                    className="w-full xs:w-auto px-2 py-1 xs:px-3 xs:py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs xs:text-sm whitespace-nowrap"
-                  >
-                    Copy
-                  </button>
-                </div>
-                <p className="text-gray-300 text-xs xs:text-sm mt-2">Share this ID with other players</p>
-              </div>
-            )}
+
 
             <div className="text-center mb-3 xs:mb-4 sm:mb-6">
               <h3 className="text-sm xs:text-base sm:text-lg lg:text-xl text-white mb-2 xs:mb-3 sm:mb-4">
@@ -1167,13 +883,18 @@ export default function TournamentPage() {
                   ))}
 
                   {/* Empty slots */}
-                  {Array.from({ length: playerCount - (remoteTournament.registeredPlayers?.length || 0) }).map((_, index) => (
+                  {Array.from({ length: playerCount - (remoteTournament?.registeredPlayers?.length || 0) }).map((_, index) => (
                     <div key={`empty-${index}`} className="bg-gray-700 rounded-lg p-2 xs:p-3 border-2 border-dashed border-gray-500">
-                      <div className="flex items-center gap-2 xs:gap-3">
-                        <div className="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-full bg-gray-600 border-2 border-gray-500 flex items-center justify-center flex-shrink-0">
-                          <FaUser className="text-gray-400 text-sm" />
-                        </div>
-                        <span className="text-gray-400 text-xs xs:text-sm sm:text-base">Waiting for player...</span>
+                      <div className="flex items-center justify-center h-full">
+                        <button
+                          onClick={() => {
+                            setSelectedSlot((remoteTournament?.registeredPlayers?.length || 0) + index);
+                            setShowAddPlayerModal(true);
+                          }}
+                          className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm"
+                        >
+                          Add Player
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -1247,6 +968,71 @@ export default function TournamentPage() {
                 </button>
               )}
             </div>
+            {showAddPlayerModal && (
+              <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="bg-gradient-to-br from-purple-800 to-blue-800 rounded-xl p-4 sm:p-6 md:p-8 text-center max-w-xs sm:max-w-sm md:max-w-md mx-4">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">Add Player to Slot {selectedSlot !== null ? selectedSlot + 1 : ''}</h3>
+                  <div className="flex flex-col gap-4">
+                    <button
+                      onClick={() => {
+                        setShowAddPlayerModal(false);
+                        setShowFriendsListModal(true);
+                      }}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                    >
+                      Invite a friend
+                    </button>
+                    <button
+                      onClick={() => {
+                        findRandomOpponent();
+                        setShowAddPlayerModal(false);
+                      }}
+                      className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                    >
+                      Find random opponent
+                    </button>
+                    <button
+                      onClick={() => setShowAddPlayerModal(false)}
+                      className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {showFriendsListModal && (
+              <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="bg-gradient-to-br from-purple-800 to-blue-800 rounded-xl p-4 sm:p-6 md:p-8 text-center max-w-xs sm:max-w-sm md:max-w-md mx-4">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">Invite a friend to Slot {selectedSlot !== null ? selectedSlot + 1 : ''}</h3>
+                  <div className="flex flex-col gap-2">
+                    {friends.map((friend) => (
+                      <div key={friend.id} className="flex items-center justify-between bg-gray-800 p-2 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <img src={friend.avatar} alt={friend.name} className="w-8 h-8 rounded-full" />
+                          <span>{friend.name}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            inviteToTournament(friend.id);
+                            setShowFriendsListModal(false);
+                          }}
+                          className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm"
+                        >
+                          Invite
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setShowFriendsListModal(false)}
+                    className="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -1267,6 +1053,21 @@ export default function TournamentPage() {
     }
   }
 
+  // Customization phase
+  if (tournamentStep === 'customization') {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 md:p-8">
+        <GameCustomization
+          onBack={() => setTournamentStep('registration')}
+          onStartGame={(customization) => {
+            setCustomisation(customization);
+            startTournament(registeredPlayers);
+          }}
+        />
+      </div>
+    );
+  }
+
   // Playing phase - show the actual game
   if (tournamentStep === 'playing') {
     // Use memoized current match
@@ -1278,9 +1079,6 @@ export default function TournamentPage() {
         </div>
       );
     }
-
-    // Set current players for the game
-    const currentPlayers = [currentMatch.player1, currentMatch.player2];
 
     return (
       <div className="flex flex-col h-full bg-black opacity-90">

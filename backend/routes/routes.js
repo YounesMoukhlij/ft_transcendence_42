@@ -25,6 +25,8 @@ import { getUserStats, getUserStatsbyUsername } from '../modules/profile.module.
 import { getMatchHistory } from '../modules/matchHistory.module.js';
 import { getLeagueStats } from '../modules/leagues.module.js';
 import { getPlayerProgress } from '../modules/playerProgress.js';
+import { saveGameCustomization, getGameCustomization } from '../modules/game.module.js';
+
 
 
 
@@ -138,5 +140,8 @@ export default async function routes(fastify, options) {
 
   // PLayer Progress (7days)
   fastify.get('/getPlayerProgress/:username', getPlayerProgress);
+   // Game customization
+  fastify.post('/saveGameCustomization', saveGameCustomization);
+  fastify.get('/getGameCustomization', getGameCustomization);
 
 }
