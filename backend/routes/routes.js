@@ -1,4 +1,4 @@
-import {getConversationId  , sendMsg , getMsgs , Xprank , IsOnline , blockFunction ,DeblockFunction , unfriend } from '../modules/user.module.js';
+import {getConversationId  , sendMsg , getMsgs , IsOnline , blockFunction ,DeblockFunction , unfriend } from '../modules/user.module.js';
 import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests , DeleteNotification } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
@@ -70,7 +70,6 @@ export default async function routes(fastify, options) {
     fastify.get('/leaderboard', leaderboard);
 
     fastify.post('/getConversationId', getConversationId);
-    fastify.get('/Xprank' , Xprank);
     fastify.get('/GetFriends' , GetFriends);
     fastify.post('/getMsgs' , getMsgs);
     fastify.post('/sendMsg' , sendMsg);

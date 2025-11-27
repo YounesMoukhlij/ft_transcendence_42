@@ -349,11 +349,16 @@ export default function ChatPage() {
     if (double_block == 2 || (double_block == 1 && user_block === user.username))
       return;
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`, {
-      user: user.username,
+      // user: user.username,
       conv_id: id,
       friend: friend, 
       friend_id: friend_id
-    });
+    },{
+      headers:{
+        Authorization: `Bearer ${user.access_token}`
+      }
+    }
+  );
     Setuser_block(user.username || '');
     if (double_block < 2)
       setDboubleBlock(double_block + 1);
@@ -370,11 +375,16 @@ export default function ChatPage() {
     const friend_id = localStorage.getItem("friend_id");
     const id = localStorage.getItem('conversationId');
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock`, {
-      user: user.username,
+      // user: user.username,
       conv_id: id,
       friend: friend,
       friend_id: friend_id 
 
+    },{
+      headers:{
+        Authorization: `Bearer ${user.access_token}`
+
+      }
     });
     
     
@@ -395,9 +405,9 @@ export default function ChatPage() {
     SetSelectContact(false);
     const friend_id = localStorage.getItem("friend_id");
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`, {
-      user: user.username,
+      // user: user.username,
+      // friend: friend,
       conv_id: id,
-      friend: friend,
       friend_id: friend_id
     },
     {
@@ -435,7 +445,7 @@ export default function ChatPage() {
     try {
       const data = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/IsOnline`, {
         params: {
-          username: friend,
+          userId: friend_id,
         },
         headers: {Authorization: `Bearer ${user.access_token}` }
       })
