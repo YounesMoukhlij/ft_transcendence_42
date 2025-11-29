@@ -1,20 +1,17 @@
-import { getConversationIdSchema , getMsgsSchema } from "./user.moduleSchema.js";
-
-
-
+import {ParseIdSchema , sendMsgSchema  , BlockSchema} from "./moduleSchema.js";
 
 
 export async function getConversationId(request, reply) {
 
-  const result = getConversationIdSchema.safeParse(request.body);
+const result = ParseIdSchema.safeParse(request.query);
 
   if (!result.success) {
-    return reply.code(400).send({ errors: result.error.errors });
+    return reply.code(400).send("missing params");
   }
-  const { friend_id } = result.data;
+  const { id } = result.data;
 
-  const caseOne = friend_id + "," + request.user.id_user;
-  const caseTwo = request.user.id_user + "," + friend_id;
+  const caseOne = id + "," + request.user.id_user;
+  const caseTwo = request.user.id_user + "," + id;
 
   try 
   {
@@ -33,17 +30,17 @@ export async function getConversationId(request, reply) {
 
   }
   catch (dberr) {
-    return reply.code(500).send( "internal server error" );
+    return reply.code(500).send("internal server error");
   }
 }
 
 
-
 export async function getMsgs(request , reply){
-  const result = getMsgsSchema.safeParse(request.body);
+
+  const result = ParseIdSchema.safeParse(request.query);
 
   if (!result.success) {
-    return reply.code(400).send({ errors: result.error.errors });
+    return reply.code(400).send("missing params");
   }
 
   const { id } = result.data;
@@ -63,11 +60,13 @@ export async function getMsgs(request , reply){
 
 export async function sendMsg(request, reply) {
 
-  const { input, id, friend_id} = request.body;
+  const result = sendMsgSchema.safeParse(request.body); 
 
-  if (!id || !friend_id || !input ) {
+  if (!result.success) {
     return reply.code(400).send("bad request ");
   }
+
+  const {input , friend_id , id} = result.data;
 
 
   const socket = request.server.users_socket.get(friend_id.toString());
@@ -102,13 +101,16 @@ export async function sendMsg(request, reply) {
 
 
 
-
-
-
 export async function IsOnline(request , reply){
 
-  const userId = request.query.userId;
-  const socket = request.server.users_socket.get(userId.toString());
+  const result = ParseIdSchema.safeParse(request.query);
+
+  if (!result.success)
+    return reply.code(400).send("missing params");
+
+  const {id}  = result.data;
+
+  const socket = request.server.users_socket.get(id.toString());
 
   try {
     if(socket)
@@ -126,7 +128,14 @@ export async function IsOnline(request , reply){
 
 export async function blockFunction(request , reply){
 
-  const { conv_id , friend_id} = request.body;
+  const result = ParseIdSchema.safeParse(request.query);
+
+  if (!result.success)
+    return reply.code(400).send("missing params");
+
+  const { conv_id , friend_id} = result.data;
+
+
 
   const socket = request.server.users_socket.get(friend_id.toString());
   try{
@@ -163,8 +172,11 @@ export async function blockFunction(request , reply){
 
 export async function DeblockFunction(request , reply){
 
-  const {conv_id , friend , friend_id} = request.body;
-
+  const result = BlockSchema.safeParse(request.body);
+  if (!result.success)
+    return reply.code(400).send("midding prams");
+  
+  const {conv_id , friend_id } = result.data;
 
 
   const socket = request.server.users_socket.get(friend_id.toString());
@@ -208,8 +220,11 @@ export async function DeblockFunction(request , reply){
 
 
 export async function unfriend(request, reply) {
+  const result = BlockSchema.safeParse(request.body);
+  if (!result.success)
+    return reply.code(400).send("midding prams");
 
-  const {conv_id , friend_id } = request.body;
+  const {conv_id , friend_id } = result.data;
   
   try {
     const socket = request.server.users_socket.get(friend_id.toString());

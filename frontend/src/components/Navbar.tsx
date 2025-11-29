@@ -130,7 +130,7 @@ useEffect(() => {
       status:0,
     }
     const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{
-      Freind_id: item.sender_user ,
+      id: item.sender_user ,
     },{
       headers: {
         Authorization: `Bearer ${user.access_token}`
@@ -285,7 +285,7 @@ useEffect(() => {
   async function  AcceptGameChallenge(item){
     const res = await  axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteNotification`,
       {
-        params: {notifyId: item.notify_id},
+        params: {id: item.notify_id},
         headers:{
           Authorization: `Bearer ${user.access_token}`
         }

@@ -136,7 +136,7 @@ const handleAddFriend = async () => {
   try {
       const res = await axios.post(
       `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendRequestFriend`,
-      { friend_id: userStats.id },
+      { id: userStats.id },
       {
         headers: {
           Authorization: `Bearer ${currentUser?.access_token}`,
@@ -162,7 +162,7 @@ const handleAcceptFriend = async () => {
     const res = await axios.post(
       `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,
     {
-      Freind_id: userStats.id,
+      id: userStats.id,
     },{
       headers: {
         Authorization: `Bearer ${currentUser?.access_token}`,
@@ -192,10 +192,10 @@ const handleUnfriend = async () =>
 {
    try {
       //  Get conversation ID
-      const conversation_id = await axios.post(
+      const conversation_id = await axios.get(
         `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,
-        { friend_id: userStats.id },
         {
+          params:{id: userStats.id },
           headers: {
             Authorization: `Bearer ${currentUser?.access_token}`,
           },
@@ -209,9 +209,9 @@ const handleUnfriend = async () =>
      const res =  await axios.post(
         `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`,
         {
-          user: currentUser.username,
+          // user: currentUser.username,
           conv_id : conv_id,
-          friend: userStats.username,
+          // friend: userStats.username,
           friend_id: userStats.id,
         },{
           headers: {

@@ -68,9 +68,9 @@ export default async function routes(fastify, options) {
 
     fastify.get('/leaderboard', leaderboard);
 
-    fastify.post('/getConversationId', getConversationId);
+    fastify.get('/getConversationId', getConversationId);
     fastify.get('/GetFriends' , GetFriends);
-    fastify.post('/getMsgs' , getMsgs);
+    fastify.get('/getMsgs' , getMsgs);
     fastify.post('/sendMsg' , sendMsg);
     fastify.get('/IsOnline' , IsOnline);
     fastify.post('/unfriend' , unfriend)

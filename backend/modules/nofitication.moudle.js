@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-
+import {ParseIdSchema} from './moduleSchema.js'
   function ft_getTime() {
   const now = new Date();
   
@@ -32,16 +32,14 @@ export async function GetNotification(request, reply) {
 
 export async function DeleteFriendRequest(request , reply){
 
+  const result = ParseIdSchema.safeParse(request.query);
+  if (!result.success)
+    return reply.code(400).send("missing params");
 
-  const notify_id = request.query.id;
-
-
-  if ( !notify_id)
-    reply.code(400).send("Missing params");
-  
+  const {id} = result.data;
 
   const firstQuery = request.server.db.prepare("select getter_user, sender_user from notification where notify_id = ?");
-  const response = firstQuery.get(notify_id);
+  const response = firstQuery.get(id);
 
 
   const socket = request.server.users_socket.get(response.sender_user.toString());
@@ -61,7 +59,7 @@ export async function DeleteFriendRequest(request , reply){
 
   try{
     const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ? AND getter_user = ?');
-    const result =  query.run(notify_id , request.user.id_user );
+    const result =  query.run(id , request.user.id_user );
     if (result.changes === 0){
       return reply.code(404).send("notification not found or not authorized");
     }
@@ -73,52 +71,38 @@ export async function DeleteFriendRequest(request , reply){
   }
 }
 
+
+
 export async function cancelFriendRequest(request , reply){
+  const result = ParseIdSchema.safeParse(request.query);
+  if (!result.success)
+    return reply.code(400).send("missing params");
 
-
-  const notify_id = request.query.id;
-  const authHeader = request.headers['authorization'];
-
-  if (!authHeader || !notify_id)
-    reply.code(400).send("Missing params");
-  
-  const token = authHeader.split(' ')[1];
-
-  let decodedObject;
-  try{
-    decodedObject = jwt.verify(token, process.env.SECRET);
-  }
-  catch(err){
-    return reply.code(401).send("Invalid token");
-  }
-
+  const {id} = result.data;
 
   const firstQuery = request.server.db.prepare("select getter_user, sender_user from notification where notify_id = ?");
-  const response = firstQuery.get(notify_id);
-
-
+  const response = firstQuery.get(id);
+  
   const socket = request.server.users_socket.get(response.getter_user.toString());
-    console.log("Here is response : ",response);
+
 
   if (socket)
   {
-    console.log("socket is alive");
-   const object = {
-    getter_user : response.getter_user,
-    sender_user : response.sender_user
-   }
+    const object = {
+      getter_user : response.getter_user,
+      sender_user : response.sender_user
+    }
     socket.send(JSON.stringify({
-        type: "canceled request",
-        data: object
-      }));
-
+      type: "canceled request",
+      data: object
+    }));
   }
 
   try{
     const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ? AND sender_user = ?');
-    const result =  query.run(notify_id , decodedObject.id_user );
+    const result =  query.run(id , request.user.id_user );
     if (result.changes === 0){
-      return reply.code(404).send("notification not found or not authorized");
+      return reply.code(404).send("notification not found");
     }
 
     return reply.code(200).send("Friend request deleted successfully");
@@ -130,25 +114,24 @@ export async function cancelFriendRequest(request , reply){
 
 
 export async function sendRequestFriend(request, reply) {
+  const result = ParseIdSchema.safeParse(request.body);
 
-  const { friend_id} = request.body;
-
-  if ( !friend_id) {
+  if (!result.success)
     return reply.code(400).send("missing params");
-  }
 
-  const socket = request.server.users_socket.get(friend_id.toString());
+  const { id } = result.data;
+  const socket = request.server.users_socket.get(id.toString());
 
   try {
     const title = "request friend";
     const existsNotify = request.server.db.prepare(`SELECT 1 FROM notification  WHERE getter_user = ? AND title = ? AND sender_user = ? AND notifyBody = ? LIMIT 1`);
-    const exists = existsNotify.get(friend_id, title, request.user.id_user, "request friend");
+    const exists = existsNotify.get(id, title, request.user.id_user, "request friend");
 
   if (exists)
     return reply.code(200).send(true);
   
     const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
-    const result = insertQuery.run(friend_id, title, request.user.id_user, "request friend");
+    const result = insertQuery.run(id, title, request.user.id_user, "request friend");
     const insertedId = result.lastInsertRowid;
 
     
@@ -158,10 +141,10 @@ export async function sendRequestFriend(request, reply) {
       const result = query1.get(request.user.id_user);
       
       const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
-      const res = query2.get(friend_id, request.user.id_user);
+      const res = query2.get(id, request.user.id_user);
       
       const object = {
-        getter_user: friend_id,
+        getter_user: id,
         sender_user: request.user.id_user,
         sender_username: request.user.username,
         title: title,
@@ -184,22 +167,20 @@ export async function sendRequestFriend(request, reply) {
 
 
 export async function AddFriend( request  , reply){
-  
-  const { Freind_id } = request.body;
-  
-  
-  if (!Freind_id)
-    return reply.code(400),send(false);
-  
-  const socket = request.server.users_socket.get(Freind_id.toString());
+  const result = ParseIdSchema.safeParse(request.body);
+
+  if (!result.success)
+    return reply.code(400).send("missing params");
+
+  const { id } = result.data;
+  const socket = request.server.users_socket.get(id.toString());
 
   try{
-
       const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
-      Fquery.run(request.user.id_user , Freind_id);
+      Fquery.run(request.user.id_user , id);
 
       const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
-      const members = [request.user.id_user, Freind_id].join(',');
+      const members = [request.user.id_user, id].join(',');
       conversationquery.run(members);
 
 
@@ -219,13 +200,12 @@ export async function AddFriend( request  , reply){
             data: object
         }));
 
-
         const title = "friend request accepted";
         const setQuery = request.server.db.prepare("INSERT INTO notification (getter_user, title, sender_user, notifyBody ) VALUES (?, ?, ?, ?)")
-        const result = setQuery.run(Freind_id, title, request.user.id_user, "friend request accepted");
+        const result = setQuery.run(id, title, request.user.id_user, "friend request accepted");
 
         const deleteQuery = request.server.db.prepare("Delete from notification where getter_user = ? AND sender_user = ? AND title = ?");
-        const deleteResult = deleteQuery.run(request.user.id_user, Freind_id, "request friend");
+        const deleteResult = deleteQuery.run(request.user.id_user, id, "request friend");
 
         const notifyObject = {
           sender_profile_img: res.profile_img,
@@ -239,48 +219,30 @@ export async function AddFriend( request  , reply){
             data: notifyObject
         }));
       }
-
-      reply.code(200).send("");
+      reply.code(200).send(true);
     }catch(err){
       console.log(err);
       reply.code(500);
-  }
+    }
 }
 
 
 export async function GetFriends(request, reply) {
-
-  const username = request.query.username;
-  if (!username) {
-    return reply.code(400).send("Missing params");
-  }
-
-
   try {
-    const getUserIdStmt = request.server.db.prepare(`SELECT id_user FROM users WHERE username = ?`);
-    const user = getUserIdStmt.get(username);
-
-    if (!user) {
-      return reply.code(404).send({ error: "User not found" });
-    }
-
-    const userId = user.id_user;
-
     const getFriendsStmt1 = request.server.db.prepare(`SELECT user_id FROM friends WHERE friend_id = ?`);
     const getFriendsStmt2 = request.server.db.prepare(`SELECT friend_id FROM friends WHERE user_id = ?`);
 
-    const friends1 = getFriendsStmt1.all(userId).map(row => row.user_id);
-    const friends2 = getFriendsStmt2.all(userId).map(row => row.friend_id);
+    const friends1 = getFriendsStmt1.all(request.user.id_user).map(row => row.user_id);
+    const friends2 = getFriendsStmt2.all(request.user.id_user).map(row => row.friend_id);
 
     const allFriendIds = [...new Set([...friends1, ...friends2])];
 
-    if (allFriendIds.length === 0) {
+    if (allFriendIds.length === 0)
       return reply.send([]);
-    }
 
     const placeholders = allFriendIds.map(() => '?').join(', ');
     const getFriendDetailsStmt = request.server.db.prepare(`
-      SELECT id_user, username, email, fullname, profile_img, xp, access_token, status 
+      SELECT id_user, username, fullname, profile_img, xp, status
       FROM users
       WHERE id_user IN (${placeholders})
     `);
@@ -303,8 +265,8 @@ export async function GetFriends(request, reply) {
         LIMIT 1
       `);
 
-      const case1 = `%${username},${friend.username}%`;
-      const case2 = `%${friend.username},${username}%`;
+      const case1 = `%${request.user.username},${friend.username}%`;
+      const case2 = `%${friend.username},${request.user.username}%`;
 
       const convIdRow = getConvIdStmt.get(case1, case2);
 
@@ -314,7 +276,6 @@ export async function GetFriends(request, reply) {
         friend.LastMessageTime = lastMessage ? lastMessage.created_at : "0000-01-01 00:00:00"
       }
     }
-
     return reply.send(friendDetails);
 
   } catch (err) {
@@ -329,14 +290,12 @@ export async function GetFriends(request, reply) {
 
 
 export function NotificationSeen(request , reply){
-
   try{
     const query = request.server.db.prepare("UPDATE notification SET is_seen = ? WHERE getter_user = ?");
     query.run(1 , request.user.id_user);
-
     reply.code(200).send(true);
   }catch(err){
-
+    reply.code(500).send("internal server error");
   }
 }
 
@@ -344,13 +303,10 @@ export function NotificationSeen(request , reply){
 
 
 export  function sendGameChallenge(request , reply){
-
-  const {Friend_id} = request.body;
-  if ( !Friend_id)
-    reply.code(401).send("missing token");
-
-
-
+  const result = ParseIdSchema.safeParse(request.body);
+  if (!result.success)
+    reply.code(400).send("missing params");
+  const {id} = result.data;
   
   try{
     const title = "game challenge";
@@ -360,10 +316,10 @@ export  function sendGameChallenge(request , reply){
     const ExpiredTime =  ft_getTime();
     const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody , expired) VALUES (?, ?, ?, ? , ?)`);
     
-    insertQuery.run(Friend_id, title, request.user.id_user, "game challenge" , ExpiredTime);
+    insertQuery.run(id, title, request.user.id_user, "game challenge" , ExpiredTime);
     
     
-    const socket = request.server.users_socket.get(Friend_id.toString());
+    const socket = request.server.users_socket.get(id.toString());
     
     
     if (socket){
@@ -373,7 +329,7 @@ export  function sendGameChallenge(request , reply){
       
       
       const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
-      const res = query2.get(Friend_id, request.user.id_user);
+      const res = query2.get(id, request.user.id_user);
 
 
       const object  = {
@@ -387,7 +343,7 @@ export  function sendGameChallenge(request , reply){
       }));
 
       const object_notify = {
-        getter_user: Friend_id,
+        getter_user: id,
         sender_user: request.user.id_user,
         sender_username: request.user.username,
         title: title,
@@ -409,16 +365,19 @@ export  function sendGameChallenge(request , reply){
   return reply.send(true);
 }
 
+
+
+
 export function AcceptGameChallenge(request , reply){
+  const result = ParseIdSchema.safeParse(request.body);
+  if (!result.success)
+    return reply.code(400).send("missing params");
 
-  const {Friend_id} = request.body;
-
-  if (!Friend_id)
-    reply.code(401).send("missing token");
+  const {id} = request.body;
 
   try{
 
-    const socket = request.server.users_socket.get(Friend_id.toString());
+    const socket = request.server.users_socket.get(id.toString());
     if (socket){
       const object  = {
       };
@@ -436,7 +395,6 @@ export function AcceptGameChallenge(request , reply){
 }
 
 export function GetSentRequests(request , reply){
-
 
   try{
       const query = request.server.db.prepare(`select * from notification where sender_user =?`);

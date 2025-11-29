@@ -40,19 +40,20 @@ function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, s
 
 
 
-async function fetchData(friend_id: string , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
+async function fetchData(friend_id: number , title: string, setDboubleBlock: (num: number) => void,  Setuser_block: (user: string) => void ): Promise<Message[] | undefined> {
   const { user , updateLastMessage} = useUserStore.getState();
 
   localStorage.setItem('room_select', title);
-  localStorage.setItem('friend_id' , friend_id);
+  localStorage.setItem('friend_id' , friend_id.toString());
   try {
-    const convRes = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,{
-      friend_id: friend_id
-    },
+    const convRes = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getConversationId`,
     {
-        headers: {
-          Authorization: `Bearer ${user.access_token}`
-        }
+      params:{
+        id: friend_id
+      },
+      headers: {
+        Authorization: `Bearer ${user.access_token}`
+      }
     }
   );
 
@@ -60,10 +61,12 @@ async function fetchData(friend_id: string , title: string, setDboubleBlock: (nu
     setDboubleBlock(convRes.data.is_double_block);
     Setuser_block(convRes.data.block_user);
 
-    const msgsRes = await axios.post(
+    const msgsRes = await axios.get(
       `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`,
-      { id: convRes.data.conversation_id },
         {
+          params : {
+            id: convRes.data.conversation_id,
+          },
           headers: {
             Authorization: `Bearer ${user.access_token}` 
           }
@@ -314,21 +317,18 @@ export default function ChatPage() {
     const fetchData = async () => {
       try {
         const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
-          params: { username: user.username },
           headers: {
             Authorization: `Bearer ${user.access_token}`
           }
         });
 
-
         setFriends(res.data);
-        console.log("THis is friends:", res.data);
       } catch (err) {
         console.log(err);
       }
     };
     fetchData();
-    }, [user?.username]);
+    }, [user?.id_user]);
 
   function handleEnterKey(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Enter') {
@@ -445,7 +445,7 @@ export default function ChatPage() {
     try {
       const data = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/IsOnline`, {
         params: {
-          userId: friend_id,
+          id: friend_id,
         },
         headers: {Authorization: `Bearer ${user.access_token}` }
       })
@@ -516,7 +516,7 @@ export default function ChatPage() {
   function startGame(friend: string){
     try{
       const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/startGame`, {
-        Friend_id: friend,
+        id: friend,
       },{
         headers: {
           Authorization: `Bearer ${user.access_token}`
