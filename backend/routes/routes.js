@@ -40,7 +40,6 @@ import { saveGameCustomization, getGameCustomization } from '../modules/game.mod
 
 export default async function routes(fastify, options) {
 
-
   fastify.addHook('onRequest' , async (request , reply) => {
     const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser" , "/getUserById/1"];
 

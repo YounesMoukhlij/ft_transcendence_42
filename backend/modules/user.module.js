@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import { getConversationIdSchema , getMsgsSchema } from "./user.moduleSchema.js";
 
 
 
@@ -6,11 +6,12 @@ import jwt from 'jsonwebtoken';
 
 export async function getConversationId(request, reply) {
 
-  const { friend_id } = request.body;
-  if (!friend_id) {
-    return reply.code(400).send({ error: "Missing friend id" });
-  }
+  const result = getConversationIdSchema.safeParse(request.body);
 
+  if (!result.success) {
+    return reply.code(400).send({ errors: result.error.errors });
+  }
+  const { friend_id } = result.data;
 
   const caseOne = friend_id + "," + request.user.id_user;
   const caseTwo = request.user.id_user + "," + friend_id;
@@ -32,14 +33,21 @@ export async function getConversationId(request, reply) {
 
   }
   catch (dberr) {
-      return reply.code(500).send( "internal server error" );
-    }
+    return reply.code(500).send( "internal server error" );
+  }
 }
 
 
 
-export async function getMsgs (request , reply){
-  const id = request.body.id;
+export async function getMsgs(request , reply){
+  const result = getMsgsSchema.safeParse(request.body);
+
+  if (!result.success) {
+    return reply.code(400).send({ errors: result.error.errors });
+  }
+
+  const { id } = result.data;
+
   try{
       const query = request.server.db.prepare("SELECT * FROM message WHERE conv_id = ? ORDER BY created_at ASC");
       const messages = query.all(id);
