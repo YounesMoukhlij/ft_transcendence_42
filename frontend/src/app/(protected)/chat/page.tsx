@@ -15,7 +15,9 @@ import  {useUserStore}  from '../../../store/userStore';
 import getFormattedDate from './tools'
 import { GiCheckMark } from "react-icons/gi";
 import { HiXMark } from "react-icons/hi2";
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useGameContext } from '@/components/GameContext';
+import { toast } from 'sonner';
 
 interface Friend {
   id_user: string,
@@ -65,7 +67,7 @@ async function fetchData(friend_id: string , title: string, setDboubleBlock: (nu
       { id: convRes.data.conversation_id },
         {
           headers: {
-            Authorization: `Bearer ${user.access_token}` 
+            Authorization: `Bearer ${user.access_token}`
           }
         }
     );
@@ -101,7 +103,7 @@ const FreindsList = ({friend_id ,  photo, title, message , status, setConversati
       setConversation(conversation);
     }
   };
-  
+
 
   return (
     <div onClick={Get_Conversation} className="flex w-full h-full hover:flex hover:cursor-pointer hover:bg-[#515151] hover:backdrop-blur-[10px] hover:rounded-[20px]">
@@ -136,12 +138,12 @@ interface Test1Props {
 
 function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test1Props) {
   const [searchTerm, setSearchTerm] = useState<string>('');
-  
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-  
+
   return (
     <div className="flex flex-col h-full">
       <div>
@@ -227,6 +229,8 @@ interface InviterData {
 }
 
 export default function ChatPage() {
+  const router = useRouter();
+  const { setGameMode } = useGameContext();
   const { friends, addFriend, removeFriend, setFriends, updateFriendStatus, updateLastMessage  } = useUserStore();
   const { messages, setMessages, addMessage, room, setRoom, profile_img, setImg } = useUserStore();
   const { setDboubleBlock, double_block, Setuser_block, user_block } = useUserStore();
@@ -274,7 +278,7 @@ export default function ChatPage() {
     if (!socket) return;
 
     socket.onmessage = (event: MessageEvent) => {
-      
+
       const { type, data } = JSON.parse(event.data);
       if (type === "message") {
         addMessage(data);
@@ -298,13 +302,36 @@ export default function ChatPage() {
         setTimeout(() => {
           Set_Display_game_invite(false);
         }, 5000);
-          
+
       }
       else if (type === "test") {
         addFriend(data);
       }
       else if (type === "start_game") {
-        redirect("/game");
+        // Acceptor receives this - navigate to customization
+        // Store challengeId for later use
+        if (data.challengeId) {
+          localStorage.setItem('pendingChallengeId', data.challengeId);
+        }
+        setGameMode('remote');
+        router.push('/game/customize');
+      }
+      else if (type === "game_challenge_accepted") {
+        // Inviter receives this when friend accepts
+        toast.success(`${data.acceptedByUsername} accepted your game challenge!`);
+        // Store challengeId for later use
+        if (data.challengeId) {
+          localStorage.setItem('pendingChallengeId', data.challengeId);
+        }
+        // Navigate to customization page
+        setGameMode('remote');
+        router.push('/game/customize');
+      }
+      else if (type === "game_challenge_declined") {
+        // Inviter receives this when friend declines
+        toast.error(`${data.declinedByUsername} declined your game challenge.`);
+        // Clear any pending challenge
+        localStorage.removeItem('pendingChallengeId');
       }
 
     };
@@ -335,15 +362,15 @@ export default function ChatPage() {
       handleSend();
     }
   }
-  
+
   async function handleBlock(
-    friend: string, 
-    setDboubleBlock: (num: number) => void, 
-    double_block: number, 
-    Setuser_block: (user: string) => void, 
+    friend: string,
+    setDboubleBlock: (num: number) => void,
+    double_block: number,
+    Setuser_block: (user: string) => void,
     user_block: string
   ) {
-    
+
     const id = window.localStorage.getItem('conversationId');
     const friend_id = localStorage.getItem("friend_id");
     if (double_block == 2 || (double_block == 1 && user_block === user.username))
@@ -351,7 +378,7 @@ export default function ChatPage() {
     await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`, {
       // user: user.username,
       conv_id: id,
-      friend: friend, 
+      friend: friend,
       friend_id: friend_id
     },{
       headers:{
@@ -365,10 +392,10 @@ export default function ChatPage() {
   }
 
   async function Deblock(
-    friend: string, 
-    setDboubleBlock: (num: number) => void, 
-    double_block: number, 
-    Setuser_block: (user: string) => void, 
+    friend: string,
+    setDboubleBlock: (num: number) => void,
+    double_block: number,
+    Setuser_block: (user: string) => void,
     user_block: string
   ) {
 
@@ -378,7 +405,7 @@ export default function ChatPage() {
       // user: user.username,
       conv_id: id,
       friend: friend,
-      friend_id: friend_id 
+      friend_id: friend_id
 
     },{
       headers:{
@@ -386,8 +413,8 @@ export default function ChatPage() {
 
       }
     });
-    
-    
+
+
     if (double_block > 0) {
       if (double_block === 2) {
         setDboubleBlock(1);
@@ -412,7 +439,7 @@ export default function ChatPage() {
     },
     {
       headers: {
-        Authorization: `Bearer ${user.access_token}` 
+        Authorization: `Bearer ${user.access_token}`
       }
     }
   );
@@ -481,7 +508,7 @@ export default function ChatPage() {
 
   function handle_dropmenu() {
     setdropmenu(!dropmenu);
-    
+
     setTimeout(() => {
       setdropmenu(false);
     }, 5000);
@@ -489,7 +516,7 @@ export default function ChatPage() {
 
   function handle_confirm_invite() {
     setConfirm(true);
-    
+
     setTimeout(() => {
       setConfirm(false);
     }, 5000);
@@ -509,23 +536,50 @@ export default function ChatPage() {
 
 
 
-  function Cancel(){
+  async function Cancel(){
     Set_Display_game_invite(false);
+
+    // Notify the inviter that the challenge was declined
+    if (socket && socket.readyState === WebSocket.OPEN && InviterData.id) {
+      try {
+        socket.send(JSON.stringify({
+          type: 'game_challenge_declined',
+          data: {
+            declinedBy: user.id_user,
+            declinedByUsername: user.username,
+            friendId: InviterData.id
+          }
+        }));
+      } catch (error) {
+        console.error('Error sending decline message:', error);
+      }
+    }
   }
 
-  function startGame(friend: string){
+  async function startGame(friend: string){
     try{
-      const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/startGame`, {
+      const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/startGame`, {
         Friend_id: friend,
       },{
         headers: {
           Authorization: `Bearer ${user.access_token}`
         },
-      })
+      });
+
+      // Store challengeId if returned
+      if (res.data?.challengeId) {
+        localStorage.setItem('pendingChallengeId', res.data.challengeId);
+      }
+
+      // Close the invite popup
+      Set_Display_game_invite(false);
+
+      // The WebSocket message will handle navigation, but we can also navigate here as fallback
+      // Navigation will happen via the "start_game" WebSocket message
     }catch(err){
-
+      console.error('Error accepting game challenge:', err);
+      toast.error('Failed to accept game challenge');
     }
-
   }
 
   function send_game_invite(friend : string){
@@ -561,7 +615,7 @@ export default function ChatPage() {
             <FaArrowRight size={20}/>
           </button>
         </div>
-        
+
         {display_chats && (
           <div ref={menuRef} className="lg:hidden">
             <div className="z-30 absolute h-full w-[60%]  rounded-4xl " onClick={handle_chats_display}></div>
@@ -576,12 +630,12 @@ export default function ChatPage() {
             </div>
           </div>
         )}
-        
-        
+
+
         <div className="relative flex-1  flex flex-col border rounded-[35px] border-solid bg-black overflow-hidden ">
           {Display_game_invite && (
             <div className="z-50 absolute inset-x-2 top-6 mx-auto max-w-3xl bg-gray-600 border-2 rounded-3xl overflow-hidden shadow-lg p-3 sm:p-4 flex flex-col items-center justify-between">
-              
+
               <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
                 <img
                   className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full mr-3"
@@ -592,13 +646,13 @@ export default function ChatPage() {
                   {InviterData.username} invited you for a 1 vs 1 game
                 </p>
               </div>
-          
+
               <div className="flex gap-3 sm:gap-4 justify-center sm:justify-end w-full sm:w-auto">
-                <Link href="/game" key="/game">
-                  <button className="bg-green-500 hover:bg-green-600 transition border-2 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex justify-center items-center">
-                    <GiCheckMark onClick={()=> startGame(InviterData.id)} size={24} className="sm:size-28 md:size-30 text-white" />
-                  </button>
-                </Link>
+                <button
+                  onClick={()=> startGame(InviterData.id)}
+                  className="bg-green-500 hover:bg-green-600 transition border-2 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex justify-center items-center">
+                  <GiCheckMark size={24} className="sm:size-28 md:size-30 text-white" />
+                </button>
                 <button
                   onClick={Cancel}
                   className="bg-red-500 hover:bg-red-600 transition border-2 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex justify-center items-center">
@@ -619,7 +673,7 @@ export default function ChatPage() {
                 {isTyping &&  <p className='text-green-400 pl-[1rem]'>typing...</p>}
                 </div>
               </div>
-              
+
               <div className="relative ">
                 <button className="flex p-2" onClick={handle_dropmenu}>
                   <SlOptions className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
@@ -705,8 +759,8 @@ export default function ChatPage() {
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
                   <div className="flex justify-around w-full h-full items-center px-2">
                     <p className="text-xs sm:text-sm">You can't send to this contact. Please deblock first.</p>
-                    <button 
-                      onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block)} 
+                    <button
+                      onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block)}
                       className="h-[1.5rem] w-[5rem] sm:h-[2rem] sm:w-[7rem] bg-white text-black rounded-[8px] text-xs sm:text-sm"
                     >
                       Deblock
@@ -717,8 +771,8 @@ export default function ChatPage() {
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
                   <div className="flex justify-around w-full h-full items-center px-2">
                     <p className="text-xs sm:text-sm">You can't send to this contact. Please deblock first.</p>
-                    <button 
-                      onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block)} 
+                    <button
+                      onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block)}
                       className="h-[1.5rem] w-[5rem] sm:h-[2rem] sm:w-[7rem] bg-white text-black rounded-[8px] text-xs sm:text-sm"
                     >
                       Deblock
@@ -733,7 +787,7 @@ export default function ChatPage() {
                 </div>
               ) : (
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
-                  
+
                   <div className="relative">
                     <button ref={buttonRef} onClick={() => handle_Emojis(setShow, show)}>
                       <BsEmojiSmile  className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />

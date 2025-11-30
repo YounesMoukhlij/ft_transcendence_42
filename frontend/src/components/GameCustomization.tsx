@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from './GameContext';
 import { useUserStore } from '../store/userStore';
 import axios from 'axios';
+import { getBackendURL } from '../lib/utils';
 
 const tableBackgrounds = [
   { name: 'Classic Green', value: '#15803d', type: 'color' },
@@ -33,7 +34,7 @@ const paddleColors = [
 
 interface GameCustomizationProps {
   onBack: () => void;
-  onStartGame: (customization: { tableBg: string; ballColor: string; paddleColor: string; }) => void;
+  onStartGame: (customization: { tableBg: string; ballColor: string; paddleColor: string; aiDifficulty?: 'easy' | 'medium' | 'hard' | null; }) => void;
   isSocketConnected?: boolean;
 }
 
@@ -41,64 +42,145 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
   const router = useRouter();
   const { gameState, setCustomisation } = useGameContext();
   const { user, clearUser } = useUserStore();
-  const token = user?.token;
+
+  // Debug: Log socket connection status
+  useEffect(() => {
+    if (gameState.mode === 'remote') {
+      console.log('GameCustomization - Socket connection status:', isSocketConnected);
+    }
+  }, [isSocketConnected, gameState.mode]);
+
+  // Get token from user object (access_token) or fallback to localStorage
+  const getToken = () => {
+    if (user?.access_token) return user.access_token;
+    if (user?.token) return user.token; // Fallback for compatibility
+
+    // Try to get from localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('user-storage');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return parsed?.state?.user?.access_token || parsed?.state?.user?.token || null;
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    return null;
+  };
+
+  const token = getToken();
 
   const [tableBg, setTableBg] = useState<string | null>(null);
   const [ballColor, setBallColor] = useState<string | null>(null);
   const [paddleColor, setPaddleColor] = useState<string | null>(null);
+  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard' | null>(null);
 
-  const isReady = tableBg && ballColor && paddleColor;
+  // For AI mode, difficulty is required; for other modes, it's not needed
+  const isReady = tableBg && ballColor && paddleColor && (gameState.mode === 'ai' ? aiDifficulty !== null : true);
 
-  const axiosInstance = axios.create({
-    baseURL: `http://${process.env.NEXT_PUBLIC_BACKEND_IP}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  // Create axios instance with token, but only if token exists
+  const axiosInstance = useMemo(() => {
+    const baseURL = getBackendURL();
+    const headers: any = {};
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return axios.create({
+      baseURL,
+      headers,
+    });
+  }, [token]);
 
   useEffect(() => {
     const fetchCustomization = async () => {
+      // Don't fetch if no token - customization is optional
+      if (!token) {
+        console.warn('No token available, skipping customization fetch');
+        return;
+      }
+
       try {
         const response = await axiosInstance.get('/getGameCustomization');
         if (response.data) {
-          const { tableBg, ballColor, paddleColor } = response.data;
+          const { tableBg, ballColor, paddleColor, aiDifficulty } = response.data;
           setTableBg(tableBg);
           setBallColor(ballColor);
           setPaddleColor(paddleColor);
+          if (aiDifficulty) setAiDifficulty(aiDifficulty);
           // Update the game context immediately
-          setCustomisation({ tableBg, ballColor, paddleColor });
+          setCustomisation({ tableBg, ballColor, paddleColor, aiDifficulty: aiDifficulty || null });
         }
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          clearUser();
-          router.push('/login');
+        // Never redirect from customization fetch - it's optional
+        // User can still customize and play without saved preferences
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 401) {
+            // Auth issue, but don't redirect - customization is optional
+            console.warn('Could not fetch saved customization (auth issue, but non-critical)');
+          } else {
+            // For other errors, just log
+            console.warn('Could not fetch customization (non-critical):', error.message);
+          }
+        } else {
+          console.error('Error fetching game customization:', error);
         }
-        console.error('Error fetching game customization:', error);
+        // Continue anyway - user can still customize manually
       }
     };
 
-    if (token) {
-      fetchCustomization();
-    }
-  }, [token, setCustomisation, clearUser, router]);
+    fetchCustomization();
+  }, [token, setCustomisation, clearUser, router, axiosInstance]);
 
-  const saveCustomization = async (customization: { tableBg: string; ballColor: string; paddleColor: string; }) => {
+  const saveCustomization = async (customization: { tableBg: string; ballColor: string; paddleColor: string; aiDifficulty?: 'easy' | 'medium' | 'hard' | null; }) => {
+    // If no token, skip saving (customization is optional for remote games)
+    if (!token) {
+      console.warn('No token available, skipping customization save');
+      return Promise.resolve(); // Return resolved promise so it doesn't block
+    }
+
     try {
       await axiosInstance.post('/saveGameCustomization', customization);
+      return Promise.resolve();
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        clearUser();
-        router.push('/login');
+      // Never redirect from customization save - it's non-critical
+      // Just log the error and continue
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          // Token might be expired or invalid, but don't redirect
+          // User can still play - customization is optional
+          console.warn('Could not save customization (auth issue, but non-critical):', error.message);
+        } else {
+          console.warn('Could not save customization (non-critical):', error.message);
+        }
+      } else {
+        console.error('Error saving game customization:', error);
       }
-      console.error('Error saving game customization:', error);
+      // Return resolved promise so caller doesn't think it failed critically
+      return Promise.resolve();
     }
   };
 
   const handleStartGame = () => {
     if (isReady) {
-      const customization = { tableBg, ballColor, paddleColor };
+      const customization = {
+        tableBg,
+        ballColor,
+        paddleColor,
+        ...(gameState.mode === 'ai' && { aiDifficulty })
+      };
       setCustomisation(customization);
-      saveCustomization(customization);
+
+      // Try to save customization, but don't block game start if it fails
+      // This is non-critical - game can proceed without saving customization
+      saveCustomization(customization).catch(err => {
+        console.warn('Could not save customization, but continuing with game:', err);
+      });
+
+      // Start game regardless of customization save result
       onStartGame(customization);
     }
   };
@@ -257,6 +339,54 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
             </div>
           </div>
 
+          {/* AI Difficulty Section - Only shown in AI mode */}
+          {gameState.mode === 'ai' && (
+            <div className="flex flex-col gap-2">
+              <h2 className="text-base font-semibold"
+                  style={{
+                    background: 'linear-gradient(135deg, #f1f5f9, #cbd5e1)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                  }}>
+                AI Difficulty
+              </h2>
+              <div className="flex gap-3 justify-center">
+                {(['easy', 'medium', 'hard'] as const).map((difficulty) => (
+                  <button
+                    key={difficulty}
+                    className={`px-4 py-2 rounded-lg border-2 transition-all duration-300 font-semibold text-sm
+                      ${aiDifficulty === difficulty ? 'scale-110' : 'hover:scale-105'}
+                    `}
+                    style={{
+                      background: aiDifficulty === difficulty
+                        ? 'linear-gradient(135deg, #3b82f6, #1e40af)'
+                        : 'linear-gradient(135deg, #4b5563, #374151)',
+                      color: '#ffffff',
+                      boxShadow: aiDifficulty === difficulty
+                        ? `
+                          inset 0 1px 0 rgba(255,255,255,0.3),
+                          inset 0 -1px 0 rgba(0,0,0,0.3),
+                          0 4px 8px rgba(59,130,246,0.4),
+                          0 0 0 2px rgba(59,130,246,0.6)
+                        `
+                        : `
+                          inset 0 1px 0 rgba(255,255,255,0.1),
+                          inset 0 -1px 0 rgba(0,0,0,0.3),
+                          0 2px 4px rgba(0,0,0,0.3)
+                        `,
+                      textTransform: 'capitalize',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                    }}
+                    onClick={() => setAiDifficulty(difficulty)}
+                  >
+                    {difficulty}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Live Preview Section */}
           <div className="flex flex-col gap-2">
             <h2 className="text-base font-semibold"
@@ -336,7 +466,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           </button>
           <button
             onClick={handleStartGame}
-            disabled={!isReady || (gameState.mode === 'remote' && !isSocketConnected)}
+            disabled={!isReady}
             className={`pb-2 cursor-pointer bg-black border-2 border-white hover:bg-white hover:text-black px-6 py-2 rounded-xl text-base font-bold transition-all duration-300
               ${isReady ? 'hover:scale-105' : 'cursor-not-allowed'}`}
             style={{
@@ -355,7 +485,11 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
               textShadow: '0 1px 2px rgba(0,0,0,0.3)'
             }}
           >
-            {gameState.mode === 'remote' && !isSocketConnected ? 'Connecting...' : 'Start Game'}
+            {gameState.mode === 'remote' && !isSocketConnected
+              ? 'Connecting...'
+              : gameState.mode === 'remote' && isSocketConnected
+              ? 'Start Game'
+              : 'Start Game'}
           </button>
         </div>
 

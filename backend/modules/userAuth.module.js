@@ -3,8 +3,8 @@ import bcrypt from 'bcrypt';
 import fetch from 'node-fetch';
 import jwt from 'jsonwebtoken';
 // Install: npm install otplib qrcode
-import otplib from 'otplib'; 
-import qrcode from 'qrcode'; 
+import otplib from 'otplib';
+import qrcode from 'qrcode';
 
 
 import { createClient } from 'redis';
@@ -116,9 +116,9 @@ export async function AddUser(request, reply) {
     const { username, email, password } = request.body;
 
     if (!username || !email || !password) {
-        return reply.code(400).send({ 
-            success: false, 
-            message: "Missing required fields" 
+        return reply.code(400).send({
+            success: false,
+            message: "Missing required fields"
         });
     }
 
@@ -128,9 +128,9 @@ export async function AddUser(request, reply) {
             .get(username, email);
 
         if (userExists) {
-            return reply.code(409).send({ 
-                success: false, 
-                message: "Username or email already exists" 
+            return reply.code(409).send({
+                success: false,
+                message: "Username or email already exists"
             });
         }
 
@@ -147,7 +147,7 @@ export async function AddUser(request, reply) {
 
     } catch (error) {
         console.error("Error adding user:", error);
-        return reply.code(500).send({ 
+        return reply.code(500).send({
             success: false,
             message: "Error adding user"
         });
@@ -158,7 +158,7 @@ export async function AddUser(request, reply) {
 export async function updateUserInfo(request, reply) {
     // 1. Get user ID from the authenticated request (set by your 'authenticate' decorator)
     const id_user = request.user.id_user;
-    
+
     if (!id_user) {
         return reply.code(400).send({
             success: false,
@@ -168,7 +168,7 @@ export async function updateUserInfo(request, reply) {
 
     let profileImgPath = null; // Will store the new image path if one is uploaded
     const formData = {}; // Will store all text fields (username, email, etc.)
-    
+
     try {
         // 2. Process the 'multipart/form-data' request stream
         const parts = request.parts();
@@ -178,14 +178,14 @@ export async function updateUserInfo(request, reply) {
                 if (part.filename) { // Check if a file was actually selected
                     // a. Create a unique filename to prevent overwrites
                     const uniqueFilename = `${Date.now()}-${part.filename.replace(/\s/g, '_')}`;
-                    
+
                     // b. Define the full path to save the file
                     //    process.cwd() points to your project's root directory
                     const savePath = path.join(process.cwd(), 'uploads', uniqueFilename);
-                    
+
                     // c. Create a stream to write the file to the 'uploads' folder
                     const writeStream = fs.createWriteStream(savePath);
-                    
+
                     // d. Safely pipe the incoming file data to the write stream
                     await pipeline(part.file, writeStream);
 
@@ -200,12 +200,12 @@ export async function updateUserInfo(request, reply) {
                 formData[part.fieldname] = part.value;
             }
         }
-        
+
         // 3. Get the user's current data from the database
         const user = request.server.db
             .prepare("SELECT * FROM users WHERE id_user = ?")
             .get(id_user);
-        
+
         if (!user) {
             return reply.code(404).send({
                 success: false,
@@ -217,19 +217,19 @@ export async function updateUserInfo(request, reply) {
         //    Use new data from formData if it exists, otherwise fall back to existing user data
         const updatedUser = {
             // Use the new path if one was uploaded, otherwise keep the user's existing image path
-            profile_img: profileImgPath || user.profile_img, 
+            profile_img: profileImgPath || user.profile_img,
             username: formData.username || user.username,
             fullname: formData.fullname || user.fullname,
             email: formData.email || user.email,
             languages: formData.languages || user.languages,
             bio: formData.bio || user.bio
         };
-        
+
         // 5. Check for username or email conflicts
         const userExists = request.server.db
             .prepare("SELECT * FROM users WHERE (username = ? OR email = ?) AND id_user != ?")
             .get(updatedUser.username, updatedUser.email, id_user);
-        
+
         if (userExists) {
             // If conflict, delete the just-uploaded image (if any) to prevent orphaned files
             if (profileImgPath) {
@@ -238,12 +238,12 @@ export async function updateUserInfo(request, reply) {
                     if (err) console.error("Error deleting conflicting upload:", newPath, err);
                 });
             }
-            return reply.code(409).send({ 
-                success: false, 
-                message: "Username or email already exists" 
+            return reply.code(409).send({
+                success: false,
+                message: "Username or email already exists"
             });
         }
-        
+
         // 6. [Optional but Recommended] Delete the old profile image
         //    This runs if a new image was uploaded (profileImgPath is not null)
         //    AND the old image was not the default one
@@ -260,13 +260,13 @@ export async function updateUserInfo(request, reply) {
 
         // 7. Update the user in the database
         const query = request.server.db
-            .prepare(`UPDATE users SET 
-                profile_img = ?, 
-                username = ?, 
-                fullname = ?, 
-                email = ?, 
-                languages = ?, 
-                bio = ? 
+            .prepare(`UPDATE users SET
+                profile_img = ?,
+                username = ?,
+                fullname = ?,
+                email = ?,
+                languages = ?,
+                bio = ?
                 WHERE id_user = ?`);
         query.run(
             updatedUser.profile_img,
@@ -286,7 +286,7 @@ export async function updateUserInfo(request, reply) {
 
     } catch (error) {
         console.error("Error updating user:", error);
-        return reply.code(500).send({ 
+        return reply.code(500).send({
             success: false,
             message: "Error updating user"
         });
@@ -307,7 +307,7 @@ export async function updateUserPassword(request, reply) {
     console.log("updateUserPassword called with id_user:", id_user);
     const { current_password, new_password } = request.body;
     console.log("updateUserPassword called with:", { id_user, current_password, new_password });
-    
+
     // Removed redundant check for id_user from body
     if (!current_password || !new_password) {
         return reply.code(400).send({
@@ -322,34 +322,34 @@ export async function updateUserPassword(request, reply) {
             .get(id_user);
 
         if (!user) {
-            return reply.code(404).send({ 
-                success: false, 
-                message: "User not found" 
+            return reply.code(404).send({
+                success: false,
+                message: "User not found"
             });
         }
 
         const isPasswordValid = await bcrypt.compare(current_password, user.password);
-        
+
         if (!isPasswordValid) {
-            return reply.code(401).send({ 
-                success: false, 
-                message: "Current password is incorrect" 
+            return reply.code(401).send({
+                success: false,
+                message: "Current password is incorrect"
             });
         }
 
         const hashedNewPassword = await hashPassword(new_password);
         request.server.db
             .prepare("UPDATE users SET password = ? WHERE id_user = ?")
-            .run(hashedNewPassword, id_user); 
+            .run(hashedNewPassword, id_user);
 
-        return reply.code(200).send({ 
+        return reply.code(200).send({
             success: true,
-            message: "Password updated successfully" 
+            message: "Password updated successfully"
         });
 
     } catch (error) {
         console.error("Error updating password:", error);
-        return reply.code(500).send({ 
+        return reply.code(500).send({
             success: false,
             message: "Error updating password"
         });
@@ -360,7 +360,7 @@ export async function updateUserPassword(request, reply) {
 export async function update2FA(request, reply) {
     const {twofa } = request.body;
     const id_user = request.user.id_user;
-    
+
     if (typeof id_user === 'undefined' || typeof twofa === 'undefined') {
         return reply.code(400).send({
             success: false,
@@ -374,26 +374,26 @@ export async function update2FA(request, reply) {
             .get(id_user);
 
         if (!user) {
-            return reply.code(404).send({ 
-                success: false, 
-                message: "User not found" 
+            return reply.code(404).send({
+                success: false,
+                message: "User not found"
             });
         }
 
-        const twofaAsInt = twofa ? 1 : 0; 
+        const twofaAsInt = twofa ? 1 : 0;
 
         request.server.db
             .prepare("UPDATE users SET twofa_enabled = ? WHERE id_user = ?")
             .run(twofaAsInt, id_user);
 
-        return reply.code(200).send({ 
+        return reply.code(200).send({
             success: true,
-            message: "2FA setting updated successfully" 
+            message: "2FA setting updated successfully"
         });
 
     } catch (error) {
         console.error("Error updating 2FA setting:", error);
-        return reply.code(500).send({ 
+        return reply.code(500).send({
             success: false,
             message: "Error updating 2FA setting"
         });
@@ -405,35 +405,35 @@ export async function update2FA(request, reply) {
 
 export async function login(request, reply) {
     const { username, password } = request.body;
-    
+
     if (!username || !password) {
-        return reply.code(400).send({ 
-            success: false, 
-            message: "Missing required fields" 
+        return reply.code(400).send({
+            success: false,
+            message: "Missing required fields"
         });
     }
     try {
         const user = request.server.db
             .prepare("SELECT * FROM users WHERE username = ?")
             .get(username);
-        
+
         if (!user) {
-            return reply.code(401).send({ 
-                success: false, 
-                message: "Invalid username or password" 
+            return reply.code(401).send({
+                success: false,
+                message: "Invalid username or password"
             });
         }
         if (user.auth_method !== 0) {
-            return reply.code(400).send({ 
-                success: false, 
-                message: "Use OAuth to log in" 
+            return reply.code(400).send({
+                success: false,
+                message: "Use OAuth to log in"
             });
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        
+
         if (!isPasswordValid) {
-            return reply.code(401).send({ 
-                success: false, 
+            return reply.code(401).send({
+                success: false,
                 message: "Invalid username or password"
             });
         }
@@ -444,14 +444,14 @@ export async function login(request, reply) {
         //         success: true,
         //         message: "2FA required",
         //         twoFA_required: true,
-        //         id_user: user.id_user 
+        //         id_user: user.id_user
         //     });
         // }
 
         // Regular login success
         const token = generateToken(user.username, user.email, user.id_user);
         const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
-        
+
         // Ensure userWithoutPassword is correctly created after token generation
         const { password: _, twoFA_secret: __, ...userWithoutPassword } = user;
         request.server.db
@@ -463,8 +463,8 @@ export async function login(request, reply) {
 
         // insert token into database
 
-        return reply.code(200).send({ 
-            success: true, 
+        return reply.code(200).send({
+            success: true,
             message: "Login successful",
             user: userWithoutPassword,
             token: token,
@@ -473,7 +473,7 @@ export async function login(request, reply) {
 
     } catch (error) {
         console.error("Error during login:", error);
-        return reply.code(500).send({ 
+        return reply.code(500).send({
             success: false,
             message: "Internal server error"
         });
@@ -539,53 +539,91 @@ export async function getAllUsers(request, reply) {
         return reply.code(200).send(safeUsers);
     } catch (error) {
         console.error("Error fetching users:", error);
-        return reply.code(500).send({ 
-            message: "Error fetching users" 
+        return reply.code(500).send({
+            message: "Error fetching users"
+        });
+    }
+}
+
+// Search users by username
+export async function searchUsers(request, reply) {
+    const { query } = request.query;
+
+    if (!query || query.trim().length === 0) {
+        return reply.code(400).send({ message: "Search query is required" });
+    }
+
+    try {
+        // Search for users whose username contains the query (case-insensitive)
+        const searchQuery = `%${query.trim()}%`;
+        const users = request.server.db
+            .prepare("SELECT id_user, username, fullname, profile_img, xp, status FROM users WHERE username LIKE ? OR fullname LIKE ? LIMIT 20")
+            .all(searchQuery, searchQuery);
+
+        // Remove sensitive fields and format response
+        const safeUsers = users.map(user => {
+            const { password, twoFA_secret, access_token, refresh_token, ...safeUser } = user;
+            // Update status based on real-time socket connections
+            const usersSocket = request.server.users_socket;
+            const friendSocket = usersSocket.get(user.id_user.toString());
+            if (friendSocket) {
+                safeUser.status = friendSocket.readyState === 1 ? 1 : 0;
+            } else {
+                safeUser.status = 0;
+            }
+            return safeUser;
+        });
+
+        return reply.code(200).send(safeUsers);
+    } catch (error) {
+        console.error("Error searching users:", error);
+        return reply.code(500).send({
+            message: "Error searching users"
         });
     }
 }
 
 export async function getUserById(request, reply) {
     const { id } = request.params;
-    
+
     try {
         const user = request.server.db
             .prepare("SELECT * FROM users WHERE id_user = ?")
             .get(id);
-        
+
         if (!user) {
             return reply.code(404).send({ message: "User not found" });
         }
-        
+
         // Remove sensitive fields before sending
         const { password, twoFA_secret, ...safeUser } = user;
         return reply.code(200).send(safeUser);
     } catch (error) {
         console.error("Error fetching user:", error);
-        return reply.code(500).send({ 
-            message: "Error fetching user" 
+        return reply.code(500).send({
+            message: "Error fetching user"
         });
     }
 }
 
 export async function getUserByEmail(request, reply) {
     const { email } = request.params;
-    
+
     try {
         const user = request.server.db
             .prepare("SELECT * FROM users WHERE email = ?")
             .get(email);
-        
+
         if (!user) {
             return reply.code(404).send({ message: "User not found" });
         }
-        
+
         const { password, twoFA_secret, ...safeUser } = user;
         return reply.code(200).send(safeUser);
     } catch (error) {
         console.error("Error fetching user:", error);
-        return reply.code(500).send({ 
-            message: "Error fetching user" 
+        return reply.code(500).send({
+            message: "Error fetching user"
         });
     }
 }
@@ -620,13 +658,13 @@ export async function DeleteUserById(request, reply) {
 
 export async function InitiateGoogleAuth(request, reply) {
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&scope=openid%20email%20profile`;
-    
+
     return reply.redirect(googleAuthUrl);
 }
 
 export async function GoogleAuth(request, reply) {
     const { code } = request.query;
-   
+
     if (!code) {
         return reply.redirect(`${FRONTEND_URL}?error=no_code`);
     }
@@ -645,7 +683,7 @@ export async function GoogleAuth(request, reply) {
         });
 
         const tokens = await tokenResponse.json();
-        
+
         if (!tokens.access_token) {
             throw new Error('Failed to obtain access token');
         }
@@ -657,7 +695,7 @@ export async function GoogleAuth(request, reply) {
 
         const googleUser = await userResponse.json();
 
-        // Check if user already exists with the given email and username 
+        // Check if user already exists with the given email and username
         const existingUser = request.server.db
             .prepare("SELECT * FROM users WHERE email = ?")
             .get(googleUser.email);
@@ -682,7 +720,7 @@ export async function GoogleAuth(request, reply) {
             const result = insertQuery.run(
             googleUser.name.split(" ")[0] + Math.floor(Math.random() * 1000),
             googleUser.name,
-            googleUser.email, 
+            googleUser.email,
             googleUser.picture,
             1,
             );
@@ -695,10 +733,10 @@ export async function GoogleAuth(request, reply) {
             // store token in db
             request.server.db
                 .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
-                .run(token, refreshToken, userId); 
+                .run(token, refreshToken, userId);
 
         }
-    
+
         return reply.redirect(`${FRONTEND_URL}/signIn/?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}`);
 
     } catch (error) {
@@ -715,7 +753,7 @@ export async function Initiate42Auth(request, reply) {
 
 export async function FortyTwoAuth(request, reply) {
     const { code } = request.query;
-    
+
     if (!code) {
         return reply.redirect(`${FRONTEND_URL}?error=no_code`);
     }
@@ -736,7 +774,7 @@ export async function FortyTwoAuth(request, reply) {
         });
 
         const tokenData = await tokenResponse.json();
-        
+
         if (!tokenData.access_token) {
             throw new Error('Failed to obtain access token');
         }
@@ -819,11 +857,11 @@ const transporter = nodemailer.createTransport({
 
 
 async function sendVerificationCode(userEmail, code) {
-  
+
   const mailOptions = {
     from: `Zmoumni`,
     to: userEmail,
-    subject: 'Your Verification Code', 
+    subject: 'Your Verification Code',
     html  : `   <!DOCTYPE html>
                 <html lang="en">
                 <head>
@@ -916,7 +954,7 @@ async function sendVerificationCode(userEmail, code) {
                 </div>
                 </body>
                 </html>
-` 
+`
   };
 
   // 4. Send the email
@@ -946,7 +984,7 @@ export async function forgotPassword(request, reply) {
         if (!authMethod || authMethod.auth_method !== 0) {
             return reply.code(400).send(
                 {
-                    success: false, 
+                    success: false,
                     message: "Password reset is only available for standard authentication users. Use OAuth to log in."
                 }
             );
@@ -957,13 +995,13 @@ export async function forgotPassword(request, reply) {
             console.log(`Password reset attempt for non-existent email: ${email}`);
             return reply.code(200).send(
                 {
-                    success: true, 
+                    success: true,
                     message: "This email does not exist in our databases. :("
                 }
             );
         }
 
-        
+
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         console.log(`Generated code for ${email}: ${code}`);
         await redis.set(`reset:${email}`, code, { EX: 120 });
@@ -986,7 +1024,7 @@ export async function forgotPassword(request, reply) {
         //         privateKey: EMAILJS_CONFIG.PRIVATE_KEY, // The private key is essential for Node.js
         //     }
         // );
-        
+
         console.log(`Verification code sent to ${email}`);
         return reply.code(200).send({ success: true, message: "A verification code has been sent to your email." });
 

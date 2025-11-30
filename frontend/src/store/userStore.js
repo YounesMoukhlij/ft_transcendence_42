@@ -50,35 +50,122 @@ export const useUserStore = create(
       // ----------------------
 
       connect: () => {
-        if (get().socket) return;
+        // Only skip if socket exists AND is open or connecting
+        const existingSocket = get().socket;
+        if (existingSocket) {
+          if (existingSocket.readyState === WebSocket.OPEN) {
+            console.log('Socket already open, skipping connect');
+            return;
+          }
+          if (existingSocket.readyState === WebSocket.CONNECTING) {
+            console.log('Socket already connecting, skipping connect');
+            return;
+          }
+          // If socket exists but is closed/closing, close it first
+          if (existingSocket.readyState === WebSocket.CLOSED || existingSocket.readyState === WebSocket.CLOSING) {
+            console.log('Cleaning up closed/closing socket before reconnecting');
+            try {
+              existingSocket.close();
+            } catch (e) {
+              // Ignore errors when closing
+            }
+            set({ socket: null, isConnect: false });
+          }
+        }
+
         if (typeof window === "undefined") return;
 
-        const protocol =
-          window.location.protocol === "https:" ? "wss" : "ws";
-        const url = `${protocol}://localhost:4444/ws`;
+        // Get user ID from state or localStorage
+        const getUserId = () => {
+          const stateUser = get().user;
+          if (stateUser?.id_user) return stateUser.id_user;
+
+          // Fallback to localStorage
+          try {
+            const stored = localStorage.getItem('user-storage');
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              return parsed?.state?.user?.id_user || null;
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+          return null;
+        };
+
+        const id = getUserId();
+        if (!id) {
+          console.warn("User ID not available yet, WebSocket connection will be delayed");
+          // Retry after a short delay if user might be loading
+          setTimeout(() => {
+            const retryId = getUserId();
+            if (retryId && !get().socket) {
+              get().connect();
+            }
+          }, 500);
+          return;
+        }
+
+        // Build WebSocket URL using environment variables
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const host = process.env.NEXT_PUBLIC_BACKEND_IP || process.env.NEXT_PUBLIC_BACKENDIP || 'localhost';
+        const port = process.env.NEXT_PUBLIC_BACKEND_PORT || process.env.NEXT_PUBLIC_BACKENDPORT || '4444';
+        const url = `${protocol}://${host}:${port}/ws`;
+
+        console.log('Attempting to connect WebSocket to:', url);
 
         try {
           const ws = new WebSocket(url);
 
           ws.onopen = () => {
-            const id = get().user?.id_user;
+            console.log("WebSocket opened successfully:", url);
+            // Get user ID again (in case it wasn't available when connect was called)
+            const userId = getUserId();
 
-            if (!id) {
-              console.error("User ID missing, cannot register socket");
+            if (!userId) {
+              console.warn("User ID still missing when socket opened, will retry...");
+              // Wait a bit and retry sending the ID
+              const retryInterval = setInterval(() => {
+                const retryUserId = getUserId();
+                if (retryUserId && ws.readyState === WebSocket.OPEN) {
+                  ws.send(String(retryUserId));
+                  set({ isConnect: true });
+                  console.log("Connected WS (retry) - User ID sent:", retryUserId, url);
+                  clearInterval(retryInterval);
+                } else if (ws.readyState !== WebSocket.OPEN) {
+                  console.warn("Socket closed while waiting for user ID");
+                  clearInterval(retryInterval);
+                }
+              }, 200);
+
+              // Stop retrying after 5 seconds
+              setTimeout(() => clearInterval(retryInterval), 5000);
               return;
             }
 
-            ws.send(String(id));
+            ws.send(String(userId));
             set({ isConnect: true });
-            console.log("Connected WS", url);
+            console.log("Connected WS - User ID sent:", userId, url);
           };
 
-          ws.onclose = () => {
-            console.log("Disconnected WS");
+          ws.onclose = (event) => {
+            console.log("Disconnected WS", {
+              code: event.code,
+              reason: event.reason,
+              wasClean: event.wasClean,
+              url
+            });
             set({ isConnect: false, socket: null });
           };
 
-          ws.onerror = (err) => console.error("WebSocket error", err);
+          ws.onerror = (err) => {
+            console.error("WebSocket error:", {
+              error: err,
+              url,
+              readyState: ws.readyState
+            });
+            set({ isConnect: false });
+          };
 
           set({ socket: ws });
         } catch (err) {
@@ -88,8 +175,36 @@ export const useUserStore = create(
 
       // Auto-connect after hydration
       initConnection: () => {
-        const id = get().user?.id_user;
-        if (id) get().connect();
+        // Get user ID from state or localStorage
+        const getUserId = () => {
+          const stateUser = get().user;
+          if (stateUser?.id_user) return stateUser.id_user;
+
+          // Fallback to localStorage
+          try {
+            const stored = localStorage.getItem('user-storage');
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              return parsed?.state?.user?.id_user || null;
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+          return null;
+        };
+
+        const id = getUserId();
+        if (id) {
+          get().connect();
+        } else {
+          // Retry after a short delay if user might still be loading
+          setTimeout(() => {
+            const retryId = getUserId();
+            if (retryId) {
+              get().connect();
+            }
+          }, 300);
+        }
       },
 
       // ----------------------

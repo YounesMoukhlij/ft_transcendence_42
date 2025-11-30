@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import { useUserStore } from '@/store/userStore';
+import { getWebSocket } from '@/components/globalSocket';
 import PingPongGame from '@/components/PingPongGame';
 
 import { ServerGameState } from '@/types/game';
@@ -20,6 +21,8 @@ export default function RemoteGameRoomPage() {
   const [error, setError] = useState('');
   const [rematchOffer, setRematchOffer] = useState(false);
   const [rematchDeclinedMessage, setRematchDeclinedMessage] = useState('');
+  const [rematchRequested, setRematchRequested] = useState(false);
+  const [gameOver, setGameOver] = useState<{winner: string; finalScore: any} | null>(null);
 
   useEffect(() => {
     document.title = 'Online Multiplayer Ping Pong';
@@ -41,11 +44,19 @@ export default function RemoteGameRoomPage() {
   }, [socket]);
 
   useEffect(() => {
-    if (!socket) {
-      setError('WebSocket connection not found. Please try again.');
-      return;
+    // Try to get WebSocket connection - first from store, then from globalSocket
+    let activeSocket = socket;
+
+    // If socket from store is not available, try to get it from globalSocket
+    if (!activeSocket || activeSocket.readyState === WebSocket.CLOSED || activeSocket.readyState === WebSocket.CLOSING) {
+      try {
+        activeSocket = getWebSocket();
+      } catch (err) {
+        console.error('Failed to get WebSocket:', err);
+      }
     }
 
+    // Message handler function
     const handleMessage = (event: MessageEvent) => {
       try {
         const message = JSON.parse(event.data);
@@ -58,14 +69,38 @@ export default function RemoteGameRoomPage() {
             break;
           case 'rematch:offer':
             setRematchOffer(true);
+            setRematchRequested(false); // Reset request status when offer received
             break;
           case 'rematch:declined':
             setRematchDeclinedMessage('Your opponent declined the rematch.');
+            setRematchRequested(false); // Reset request status
             break;
           case 'rematch:start':
             setServerGameState(message.payload);
             setRematchOffer(false);
             setRematchDeclinedMessage('');
+            setRematchRequested(false);
+            setGameOver(null); // Reset game over state for rematch
+            break;
+          case 'gameOver':
+            // Game ended, winner is in message.payload.winner
+            setGameOver({
+              winner: message.payload.winner,
+              finalScore: message.payload.finalScore
+            });
+            // Update final game state if provided
+            if (message.payload.finalGameState) {
+              setServerGameState(message.payload.finalGameState);
+            }
+            break;
+          case 'matchFound':
+            // If we receive matchFound while on room page, update state
+            if (message.payload.roomCode === roomCode) {
+              setServerGameState(null); // Reset to trigger re-render
+            }
+            break;
+          case 'error':
+            setError(message.message || 'An error occurred');
             break;
           default:
             console.log('Unhandled game message:', message);
@@ -75,12 +110,82 @@ export default function RemoteGameRoomPage() {
       }
     };
 
-    socket.addEventListener('message', handleMessage);
+    // If still no socket, wait a bit for connection to establish, then redirect
+    if (!activeSocket || (activeSocket.readyState !== WebSocket.OPEN && activeSocket.readyState !== WebSocket.CONNECTING)) {
+      // Give it a short time to connect (in case it's still connecting)
+      const timeoutId = setTimeout(() => {
+        // Check one more time if socket is now available
+        let finalSocket = socket;
+        if (!finalSocket || finalSocket.readyState === WebSocket.CLOSED || finalSocket.readyState === WebSocket.CLOSING) {
+          try {
+            finalSocket = getWebSocket();
+          } catch (err) {
+            // If still no connection, redirect to game home page
+            console.error('WebSocket connection not available, redirecting to game home');
+            router.push('/game');
+            return;
+          }
+        }
+
+        // If socket is connecting, wait a bit more
+        if (finalSocket && finalSocket.readyState === WebSocket.CONNECTING) {
+          const connectTimeout = setTimeout(() => {
+            if (finalSocket && finalSocket.readyState !== WebSocket.OPEN) {
+              console.error('WebSocket connection timeout, redirecting to game home');
+              router.push('/game');
+            } else if (finalSocket && finalSocket.readyState === WebSocket.OPEN) {
+              // Socket is now open, set up message handler
+              finalSocket.addEventListener('message', handleMessage);
+            }
+          }, 2000); // Wait 2 more seconds for connection
+
+          return () => clearTimeout(connectTimeout);
+        }
+
+        // If socket is still not open, redirect
+        if (!finalSocket || finalSocket.readyState !== WebSocket.OPEN) {
+          console.error('WebSocket connection not available, redirecting to game home');
+          router.push('/game');
+        } else {
+          // Socket is open, set up message handler
+          finalSocket.addEventListener('message', handleMessage);
+        }
+      }, 500); // Wait 500ms before checking
+
+      return () => clearTimeout(timeoutId);
+    }
+
+    // If socket is connecting, wait for it to open
+    if (activeSocket.readyState === WebSocket.CONNECTING) {
+      const openHandler = () => {
+        // Socket is now open, set up message handler
+        activeSocket!.addEventListener('message', handleMessage);
+      };
+
+      activeSocket.addEventListener('open', openHandler);
+
+      // Also set a timeout in case connection fails
+      const connectTimeout = setTimeout(() => {
+        if (activeSocket && activeSocket.readyState !== WebSocket.OPEN) {
+          console.error('WebSocket connection timeout, redirecting to game home');
+          router.push('/game');
+        }
+      }, 3000);
+
+      return () => {
+        activeSocket?.removeEventListener('open', openHandler);
+        activeSocket?.removeEventListener('message', handleMessage);
+        clearTimeout(connectTimeout);
+      };
+    }
+
+    // Socket is open, set up message handler
+    activeSocket.addEventListener('message', handleMessage);
 
     return () => {
-      socket.removeEventListener('message', handleMessage);
+      activeSocket?.removeEventListener('message', handleMessage);
     };
-  }, [socket, handleAcceptRematch, handleDeclineRematch]);
+  }, [socket, handleAcceptRematch, handleDeclineRematch, roomCode, router]);
 
   const leaveRoom = () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -120,15 +225,72 @@ export default function RemoteGameRoomPage() {
           </button>
         </div>
       </div>
-      <PingPongGame 
-        serverGameState={serverGameState} 
-        opponentLeft={opponentLeft} 
-        setServerGameState={setServerGameState}
-        rematchDeclinedMessage={rematchDeclinedMessage}
-        setRematchDeclinedMessage={setRematchDeclinedMessage}
-        rematchOffer={rematchOffer}
-        handleAcceptRematch={handleAcceptRematch}
-      />
+      {gameOver ? (
+        <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
+          <h2 className="text-4xl font-bold mb-4">Game Over</h2>
+          <p className="text-2xl mt-4 mb-6">{gameOver.winner} is the winner!</p>
+          <p className="text-lg mb-4">
+            Final Score: {gameOver.finalScore.player1} - {gameOver.finalScore.player2}
+          </p>
+
+          {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage}</p>}
+
+          {rematchOffer ? (
+            <div>
+              <p className="text-yellow-400 mb-4">Your opponent requested a rematch!</p>
+              <button
+                onClick={handleAcceptRematch}
+                className="mt-4 px-6 py-3 bg-yellow-500 rounded-lg text-lg hover:bg-yellow-600 transition-colors"
+              >
+                Accept Rematch
+              </button>
+              <button
+                onClick={() => {
+                  if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: 'rematch:decline' }));
+                    setRematchOffer(false);
+                  }
+                }}
+                className="mt-4 ml-4 px-6 py-3 bg-red-500 rounded-lg text-lg hover:bg-red-600 transition-colors"
+              >
+                Decline
+              </button>
+            </div>
+          ) : rematchRequested ? (
+            <p className="text-yellow-400 mb-4">Waiting for opponent to accept rematch...</p>
+          ) : (
+            <button
+              onClick={() => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                  socket.send(JSON.stringify({ type: 'rematch:request' }));
+                  setRematchRequested(true);
+                  setRematchDeclinedMessage(''); // Clear any previous decline message
+                }
+              }}
+              className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors"
+            >
+              Request Rematch
+            </button>
+          )}
+
+          <button
+            onClick={leaveRoom}
+            className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors"
+          >
+            Back to Game Lobby
+          </button>
+        </div>
+      ) : (
+        <PingPongGame
+          serverGameState={serverGameState}
+          opponentLeft={opponentLeft}
+          setServerGameState={setServerGameState}
+          rematchDeclinedMessage={rematchDeclinedMessage}
+          setRematchDeclinedMessage={setRematchDeclinedMessage}
+          rematchOffer={rematchOffer}
+          handleAcceptRematch={handleAcceptRematch}
+        />
+      )}
     </div>
   );
 }

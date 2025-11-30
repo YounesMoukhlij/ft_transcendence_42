@@ -1,7 +1,8 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
+import { useUserStore } from '@/store/userStore';
 
 const predefinedAvatars = [
   '/profileface.png',
@@ -12,9 +13,28 @@ const predefinedAvatars = [
 function Player2Setup() {
   const { gameState, setPlayers } = useGameContext();
   const router = useRouter();
+  const user = useUserStore((state) => state.user);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('');
   const [upload, setUpload] = useState<File | null>(null);
+
+  // Initialize Player 1 with logged-in user's data when component mounts
+  useEffect(() => {
+    if (user) {
+      // Always ensure Player 1 is set with the logged-in user's data
+      const player1 = {
+        name: user.username || 'Player 1',
+        avatar: user.profile_img || '',
+        color: '#f87171',
+        id: user.id_user?.toString() || undefined,
+      };
+
+      // Only update if Player 1 doesn't exist or doesn't match the logged-in user
+      if (!gameState.players || !gameState.players[0] || gameState.players[0].id !== player1.id) {
+        setPlayers([player1]);
+      }
+    }
+  }, [user, gameState.players, setPlayers]);
 
   const handleAvatarSelect = (src: string) => {
     setAvatar(src);
@@ -34,8 +54,15 @@ function Player2Setup() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Ensure Player 1 has the logged-in user's data
+    const player1 = gameState.players[0] || {
+      name: user?.username || 'Player 1',
+      avatar: user?.profile_img || '',
+      color: '#f87171',
+      id: user?.id_user?.toString() || undefined,
+    };
     setPlayers([
-      gameState.players[0] || { name: 'Player 1', avatar: '', color: '#f87171' },
+      player1,
       { name: name || 'Player 2', avatar: avatar || '', color: '#60a5fa' },
     ]);
     router.push('/game/customize');

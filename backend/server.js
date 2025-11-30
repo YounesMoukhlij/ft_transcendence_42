@@ -12,6 +12,8 @@ import dotenv from 'dotenv';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import fastifyJwt from '@fastify/jwt';
+import GameManager from './modules/gameManager.js';
+import { setupWebSocketServer } from './modules/websocketHandler.js';
 
 dotenv.config();
 
@@ -23,7 +25,7 @@ const uploadsDir = path.join(__dirname, 'uploads');
 
 
 const app = fastify({
-  logger: true, 
+  logger: true,
   bodyLimit: 10 * 1024 * 1024,
 });
 
@@ -31,9 +33,12 @@ const app = fastify({
 
 const db = new Database('Database.db');
 app.decorate('db', db);
-    const wss = new WebSocketServer({ server: app.server, path: '/ws' });
-    const users_socket = new Map();
-    app.decorate('users_socket', users_socket);
+const users_socket = new Map();
+app.decorate('users_socket', users_socket);
+
+// Initialize Game Manager
+const gameManager = new GameManager(db, users_socket);
+app.decorate('gameManager', gameManager);
 
 app.register(fastifyJwt, { secret: process.env.SECRET});
 
@@ -109,59 +114,15 @@ async function startServer() {
       app.log.info('Database initialized');
     }
 
-    function statusSahre(id  , mode){
-    const getFriendsStmt1 = db.prepare(`SELECT user_id  FROM friends WHERE friend_id = ?`);
-    const getFriendsStmt2 = db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ?`);
+    // Start the HTTP server first
+    await app.listen({ port: process.env.PORT, host: '0.0.0.0' });
 
-    const friends1 = getFriendsStmt1.all(id).map(row => row.user_id);
-    const friends2 = getFriendsStmt2.all(id).map(row => row.friend_id);
-    const allFriends = [...friends1, ...friends2];
+    // --- WebSocket Server Setup (after HTTP server is listening) ---
+    const wss = new WebSocketServer({ server: app.server, path: '/ws' });
+    setupWebSocketServer(wss, db, users_socket, gameManager);
 
-
-    for (let i = 0; i < allFriends.length; i++) {
-      const socket = users_socket.get(allFriends[i].toString());
-
-      if(socket){
-
-        const data= {
-          status: mode,
-          friend: id
-        }
-        socket.send(JSON.stringify({
-          type: "status",
-          data: data
-      }));
-    }
-  }
-}
-    // --- WebSocket Server Setup ---
-  wss.on('connection', (socket) => {
-    let id = -1;
-    
-    socket.once('message', (msg) => {
-      
-      id = msg.toString();
-
-      users_socket.set(id, socket);
-
-      statusSahre(id , 1);
-
-
-      const query = db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
-      query.run(1 , id);
-
-    
-      socket.on('close', () => {
-        statusSahre(id , 0);
-
-        const query = db.prepare('UPDATE users SET status = ? WHERE id_user = ?');
-        query.run(0 , id);
-
-      });
-    });
-  });
-
-  await app.listen({ port: process.env.PORT, host: '0.0.0.0' });
+    // Start periodic game-related tasks (cleanup, matchmaking, sync)
+    gameManager.startPeriodicTasks();
 
   } catch (err) {
     app.log.error(err);

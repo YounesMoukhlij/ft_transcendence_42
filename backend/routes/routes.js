@@ -18,7 +18,8 @@ import {
     updateUserInfo,
     updateUserPassword,
     update2FA,
-    leaderboard
+    leaderboard,
+    searchUsers
 } from '../modules/userAuth.module.js';
 
 import { getUserStats, getUserStatsbyUsername } from '../modules/profile.module.js';
@@ -40,7 +41,6 @@ import { saveGameCustomization, getGameCustomization } from '../modules/game.mod
 
 export default async function routes(fastify, options) {
 
-
   fastify.addHook('onRequest' , async (request , reply) => {
     const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser" , "/getUserById/1"];
 
@@ -55,12 +55,13 @@ export default async function routes(fastify, options) {
   });
 
 
-  
+
 
     fastify.post('/AddUser', AddUser);
     fastify.get('/getAllUsers', getAllUsers);
     fastify.get('/getUserById/:id', getUserById);
     fastify.get('/getUserByEmail/:email', getUserByEmail);
+    fastify.get('/searchUsers', searchUsers);
     fastify.delete('/DeleteUserById/:id', DeleteUserById);
     fastify.post('/sendGameChallenge' , sendGameChallenge);
     fastify.post('/startGame' , AcceptGameChallenge);
@@ -77,7 +78,7 @@ export default async function routes(fastify, options) {
     fastify.post('/unfriend' , unfriend)
     fastify.post('/AddFriend' , AddFriend);
     fastify.post('/sendRequestFriend' , sendRequestFriend);
-    fastify.get('/GetNotification' , GetNotification);    
+    fastify.get('/GetNotification' , GetNotification);
     fastify.post('/block' , blockFunction);
     fastify.post('/Deblock' , DeblockFunction);
     fastify.delete('/DeleteFriendRequest' , DeleteFriendRequest);
@@ -89,7 +90,7 @@ export default async function routes(fastify, options) {
     fastify.post('/updateUserInfo', updateUserInfo);
     fastify.post('/updateUserPassword', updateUserPassword);
     fastify.post('/update2FA', update2FA);
-    
+
 
 
     fastify.post('/forgotPassword', forgotPassword);
@@ -102,14 +103,14 @@ export default async function routes(fastify, options) {
 
     fastify.post('/login', login);
     fastify.post('/refreshToken', refreshToken);
-   
+
     // ====== GOOGLE OAUTH ROUTES ======
     // Step 1: Initiate OAuth flow
     fastify.get('/auth/google', InitiateGoogleAuth);
-    
+
     // Step 2: Google redirects here with code
     fastify.get('/GoogleAuth', GoogleAuth);
-    
+
     // ====== 42 OAUTH ROUTES ======
     // Step 1: Initiate OAuth flow
     fastify.get('/auth/42', Initiate42Auth);
@@ -124,9 +125,9 @@ export default async function routes(fastify, options) {
   // logged in USer
   fastify.get('/getUserStats', getUserStats);
 
-  // user by username 
+  // user by username
   fastify.get('/getUserStats/:username', getUserStatsbyUsername);
-  
+
   // leagues Toutes
 
   fastify.get('/getLeaguesStats/:league', getLeagueStats);

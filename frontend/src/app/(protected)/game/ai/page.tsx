@@ -14,12 +14,13 @@ export default function AIGamePage() {
     document.title = 'AI Ping Pong Game';
   }, []);
 
-  // Ensure we're in AI mode
+  // Ensure we're in AI mode (only set once on mount)
   useEffect(() => {
-    if (!gameState.mode || gameState.mode !== 'ai') {
+    if (gameState.mode !== 'ai') {
       setGameMode('ai');
     }
-  }, [gameState.mode, setGameMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   return (
     <div className="flex flex-col items-center justify-center h-[100%] w-[100%]">

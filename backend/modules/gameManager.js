@@ -1,0 +1,1983 @@
+// Game Manager for Remote 1v1 Ping Pong Games
+
+const GAME_WIDTH = 800;
+const GAME_HEIGHT = 600;
+const PADDLE_WIDTH = 16;
+const PADDLE_HEIGHT = 100;
+const BALL_RADIUS = 10;
+const PADDLE_SPEED = 12; // Increased from 8 for faster gameplay
+const BALL_SPEED = 6; // Reduced for slower ball movement (was 8)
+const WINNING_SCORE = 5;
+
+class GameManager {
+  constructor(db, usersSocket) {
+    this.db = db;
+    this.usersSocket = usersSocket;
+    this.matchmakingQueue = [];
+    this.gameRooms = new Map();
+    this.gameLoops = new Map();
+    this.pendingInvitations = new Map(); // friendId -> { from: userId, roomCode: string }
+    this.rematchRequests = new Map(); // roomCode -> { from: userId, to: userId }
+    this.acceptedChallenges = new Map(); // challengeId -> { inviterId: userId, acceptorId: userId, inviterReady: false, acceptorReady: false }
+
+    // Tournament management
+    this.tournaments = new Map(); // tournamentId -> Tournament object
+    this.tournamentJoinRequests = new Map(); // tournamentId -> Map<requestId, JoinRequest>
+    this.tournamentInvites = new Map(); // userId -> Array<TournamentInvite>
+    this.randomOpponentQueue = new Map(); // userId -> { tournamentId, playerInfo }
+  }
+
+  // Generate unique room code
+  generateRoomCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+
+  // Initialize game state
+  initializeGameState(player1, player2) {
+    return {
+      player1: {
+        id: player1.id,
+        username: player1.username,
+        y: GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2,
+        score: 0,
+        customization: player1.customization || {}
+      },
+      player2: {
+        id: player2.id,
+        username: player2.username,
+        y: GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2,
+        score: 0,
+        customization: player2.customization || {}
+      },
+      ball: {
+        x: GAME_WIDTH / 2,
+        y: GAME_HEIGHT / 2,
+        dx: Math.random() > 0.5 ? BALL_SPEED : -BALL_SPEED,
+        dy: Math.random() > 0.5 ? BALL_SPEED : -BALL_SPEED
+      }
+    };
+  }
+
+  // Add player to matchmaking queue
+  addToMatchmakingQueue(player) {
+    // Check if player is already in queue
+    const existingIndex = this.matchmakingQueue.findIndex(p => p.id === player.id);
+    if (existingIndex !== -1) {
+      return { error: 'Already in matchmaking queue' };
+    }
+
+    // Check if player is already in a game
+    const existingRoom = this.findRoomByPlayer(player.id);
+    if (existingRoom) {
+      return { error: 'Already in a game' };
+    }
+
+    this.matchmakingQueue.push(player);
+
+    // Try to match players
+    if (this.matchmakingQueue.length >= 2) {
+      const player1 = this.matchmakingQueue.shift();
+      const player2 = this.matchmakingQueue.shift();
+      return this.createGameRoom(player1, player2);
+    }
+
+    return { status: 'searching' };
+  }
+
+  // Remove player from matchmaking queue
+  removeFromMatchmakingQueue(playerId) {
+    const index = this.matchmakingQueue.findIndex(p => p.id === playerId);
+    if (index !== -1) {
+      this.matchmakingQueue.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  // Create game room
+  createGameRoom(player1, player2) {
+    const roomCode = this.generateRoomCode();
+    const gameState = this.initializeGameState(player1, player2);
+
+    const room = {
+      id: roomCode,
+      player1: {
+        id: player1.id,
+        username: player1.username,
+        socket: player1.socket,
+        customization: player1.customization || {}
+      },
+      player2: {
+        id: player2.id,
+        username: player2.username,
+        socket: player2.socket,
+        customization: player2.customization || {}
+      },
+      gameState,
+      lastUpdate: Date.now(),
+      startTime: Date.now(), // Track when game started for duration calculation
+      paddleDirections: {
+        player1: 'stop',
+        player2: 'stop'
+      },
+      // Statistics tracking
+      stats: {
+        // Rally tracking (consecutive touches without scoring)
+        currentRally: 0,
+        longestRally: 0,
+        totalRallies: [],
+        totalTouches: 0,
+
+        // Ball speed tracking
+        maxBallSpeed: 0,
+
+        // Player touches
+        player1Touches: 0,
+        player2Touches: 0,
+
+        // Point streaks
+        player1CurrentStreak: 0,
+        player2CurrentStreak: 0,
+        player1MaxStreak: 0,
+        player2MaxStreak: 0,
+
+        // Leading time tracking
+        player1LeadingStart: null,
+        player2LeadingStart: null,
+        player1LeadingTime: 0,
+        player2LeadingTime: 0,
+
+        // Previous scores for detecting score changes
+        previousPlayer1Score: 0,
+        previousPlayer2Score: 0
+      }
+    };
+
+    this.gameRooms.set(roomCode, room);
+    this.startGameLoop(roomCode);
+
+    // Notify both players
+    this.sendToPlayer(player1.socket, {
+      type: 'matchFound',
+      payload: {
+        roomCode,
+        players: [
+          { id: player1.id, username: player1.username },
+          { id: player2.id, username: player2.username }
+        ]
+      }
+    });
+
+    this.sendToPlayer(player2.socket, {
+      type: 'matchFound',
+      payload: {
+        roomCode,
+        players: [
+          { id: player1.id, username: player1.username },
+          { id: player2.id, username: player2.username }
+        ]
+      }
+    });
+
+    return { roomCode, gameState };
+  }
+
+  // Find room by player ID
+  findRoomByPlayer(playerId) {
+    for (const [roomCode, room] of this.gameRooms.entries()) {
+      if (room.player1.id === playerId || room.player2.id === playerId) {
+        return { roomCode, room };
+      }
+    }
+    return null;
+  }
+
+  // Handle paddle movement
+  handlePaddleMove(playerId, direction) {
+    const found = this.findRoomByPlayer(playerId);
+    if (!found) return;
+
+    const { room } = found;
+
+    if (room.player1.id === playerId) {
+      room.paddleDirections.player1 = direction;
+    } else if (room.player2.id === playerId) {
+      room.paddleDirections.player2 = direction;
+    }
+  }
+
+  // Update paddle positions based on directions
+  updatePaddles(room) {
+    const { paddleDirections, gameState } = room;
+
+    // Update player1 paddle
+    if (paddleDirections.player1 === 'up') {
+      gameState.player1.y = Math.max(0, gameState.player1.y - PADDLE_SPEED);
+    } else if (paddleDirections.player1 === 'down') {
+      gameState.player1.y = Math.min(GAME_HEIGHT - PADDLE_HEIGHT, gameState.player1.y + PADDLE_SPEED);
+    }
+
+    // Update player2 paddle
+    if (paddleDirections.player2 === 'up') {
+      gameState.player2.y = Math.max(0, gameState.player2.y - PADDLE_SPEED);
+    } else if (paddleDirections.player2 === 'down') {
+      gameState.player2.y = Math.min(GAME_HEIGHT - PADDLE_HEIGHT, gameState.player2.y + PADDLE_SPEED);
+    }
+  }
+
+  // Update ball physics
+  updateBall(gameState, room) {
+    const { ball } = gameState;
+    const stats = room.stats;
+
+    // Calculate current ball speed (magnitude of velocity vector)
+    // Speed in pixels per frame, convert to pixels per second (60 FPS)
+    const speedPixelsPerFrame = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+    const speedPixelsPerSecond = speedPixelsPerFrame * 60;
+
+    // Convert to approximate m/s (assuming ~100 pixels = 1 meter for a ping pong table)
+    // A standard ping pong table is ~2.74m x 1.525m, our game is 800x600 pixels
+    // So approximately: 800 pixels ≈ 2.74m, therefore 1 pixel ≈ 0.003425m
+    const pixelsToMeters = 0.003425;
+    const speedMetersPerSecond = speedPixelsPerSecond * pixelsToMeters;
+
+    if (speedMetersPerSecond > stats.maxBallSpeed) {
+      stats.maxBallSpeed = speedMetersPerSecond;
+    }
+
+    // Move ball
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    // Wall collision (top/bottom)
+    if (ball.y - BALL_RADIUS < 0 || ball.y + BALL_RADIUS > GAME_HEIGHT) {
+      ball.dy = -ball.dy;
+      ball.y = Math.max(BALL_RADIUS, Math.min(GAME_HEIGHT - BALL_RADIUS, ball.y));
+    }
+
+    // Paddle collision - Left paddle (player1)
+    if (ball.x - BALL_RADIUS < 10 + PADDLE_WIDTH &&
+        ball.x - BALL_RADIUS > 10 &&
+        ball.y > gameState.player1.y &&
+        ball.y < gameState.player1.y + PADDLE_HEIGHT) {
+      ball.dx = -ball.dx * 1.02; // Speed increase
+      ball.x = 10 + PADDLE_WIDTH + BALL_RADIUS;
+
+      // Track touch and rally
+      stats.player1Touches++;
+      stats.currentRally++;
+      stats.totalTouches++;
+    }
+
+    // Paddle collision - Right paddle (player2)
+    if (ball.x + BALL_RADIUS > GAME_WIDTH - PADDLE_WIDTH - 10 &&
+        ball.x + BALL_RADIUS < GAME_WIDTH - 10 &&
+        ball.y > gameState.player2.y &&
+        ball.y < gameState.player2.y + PADDLE_HEIGHT) {
+      ball.dx = -ball.dx * 1.02; // Speed increase
+      ball.x = GAME_WIDTH - PADDLE_WIDTH - 10 - BALL_RADIUS;
+
+      // Track touch and rally
+      stats.player2Touches++;
+      stats.currentRally++;
+      stats.totalTouches++;
+    }
+
+    // Scoring
+    let ballReset = false;
+    if (ball.x + BALL_RADIUS < 0) {
+      // Ball passed left paddle - player2 scores
+      gameState.player2.score++;
+      ballReset = true;
+    } else if (ball.x - BALL_RADIUS > GAME_WIDTH) {
+      // Ball passed right paddle - player1 scores
+      gameState.player1.score++;
+      ballReset = true;
+    }
+
+    if (ballReset) {
+      // End of rally - save rally length and reset
+      if (stats.currentRally > 0) {
+        stats.totalRallies.push(stats.currentRally);
+        if (stats.currentRally > stats.longestRally) {
+          stats.longestRally = stats.currentRally;
+        }
+        stats.currentRally = 0;
+      }
+
+      ball.x = GAME_WIDTH / 2;
+      ball.y = GAME_HEIGHT / 2;
+      ball.dx = Math.random() > 0.5 ? BALL_SPEED : -BALL_SPEED;
+      ball.dy = Math.random() > 0.5 ? BALL_SPEED : -BALL_SPEED;
+    }
+  }
+
+  // Check for winner
+  checkWinner(gameState) {
+    if (gameState.player1.score >= WINNING_SCORE) {
+      return gameState.player1.username;
+    } else if (gameState.player2.score >= WINNING_SCORE) {
+      return gameState.player2.username;
+    }
+    return null;
+  }
+
+  // Start game loop for a room
+  startGameLoop(roomCode) {
+    const interval = setInterval(() => {
+      try {
+        const room = this.gameRooms.get(roomCode);
+        if (!room) {
+          clearInterval(interval);
+          this.gameLoops.delete(roomCode);
+          return;
+        }
+
+        // Check if sockets are still connected
+        if (room.player1.socket.readyState !== 1 || room.player2.socket.readyState !== 1) {
+          // One or both players disconnected - end game with quitter as loser
+          clearInterval(interval);
+          this.gameLoops.delete(roomCode);
+
+          // Determine who quit and who won
+          let winnerId, loserId, winnerUsername, loserUsername;
+          let disconnectedPlayer = null;
+          let connectedPlayer = null;
+
+          if (room.player1.socket.readyState !== 1) {
+            // Player1 disconnected - Player2 wins
+            disconnectedPlayer = room.player1;
+            connectedPlayer = room.player2;
+            winnerId = room.player2.id;
+            loserId = room.player1.id;
+            winnerUsername = room.player2.username;
+            loserUsername = room.player1.username;
+            // Set final scores: winner gets 5, loser gets current score
+            room.gameState.player2.score = WINNING_SCORE;
+          } else if (room.player2.socket.readyState !== 1) {
+            // Player2 disconnected - Player1 wins
+            disconnectedPlayer = room.player2;
+            connectedPlayer = room.player1;
+            winnerId = room.player1.id;
+            loserId = room.player2.id;
+            winnerUsername = room.player1.username;
+            loserUsername = room.player2.username;
+            // Set final scores: winner gets 5, loser gets current score
+            room.gameState.player1.score = WINNING_SCORE;
+          } else {
+            // Both disconnected - shouldn't happen, but handle gracefully
+            this.gameRooms.delete(roomCode);
+            return;
+          }
+
+          // Notify connected player that opponent quit and they won
+          if (connectedPlayer && connectedPlayer.socket && connectedPlayer.socket.readyState === 1) {
+            const gameOverPayload = {
+              winner: winnerUsername,
+              winnerId: winnerId,
+              reason: 'opponentQuit',
+              message: `${loserUsername} quit the game. You win!`,
+              finalScore: {
+                player1: room.gameState.player1.score,
+                player2: room.gameState.player2.score
+              },
+              finalGameState: room.gameState
+            };
+
+            this.sendToPlayer(connectedPlayer.socket, {
+              type: 'gameOver',
+              payload: gameOverPayload
+            });
+          }
+
+          // Save game history with quitter as loser
+          this.saveGameHistory(room, true); // Pass true to indicate disconnect
+
+          // Award XP: Winner gets 500, Loser gets 200 (for remote games)
+          this.awardXP(winnerId, loserId, 500, 200, 'casual');
+
+          // Remove room
+          this.gameRooms.delete(roomCode);
+          return;
+        }
+
+        // Update paddles
+        this.updatePaddles(room);
+
+        // Track leading time
+        const stats = room.stats;
+        const now = Date.now();
+        const p1Score = room.gameState.player1.score;
+        const p2Score = room.gameState.player2.score;
+
+        // Track point streaks
+        if (p1Score > stats.previousPlayer1Score) {
+          // Player1 scored
+          stats.player1CurrentStreak++;
+          stats.player2CurrentStreak = 0;
+          if (stats.player1CurrentStreak > stats.player1MaxStreak) {
+            stats.player1MaxStreak = stats.player1CurrentStreak;
+          }
+        } else if (p2Score > stats.previousPlayer2Score) {
+          // Player2 scored
+          stats.player2CurrentStreak++;
+          stats.player1CurrentStreak = 0;
+          if (stats.player2CurrentStreak > stats.player2MaxStreak) {
+            stats.player2MaxStreak = stats.player2CurrentStreak;
+          }
+        }
+
+        // Track leading time
+        if (p1Score > p2Score) {
+          // Player1 is leading
+          if (!stats.player1LeadingStart) {
+            stats.player1LeadingStart = now;
+          }
+          if (stats.player2LeadingStart) {
+            // Player2 was leading, add to their time
+            stats.player2LeadingTime += (now - stats.player2LeadingStart) / 1000; // Convert to seconds
+            stats.player2LeadingStart = null;
+          }
+        } else if (p2Score > p1Score) {
+          // Player2 is leading
+          if (!stats.player2LeadingStart) {
+            stats.player2LeadingStart = now;
+          }
+          if (stats.player1LeadingStart) {
+            // Player1 was leading, add to their time
+            stats.player1LeadingTime += (now - stats.player1LeadingStart) / 1000; // Convert to seconds
+            stats.player1LeadingStart = null;
+          }
+        } else {
+          // Tied - stop tracking leading time
+          if (stats.player1LeadingStart) {
+            stats.player1LeadingTime += (now - stats.player1LeadingStart) / 1000;
+            stats.player1LeadingStart = null;
+          }
+          if (stats.player2LeadingStart) {
+            stats.player2LeadingTime += (now - stats.player2LeadingStart) / 1000;
+            stats.player2LeadingStart = null;
+          }
+        }
+
+        // Update previous scores
+        stats.previousPlayer1Score = p1Score;
+        stats.previousPlayer2Score = p2Score;
+
+        // Update ball
+        this.updateBall(room.gameState, room);
+
+        // Check for winner AFTER updating ball (so we catch the scoring point)
+        const winner = this.checkWinner(room.gameState);
+        if (winner) {
+          // ALWAYS broadcast final game state when winner is detected
+          // This ensures clients receive the final state with score 5, regardless of frame count
+          this.broadcastGameState(roomCode, room.gameState);
+
+          // Stop the loop immediately after broadcasting
+          clearInterval(interval);
+          this.gameLoops.delete(roomCode);
+
+          // Notify players with game over (include final state)
+          const gameOverPayload = {
+            winner: winner,
+            finalScore: {
+              player1: room.gameState.player1.score,
+              player2: room.gameState.player2.score
+            },
+            finalGameState: room.gameState // Include final state so client can display it
+          };
+
+          this.sendToPlayer(room.player1.socket, {
+            type: 'gameOver',
+            payload: gameOverPayload
+          });
+
+          this.sendToPlayer(room.player2.socket, {
+            type: 'gameOver',
+            payload: gameOverPayload
+          });
+
+          // Save game history
+          this.saveGameHistory(room, false);
+
+          // Award XP: Winner gets 500, Loser gets 200 (for remote games)
+          const winnerId = winner === room.player1.username ? room.player1.id : room.player2.id;
+          const loserId = winner === room.player1.username ? room.player2.id : room.player1.id;
+          this.awardXP(winnerId, loserId, 500, 200, 'casual');
+
+          // Keep room for rematch option, but stop game loop
+          return;
+        }
+
+        // Broadcast game state every frame (60 FPS) for smooth movement
+        // This provides smoother updates for ball and paddle movement
+        this.broadcastGameState(roomCode, room.gameState);
+      } catch (error) {
+        console.error('Error in game loop for room', roomCode, ':', error);
+        // Don't stop the loop on error, just log it
+      }
+    }, 1000 / 60); // 60 FPS for physics and broadcasting
+
+    this.gameLoops.set(roomCode, interval);
+  }
+
+  // Broadcast game state to both players
+  broadcastGameState(roomCode, gameState) {
+    const room = this.gameRooms.get(roomCode);
+    if (!room) return;
+
+    const gameStateMessage = {
+      type: 'gameState',
+      payload: gameState
+    };
+
+    // Send to both players, but don't fail if one fails
+    const p1Sent = this.sendToPlayer(room.player1.socket, gameStateMessage);
+    const p2Sent = this.sendToPlayer(room.player2.socket, gameStateMessage);
+
+    // If both failed, the game loop will detect disconnected sockets on next iteration
+    if (!p1Sent && !p2Sent) {
+      console.warn('Failed to send game state to both players in room', roomCode);
+    }
+  }
+
+  // Send message to player
+  sendToPlayer(socket, message) {
+    if (!socket) return false;
+
+    if (socket.readyState === 1) { // WebSocket.OPEN
+      try {
+        const messageStr = JSON.stringify(message);
+        socket.send(messageStr);
+        return true;
+      } catch (error) {
+        console.error('Error sending message to player:', error);
+        return false;
+      }
+    } else {
+      // Socket not open - log for debugging
+      console.warn('Attempted to send message to closed socket. State:', socket.readyState);
+      return false;
+    }
+  }
+
+  // Remove player from room (called when player explicitly quits or disconnects)
+  removePlayer(roomCode, playerId) {
+    const room = this.gameRooms.get(roomCode);
+    if (!room) return;
+
+    // Stop game loop
+    const loop = this.gameLoops.get(roomCode);
+    if (loop) {
+      clearInterval(loop);
+      this.gameLoops.delete(roomCode);
+    }
+
+    // Determine winner and loser
+    const quitter = room.player1.id === playerId ? room.player1 : room.player2;
+    const winner = room.player1.id === playerId ? room.player2 : room.player1;
+
+    // Set final scores: winner gets 5, quitter gets current score
+    if (room.player1.id === playerId) {
+      room.gameState.player2.score = WINNING_SCORE;
+    } else {
+      room.gameState.player1.score = WINNING_SCORE;
+    }
+
+    // Notify opponent that they won because opponent quit
+    if (winner && winner.socket && winner.socket.readyState === 1) {
+      const gameOverPayload = {
+        winner: winner.username,
+        winnerId: winner.id,
+        reason: 'opponentQuit',
+        message: `${quitter.username} quit the game. You win!`,
+        finalScore: {
+          player1: room.gameState.player1.score,
+          player2: room.gameState.player2.score
+        },
+        finalGameState: room.gameState
+      };
+
+      this.sendToPlayer(winner.socket, {
+        type: 'gameOver',
+        payload: gameOverPayload
+      });
+    }
+
+    // Save game history with quitter as loser
+    this.saveGameHistory(room, true); // Pass true to indicate disconnect
+
+    // Award XP: Winner gets 500, Loser gets 200 (for remote games)
+    this.awardXP(winner.id, quitter.id, 500, 200, 'casual');
+
+    // Remove room
+    this.gameRooms.delete(roomCode);
+  }
+
+  // Handle friend invitation
+  sendFriendInvitation(fromUserId, fromUsername, friendId, customization) {
+    const friendSocket = this.usersSocket.get(friendId.toString());
+
+    if (!friendSocket) {
+      return { error: 'Friend is not online' };
+    }
+
+    const roomCode = this.generateRoomCode();
+    // Store invitation with friendId (acceptor) as key
+    this.pendingInvitations.set(friendId.toString(), {
+      from: fromUserId, // inviter
+      fromUsername,
+      roomCode,
+      customization,
+      timestamp: Date.now()
+    });
+
+    // Send invitation to friend
+    this.sendToPlayer(friendSocket, {
+      type: 'gameInvitation',
+      payload: {
+        from: {
+          id: fromUserId,
+          username: fromUsername
+        },
+        roomCode,
+        customization
+      }
+    });
+
+    return { roomCode };
+  }
+
+  // Accept friend invitation
+  // acceptorId: the user who is accepting (the one who received the invitation)
+  // inviterId: the user who sent the invitation
+  acceptFriendInvitation(acceptorId, inviterId, acceptorUsername, acceptorSocket, acceptorCustomization) {
+    // Find invitation - it's stored with acceptorId as key
+    const invitation = this.pendingInvitations.get(acceptorId.toString());
+    if (!invitation) {
+      return { error: 'Invitation not found or expired' };
+    }
+
+    // Verify the invitation is from the correct inviter
+    if (invitation.from !== inviterId) {
+      return { error: 'Invalid invitation' };
+    }
+
+    // Remove from pending
+    this.pendingInvitations.delete(acceptorId.toString());
+
+    // Get inviter socket
+    const inviterSocket = this.usersSocket.get(inviterId.toString());
+    if (!inviterSocket) {
+      return { error: 'Inviter is no longer online' };
+    }
+
+    // Get inviter username from database
+    const getUserStmt = this.db.prepare('SELECT username FROM users WHERE id_user = ?');
+    const inviterUser = getUserStmt.get(inviterId);
+    if (!inviterUser) {
+      return { error: 'Inviter not found' };
+    }
+
+    // Create game room
+    const player1 = {
+      id: inviterId,
+      username: inviterUser.username,
+      socket: inviterSocket,
+      customization: invitation.customization
+    };
+
+    const player2 = {
+      id: acceptorId,
+      username: acceptorUsername,
+      socket: acceptorSocket,
+      customization: acceptorCustomization
+    };
+
+    return this.createGameRoom(player1, player2);
+  }
+
+  // Decline friend invitation
+  declineFriendInvitation(friendId) {
+    const invitation = this.pendingInvitations.get(friendId);
+    if (!invitation) return;
+
+    const inviterSocket = this.usersSocket.get(invitation.from.toString());
+    if (inviterSocket) {
+      this.sendToPlayer(inviterSocket, {
+        type: 'gameInvitationDeclined',
+        payload: {
+          friendId
+        }
+      });
+    }
+
+    this.pendingInvitations.delete(friendId);
+  }
+
+  // Handle rematch request
+  requestRematch(roomCode, playerId) {
+    const room = this.gameRooms.get(roomCode);
+    if (!room) {
+      return { error: 'Room not found' };
+    }
+
+    const opponent = room.player1.id === playerId ? room.player2 : room.player1;
+    if (!opponent) {
+      return { error: 'Opponent not found' };
+    }
+
+    // Store rematch request
+    this.rematchRequests.set(roomCode, {
+      from: playerId,
+      to: opponent.id
+    });
+
+    // Notify opponent
+    this.sendToPlayer(opponent.socket, {
+      type: 'rematch:offer'
+    });
+
+    return { success: true };
+  }
+
+  // Accept rematch
+  acceptRematch(roomCode, playerId) {
+    const room = this.gameRooms.get(roomCode);
+    if (!room) {
+      return { error: 'Room not found' };
+    }
+
+    const rematchRequest = this.rematchRequests.get(roomCode);
+    // The player who RECEIVED the request (rematchRequest.to) should accept it
+    if (!rematchRequest || rematchRequest.to !== playerId) {
+      return { error: 'Invalid rematch request' };
+    }
+
+    // Reset game state
+    const player1 = room.player1;
+    const player2 = room.player2;
+    room.gameState = this.initializeGameState(
+      { id: player1.id, username: player1.username, customization: player1.customization },
+      { id: player2.id, username: player2.username, customization: player2.customization }
+    );
+    room.paddleDirections = { player1: 'stop', player2: 'stop' };
+    room.startTime = Date.now(); // Reset start time for rematch
+
+    // Reset statistics for rematch
+    room.stats = {
+      currentRally: 0,
+      longestRally: 0,
+      totalRallies: [],
+      totalTouches: 0,
+      maxBallSpeed: 0,
+      player1Touches: 0,
+      player2Touches: 0,
+      player1CurrentStreak: 0,
+      player2CurrentStreak: 0,
+      player1MaxStreak: 0,
+      player2MaxStreak: 0,
+      player1LeadingStart: null,
+      player2LeadingStart: null,
+      player1LeadingTime: 0,
+      player2LeadingTime: 0,
+      previousPlayer1Score: 0,
+      previousPlayer2Score: 0
+    };
+
+    // Remove rematch request
+    this.rematchRequests.delete(roomCode);
+
+    // Restart game loop
+    this.startGameLoop(roomCode);
+
+    // Notify both players
+    this.sendToPlayer(player1.socket, {
+      type: 'rematch:start',
+      payload: room.gameState
+    });
+
+    this.sendToPlayer(player2.socket, {
+      type: 'rematch:start',
+      payload: room.gameState
+    });
+
+    return { success: true };
+  }
+
+  // Decline rematch
+  declineRematch(roomCode, playerId) {
+    const room = this.gameRooms.get(roomCode);
+    if (!room) return;
+
+    const rematchRequest = this.rematchRequests.get(roomCode);
+    if (rematchRequest) {
+      const requesterSocket = this.usersSocket.get(rematchRequest.from.toString());
+      if (requesterSocket) {
+        this.sendToPlayer(requesterSocket, {
+          type: 'rematch:declined'
+        });
+      }
+      this.rematchRequests.delete(roomCode);
+    }
+  }
+
+  // Award XP to winner and loser (only for remote games)
+  awardXP(winnerId, loserId, winnerXP, loserXP, gameType = 'casual') {
+    try {
+      // Only award XP for remote games (casual type)
+      if (gameType !== 'casual') {
+        console.log(`[GameManager] Skipping XP award for game type: ${gameType}`);
+        return;
+      }
+
+      // Award XP to winner
+      const updateWinnerStmt = this.db.prepare('UPDATE users SET xp = xp + ? WHERE id_user = ?');
+      updateWinnerStmt.run(winnerXP, winnerId);
+      console.log(`[GameManager] Awarded ${winnerXP} XP to winner ${winnerId}`);
+
+      // Award XP to loser
+      const updateLoserStmt = this.db.prepare('UPDATE users SET xp = xp + ? WHERE id_user = ?');
+      updateLoserStmt.run(loserXP, loserId);
+      console.log(`[GameManager] Awarded ${loserXP} XP to loser ${loserId}`);
+    } catch (error) {
+      console.error('Error awarding XP:', error);
+    }
+  }
+
+  // Save game history to database
+  saveGameHistory(room, isDisconnect = false) {
+    try {
+      const stmt = this.db.prepare(`
+        INSERT INTO game_history (
+          user_win, user_lose, win_score, lose_score,
+          type, tournament_id, tournament_round, game_date, duration,
+          longest_rally, average_rally, ball_max_speed,
+          touches_win, touches_lose,
+          max_points_streak_win, max_points_streak_lose,
+          max_leading_time_win, max_leading_time_lose,
+          blockchain_hash
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const player1Score = room.gameState.player1.score;
+      const player2Score = room.gameState.player2.score;
+      const stats = room.stats;
+
+      const winnerId = player1Score >= WINNING_SCORE
+        ? room.player1.id
+        : room.player2.id;
+
+      const loserId = winnerId === room.player1.id
+        ? room.player2.id
+        : room.player1.id;
+
+      const winScore = winnerId === room.player1.id ? player1Score : player2Score;
+      const loseScore = winnerId === room.player1.id ? player2Score : player1Score;
+
+      // Calculate game duration in seconds
+      const duration = room.startTime
+        ? Math.floor((Date.now() - room.startTime) / 1000)
+        : null;
+
+      // Finalize leading time tracking (add any remaining leading time)
+      const now = Date.now();
+      if (stats.player1LeadingStart) {
+        stats.player1LeadingTime += (now - stats.player1LeadingStart) / 1000;
+      }
+      if (stats.player2LeadingStart) {
+        stats.player2LeadingTime += (now - stats.player2LeadingStart) / 1000;
+      }
+
+      // Calculate average rally
+      const averageRally = stats.totalRallies.length > 0
+        ? stats.totalRallies.reduce((sum, r) => sum + r, 0) / stats.totalRallies.length
+        : 0;
+
+      // Get statistics for winner and loser
+      const touchesWin = winnerId === room.player1.id ? stats.player1Touches : stats.player2Touches;
+      const touchesLose = winnerId === room.player1.id ? stats.player2Touches : stats.player1Touches;
+      const maxStreakWin = winnerId === room.player1.id ? stats.player1MaxStreak : stats.player2MaxStreak;
+      const maxStreakLose = winnerId === room.player1.id ? stats.player2MaxStreak : stats.player1MaxStreak;
+      const maxLeadingTimeWin = winnerId === room.player1.id ? stats.player1LeadingTime : stats.player2LeadingTime;
+      const maxLeadingTimeLose = winnerId === room.player1.id ? stats.player2LeadingTime : stats.player1LeadingTime;
+
+      // Convert ball speed to m/s (already calculated in updateBall)
+      const ballMaxSpeedMetersPerSecond = stats.maxBallSpeed > 0
+        ? Math.round(stats.maxBallSpeed * 100) / 100
+        : null;
+
+      stmt.run(
+        winnerId,
+        loserId,
+        winScore,
+        loseScore,
+        'casual', // Remote 1v1 games are casual
+        null, // tournament_id (NULL for casual games)
+        null, // tournament_round (NULL for casual games)
+        new Date().toISOString(),
+        duration,
+        stats.longestRally || null,
+        averageRally > 0 ? Math.round(averageRally * 100) / 100 : null, // Round to 2 decimal places
+        ballMaxSpeedMetersPerSecond, // Ball max speed in m/s
+        touchesWin || 0,
+        touchesLose || 0,
+        maxStreakWin || 0,
+        maxStreakLose || 0,
+        Math.floor(maxLeadingTimeWin), // Leading time in seconds
+        Math.floor(maxLeadingTimeLose), // Leading time in seconds
+        null // blockchain_hash (optional, NULL for now)
+      );
+
+      console.log(`Game history saved: Winner ${winnerId} (${winScore}-${loseScore}) vs Loser ${loserId}`);
+      console.log(`Stats: Duration: ${duration}s, Longest Rally: ${stats.longestRally}, Avg Rally: ${averageRally.toFixed(2)}, Max Speed: ${ballMaxSpeedMetersPerSecond?.toFixed(2) || 0}m/s`);
+      console.log(`Touches - Winner: ${touchesWin}, Loser: ${touchesLose}`);
+      console.log(`Streaks - Winner: ${maxStreakWin}, Loser: ${maxStreakLose}`);
+      console.log(`Leading Time - Winner: ${Math.floor(maxLeadingTimeWin)}s, Loser: ${Math.floor(maxLeadingTimeLose)}s`);
+    } catch (error) {
+      console.error('Error saving game history:', error);
+    }
+  }
+
+  // Cleanup expired invitations (older than 30 seconds)
+  cleanupExpiredInvitations() {
+    const now = Date.now();
+    for (const [friendId, invitation] of this.pendingInvitations.entries()) {
+      if (now - invitation.timestamp > 30000) {
+        this.pendingInvitations.delete(friendId);
+      }
+    }
+
+    // Also cleanup expired accepted challenges (older than 5 minutes)
+    const CHALLENGE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+    for (const [challengeId, challenge] of this.acceptedChallenges.entries()) {
+      if (now - challenge.timestamp > CHALLENGE_EXPIRY) {
+        this.acceptedChallenges.delete(challengeId);
+      }
+    }
+
+    // Cleanup expired random opponent queue entries (older than 2 minutes)
+    const RANDOM_OPPONENT_EXPIRY = 2 * 60 * 1000; // 2 minutes
+    for (const [key, entry] of this.randomOpponentQueue.entries()) {
+      if (now - entry.timestamp > RANDOM_OPPONENT_EXPIRY) {
+        this.randomOpponentQueue.delete(key);
+      }
+    }
+  }
+
+  // Cleanup disconnected players
+  handlePlayerDisconnect(playerId) {
+    // Remove from matchmaking
+    this.removeFromMatchmakingQueue(playerId);
+
+    // Remove from any rooms
+    const found = this.findRoomByPlayer(playerId);
+    if (found) {
+      this.removePlayer(found.roomCode, playerId);
+    }
+
+    // Clean up pending invitations
+    for (const [friendId, invitation] of this.pendingInvitations.entries()) {
+      if (invitation.from === playerId) {
+        this.pendingInvitations.delete(friendId);
+      }
+    }
+
+    // Clean up accepted challenges where this player is involved
+    for (const [challengeId, challenge] of this.acceptedChallenges.entries()) {
+      if (challenge.inviterId === playerId || challenge.acceptorId === playerId) {
+        this.acceptedChallenges.delete(challengeId);
+      }
+    }
+
+    // Clean up tournament-related data
+    this.handleTournamentDisconnect(playerId);
+  }
+
+  // ==================== TOURNAMENT MANAGEMENT ====================
+
+  // Generate unique tournament ID
+  generateTournamentId() {
+    return `T${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+  }
+
+  // Create a new tournament
+  createTournament(hostId, hostInfo, playerCount, isPrivate) {
+    const tournamentId = this.generateTournamentId();
+
+    const tournament = {
+      id: tournamentId,
+      name: `${hostInfo.playerName}'s Tournament`,
+      host: {
+        id: hostId,
+        name: hostInfo.playerName,
+        avatar: hostInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
+        color: hostInfo.color || '#3B82F6'
+      },
+      maxPlayers: playerCount,
+      currentPlayers: 1,
+      registeredPlayers: [{
+        id: hostId,
+        name: hostInfo.playerName,
+        avatar: hostInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
+        color: hostInfo.color || '#3B82F6'
+      }],
+      status: 'waiting',
+      isPrivate: isPrivate || false,
+      type: 'remote',
+      playerCount: playerCount,
+      bracket: null,
+      createdAt: Date.now(),
+      joinRequests: new Map() // requestId -> JoinRequest
+    };
+
+    this.tournaments.set(tournamentId, tournament);
+    this.tournamentJoinRequests.set(tournamentId, new Map());
+
+    return { tournament, tournamentId };
+  }
+
+  // Search for available tournaments (returns real-time data)
+  searchTournaments(userId) {
+    const availableTournaments = [];
+    const now = Date.now();
+
+    for (const [tournamentId, tournament] of this.tournaments.entries()) {
+      // Skip if tournament is full or finished
+      if (tournament.currentPlayers >= tournament.maxPlayers || tournament.status === 'finished') {
+        continue;
+      }
+
+      // Skip if tournament is too old (older than 1 hour) and has no players
+      if (tournament.currentPlayers === 1 && (now - tournament.createdAt) > 3600000) {
+        continue;
+      }
+
+      // Skip if user is already in this tournament
+      if (tournament.registeredPlayers.some(p => p.id === userId)) {
+        continue;
+      }
+
+      // For private tournaments, only show if user has an invite
+      if (tournament.isPrivate) {
+        const invites = this.tournamentInvites.get(userId.toString()) || [];
+        if (!invites.some(inv => inv.tournamentId === tournamentId)) {
+          continue;
+        }
+      }
+
+      // Return real-time tournament data
+      availableTournaments.push({
+        id: tournament.id,
+        name: tournament.name,
+        host: tournament.host,
+        maxPlayers: tournament.maxPlayers,
+        currentPlayers: tournament.currentPlayers,
+        registeredPlayers: tournament.registeredPlayers,
+        status: tournament.status,
+        isPrivate: tournament.isPrivate,
+        type: tournament.type,
+        playerCount: tournament.playerCount
+      });
+    }
+
+    // Sort by most recent first
+    return availableTournaments.sort((a, b) => {
+      const tournamentA = this.tournaments.get(a.id);
+      const tournamentB = this.tournaments.get(b.id);
+      if (!tournamentA || !tournamentB) return 0;
+      return tournamentB.createdAt - tournamentA.createdAt;
+    });
+  }
+
+  // Request to join a tournament
+  requestJoinTournament(tournamentId, playerId, playerInfo) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Check if tournament is full
+    if (tournament.currentPlayers >= tournament.maxPlayers) {
+      return { error: 'Tournament is full' };
+    }
+
+    // Check if player is already registered
+    if (tournament.registeredPlayers.some(p => p.id === playerId)) {
+      return { error: 'You are already registered in this tournament' };
+    }
+
+    // Check if tournament is private and user has invite
+    if (tournament.isPrivate) {
+      const invites = this.tournamentInvites.get(playerId.toString()) || [];
+      if (!invites.some(inv => inv.tournamentId === tournamentId)) {
+        return { error: 'You need an invitation to join this tournament' };
+      }
+    }
+
+    // Create join request
+    const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const joinRequest = {
+      id: requestId,
+      player: {
+        id: playerId,
+        name: playerInfo.playerName,
+        avatar: playerInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
+        color: playerInfo.color || '#10B981'
+      },
+      tournamentId: tournamentId,
+      status: 'pending',
+      timestamp: Date.now()
+    };
+
+    const requests = this.tournamentJoinRequests.get(tournamentId);
+    requests.set(requestId, joinRequest);
+
+    // Notify host
+    const hostSocket = this.usersSocket.get(tournament.host.id.toString());
+    if (hostSocket) {
+      this.sendToPlayer(hostSocket, {
+        type: 'tournamentJoinRequest',
+        data: {
+          tournamentId: tournamentId,
+          request: joinRequest
+        }
+      });
+    }
+
+    return { success: true, requestId };
+  }
+
+  // Approve a join request
+  approveJoinRequest(tournamentId, requestId, hostId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Verify host
+    if (tournament.host.id !== hostId) {
+      return { error: 'Only the host can approve requests' };
+    }
+
+    // Check if tournament is full
+    if (tournament.currentPlayers >= tournament.maxPlayers) {
+      return { error: 'Tournament is full' };
+    }
+
+    const requests = this.tournamentJoinRequests.get(tournamentId);
+    const request = requests.get(requestId);
+    if (!request || request.status !== 'pending') {
+      return { error: 'Join request not found or already processed' };
+    }
+
+    // Add player to tournament
+    tournament.registeredPlayers.push(request.player);
+    tournament.currentPlayers++;
+
+    // Update request status
+    request.status = 'approved';
+    requests.delete(requestId);
+
+    // Notify the newly approved player with full tournament data
+    const playerSocket = this.usersSocket.get(request.player.id.toString());
+    if (playerSocket) {
+      this.sendToPlayer(playerSocket, {
+        type: 'tournamentJoinApproved',
+        data: {
+          tournamentId: tournamentId,
+          tournament: this.getTournamentData(tournament)
+        }
+      });
+    }
+
+    // Notify host about the approval
+    const hostSocket = this.usersSocket.get(tournament.host.id.toString());
+    if (hostSocket) {
+      this.sendToPlayer(hostSocket, {
+        type: 'joinRequestApproved',
+        data: {
+          player: request.player
+        }
+      });
+    }
+
+    // Broadcast tournament update to all registered players
+    // This ensures all players (including host) see the new player immediately
+    this.broadcastTournamentUpdate(tournament);
+
+    // Don't auto-start tournament - wait for host to customize and start
+    // The tournament will be started when host sends startTournament action after customization
+
+    return { success: true };
+  }
+
+  // Decline a join request
+  declineJoinRequest(tournamentId, requestId, hostId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Verify host
+    if (tournament.host.id !== hostId) {
+      return { error: 'Only the host can decline requests' };
+    }
+
+    const requests = this.tournamentJoinRequests.get(tournamentId);
+    const request = requests.get(requestId);
+    if (!request) {
+      return { error: 'Join request not found' };
+    }
+
+    // Update request status
+    request.status = 'declined';
+    requests.delete(requestId);
+
+    // Notify the player
+    const playerSocket = this.usersSocket.get(request.player.id.toString());
+    if (playerSocket) {
+      this.sendToPlayer(playerSocket, {
+        type: 'tournamentJoinDeclined',
+        data: {
+          message: 'Your join request was declined',
+          tournamentId: tournamentId
+        }
+      });
+    }
+
+    // Notify host
+    const hostSocket = this.usersSocket.get(tournament.host.id.toString());
+    if (hostSocket) {
+      this.sendToPlayer(hostSocket, {
+        type: 'joinRequestDeclined',
+        data: {
+          player: request.player
+        }
+      });
+    }
+
+    return { success: true };
+  }
+
+  // Invite a friend to tournament
+  inviteToTournament(tournamentId, hostId, friendId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Verify host
+    if (tournament.host.id !== hostId) {
+      return { error: 'Only the host can invite players' };
+    }
+
+    // Check if tournament is full
+    if (tournament.currentPlayers >= tournament.maxPlayers) {
+      return { error: 'Tournament is full' };
+    }
+
+    // Check if friend is already registered
+    if (tournament.registeredPlayers.some(p => p.id === friendId)) {
+      return { error: 'Friend is already registered in this tournament' };
+    }
+
+    // Add invite to in-memory map
+    const friendInvites = this.tournamentInvites.get(friendId.toString()) || [];
+    if (!friendInvites.some(inv => inv.tournamentId === tournamentId)) {
+      friendInvites.push({
+        tournamentId: tournamentId,
+        tournamentName: tournament.name,
+        host: tournament.host,
+        timestamp: Date.now()
+      });
+      this.tournamentInvites.set(friendId.toString(), friendInvites);
+    }
+
+    // Create database notification (similar to game challenges)
+    try {
+      const title = "tournament invite";
+      const notifyBody = `invited you to join a tournament`;
+
+      // Get host's profile image
+      const getHostStmt = this.db.prepare('SELECT profile_img, username FROM users WHERE id_user = ?');
+      const hostUser = getHostStmt.get(hostId);
+
+      // Calculate expiration time (1 hour from now)
+      const now = new Date();
+      const expired = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour
+      const expiredStr = expired.toISOString().slice(0, 19).replace('T', ' ');
+
+      // Insert notification into database
+      // Note: tournamentId is stored in notifyBody as JSON or we can add a column
+      // For now, we'll store it in notifyBody as a JSON string for tournament invites
+      const notifyBodyWithTournamentId = JSON.stringify({
+        message: notifyBody,
+        tournamentId: tournamentId
+      });
+      const insertStmt = this.db.prepare(`
+        INSERT INTO notification (getter_user, title, sender_user, notifyBody, expired)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      insertStmt.run(friendId, title, hostId, notifyBodyWithTournamentId, expiredStr);
+
+      // Get the notification ID
+      const getNotifyStmt = this.db.prepare(`
+        SELECT notify_id FROM notification
+        WHERE getter_user = ? AND sender_user = ? AND title = ?
+        ORDER BY notify_id DESC LIMIT 1
+      `);
+      const notification = getNotifyStmt.get(friendId, hostId, title);
+
+      // Send notify message to friend (for Navbar notification area)
+      // Always try to send via WebSocket if friend is online
+      // If offline, notification will be synced when they reconnect
+      const friendSocket = this.usersSocket.get(friendId.toString());
+      if (friendSocket && notification) {
+        const notifyData = {
+          getter_user: friendId,
+          sender_user: hostId,
+          sender_username: hostUser?.username || tournament.host.name,
+          title: title,
+          sender_profile_img: hostUser?.profile_img || tournament.host.avatar,
+          notify_id: notification.notify_id,
+          expired: expiredStr,
+          tournamentId: tournamentId // Include tournamentId for acceptance
+        };
+
+        const sent = this.sendToPlayer(friendSocket, {
+          type: 'notify',
+          data: notifyData
+        });
+
+        if (sent) {
+          console.log(`[GameManager] Tournament invite notification sent to friend ${friendId} via WebSocket`);
+        } else {
+          console.warn(`[GameManager] Failed to send tournament invite notification to friend ${friendId} (socket not open)`);
+        }
+      } else {
+        if (!friendSocket) {
+          console.log(`[GameManager] Friend ${friendId} is offline. Notification stored in database and will be synced on reconnect.`);
+        }
+        if (!notification) {
+          console.error(`[GameManager] Failed to retrieve notification ID for tournament invite to friend ${friendId}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating tournament invite notification:', error);
+      // Continue even if notification creation fails
+    }
+
+    // Send tournamentInvite message (for tournament page)
+    const friendSocket = this.usersSocket.get(friendId.toString());
+    if (friendSocket) {
+      this.sendToPlayer(friendSocket, {
+        type: 'tournamentInvite',
+        data: {
+          tournamentId: tournamentId,
+          tournament: this.getTournamentData(tournament),
+          host: tournament.host
+        }
+      });
+    }
+
+    return { success: true };
+  }
+
+  // Accept tournament invite
+  acceptTournamentInvite(tournamentId, playerId, playerInfo) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Check if tournament is full
+    if (tournament.currentPlayers >= tournament.maxPlayers) {
+      return { error: 'Tournament is full' };
+    }
+
+    // Check if player is already registered
+    if (tournament.registeredPlayers.some(p => p.id === playerId)) {
+      return { error: 'You are already registered in this tournament' };
+    }
+
+    // Remove invite
+    const invites = this.tournamentInvites.get(playerId.toString()) || [];
+    const filteredInvites = invites.filter(inv => inv.tournamentId !== tournamentId);
+    this.tournamentInvites.set(playerId.toString(), filteredInvites);
+
+    // Add player directly (no approval needed for invites)
+    tournament.registeredPlayers.push({
+      id: playerId,
+      name: playerInfo.playerName,
+      avatar: playerInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
+      color: playerInfo.color || '#10B981'
+    });
+    tournament.currentPlayers++;
+
+    // Notify player with full tournament data
+    const playerSocket = this.usersSocket.get(playerId.toString());
+    if (playerSocket) {
+      this.sendToPlayer(playerSocket, {
+        type: 'tournamentJoined',
+        data: {
+          tournamentId: tournamentId,
+          tournament: this.getTournamentData(tournament)
+        }
+      });
+    }
+
+    // Broadcast tournament update to all players (including the newly joined player)
+    // This ensures everyone has the latest state
+    this.broadcastTournamentUpdate(tournament);
+
+    // Don't auto-start tournament - wait for host to customize and start
+    // The tournament will be started when host sends startTournament action after customization
+
+    return { success: true, tournament: this.getTournamentData(tournament) };
+  }
+
+  // Decline tournament invite
+  declineTournamentInvite(tournamentId, playerId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Remove invite from in-memory map
+    const invites = this.tournamentInvites.get(playerId.toString()) || [];
+    const filteredInvites = invites.filter(inv => inv.tournamentId !== tournamentId);
+    this.tournamentInvites.set(playerId.toString(), filteredInvites);
+
+    // Get player info for the message
+    const getPlayerStmt = this.db.prepare('SELECT username FROM users WHERE id_user = ?');
+    const player = getPlayerStmt.get(playerId);
+
+    // Notify host that invitation was declined
+    const hostSocket = this.usersSocket.get(tournament.host.id.toString());
+    if (hostSocket && player) {
+      this.sendToPlayer(hostSocket, {
+        type: 'tournamentInviteDeclined',
+        data: {
+          tournamentId: tournamentId,
+          playerId: playerId,
+          playerName: player.username,
+          message: `${player.username} declined your tournament invitation`
+        }
+      });
+    }
+
+    return { success: true };
+  }
+
+  // Find random opponent for tournament
+  findRandomOpponent(tournamentId, hostId, playerInfo) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Verify host
+    if (tournament.host.id !== hostId) {
+      return { error: 'Only the host can find random opponents' };
+    }
+
+    // Check if tournament is full
+    if (tournament.currentPlayers >= tournament.maxPlayers) {
+      return { error: 'Tournament is full' };
+    }
+
+    // Try to find a random available player
+    const availablePlayer = this.findAvailablePlayerForTournament(tournamentId);
+
+    if (availablePlayer) {
+      // Found an available player, add them to tournament
+      tournament.registeredPlayers.push({
+        id: availablePlayer.id,
+        name: availablePlayer.username,
+        avatar: playerInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
+        color: playerInfo.color || '#10B981'
+      });
+      tournament.currentPlayers++;
+
+      // Notify the newly added player
+      const playerSocket = this.usersSocket.get(availablePlayer.id.toString());
+      if (playerSocket) {
+        this.sendToPlayer(playerSocket, {
+          type: 'tournamentJoined',
+          data: {
+            tournamentId: tournament.id,
+            tournament: this.getTournamentData(tournament)
+          }
+        });
+      }
+
+      // Broadcast update to all tournament players (including host and newly added player)
+      // This ensures everyone sees the new player immediately
+      this.broadcastTournamentUpdate(tournament);
+
+      // Don't auto-start tournament - wait for host to customize and start
+      // The tournament will be started when host sends startTournament action after customization
+
+      return { success: true, message: 'Random opponent found and added to tournament' };
+    } else {
+      // No available player found, add to queue for later matching
+      const queueKey = `tournament-${tournamentId}`;
+      this.randomOpponentQueue.set(queueKey, {
+        tournamentId: tournamentId,
+        playerInfo: playerInfo,
+        timestamp: Date.now(),
+        isTournamentSearch: true
+      });
+
+      return { success: true, message: 'Searching for random opponent...' };
+    }
+  }
+
+  // Find an available player for tournament (not in any tournament or game)
+  findAvailablePlayerForTournament(excludeTournamentId) {
+    // Get all online users
+    const onlineUserIds = Array.from(this.usersSocket.keys()).map(id => parseInt(id));
+
+    // Filter out players who are:
+    // 1. Already in a tournament
+    // 2. In a game room
+    // 3. In the matchmaking queue
+    for (const userId of onlineUserIds) {
+      // Check if player is in any tournament
+      let isInTournament = false;
+      for (const [tournamentId, tournament] of this.tournaments.entries()) {
+        if (tournament.registeredPlayers.some(p => p.id === userId)) {
+          isInTournament = true;
+          break;
+        }
+      }
+      if (isInTournament) continue;
+
+      // Check if player is in a game room
+      const inGame = this.findRoomByPlayer(userId);
+      if (inGame) continue;
+
+      // Check if player is in matchmaking queue
+      const inQueue = this.matchmakingQueue.some(p => p.id === userId);
+      if (inQueue) continue;
+
+      // Found an available player
+      const getUserStmt = this.db.prepare('SELECT id_user, username FROM users WHERE id_user = ?');
+      const user = getUserStmt.get(userId);
+      if (user) {
+        return { id: user.id_user, username: user.username };
+      }
+    }
+
+    return null; // No available player found
+  }
+
+  // Try to match random opponents (called periodically or when new players join queue)
+  tryMatchRandomOpponents() {
+    const queueEntries = Array.from(this.randomOpponentQueue.entries());
+    const tournamentSearches = queueEntries.filter(([key, entry]) => entry.isTournamentSearch);
+
+    for (const [key, entry] of tournamentSearches) {
+      const tournament = this.tournaments.get(entry.tournamentId);
+      if (!tournament || tournament.currentPlayers >= tournament.maxPlayers) {
+        this.randomOpponentQueue.delete(key);
+        continue;
+      }
+
+      // Try to find an available player
+      const availablePlayer = this.findAvailablePlayerForTournament(entry.tournamentId);
+      if (availablePlayer) {
+        // Add player to tournament
+        tournament.registeredPlayers.push({
+          id: availablePlayer.id,
+          name: availablePlayer.username,
+          avatar: entry.playerInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
+          color: entry.playerInfo.color || '#10B981'
+        });
+        tournament.currentPlayers++;
+
+        // Remove from queue
+        this.randomOpponentQueue.delete(key);
+
+        // Notify the newly matched player
+        const playerSocket = this.usersSocket.get(availablePlayer.id.toString());
+        if (playerSocket) {
+          this.sendToPlayer(playerSocket, {
+            type: 'tournamentJoined',
+            data: {
+              tournamentId: tournament.id,
+              tournament: this.getTournamentData(tournament)
+            }
+          });
+        }
+
+        // Broadcast update to all tournament players
+        // This ensures real-time synchronization across all clients
+        this.broadcastTournamentUpdate(tournament);
+
+        // Don't auto-start tournament - wait for host to customize and start
+        // The tournament will be started when host sends startTournament action after customization
+
+        return; // Matched one
+      }
+    }
+  }
+
+  // Start tournament (create bracket)
+  startTournament(tournamentId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    if (tournament.currentPlayers !== tournament.maxPlayers) {
+      return { error: 'Tournament is not full' };
+    }
+
+    // Create bracket (4 players: 2 semi-finals, 1 final)
+    const bracket = this.createTournamentBracket(tournament.registeredPlayers);
+    tournament.bracket = bracket;
+    tournament.status = 'playing';
+
+    // Broadcast tournament update
+    this.broadcastTournamentUpdate(tournament);
+
+    return { success: true, bracket };
+  }
+
+  // Create tournament bracket
+  createTournamentBracket(players) {
+    const bracket = [];
+    let matchId = 1;
+
+    if (players.length === 4) {
+      // Semi-finals (Round 1)
+      bracket.push({
+        id: matchId++,
+        round: 1,
+        player1: players[0],
+        player2: players[1],
+        status: 'pending'
+      });
+      bracket.push({
+        id: matchId++,
+        round: 1,
+        player1: players[2],
+        player2: players[3],
+        status: 'pending'
+      });
+      // Final (Round 2)
+      bracket.push({
+        id: matchId++,
+        round: 2,
+        status: 'pending'
+      });
+    }
+
+    return bracket;
+  }
+
+  // Get tournament data (sanitized for client)
+  getTournamentData(tournament) {
+    return {
+      id: tournament.id,
+      name: tournament.name,
+      host: tournament.host,
+      maxPlayers: tournament.maxPlayers,
+      currentPlayers: tournament.currentPlayers,
+      registeredPlayers: tournament.registeredPlayers,
+      status: tournament.status,
+      isPrivate: tournament.isPrivate,
+      type: tournament.type,
+      playerCount: tournament.playerCount,
+      bracket: tournament.bracket
+    };
+  }
+
+  // Broadcast tournament update to all registered players (including host)
+  broadcastTournamentUpdate(tournament) {
+    const tournamentData = this.getTournamentData(tournament);
+    const sentTo = new Set(); // Track who we've sent to avoid duplicates
+
+    // Send to all registered players (includes host)
+    for (const player of tournament.registeredPlayers) {
+      if (sentTo.has(player.id)) continue; // Skip if already sent
+
+      const socket = this.usersSocket.get(player.id.toString());
+      if (socket) {
+        const sent = this.sendToPlayer(socket, {
+          type: 'tournamentUpdated',
+          data: tournamentData
+        });
+        if (sent) {
+          sentTo.add(player.id);
+        } else {
+          console.warn(`Failed to send tournament update to player ${player.id} (socket not open)`);
+        }
+      } else {
+        console.warn(`Player ${player.id} not found in usersSocket map`);
+      }
+    }
+
+    // Also ensure host gets update (in case host is not in registeredPlayers for some reason)
+    if (!sentTo.has(tournament.host.id)) {
+      const hostSocket = this.usersSocket.get(tournament.host.id.toString());
+      if (hostSocket) {
+        this.sendToPlayer(hostSocket, {
+          type: 'tournamentUpdated',
+          data: tournamentData
+        });
+      }
+    }
+  }
+
+  // Cancel tournament (host only)
+  cancelTournament(tournamentId, hostId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Verify host
+    if (tournament.host.id !== hostId) {
+      return { error: 'Only the host can cancel the tournament' };
+    }
+
+    // Notify all players (except host) that tournament is cancelled
+    for (const player of tournament.registeredPlayers) {
+      // Skip host - they're the one cancelling
+      if (player.id === hostId) continue;
+
+      const socket = this.usersSocket.get(player.id.toString());
+      if (socket) {
+        this.sendToPlayer(socket, {
+          type: 'tournamentDisbanded',
+          data: {
+            tournamentId: tournamentId,
+            reason: 'Tournament cancelled by host'
+          }
+        });
+      }
+    }
+
+    // Clean up tournament data
+    this.tournaments.delete(tournamentId);
+    this.tournamentJoinRequests.delete(tournamentId);
+
+    // Remove from random opponent queue
+    for (const [key, entry] of this.randomOpponentQueue.entries()) {
+      if (entry.isTournamentSearch && entry.tournamentId === tournamentId) {
+        this.randomOpponentQueue.delete(key);
+      }
+    }
+
+    // Remove tournament invites for this tournament
+    for (const [playerId, invites] of this.tournamentInvites.entries()) {
+      const filteredInvites = invites.filter(inv => inv.tournamentId !== tournamentId);
+      if (filteredInvites.length === 0) {
+        this.tournamentInvites.delete(playerId);
+      } else {
+        this.tournamentInvites.set(playerId, filteredInvites);
+      }
+    }
+
+    return { success: true };
+  }
+
+  // Handle player socket reconnection (update socket reference in active game rooms)
+  handlePlayerReconnect(playerId, newSocket) {
+    const found = this.findRoomByPlayer(playerId);
+    if (found && found.room) {
+      if (found.room.player1.id === playerId) {
+        found.room.player1.socket = newSocket;
+        console.log(`[GameManager] Updated socket for player1 (${playerId}) in room ${found.roomCode}`);
+      } else if (found.room.player2.id === playerId) {
+        found.room.player2.socket = newSocket;
+        console.log(`[GameManager] Updated socket for player2 (${playerId}) in room ${found.roomCode}`);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  // Handle game challenge decline message forwarding
+  handleGameChallengeDecline(declinerId, declinerUsername, friendId) {
+    const friendSocket = this.usersSocket.get(friendId.toString());
+    if (friendSocket) {
+      this.sendToPlayer(friendSocket, {
+        type: 'game_challenge_declined',
+        data: {
+          declinedBy: declinerId,
+          declinedByUsername: declinerUsername,
+          friendId: friendId
+        }
+      });
+      return true;
+    }
+    return false;
+  }
+
+  // Check and cancel expired tournaments (not full within 2 minutes)
+  checkExpiredTournaments() {
+    const now = Date.now();
+    const TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes in milliseconds
+    const tournamentsToCancel = [];
+
+    for (const [tournamentId, tournament] of this.tournaments.entries()) {
+      // Only check waiting tournaments that are not full
+      if (tournament.status === 'waiting' && tournament.currentPlayers < tournament.maxPlayers) {
+        const age = now - tournament.createdAt;
+
+        // If tournament is older than 2 minutes and not full, mark for cancellation
+        if (age >= TIMEOUT_MS) {
+          tournamentsToCancel.push(tournamentId);
+        }
+      }
+    }
+
+    // Cancel expired tournaments
+    for (const tournamentId of tournamentsToCancel) {
+      const tournament = this.tournaments.get(tournamentId);
+      if (!tournament) continue;
+
+      // Notify all players (including host) that tournament timed out
+      for (const player of tournament.registeredPlayers) {
+        const socket = this.usersSocket.get(player.id.toString());
+        if (socket) {
+          this.sendToPlayer(socket, {
+            type: 'tournamentDisbanded',
+            data: {
+              tournamentId: tournamentId,
+              reason: 'Tournament timed out: Could not find enough players within 2 minutes'
+            }
+          });
+        }
+      }
+
+      // Also notify host if they're not in registeredPlayers
+      if (!tournament.registeredPlayers.some(p => p.id === tournament.host.id)) {
+        const hostSocket = this.usersSocket.get(tournament.host.id.toString());
+        if (hostSocket) {
+          this.sendToPlayer(hostSocket, {
+            type: 'tournamentCancelled',
+            data: {
+              tournamentId: tournamentId,
+              message: 'Tournament timed out: Could not find enough players within 2 minutes'
+            }
+          });
+        }
+      }
+
+      // Clean up tournament data
+      this.tournaments.delete(tournamentId);
+      this.tournamentJoinRequests.delete(tournamentId);
+
+      // Remove from random opponent queue
+      for (const [key, entry] of this.randomOpponentQueue.entries()) {
+        if (entry.isTournamentSearch && entry.tournamentId === tournamentId) {
+          this.randomOpponentQueue.delete(key);
+        }
+      }
+
+      // Remove tournament invites for this tournament
+      for (const [playerId, invites] of this.tournamentInvites.entries()) {
+        const filteredInvites = invites.filter(inv => inv.tournamentId !== tournamentId);
+        if (filteredInvites.length === 0) {
+          this.tournamentInvites.delete(playerId);
+        } else {
+          this.tournamentInvites.set(playerId, filteredInvites);
+        }
+      }
+
+      console.log(`[GameManager] Tournament ${tournamentId} cancelled due to timeout (not full within 2 minutes)`);
+    }
+  }
+
+  // Start periodic cleanup tasks
+  startPeriodicTasks() {
+    // Cleanup expired invitations every 30 seconds
+    setInterval(() => {
+      this.cleanupExpiredInvitations();
+    }, 30000);
+
+    // Try to match random opponents for tournaments every 5 seconds
+    setInterval(() => {
+      this.tryMatchRandomOpponents();
+    }, 5000);
+
+    // Check for expired tournaments (not full within 2 minutes) every 10 seconds
+    setInterval(() => {
+      this.checkExpiredTournaments();
+    }, 10000); // Check every 10 seconds
+
+    // Periodic tournament state sync: Broadcast updates to keep all players synchronized
+    // This ensures players see real-time updates even if they missed a message
+    setInterval(() => {
+      for (const [tournamentId, tournament] of this.tournaments.entries()) {
+        // Only sync active tournaments (waiting or playing)
+        if (tournament.status === 'waiting' || tournament.status === 'playing') {
+          // Broadcast current state to all players every 15 seconds
+          this.broadcastTournamentUpdate(tournament);
+        }
+      }
+    }, 15000); // Sync every 15 seconds
+
+    console.log('[GameManager] Periodic tasks started');
+  }
+
+  // Handle tournament player disconnect
+  handleTournamentDisconnect(playerId) {
+    // Remove from random opponent queue (check all entries)
+    for (const [key, entry] of this.randomOpponentQueue.entries()) {
+      if (entry.isTournamentSearch) {
+        // Check if this tournament search is for a tournament this player hosts
+        const tournament = this.tournaments.get(entry.tournamentId);
+        if (tournament && tournament.host.id === playerId) {
+          this.randomOpponentQueue.delete(key);
+        }
+      } else if (key === playerId.toString() || (entry.playerInfo && entry.playerInfo.playerId === playerId)) {
+        this.randomOpponentQueue.delete(key);
+      }
+    }
+
+    // Remove tournament invites
+    this.tournamentInvites.delete(playerId.toString());
+
+    // Find tournaments where player is registered
+    for (const [tournamentId, tournament] of this.tournaments.entries()) {
+      const playerIndex = tournament.registeredPlayers.findIndex(p => p.id === playerId);
+      if (playerIndex !== -1) {
+        // Remove player from tournament
+        tournament.registeredPlayers.splice(playerIndex, 1);
+        tournament.currentPlayers--;
+
+        // If host disconnected, disband tournament
+        if (tournament.host.id === playerId) {
+          // Notify all players
+          this.broadcastTournamentUpdate(tournament);
+          for (const player of tournament.registeredPlayers) {
+            const socket = this.usersSocket.get(player.id.toString());
+            if (socket) {
+              this.sendToPlayer(socket, {
+                type: 'tournamentDisbanded',
+                data: { tournamentId: tournamentId, reason: 'Host disconnected' }
+              });
+            }
+          }
+          // Remove tournament
+          this.tournaments.delete(tournamentId);
+          this.tournamentJoinRequests.delete(tournamentId);
+        } else {
+          // Broadcast update
+          this.broadcastTournamentUpdate(tournament);
+        }
+      }
+    }
+  }
+}
+
+export default GameManager;
+

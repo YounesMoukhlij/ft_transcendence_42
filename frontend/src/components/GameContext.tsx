@@ -30,10 +30,11 @@ export interface GameCustomisation {
   tableBg: string | null;
   ballColor: string | null;
   paddleColor: string | null;
+  aiDifficulty?: 'easy' | 'medium' | 'hard' | null;
 }
 
 export interface GameState {
-  mode: 'ai' | 'local' | 'tournament' | 'remote' | null;
+  mode: 'ai' | 'local' | 'tournament' | 'remote' | 'tic-tac-toe' | null;
   players: Player[];
   customisation: GameCustomisation;
   roomCode?: string;
@@ -75,6 +76,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       tableBg: null,
       ballColor: null,
       paddleColor: null,
+      aiDifficulty: null,
     },
     tournament: undefined,
   });
@@ -106,6 +108,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         tableBg: null,
         ballColor: null,
         paddleColor: null,
+        aiDifficulty: null,
       },
       tournament: undefined,
     });

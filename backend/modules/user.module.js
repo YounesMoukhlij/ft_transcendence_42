@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import { getConversationIdSchema , getMsgsSchema } from "./user.moduleSchema.js";
 
 
 
@@ -6,16 +6,17 @@ import jwt from 'jsonwebtoken';
 
 export async function getConversationId(request, reply) {
 
-  const { friend_id } = request.body;
-  if (!friend_id) {
-    return reply.code(400).send({ error: "Missing friend id" });
-  }
+  const result = getConversationIdSchema.safeParse(request.body);
 
+  if (!result.success) {
+    return reply.code(400).send({ errors: result.error.errors });
+  }
+  const { friend_id } = result.data;
 
   const caseOne = friend_id + "," + request.user.id_user;
   const caseTwo = request.user.id_user + "," + friend_id;
 
-  try 
+  try
   {
     const query = request.server.db.prepare("SELECT * FROM room WHERE members = ?" );
     let result = query.get(caseOne);
@@ -32,14 +33,21 @@ export async function getConversationId(request, reply) {
 
   }
   catch (dberr) {
-      return reply.code(500).send( "internal server error" );
-    }
+    return reply.code(500).send( "internal server error" );
+  }
 }
 
 
 
-export async function getMsgs (request , reply){
-  const id = request.body.id;
+export async function getMsgs(request , reply){
+  const result = getMsgsSchema.safeParse(request.body);
+
+  if (!result.success) {
+    return reply.code(400).send({ errors: result.error.errors });
+  }
+
+  const { id } = result.data;
+
   try{
       const query = request.server.db.prepare("SELECT * FROM message WHERE conv_id = ? ORDER BY created_at ASC");
       const messages = query.all(id);
@@ -74,9 +82,17 @@ export async function sendMsg(request, reply) {
     query.run(id, input, request.user.id_user, isSeen);
 
     if (socket) {
+      // Get sender username for the message
+      const getUserStmt = request.server.db.prepare('SELECT username FROM users WHERE id_user = ?');
+      const senderUser = getUserStmt.get(request.user.id_user);
+
       const data = {
         message: input,
         conv_id: id,
+        user: senderUser?.username || request.user.username, // Include sender username for updateLastMessage
+        sender: request.user.id_user.toString(), // Include sender ID for addMessage
+        created_at: new Date().toISOString(), // Include timestamp
+        isSeen: 1, // Message is seen since friend is online (socket exists)
       };
       socket.send(JSON.stringify({
         type: "message",
@@ -133,7 +149,7 @@ export async function blockFunction(request , reply){
 
     const query = request.server.db.prepare(`UPDATE room SET block_user = ?, is_double_block = CASE  WHEN is_double_block < 2 THEN is_double_block + 1 ELSE is_double_block END WHERE conversation_id = ?`);
     query.run(request.user.username , conv_id);
-    
+
     if (socket){
         const querydata = request.server.db.prepare(`SELECT * from room WHERE conversation_id = ?`);
         const data = querydata.get(conv_id);
@@ -145,7 +161,7 @@ export async function blockFunction(request , reply){
     }
 
     reply.send(true);
-    
+
   }catch(err){
     reply.code(500);
     console.log(err);
@@ -166,7 +182,7 @@ export async function DeblockFunction(request , reply){
     const result = query.all(conv_id);
 
 
-    
+
     if (result[0].is_double_block === 2){
       const query = request.server.db.prepare(`UPDATE room SET is_double_block = ?, block_user = ? WHERE conversation_id = ?`);
       query.run(1, friend, conv_id);
@@ -176,7 +192,7 @@ export async function DeblockFunction(request , reply){
       const query = request.server.db.prepare(`UPDATE room SET is_double_block = ?, block_user = ? WHERE conversation_id = ?`);
       query.run( 0 , '' ,conv_id);
     }
-    
+
     if (socket){
 
       const querydata = request.server.db.prepare(`SELECT * from room WHERE conversation_id = ?`);
@@ -190,7 +206,7 @@ export async function DeblockFunction(request , reply){
 
 
     reply.code(200).send(true);
-    
+
   }catch(err){
     reply.code(500);
     console.log(err);
@@ -202,7 +218,7 @@ export async function DeblockFunction(request , reply){
 export async function unfriend(request, reply) {
 
   const {conv_id , friend_id } = request.body;
-  
+
   try {
     const socket = request.server.users_socket.get(friend_id.toString());
 

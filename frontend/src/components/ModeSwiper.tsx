@@ -21,14 +21,16 @@ export default function ModeSwiper()
       { id: 2, title: "Remote Game", description: "Play with a friend online", buttonname: "1v1 Remote", image: "/1v1.png", mode: 'remote-options' as const },
       { id: 3, title: "Game vs AI", description: "Play against computer", buttonname: "AI", image: "/robot.png", mode: 'ai' as const },
       { id: 4, title: "Game vs Human", description: "Play with a friend", buttonname: "1 Versus 1", image: "/1v1.png", mode: 'local' as const },
+      { id: 5, title: "Tic Tac Toe", description: "Play X O game locally", buttonname: "X O Game", image: "/1v1.png", mode: 'tic-tac-toe' as const },
     ];
 
-    const handleClick = (mode: 'ai' | 'local' | 'tournament' | 'remote' | 'remote-options') => {
+    const handleClick = (mode: 'ai' | 'local' | 'tournament' | 'remote' | 'remote-options' | 'tic-tac-toe') => {
       if (mode === 'ai') {
         setGameMode(mode);
         router.push('/game/customize');
       } else if (mode === 'local') {
-        router.push('/game/versus-selection');
+        setGameMode(mode);
+        router.push('/game/player2');
       } else if (mode === 'tournament') {
         setGameMode(mode);
         router.push('/game/tournament');
@@ -41,6 +43,10 @@ export default function ModeSwiper()
         setGameMode('remote');
         router.push('/game/remote-options');
       }
+      else if (mode === 'tic-tac-toe') {
+        setGameMode(mode);
+        router.push('/game/tic-tac-toe');
+      }
     };
 
     return (
@@ -51,11 +57,11 @@ export default function ModeSwiper()
           effect="fade"
           slidesPerView={1}
           navigation
-          speed={2000}
+          speed={1500}
           className="h-full"
           loop={true}
           autoplay={{
-              delay: 5500,
+              delay: 4000,
               disableOnInteraction: false,
               pauseOnMouseEnter: true,
           }}
