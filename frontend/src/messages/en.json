@@ -314,6 +314,7 @@
     "searchTimeoutWarning": "Timeout in {time}",
     "cancelSearch": "Cancel Search",
     "searchTimeoutMessage": "Search timed out after 2 minutes. Please try again.",
+    "friendChallengeCancelled": "The other player cancelled the challenge.",
     "invitedToPlayGame": "{username} invited you to play a game. Accept?",
     "friendDeclinedInvitation": "Your friend declined the game invitation.",
     "anErrorOccurred": "An error occurred",

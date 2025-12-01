@@ -314,6 +314,7 @@
     "searchTimeoutWarning": "Tiempo de espera en {time}",
     "cancelSearch": "Cancelar Búsqueda",
     "searchTimeoutMessage": "La búsqueda expiró después de 2 minutos. Por favor intenta de nuevo.",
+    "friendChallengeCancelled": "El otro jugador canceló el desafío.",
     "invitedToPlayGame": "{username} te invitó a jugar un juego. ¿Aceptar?",
     "friendDeclinedInvitation": "Tu amigo rechazó la invitación de juego.",
     "anErrorOccurred": "Ocurrió un error",

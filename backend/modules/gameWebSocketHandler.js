@@ -249,12 +249,60 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
 
     case 'cancelSearch': {
       // Remove player from matchmaking queue
+      // Make it idempotent - don't error if not in queue (user might have already cancelled or never joined)
       const removed = gameManager.removeFromMatchmakingQueue(userId);
       if (removed) {
         socket.send(JSON.stringify({ type: 'searchCancelled' }));
         console.log(`[cancelSearch] User ${userId} cancelled matchmaking search`);
       } else {
-        socket.send(JSON.stringify({ type: 'error', message: 'Not in matchmaking queue' }));
+        // User is not in matchmaking queue - this is fine, just send success
+        // This can happen if they already cancelled, or if they're in a friend challenge
+        socket.send(JSON.stringify({ type: 'searchCancelled' }));
+        console.log(`[cancelSearch] User ${userId} not in matchmaking queue (already cancelled or friend challenge)`);
+      }
+      break;
+    }
+
+    case 'cancelFriendChallenge': {
+      // Handle cancellation of friend challenge (User A cancels waiting for User B)
+      const challengeId = message.payload?.challengeId;
+
+      if (!challengeId) {
+        // If no challengeId provided, try to find active challenge for this user
+        for (const [id, challenge] of gameManager.acceptedChallenges.entries()) {
+          if (challenge.inviterId === userId || challenge.acceptorId === userId) {
+            gameManager.acceptedChallenges.delete(id);
+            console.log(`[cancelFriendChallenge] User ${userId} cancelled challenge ${id}`);
+            socket.send(JSON.stringify({ type: 'searchCancelled' }));
+            return;
+          }
+        }
+        socket.send(JSON.stringify({ type: 'error', message: 'No active challenge found' }));
+        return;
+      }
+
+      // Verify this user is part of the challenge
+      const challenge = gameManager.acceptedChallenges.get(challengeId);
+      if (challenge && (challenge.inviterId === userId || challenge.acceptorId === userId)) {
+        // Remove the challenge
+        gameManager.acceptedChallenges.delete(challengeId);
+        console.log(`[cancelFriendChallenge] User ${userId} cancelled challenge ${challengeId}`);
+
+        // Notify the other player that the challenge was cancelled
+        const otherUserId = challenge.inviterId === userId ? challenge.acceptorId : challenge.inviterId;
+        const otherUserSocket = usersSocket.get(otherUserId.toString());
+        if (otherUserSocket) {
+          gameManager.sendToPlayer(otherUserSocket, {
+            type: 'friendChallengeCancelled',
+            data: {
+              message: 'The other player cancelled the challenge'
+            }
+          });
+        }
+
+        socket.send(JSON.stringify({ type: 'searchCancelled' }));
+      } else {
+        socket.send(JSON.stringify({ type: 'error', message: 'Challenge not found or you are not part of it' }));
       }
       break;
     }

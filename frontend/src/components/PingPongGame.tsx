@@ -160,36 +160,38 @@ const useLocalGameState = (players: Player[]) => {
         if (shouldReact) {
           // Miss chance - sometimes AI just doesn't move at all
           const missChance = settings.missChance || 0;
-          if (Math.random() < missChance) {
-            // AI misses - don't move towards ball
-            return prev;
-          }
+          const shouldMiss = Math.random() < missChance;
 
-          const targetPaddleCenter = targetY;
-          const diff = targetPaddleCenter - aiPaddleCenter;
+          // Only skip movement if missing, but still allow ball and other updates
+          if (!shouldMiss) {
+            const targetPaddleCenter = targetY;
+            const diff = targetPaddleCenter - aiPaddleCenter;
 
-          // Apply reaction delay (longer on easier difficulties)
-          const reactionFactor = settings.reactionDelay > 0 ? 1 - settings.reactionDelay : 1;
+            // Apply reaction delay (longer on easier difficulties)
+            const reactionFactor = settings.reactionDelay > 0 ? 1 - settings.reactionDelay : 1;
 
-          // Add occasional hesitation on easy/medium (stops moving briefly)
-          if (difficulty !== 'hard' && Math.random() < 0.1) {
-            return prev; // Don't move this frame
-          }
+            // Add occasional hesitation on easy/medium (stops moving briefly)
+            const shouldHesitate = difficulty !== 'hard' && Math.random() < 0.1;
 
-          // Smooth movement towards target with difficulty-based speed
-          if (Math.abs(diff) > 2) { // Increased threshold from 1 to 2 for less precision
-            const maxMoveSpeed = settings.speed * settings.maxSpeed;
-            // Use a smaller multiplier for movement calculation to slow it down
-            const moveSpeed = Math.min(maxMoveSpeed, Math.abs(diff) * (difficulty === 'easy' ? 0.08 : difficulty === 'medium' ? 0.12 : 0.15));
-            const moveAmount = Math.sign(diff) * moveSpeed * reactionFactor * deltaTime;
+            if (!shouldHesitate) {
+              // Smooth movement towards target with difficulty-based speed
+              if (Math.abs(diff) > 2) { // Increased threshold from 1 to 2 for less precision
+                const maxMoveSpeed = settings.speed * settings.maxSpeed;
+                // Use a smaller multiplier for movement calculation to slow it down
+                const moveSpeed = Math.min(maxMoveSpeed, Math.abs(diff) * (difficulty === 'easy' ? 0.08 : difficulty === 'medium' ? 0.12 : 0.15));
+                const moveAmount = Math.sign(diff) * moveSpeed * reactionFactor * deltaTime;
 
-            // Sometimes move in wrong direction on easy (especially when ball is far)
-            if (difficulty === 'easy' && Math.random() < 0.15 && ballX < GAME_WIDTH * 0.8) {
-              newPaddles[1] -= moveAmount * 0.5; // Move opposite direction slightly
-            } else {
-              newPaddles[1] += moveAmount;
+                // Sometimes move in wrong direction on easy (especially when ball is far)
+                if (difficulty === 'easy' && Math.random() < 0.15 && ballX < GAME_WIDTH * 0.8) {
+                  newPaddles[1] -= moveAmount * 0.5; // Move opposite direction slightly
+                } else {
+                  newPaddles[1] += moveAmount;
+                }
+              }
             }
+            // If hesitating, paddle doesn't move (but ball still updates)
           }
+          // If missing, paddle doesn't move (but ball still updates)
         }
       } else {
         // Human controls for player 2 in local/tournament mode

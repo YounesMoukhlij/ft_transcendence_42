@@ -183,9 +183,27 @@ export default function CustomizePage() {
       searchTimeoutRef.current = null;
     }
 
+    // Check if this is a friend challenge
+    const challengeId = typeof window !== 'undefined' ? localStorage.getItem('pendingChallengeId') : null;
+    const isFriendChallenge = !!challengeId;
+
     // Send cancel message to server if socket is open
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'cancelSearch' }));
+      if (isFriendChallenge && challengeId) {
+        // For friend challenges, send cancelFriendChallenge instead of cancelSearch
+        socket.send(JSON.stringify({
+          type: 'cancelFriendChallenge',
+          payload: { challengeId }
+        }));
+      } else {
+        // For random matchmaking, send cancelSearch
+        socket.send(JSON.stringify({ type: 'cancelSearch' }));
+      }
+    }
+
+    // Clear challengeId if it's a friend challenge
+    if (isFriendChallenge && typeof window !== 'undefined') {
+      localStorage.removeItem('pendingChallengeId');
     }
 
     setIsSearching(false);
@@ -226,6 +244,49 @@ export default function CustomizePage() {
             console.log('[CustomizePage] Waiting for opponent to finish customization...');
             setIsSearching(true);
             setError('');
+          } else if (message.type === 'game_challenge_declined') {
+            // User A receives this when User B declines the challenge while User A is waiting
+            console.log('[CustomizePage] Friend declined the challenge while waiting');
+            setIsSearching(false);
+            setTimeRemaining(120);
+            const declinedByUsername = message.data?.declinedByUsername || 'Friend';
+            setError(t('navbar.gameChallengeDeclined', { username: declinedByUsername }) || `${declinedByUsername} declined your game challenge.`);
+
+            // Clear challengeId
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('pendingChallengeId');
+            }
+
+            // Clear timeouts
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            if (searchTimeoutRef.current) {
+              clearTimeout(searchTimeoutRef.current);
+              searchTimeoutRef.current = null;
+            }
+          } else if (message.type === 'friendChallengeCancelled') {
+            // User B receives this when User A cancels waiting
+            console.log('[CustomizePage] Friend challenge was cancelled by the other player');
+            setIsSearching(false);
+            setTimeRemaining(120);
+            setError(t('game.friendChallengeCancelled') || 'The other player cancelled the challenge');
+
+            // Clear challengeId
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('pendingChallengeId');
+            }
+
+            // Clear timeouts
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            if (searchTimeoutRef.current) {
+              clearTimeout(searchTimeoutRef.current);
+              searchTimeoutRef.current = null;
+            }
           } else if (message.type === 'searchCancelled') {
             console.log('[CustomizePage] Search cancelled successfully');
             setIsSearching(false);
@@ -534,17 +595,15 @@ export default function CustomizePage() {
               </div>
             )}
 
-            {/* Cancel Button - Only show for random matchmaking */}
-            {!isFriendChallenge && (
-              <div className="flex justify-center">
-                <button
-                  onClick={handleCancelSearch}
-                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  <span>{t('game.cancelSearch')}</span>
-                </button>
-              </div>
-            )}
+            {/* Cancel Button - Show for both random matchmaking and friend challenges */}
+            <div className="flex justify-center">
+              <button
+                onClick={handleCancelSearch}
+                className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <span>{t('game.cancelSearch')}</span>
+              </button>
+            </div>
           </div>
         </div>
       );
