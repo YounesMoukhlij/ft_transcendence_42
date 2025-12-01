@@ -827,7 +827,7 @@ export default function RemoteGameRoomPage() {
                     <span className="font-semibold">Controls:</span> Use <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">W</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">S</kbd> or <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↑</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↓</kbd> keys to move your paddle
                   </p>
                   <p className="text-gray-400 text-xs md:text-sm mb-2">
-                    First to 5 points wins!
+                    First to 10 points wins!
                   </p>
                   <p className="text-gray-500 text-xs">
                     Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-xs">F</kbd> for fullscreen mode

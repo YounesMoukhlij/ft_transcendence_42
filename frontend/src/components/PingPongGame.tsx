@@ -11,8 +11,8 @@ const GAME_HEIGHT = 600;
 const GAME_WIDTH = 800;
 const PADDLE_WIDTH = 16;
 const BALL_RADIUS = 10;
-const WINNING_SCORE = 5;
-const AI_WINNING_SCORE = 15; // AI games are first to 15 points
+const WINNING_SCORE = 10;
+const AI_WINNING_SCORE = 10; // AI games are first to 10 points
 
 // Game constants for smooth gameplay
 const PADDLE_SPEED = 10; // Pixels per frame at 60 FPS (600 pixels/second)
@@ -21,28 +21,31 @@ const BALL_MAX_SPEED = 14;
 const BALL_SPEED_INCREMENT = 0.05; // Speed increase per collision
 const BALL_MIN_SPEED = 5;
 
-// AI difficulty settings - improved for better gameplay
+// AI difficulty settings - balanced for beatable gameplay
 const AI_DIFFICULTY_SETTINGS = {
   easy: {
-    speed: 5,           // Moderate movement speed
-    reactionDelay: 0.25, // Delay before reacting
-    accuracy: 0.75,      // 75% accuracy in positioning
+    speed: 3,           // Slower movement speed
+    reactionDelay: 0.5, // Longer delay before reacting
+    accuracy: 0.5,      // 50% accuracy - makes significant mistakes
     prediction: false,   // No prediction
-    maxSpeed: 0.85,      // AI moves at 85% max speed
+    maxSpeed: 0.6,      // AI moves at 60% max speed
+    missChance: 0.15,   // 15% chance to miss even when ball is reachable
   },
   medium: {
-    speed: 7,           // Medium movement speed
-    reactionDelay: 0.1, // Small delay
-    accuracy: 0.88,     // 88% accuracy
-    prediction: true,    // Basic prediction
-    maxSpeed: 0.92,      // AI moves at 92% max speed
+    speed: 5,           // Moderate movement speed
+    reactionDelay: 0.25, // Noticeable delay
+    accuracy: 0.7,      // 70% accuracy - some mistakes
+    prediction: false,   // No prediction for medium
+    maxSpeed: 0.75,     // AI moves at 75% max speed
+    missChance: 0.08,   // 8% chance to miss
   },
   hard: {
-    speed: 9,           // Fast movement
-    reactionDelay: 0,   // Instant reaction
-    accuracy: 0.96,     // 96% accuracy
+    speed: 7,           // Fast movement
+    reactionDelay: 0.15, // Small delay (not instant)
+    accuracy: 0.85,     // 85% accuracy (reduced from 96%)
     prediction: true,   // Advanced prediction
-    maxSpeed: 1.0,      // AI can move at full speed
+    maxSpeed: 0.9,      // AI moves at 90% max speed (not 100%)
+    missChance: 0.05,   // 5% chance to miss
   },
 };
 
@@ -114,7 +117,7 @@ const useLocalGameState = (players: Player[]) => {
         const aiPaddleCenter = newPaddles[1] + PADDLE_HEIGHT / 2;
         const aiPaddleX = GAME_WIDTH - PADDLE_WIDTH - 10;
 
-        // Calculate target position with prediction for medium/hard
+        // Calculate target position with prediction for hard mode only
         let targetY = ballY;
 
         if (settings.prediction && ballVx > 0) {
@@ -124,39 +127,68 @@ const useLocalGameState = (players: Player[]) => {
             const timeToReach = distanceToPaddle / Math.abs(ballVx);
             let predictedY = ballY + (ballVy * timeToReach);
 
-            // Account for wall bounces
+            // Account for wall bounces (with some error for lower difficulties)
+            let bounceError = difficulty === 'easy' ? 0.8 : difficulty === 'medium' ? 0.9 : 1.0;
             while (predictedY < BALL_RADIUS || predictedY > GAME_HEIGHT - BALL_RADIUS) {
               if (predictedY < BALL_RADIUS) {
-                predictedY = BALL_RADIUS + (BALL_RADIUS - predictedY);
+                predictedY = BALL_RADIUS + (BALL_RADIUS - predictedY) * bounceError;
               } else {
-                predictedY = (GAME_HEIGHT - BALL_RADIUS) - (predictedY - (GAME_HEIGHT - BALL_RADIUS));
+                predictedY = (GAME_HEIGHT - BALL_RADIUS) - (predictedY - (GAME_HEIGHT - BALL_RADIUS)) * bounceError;
               }
+              bounceError *= 0.95; // Reduce error on multiple bounces
             }
 
             targetY = predictedY;
           }
         }
 
-        // Apply accuracy (for easy/medium, AI might not be perfectly accurate)
-        const accuracyOffset = (1 - settings.accuracy) * (Math.random() - 0.5) * PADDLE_HEIGHT * 0.5;
+        // Apply accuracy with larger offset range for easier difficulties
+        const accuracyMultiplier = difficulty === 'easy' ? 2.0 : difficulty === 'medium' ? 1.5 : 1.0;
+        const accuracyOffset = (1 - settings.accuracy) * (Math.random() - 0.5) * PADDLE_HEIGHT * accuracyMultiplier;
         targetY += accuracyOffset;
 
-        // Only move AI if ball is on the right side or moving towards AI
-        const shouldReact = ballX > GAME_WIDTH / 3 && (ballVx > 0 || ballX > GAME_WIDTH / 2);
+        // Add intentional overshooting on easy/medium (AI goes past target sometimes)
+        if (difficulty !== 'hard' && Math.random() < 0.2) {
+          const overshootAmount = difficulty === 'easy' ? PADDLE_HEIGHT * 0.3 : PADDLE_HEIGHT * 0.15;
+          targetY += (Math.random() > 0.5 ? 1 : -1) * overshootAmount;
+        }
+
+        // React later on easier difficulties (closer to paddle)
+        const reactThreshold = difficulty === 'easy' ? GAME_WIDTH * 0.7 : difficulty === 'medium' ? GAME_WIDTH * 0.6 : GAME_WIDTH / 3;
+        const shouldReact = ballX > reactThreshold && (ballVx > 0 || ballX > GAME_WIDTH / 2);
 
         if (shouldReact) {
+          // Miss chance - sometimes AI just doesn't move at all
+          const missChance = settings.missChance || 0;
+          if (Math.random() < missChance) {
+            // AI misses - don't move towards ball
+            return prev;
+          }
+
           const targetPaddleCenter = targetY;
           const diff = targetPaddleCenter - aiPaddleCenter;
 
-          // Apply reaction delay for easy/medium (smoother movement)
+          // Apply reaction delay (longer on easier difficulties)
           const reactionFactor = settings.reactionDelay > 0 ? 1 - settings.reactionDelay : 1;
 
+          // Add occasional hesitation on easy/medium (stops moving briefly)
+          if (difficulty !== 'hard' && Math.random() < 0.1) {
+            return prev; // Don't move this frame
+          }
+
           // Smooth movement towards target with difficulty-based speed
-          if (Math.abs(diff) > 1) {
+          if (Math.abs(diff) > 2) { // Increased threshold from 1 to 2 for less precision
             const maxMoveSpeed = settings.speed * settings.maxSpeed;
-            const moveSpeed = Math.min(maxMoveSpeed, Math.abs(diff) * 0.15);
+            // Use a smaller multiplier for movement calculation to slow it down
+            const moveSpeed = Math.min(maxMoveSpeed, Math.abs(diff) * (difficulty === 'easy' ? 0.08 : difficulty === 'medium' ? 0.12 : 0.15));
             const moveAmount = Math.sign(diff) * moveSpeed * reactionFactor * deltaTime;
-            newPaddles[1] += moveAmount;
+
+            // Sometimes move in wrong direction on easy (especially when ball is far)
+            if (difficulty === 'easy' && Math.random() < 0.15 && ballX < GAME_WIDTH * 0.8) {
+              newPaddles[1] -= moveAmount * 0.5; // Move opposite direction slightly
+            } else {
+              newPaddles[1] += moveAmount;
+            }
           }
         }
       } else {
@@ -311,6 +343,8 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const lastUpdateTimeRef = useRef<number>(Date.now());
   const interpolatedStateRef = useRef<ServerGameState | null>(null);
   const updateHistoryRef = useRef<Array<{ state: ServerGameState; timestamp: number }>>([]);
+  const smoothedBallPositionRef = useRef<{ x: number; y: number } | null>(null); // For exponential smoothing
+  const networkLatencyRef = useRef<number>(16.67); // Track network latency (default to 1 frame)
 
   // Local game state - use gameState.players for local mode, tournamentPlayers for tournament mode
   const localPlayers = tournamentMode ? tournamentPlayers : (gameState.mode === 'local' ? gameState.players : []);
@@ -499,6 +533,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   useEffect(() => {
     if (!tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local' && serverGameState) {
       const now = Date.now();
+      const timeSinceUpdate = now - lastUpdateTimeRef.current;
+
+      // Calculate adaptive network latency (moving average of update intervals)
+      if (timeSinceUpdate > 0 && timeSinceUpdate < 200) { // Only track reasonable latencies
+        // Exponential moving average for latency
+        networkLatencyRef.current = networkLatencyRef.current * 0.7 + timeSinceUpdate * 0.3;
+      }
 
       // Store previous state for interpolation
       if (interpolatedStateRef.current) {
@@ -509,9 +550,17 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       interpolatedStateRef.current = { ...serverGameState };
       lastUpdateTimeRef.current = now;
 
-      // Keep a history of recent updates for better interpolation (keep last 3 updates)
+      // Initialize smoothed position if needed
+      if (!smoothedBallPositionRef.current) {
+        smoothedBallPositionRef.current = {
+          x: serverGameState.ball.x,
+          y: serverGameState.ball.y
+        };
+      }
+
+      // Keep a history of recent updates for better interpolation (keep last 5 updates for better smoothing)
       updateHistoryRef.current.push({ state: { ...serverGameState }, timestamp: now });
-      if (updateHistoryRef.current.length > 3) {
+      if (updateHistoryRef.current.length > 5) {
         updateHistoryRef.current.shift();
       }
     } else if (!serverGameState || gameState.mode === 'ai' || gameState.mode === 'local') {
@@ -519,6 +568,8 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       previousGameStateRef.current = null;
       interpolatedStateRef.current = null;
       updateHistoryRef.current = [];
+      smoothedBallPositionRef.current = null;
+      networkLatencyRef.current = 16.67;
     }
   }, [serverGameState, tournamentMode, gameState.mode]);
 
@@ -618,10 +669,10 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       ctx.fillText(scores.player2.toString(), GAME_WIDTH / 2 + 60, 50);
 
     } else if (serverGameState) {
-      // Remote Game Draw with interpolation for smooth movement
+      // Remote Game Draw with improved interpolation for smooth movement
       let displayState = serverGameState;
 
-      // Apply interpolation if we have previous state for smoother movement
+      // Apply advanced interpolation if we have previous state for smoother movement
       if (previousGameStateRef.current && interpolatedStateRef.current && !winner) {
         const now = Date.now();
         const timeSinceUpdate = now - lastUpdateTimeRef.current;
@@ -629,56 +680,110 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         // Calculate expected time between updates (60 FPS = ~16.67ms)
         const expectedUpdateInterval = 16.67;
 
-        // Use a longer interpolation window for smoother movement (up to 50ms)
-        // This handles network jitter better
-        const interpolationDuration = expectedUpdateInterval * 2; // ~33ms
-        const maxInterpolationTime = 50; // Don't interpolate if update is too old
+        // Adaptive interpolation window based on network latency
+        // Use longer window (up to 150ms) to handle network jitter better
+        const adaptiveWindow = Math.max(100, networkLatencyRef.current * 3); // At least 100ms, scale with latency
+        const maxInterpolationTime = Math.min(150, adaptiveWindow); // Cap at 150ms
 
         // Only interpolate if update is recent enough
         if (timeSinceUpdate < maxInterpolationTime) {
           const prev = previousGameStateRef.current;
           const curr = interpolatedStateRef.current;
 
-          // Calculate interpolation factor (0 to 1)
-          // If we're ahead of schedule, use extrapolation (factor > 1)
-          // If we're behind, use interpolation (factor < 1)
+          // Calculate interpolation factor
+          const interpolationDuration = expectedUpdateInterval;
           let interpolationFactor = timeSinceUpdate / interpolationDuration;
 
-          // Clamp extrapolation to prevent too much prediction
-          interpolationFactor = Math.min(interpolationFactor, 1.5);
-
-          // Smooth interpolation function (ease-out for more natural movement)
-          const smoothStep = (t: number) => t * t * (3 - 2 * t);
-          const smoothedFactor = smoothStep(Math.min(interpolationFactor, 1));
-
-          // Linear interpolation/extrapolation for smooth movement
+          // Linear interpolation for paddles (smooth movement)
           const lerp = (start: number, end: number, factor: number) => {
             if (factor <= 1) {
-              // Interpolation
               return start + (end - start) * factor;
             } else {
-              // Extrapolation (predict future position)
-              // Calculate velocity from previous state
+              // Extrapolation with less damping for better responsiveness
               const velocity = end - start;
-              return end + velocity * (factor - 1) * 0.5; // Dampen extrapolation
+              return end + velocity * (factor - 1) * 0.7; // Reduced damping from 0.5 to 0.7
             }
           };
+
+          // Smooth interpolation for paddles (slight easing for natural feel)
+          const smoothStep = (t: number) => t * t * (3 - 2 * t);
+          const smoothedPaddleFactor = smoothStep(Math.min(interpolationFactor, 1));
+
+          // Velocity-based prediction for ball (smooth and linear movement)
+          const getBallPosition = () => {
+            if (!smoothedBallPositionRef.current) {
+              smoothedBallPositionRef.current = { x: curr.ball.x, y: curr.ball.y };
+            }
+
+            const prevBall = prev.ball;
+            const currBall = curr.ball;
+
+            // Calculate velocity from server state
+            // dx/dy are in pixels per frame (where frame = 16.67ms at 60 FPS)
+            // Convert to pixels per millisecond for prediction
+            let ballVx: number;
+            let ballVy: number;
+
+            if (currBall.dx !== undefined && currBall.dy !== undefined) {
+              // Use velocity from server (pixels per frame), convert to pixels per ms
+              // Since updates come every 16.67ms (60 FPS), divide by 16.67
+              ballVx = currBall.dx / expectedUpdateInterval;
+              ballVy = currBall.dy / expectedUpdateInterval;
+            } else {
+              // Fallback: calculate velocity from position difference
+              ballVx = (currBall.x - prevBall.x) / interpolationDuration;
+              ballVy = (currBall.y - prevBall.y) / interpolationDuration;
+            }
+
+            // Calculate predicted position using velocity (timeSinceUpdate is in ms)
+            const predictedX = currBall.x + ballVx * timeSinceUpdate;
+            const predictedY = currBall.y + ballVy * timeSinceUpdate;
+
+            // Exponential smoothing for ultra-smooth ball movement
+            // Higher alpha (0.15-0.25) = more responsive, lower = smoother
+            const alpha = 0.2; // Balance between responsiveness and smoothness
+            const smoothedX = smoothedBallPositionRef.current.x * (1 - alpha) + predictedX * alpha;
+            const smoothedY = smoothedBallPositionRef.current.y * (1 - alpha) + predictedY * alpha;
+
+            // Update smoothed position reference
+            smoothedBallPositionRef.current = { x: smoothedX, y: smoothedY };
+
+            // For interpolation (when behind), use linear interpolation for accuracy
+            if (interpolationFactor <= 1) {
+              // Linear interpolation when behind - more accurate
+              return {
+                x: prevBall.x + (currBall.x - prevBall.x) * interpolationFactor,
+                y: prevBall.y + (currBall.y - prevBall.y) * interpolationFactor
+              };
+            } else {
+              // Use smoothed prediction when ahead
+              return { x: smoothedX, y: smoothedY };
+            }
+          };
+
+          const ballPos = getBallPosition();
 
           displayState = {
             ...curr,
             player1: {
               ...curr.player1,
-              y: lerp(prev.player1.y, curr.player1.y, smoothedFactor)
+              y: lerp(prev.player1.y, curr.player1.y, smoothedPaddleFactor)
             },
             player2: {
               ...curr.player2,
-              y: lerp(prev.player2.y, curr.player2.y, smoothedFactor)
+              y: lerp(prev.player2.y, curr.player2.y, smoothedPaddleFactor)
             },
             ball: {
               ...curr.ball,
-              x: lerp(prev.ball.x, curr.ball.x, smoothedFactor),
-              y: lerp(prev.ball.y, curr.ball.y, smoothedFactor)
+              x: ballPos.x,
+              y: ballPos.y
             }
+          };
+        } else {
+          // If update is too old, reset smoothed position to current state
+          smoothedBallPositionRef.current = {
+            x: serverGameState.ball.x,
+            y: serverGameState.ball.y
           };
         }
       }

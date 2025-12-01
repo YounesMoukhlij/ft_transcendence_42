@@ -6,8 +6,8 @@ const PADDLE_WIDTH = 16;
 const PADDLE_HEIGHT = 100;
 const BALL_RADIUS = 10;
 const PADDLE_SPEED = 12; // Increased from 8 for faster gameplay
-const BALL_SPEED = 6; // Reduced for slower ball movement (was 8)
-const WINNING_SCORE = 5;
+const BALL_SPEED = 4.5; // Reduced for slower, softer ball movement in remote game (was 6)
+const WINNING_SCORE = 10;
 
 class GameManager {
   constructor(db, usersSocket) {
@@ -352,7 +352,7 @@ class GameManager {
             loserId = room.player1.id;
             winnerUsername = room.player2.username;
             loserUsername = room.player1.username;
-            // Set final scores: winner gets 5, loser gets current score
+            // Set final scores: winner gets 10, loser gets current score
             room.gameState.player2.score = WINNING_SCORE;
           } else if (room.player2.socket.readyState !== 1) {
             // Player2 disconnected - Player1 wins
@@ -362,7 +362,7 @@ class GameManager {
             loserId = room.player2.id;
             winnerUsername = room.player1.username;
             loserUsername = room.player2.username;
-            // Set final scores: winner gets 5, loser gets current score
+            // Set final scores: winner gets 10, loser gets current score
             room.gameState.player1.score = WINNING_SCORE;
           } else {
             // Both disconnected - shouldn't happen, but handle gracefully
@@ -471,7 +471,7 @@ class GameManager {
         const winner = this.checkWinner(room.gameState);
         if (winner) {
           // ALWAYS broadcast final game state when winner is detected
-          // This ensures clients receive the final state with score 5, regardless of frame count
+          // This ensures clients receive the final state with score 10, regardless of frame count
           this.broadcastGameState(roomCode, room.gameState);
 
           // Stop the loop immediately after broadcasting
@@ -578,7 +578,7 @@ class GameManager {
     const quitter = room.player1.id === playerId ? room.player1 : room.player2;
     const winner = room.player1.id === playerId ? room.player2 : room.player1;
 
-    // Set final scores: winner gets 5, quitter gets current score
+    // Set final scores: winner gets 10, quitter gets current score
     if (room.player1.id === playerId) {
       room.gameState.player2.score = WINNING_SCORE;
     } else {

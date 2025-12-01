@@ -240,12 +240,14 @@ export default function CustomizePage() {
             }
           } else if (message.type === 'error') {
             const errorMessage = message.message || t('game.anErrorOccurred');
-            console.error('[CustomizePage] Error from server:', errorMessage);
 
             // Handle "Already in a game" error by leaving the current game
             if (errorMessage.toLowerCase().includes('already in a game') ||
                 errorMessage.toLowerCase().includes('already in game')) {
-              console.log('[CustomizePage] User is already in a game, attempting to leave...');
+              // Log as info since we're handling it gracefully (only in development)
+              if (process.env.NODE_ENV === 'development') {
+                console.log('[CustomizePage] User is already in a game, attempting to leave...');
+              }
 
               // Try to leave the current game room
               if (socket && socket.readyState === WebSocket.OPEN) {
@@ -277,7 +279,10 @@ export default function CustomizePage() {
                 setError(errorMessage);
               }
             } else {
-              // For other errors, show the error message normally
+              // For other errors, log them (only in development) and show to user
+              if (process.env.NODE_ENV === 'development') {
+                console.error('[CustomizePage] Error from server:', errorMessage);
+              }
               setError(errorMessage);
             }
 

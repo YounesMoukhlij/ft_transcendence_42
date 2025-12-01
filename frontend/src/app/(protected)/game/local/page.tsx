@@ -424,7 +424,7 @@ export default function LocalGamePage() {
                 </p>
               </div>
               <p className="text-gray-400 text-xs md:text-sm mt-2">
-                First to 5 points wins!
+                First to 10 points wins!
               </p>
               <p className="text-gray-500 text-xs mt-2">
                 Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-xs">F</kbd> for fullscreen mode
