@@ -54,6 +54,7 @@ export default function RemoteGameRoomPage() {
   const [player1Username, setPlayer1Username] = useState<string>('');
   const [player2Username, setPlayer2Username] = useState<string>('');
   const profileImagesFetched = useRef<Set<number>>(new Set()); // Track which player IDs we've fetched
+  const autoRedirectTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for auto-redirect after 1 minute
 
   useEffect(() => {
     document.title = t('game.onlineMultiplayerPingPong');
@@ -218,6 +219,11 @@ export default function RemoteGameRoomPage() {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({ type: 'rematch:accept' }));
       setRematchOffer(false);
+      // Clear auto-redirect timer since user is interacting
+      if (autoRedirectTimerRef.current) {
+        clearTimeout(autoRedirectTimerRef.current);
+        autoRedirectTimerRef.current = null;
+      }
     }
   }, [socket]);
 
@@ -261,6 +267,11 @@ export default function RemoteGameRoomPage() {
             setRematchRequested(false); // Reset request status
             break;
           case 'rematch:start':
+            // Clear auto-redirect timer since rematch is starting
+            if (autoRedirectTimerRef.current) {
+              clearTimeout(autoRedirectTimerRef.current);
+              autoRedirectTimerRef.current = null;
+            }
             setServerGameState(message.payload);
             setRematchOffer(false);
             setRematchDeclinedMessage('');
@@ -286,6 +297,7 @@ export default function RemoteGameRoomPage() {
               setRematchRequested(false);
               setRematchDeclinedMessage('');
               setOpponentLeft(true);
+              // Don't set auto-redirect timer for opponent quit - user should manually leave
             }
             break;
           case 'matchFound':
@@ -380,9 +392,15 @@ export default function RemoteGameRoomPage() {
     return () => {
       activeSocket?.removeEventListener('message', handleMessage);
     };
-  }, [socket, handleAcceptRematch, handleDeclineRematch, roomCode, router]);
+  }, [socket, handleAcceptRematch, handleDeclineRematch, roomCode, router, t]);
 
-  const leaveRoom = () => {
+  const leaveRoom = useCallback(() => {
+    // Clear auto-redirect timer since user is leaving
+    if (autoRedirectTimerRef.current) {
+      clearTimeout(autoRedirectTimerRef.current);
+      autoRedirectTimerRef.current = null;
+    }
+
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({
         type: 'leaveRoom',
@@ -390,7 +408,38 @@ export default function RemoteGameRoomPage() {
       }));
     }
     router.push('/game');
-  };
+  }, [socket, roomCode, router]);
+
+  // Auto-redirect timer: After 1 minute of inactivity on game over screen, redirect to lobby
+  useEffect(() => {
+    // Only set timer if game is over and opponent didn't quit (they can still rematch)
+    if (gameOver && gameOver.reason !== 'opponentQuit') {
+      // Clear any existing timer first
+      if (autoRedirectTimerRef.current) {
+        clearTimeout(autoRedirectTimerRef.current);
+      }
+
+      // Set new timer for 60 seconds (1 minute)
+      autoRedirectTimerRef.current = setTimeout(() => {
+        console.log('[RemoteGameRoom] Auto-redirecting to lobby after 1 minute of inactivity');
+        leaveRoom();
+      }, 60000); // 60 seconds = 1 minute
+
+      // Cleanup function
+      return () => {
+        if (autoRedirectTimerRef.current) {
+          clearTimeout(autoRedirectTimerRef.current);
+          autoRedirectTimerRef.current = null;
+        }
+      };
+    } else {
+      // If gameOver is cleared or opponent quit, clear any existing timer
+      if (autoRedirectTimerRef.current) {
+        clearTimeout(autoRedirectTimerRef.current);
+        autoRedirectTimerRef.current = null;
+      }
+    }
+  }, [gameOver, leaveRoom]);
 
   if (error) {
     return (
@@ -449,6 +498,11 @@ export default function RemoteGameRoomPage() {
                       if (socket && socket.readyState === WebSocket.OPEN) {
                         socket.send(JSON.stringify({ type: 'rematch:decline' }));
                         setRematchOffer(false);
+                        // Clear auto-redirect timer since user is interacting
+                        if (autoRedirectTimerRef.current) {
+                          clearTimeout(autoRedirectTimerRef.current);
+                          autoRedirectTimerRef.current = null;
+                        }
                       }
                     }}
                     className="mt-4 ml-4 px-6 py-3 bg-red-500 rounded-lg text-lg hover:bg-red-600 transition-colors"
@@ -465,6 +519,11 @@ export default function RemoteGameRoomPage() {
                       socket.send(JSON.stringify({ type: 'rematch:request' }));
                       setRematchRequested(true);
                       setRematchDeclinedMessage(''); // Clear any previous decline message
+                      // Clear auto-redirect timer since user is interacting
+                      if (autoRedirectTimerRef.current) {
+                        clearTimeout(autoRedirectTimerRef.current);
+                        autoRedirectTimerRef.current = null;
+                      }
                     }
                   }}
                   className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors"
@@ -598,28 +657,31 @@ export default function RemoteGameRoomPage() {
               </div>
             )}
 
-            <div className={`w-full flex justify-center ${isFullscreen ? 'flex-1 items-center' : ''}`}>
-              <div
-                className={isFullscreen ? 'w-full h-full flex items-center justify-center' : 'w-full'}
-                style={isFullscreen ? {
-                  aspectRatio: '4/3',
-                  maxWidth: '95vw',
-                  maxHeight: '95vh',
-                  width: 'auto',
-                  height: 'auto'
-                } : {}}
-              >
-                <PingPongGame
-                  serverGameState={serverGameState}
-                  opponentLeft={opponentLeft}
-                  setServerGameState={setServerGameState}
-                  rematchDeclinedMessage={rematchDeclinedMessage}
-                  setRematchDeclinedMessage={setRematchDeclinedMessage}
-                  rematchOffer={rematchOffer}
-                  handleAcceptRematch={handleAcceptRematch}
-                />
+            {/* Only render PingPongGame when game is NOT over to prevent "Connecting Game..." message */}
+            {!gameOver && (
+              <div className={`w-full flex justify-center ${isFullscreen ? 'flex-1 items-center' : ''}`}>
+                <div
+                  className={isFullscreen ? 'w-full h-full flex items-center justify-center' : 'w-full'}
+                  style={isFullscreen ? {
+                    aspectRatio: '4/3',
+                    maxWidth: '95vw',
+                    maxHeight: '95vh',
+                    width: 'auto',
+                    height: 'auto'
+                  } : {}}
+                >
+                  <PingPongGame
+                    serverGameState={serverGameState}
+                    opponentLeft={opponentLeft}
+                    setServerGameState={setServerGameState}
+                    rematchDeclinedMessage={rematchDeclinedMessage}
+                    setRematchDeclinedMessage={setRematchDeclinedMessage}
+                    rematchOffer={rematchOffer}
+                    handleAcceptRematch={handleAcceptRematch}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Controls - Hidden in fullscreen */}
             {!isFullscreen && (

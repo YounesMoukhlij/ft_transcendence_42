@@ -6,18 +6,144 @@ import { useGameContext } from '@/components/GameContext';
 import PingPongGame from '@/components/PingPongGame';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { IoExpand, IoContract } from 'react-icons/io5';
+import { useUserStore } from '@/store/userStore';
+import axios from 'axios';
+import { getBackendURL } from '@/lib/utils';
+
+const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png';
+
+// Helper function to resolve profile image URL
+const getProfileImageUrl = (profileImg: string | null | undefined): string => {
+  if (!profileImg) return defaultProfileImg;
+
+  const API_URL = getBackendURL();
+
+  // If the path is from our DB (e.g., /uploads/...), prefix with API_URL
+  if (profileImg.startsWith('/uploads/')) {
+    return `${API_URL}${profileImg}`;
+  }
+
+  // Otherwise, it's a full URL (default or from OAuth), use it directly
+  return profileImg;
+};
 
 export default function LocalGamePage() {
   const { t } = useTranslation();
   const { gameState } = useGameContext();
+  const { user } = useUserStore();
   const router = useRouter();
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Player profile images state
+  const [player1ProfileImg, setPlayer1ProfileImg] = useState<string>(defaultProfileImg);
+  const [player2ProfileImg, setPlayer2ProfileImg] = useState<string>(defaultProfileImg);
+  const profileImagesFetched = useRef<Set<string>>(new Set()); // Track which player IDs we've fetched
 
   // Set page title
   useEffect(() => {
     document.title = t('game.localMultiplayerPingPong');
   }, [t]);
+
+  // Fetch player profile images when players are available
+  useEffect(() => {
+    if (!gameState.players || !gameState.players[0] || !gameState.players[1] || !user?.access_token) return;
+
+    const player1 = gameState.players[0];
+    const player2 = gameState.players[1];
+
+    // Set Player 1 profile image
+    // If player has an ID, try to fetch from backend; otherwise use their avatar
+    if (player1.id && !profileImagesFetched.current.has(`player1-${player1.id}`)) {
+      // Try to fetch profile image from backend if user ID exists
+      const fetchPlayer1Profile = async () => {
+        try {
+          // If player1 is the logged-in user, use their profile image directly
+          if (user?.id_user?.toString() === player1.id && user?.profile_img) {
+            setPlayer1ProfileImg(getProfileImageUrl(user.profile_img));
+            profileImagesFetched.current.add(`player1-${player1.id}`);
+            return;
+          }
+
+          // Otherwise, fetch by username if available
+          if (player1.name) {
+            const response = await axios.get(
+              `${getBackendURL()}/getUserStats/${player1.name}`,
+              {
+                headers: { Authorization: `Bearer ${user.access_token}` }
+              }
+            );
+
+            if (response.data?.profile_img || response.data?.avatar) {
+              const profileImg = response.data.profile_img || response.data.avatar;
+              setPlayer1ProfileImg(getProfileImageUrl(profileImg));
+              profileImagesFetched.current.add(`player1-${player1.id}`);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error(`[LocalGame] Error fetching profile for Player 1:`, error);
+        }
+
+        // Fallback to avatar from player object
+        if (player1.avatar) {
+          setPlayer1ProfileImg(getProfileImageUrl(player1.avatar));
+          profileImagesFetched.current.add(`player1-${player1.id}`);
+        }
+      };
+
+      fetchPlayer1Profile();
+    } else if (player1.avatar && !player1.id) {
+      // No ID, just use avatar directly
+      setPlayer1ProfileImg(getProfileImageUrl(player1.avatar));
+    }
+
+    // Set Player 2 profile image
+    // If player has an ID, try to fetch from backend; otherwise use their avatar
+    if (player2.id && !profileImagesFetched.current.has(`player2-${player2.id}`)) {
+      // Try to fetch profile image from backend if user ID exists
+      const fetchPlayer2Profile = async () => {
+        try {
+          // If player2 is the logged-in user, use their profile image directly
+          if (user?.id_user?.toString() === player2.id && user?.profile_img) {
+            setPlayer2ProfileImg(getProfileImageUrl(user.profile_img));
+            profileImagesFetched.current.add(`player2-${player2.id}`);
+            return;
+          }
+
+          // Otherwise, fetch by username if available
+          if (player2.name) {
+            const response = await axios.get(
+              `${getBackendURL()}/getUserStats/${player2.name}`,
+              {
+                headers: { Authorization: `Bearer ${user.access_token}` }
+              }
+            );
+
+            if (response.data?.profile_img || response.data?.avatar) {
+              const profileImg = response.data.profile_img || response.data.avatar;
+              setPlayer2ProfileImg(getProfileImageUrl(profileImg));
+              profileImagesFetched.current.add(`player2-${player2.id}`);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error(`[LocalGame] Error fetching profile for Player 2:`, error);
+        }
+
+        // Fallback to avatar from player object
+        if (player2.avatar) {
+          setPlayer2ProfileImg(getProfileImageUrl(player2.avatar));
+          profileImagesFetched.current.add(`player2-${player2.id}`);
+        }
+      };
+
+      fetchPlayer2Profile();
+    } else if (player2.avatar && !player2.id) {
+      // No ID, just use avatar directly
+      setPlayer2ProfileImg(getProfileImageUrl(player2.avatar));
+    }
+  }, [gameState.players, user]);
 
   useEffect(() => {
     if (!gameState.players || !gameState.players[1]?.name) {
@@ -130,6 +256,93 @@ export default function LocalGamePage() {
       }`}
     >
       <div className={`w-full flex flex-col items-center ${isFullscreen ? 'h-full justify-center' : 'max-w-4xl'}`}>
+        {/* Player Profile Images - Shown at top of game table */}
+        {gameState.players && gameState.players[0] && gameState.players[1] && !isFullscreen && (
+          <div className="w-full max-w-4xl mb-4 px-4">
+            <div className="flex items-center justify-between bg-gray-800/80 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
+              {/* Player 1 */}
+              <div className="flex items-center gap-3 flex-1">
+                <div className="relative">
+                  <img
+                    src={player1ProfileImg}
+                    alt={player1Name}
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-blue-400 shadow-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = defaultProfileImg;
+                    }}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-white font-semibold text-sm sm:text-base md:text-lg truncate">
+                    {player1Name}
+                  </p>
+                  <p className="text-gray-400 text-xs sm:text-sm">Left Paddle</p>
+                </div>
+              </div>
+
+              {/* VS Separator */}
+              <div className="mx-4 sm:mx-6 flex-shrink-0">
+                <span className="text-yellow-400 font-bold text-lg sm:text-xl md:text-2xl">VS</span>
+              </div>
+
+              {/* Player 2 */}
+              <div className="flex items-center gap-3 flex-1 flex-row-reverse text-right">
+                <div className="relative">
+                  <img
+                    src={player2ProfileImg}
+                    alt={player2Name}
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-red-400 shadow-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = defaultProfileImg;
+                    }}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-white font-semibold text-sm sm:text-base md:text-lg truncate">
+                    {player2Name}
+                  </p>
+                  <p className="text-gray-400 text-xs sm:text-sm">Right Paddle</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Player Profile Images in Fullscreen - Minimal */}
+        {gameState.players && gameState.players[0] && gameState.players[1] && isFullscreen && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700 shadow-xl">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <img
+                  src={player1ProfileImg}
+                  alt={player1Name}
+                  className="w-8 h-8 rounded-full object-cover border-2 border-blue-400"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = defaultProfileImg;
+                  }}
+                />
+                <span className="text-white text-xs font-semibold truncate max-w-[100px]">
+                  {player1Name}
+                </span>
+              </div>
+              <span className="text-yellow-400 font-bold">VS</span>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-xs font-semibold truncate max-w-[100px]">
+                  {player2Name}
+                </span>
+                <img
+                  src={player2ProfileImg}
+                  alt={player2Name}
+                  className="w-8 h-8 rounded-full object-cover border-2 border-red-400"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = defaultProfileImg;
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Game Container */}
         <div className={`w-full flex justify-center ${isFullscreen ? 'flex-1 items-center' : 'mb-4'}`}>
           <div
@@ -149,12 +362,6 @@ export default function LocalGamePage() {
         {/* Controls and Info - Hidden in fullscreen */}
         {!isFullscreen && (
           <div className="w-full max-w-2xl mt-4 text-center space-y-4">
-            {/* Player Names Display */}
-            <div className="text-white text-lg">
-              <span className="font-semibold">{player1Name}</span>
-              <span className="mx-3 opacity-50">vs</span>
-              <span className="font-semibold">{player2Name}</span>
-            </div>
 
             {/* Controls Instructions */}
             <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
@@ -213,12 +420,6 @@ export default function LocalGamePage() {
         {isFullscreen && (
           <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-6 py-3 border border-gray-700 shadow-xl">
             <div className="flex items-center gap-4 text-white text-sm flex-wrap justify-center">
-              <div>
-                <span className="font-semibold">{player1Name}</span>
-                <span className="mx-2 opacity-50">vs</span>
-                <span className="font-semibold">{player2Name}</span>
-              </div>
-              <div className="h-4 w-px bg-gray-600"></div>
               <div>
                 <span className="opacity-70">P1: </span>
                 <span className="font-semibold">W / S</span>
