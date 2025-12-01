@@ -112,6 +112,25 @@ async function startServer() {
       const init = fs.readFileSync(path.join(__dirname, 'init.sql'), 'utf8');
       db.exec(init);
       app.log.info('Database initialized');
+    } else {
+      // Check if game_settings table exists, create it if missing (for existing databases)
+      const gameSettingsExists = tables.some(table => table.name === 'game_settings');
+      if (!gameSettingsExists) {
+        db.exec(`
+          CREATE TABLE IF NOT EXISTS game_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userId INTEGER NOT NULL UNIQUE,
+            tableBg TEXT,
+            ballColor TEXT,
+            paddleColor TEXT,
+            aiDifficulty TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (userId) REFERENCES users(id_user)
+          );
+        `);
+        app.log.info('game_settings table created');
+      }
     }
 
     // Start the HTTP server first

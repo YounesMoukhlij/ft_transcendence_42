@@ -12,7 +12,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 export default function InviteFriendPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { user } = useUserStore();
+  const { user, clearUser } = useUserStore();
   const { gameState, setCustomisation } = useGameContext();
   const { socket } = useUserStore();
   const [friendsList, setFriendsList] = useState<any[]>([]);
@@ -32,27 +32,70 @@ export default function InviteFriendPage() {
         return;
       }
 
+      // Validate token format before making request
+      const token = user.access_token.trim();
+      if (!token || token.length < 10) {
+        console.warn('[InviteFriend] Invalid token format, skipping fetch');
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await axios.get(
           `${getBackendURL()}/GetFriends`,
           {
             params: { username: user.username },
             headers: {
-              Authorization: `Bearer ${user.access_token}`
-            }
+              Authorization: `Bearer ${token}`
+            },
+            timeout: 5000 // 5 second timeout
           }
         );
         setFriendsList(response.data || []);
-      } catch (error) {
-        console.error('Error fetching friends:', error);
-        setError(t('game.failedToSendInvitation'));
+        setError(''); // Clear any previous errors on success
+      } catch (error: any) {
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 401) {
+            // Unauthorized - token is invalid or expired
+            console.warn('[InviteFriend] 401 Unauthorized - token invalid or expired');
+
+            // Clear user state and redirect to login
+            clearUser();
+            router.push('/login');
+            return;
+          } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+            // Network timeout
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('[InviteFriend] Request timeout while fetching friends');
+            }
+            setError(t('game.networkError') || 'Network error. Please try again.');
+          } else if (error.response?.status === 500) {
+            // Server error
+            if (process.env.NODE_ENV === 'development') {
+              console.error('[InviteFriend] Server error fetching friends:', error.response.data);
+            }
+            setError(t('game.serverError') || 'Server error. Please try again later.');
+          } else {
+            // Other errors
+            if (process.env.NODE_ENV === 'development') {
+              console.error('[InviteFriend] Error fetching friends:', error.response?.data || error.message);
+            }
+            setError(t('game.failedToLoadFriends') || 'Failed to load friends list.');
+          }
+        } else {
+          // Non-axios error
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[InviteFriend] Unexpected error:', error);
+          }
+          setError(t('game.failedToLoadFriends') || 'Failed to load friends list.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchFriends();
-  }, [user, t]);
+  }, [user, t, router, clearUser]);
 
   // Listen for WebSocket messages (game challenge declines and status updates)
   useEffect(() => {

@@ -44,7 +44,12 @@ export default function RemoteGameRoomPage() {
   const [rematchOffer, setRematchOffer] = useState(false);
   const [rematchDeclinedMessage, setRematchDeclinedMessage] = useState('');
   const [rematchRequested, setRematchRequested] = useState(false);
-  const [gameOver, setGameOver] = useState<{winner: string; finalScore: any} | null>(null);
+  const [gameOver, setGameOver] = useState<{
+    winner: string;
+    finalScore: any;
+    reason?: string;
+    message?: string;
+  } | null>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -55,6 +60,8 @@ export default function RemoteGameRoomPage() {
   const [player2Username, setPlayer2Username] = useState<string>('');
   const profileImagesFetched = useRef<Set<number>>(new Set()); // Track which player IDs we've fetched
   const autoRedirectTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for auto-redirect after 1 minute
+  const autoFullscreenAttemptedRef = useRef<boolean>(false); // Track if we've attempted auto-fullscreen
+  const gameStartedRef = useRef<boolean>(false); // Track if game has started (serverGameState received)
 
   useEffect(() => {
     document.title = t('game.onlineMultiplayerPingPong');
@@ -153,12 +160,16 @@ export default function RemoteGameRoomPage() {
         // Enter fullscreen
         if (container.requestFullscreen) {
           await container.requestFullscreen();
+          container.focus();
         } else if ((container as any).webkitRequestFullscreen) {
           await (container as any).webkitRequestFullscreen();
+          container.focus();
         } else if ((container as any).mozRequestFullScreen) {
           await (container as any).mozRequestFullScreen();
+          container.focus();
         } else if ((container as any).msRequestFullscreen) {
           await (container as any).msRequestFullscreen();
+          container.focus();
         }
       }
     } catch (error) {
@@ -214,6 +225,126 @@ export default function RemoteGameRoomPage() {
       window.removeEventListener('keydown', handleKeyPress);
     };
   }, [toggleFullscreen]);
+
+  // Automatically enter fullscreen when page mounts (user initiated navigation = user interaction)
+  useEffect(() => {
+    const container = gameContainerRef.current;
+    if (!container) {
+      // Container not ready yet, retry after a short delay
+      const retryTimer = setTimeout(() => {
+        const retryContainer = gameContainerRef.current;
+        if (retryContainer && !autoFullscreenAttemptedRef.current) {
+          autoFullscreenAttemptedRef.current = true;
+          requestAnimationFrame(async () => {
+            try {
+              if (retryContainer.requestFullscreen) {
+                await retryContainer.requestFullscreen();
+                retryContainer.focus();
+              } else if ((retryContainer as any).webkitRequestFullscreen) {
+                await (retryContainer as any).webkitRequestFullscreen();
+                retryContainer.focus();
+              } else if ((retryContainer as any).mozRequestFullScreen) {
+                await (retryContainer as any).mozRequestFullScreen();
+                retryContainer.focus();
+              } else if ((retryContainer as any).msRequestFullscreen) {
+                await (retryContainer as any).msRequestFullscreen();
+                retryContainer.focus();
+              }
+            } catch (error) {
+              console.warn('[RemoteGame] Fullscreen blocked on retry:', error);
+            }
+          });
+        }
+      }, 200);
+      return () => clearTimeout(retryTimer);
+    }
+
+    // Check if already in fullscreen
+    const isAlreadyFullscreen = !!(
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement ||
+      (document as any).msFullscreenElement
+    );
+
+    if (isAlreadyFullscreen) {
+      autoFullscreenAttemptedRef.current = true;
+      return; // Already in fullscreen
+    }
+
+    // Mark as attempted immediately
+    autoFullscreenAttemptedRef.current = true;
+
+    // Trigger fullscreen - using requestAnimationFrame to ensure we're in interaction context
+    const timer = setTimeout(() => {
+      requestAnimationFrame(async () => {
+        try {
+          if (container.requestFullscreen) {
+            await container.requestFullscreen();
+            container.focus();
+          } else if ((container as any).webkitRequestFullscreen) {
+            await (container as any).webkitRequestFullscreen();
+            container.focus();
+          } else if ((container as any).mozRequestFullScreen) {
+            await (container as any).mozRequestFullScreen();
+            container.focus();
+          } else if ((container as any).msRequestFullscreen) {
+            await (container as any).msRequestFullscreen();
+            container.focus();
+          }
+        } catch (error) {
+          console.warn('[RemoteGame] Auto-fullscreen not available:', error);
+          // If fullscreen fails, reset the flag so we can try again when gameState arrives
+          autoFullscreenAttemptedRef.current = false;
+        }
+      });
+    }, 300); // Small delay to ensure DOM is fully ready
+
+    return () => clearTimeout(timer);
+  }, []); // Run once on mount - navigation is user-initiated
+
+  // Backup: Also attempt fullscreen when game actually starts (if mount attempt failed)
+  useEffect(() => {
+    // Only trigger when game actually starts (serverGameState is available) and not game over
+    if (!serverGameState || gameOver) return;
+
+    // Mark game as started
+    gameStartedRef.current = true;
+
+    // If we haven't successfully entered fullscreen yet, try again
+    const isInFullscreen = !!(
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement ||
+      (document as any).msFullscreenElement
+    );
+
+    if (!isInFullscreen && !autoFullscreenAttemptedRef.current) {
+      autoFullscreenAttemptedRef.current = true;
+      const container = gameContainerRef.current;
+      if (container) {
+        requestAnimationFrame(async () => {
+          try {
+            if (container.requestFullscreen) {
+              await container.requestFullscreen();
+              container.focus();
+            } else if ((container as any).webkitRequestFullscreen) {
+              await (container as any).webkitRequestFullscreen();
+              container.focus();
+            } else if ((container as any).mozRequestFullScreen) {
+              await (container as any).mozRequestFullScreen();
+              container.focus();
+            } else if ((container as any).msRequestFullscreen) {
+              await (container as any).msRequestFullscreen();
+              container.focus();
+            }
+          } catch (error) {
+            console.warn('[RemoteGame] Fullscreen backup attempt failed:', error);
+          }
+        });
+      }
+    }
+  }, [serverGameState, gameOver]); // Trigger when game starts
 
   const handleAcceptRematch = useCallback(() => {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -272,6 +403,9 @@ export default function RemoteGameRoomPage() {
               clearTimeout(autoRedirectTimerRef.current);
               autoRedirectTimerRef.current = null;
             }
+            // Reset flags so fullscreen can trigger again for rematch
+            autoFullscreenAttemptedRef.current = false;
+            gameStartedRef.current = false;
             setServerGameState(message.payload);
             setRematchOffer(false);
             setRematchDeclinedMessage('');
@@ -458,7 +592,8 @@ export default function RemoteGameRoomPage() {
   return (
     <div
       ref={gameContainerRef}
-      className={`flex flex-col items-center justify-center w-full transition-all duration-300 ${
+      tabIndex={-1}
+      className={`flex flex-col items-center justify-center w-full transition-all duration-300 focus:outline-none ${
         isFullscreen
           ? 'h-screen bg-black p-4'
           : 'min-h-full p-4 bg-transparent'

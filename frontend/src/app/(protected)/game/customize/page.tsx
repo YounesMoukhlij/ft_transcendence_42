@@ -239,8 +239,48 @@ export default function CustomizePage() {
               searchTimeoutRef.current = null;
             }
           } else if (message.type === 'error') {
-            console.error('[CustomizePage] Error from server:', message.message);
-            setError(message.message || t('game.anErrorOccurred'));
+            const errorMessage = message.message || t('game.anErrorOccurred');
+            console.error('[CustomizePage] Error from server:', errorMessage);
+
+            // Handle "Already in a game" error by leaving the current game
+            if (errorMessage.toLowerCase().includes('already in a game') ||
+                errorMessage.toLowerCase().includes('already in game')) {
+              console.log('[CustomizePage] User is already in a game, attempting to leave...');
+
+              // Try to leave the current game room
+              if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                  type: 'cancelMatchmaking'
+                }));
+
+                // Also try to leave room if we have a roomCode
+                if (gameState.roomCode) {
+                  socket.send(JSON.stringify({
+                    type: 'leaveRoom',
+                    payload: { roomCode: gameState.roomCode }
+                  }));
+                }
+
+                // Set a friendlier error message
+                setError(t('game.leftPreviousGame') || 'Left previous game. Please try again.');
+
+                // Clear game state
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('pendingChallengeId');
+                }
+
+                // Clear search state after a short delay so user can retry
+                setTimeout(() => {
+                  setError('');
+                }, 3000);
+              } else {
+                setError(errorMessage);
+              }
+            } else {
+              // For other errors, show the error message normally
+              setError(errorMessage);
+            }
+
             setIsSearching(false);
             setTimeRemaining(120);
             // Clear timeout

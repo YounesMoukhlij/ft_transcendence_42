@@ -61,6 +61,9 @@ interface PingPongGameProps {
   tournamentMode?: boolean;
   tournamentPlayers?: Player[];
   onTournamentMatchEnd?: (winner: Player) => void;
+
+  // Local/AI game props
+  onGameOver?: (winner: string | null) => void;
 }
 
 // Initial state for local game
@@ -177,10 +180,10 @@ const useLocalGameState = (players: Player[]) => {
       // Wall collision with proper bounce
       if (y - BALL_RADIUS <= 0) {
         y = BALL_RADIUS;
-        vy = -Math.abs(vy); // Ensure positive direction after bounce
+        vy = Math.abs(vy); // Bounce down (positive velocity)
       } else if (y + BALL_RADIUS >= GAME_HEIGHT) {
         y = GAME_HEIGHT - BALL_RADIUS;
-        vy = Math.abs(vy); // Ensure negative direction after bounce
+        vy = -Math.abs(vy); // Bounce up (negative velocity)
       }
 
       // Improved paddle collision with angle calculation
@@ -290,7 +293,8 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   handleAcceptRematch,
   tournamentMode = false,
   tournamentPlayers = [],
-  onTournamentMatchEnd
+  onTournamentMatchEnd,
+  onGameOver
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keysPressed = useRef<{ [key: string]: boolean }>({});
@@ -380,33 +384,68 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   }, [socket, user, winner, tournamentMode, gameState.mode]);
 
   // Game loop for local tournament, AI mode, and local mode - improved with delta time
+  const gameModeRef = useRef(gameState.mode);
+  const aiDifficultyRef = useRef(gameState.customisation?.aiDifficulty);
+  const winnerRef = useRef(winner);
+  const tournamentModeRef = useRef(tournamentMode);
+  const updateGameStateRef = useRef(updateGameState);
+
+  // Update refs when values change (don't restart loop)
   useEffect(() => {
-    const isLocalMode = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
-    if (!isLocalMode || winner) return;
+    gameModeRef.current = gameState.mode;
+    aiDifficultyRef.current = gameState.customisation?.aiDifficulty;
+    winnerRef.current = winner;
+    tournamentModeRef.current = tournamentMode;
+    updateGameStateRef.current = updateGameState;
+  }, [gameState.mode, gameState.customisation?.aiDifficulty, winner, tournamentMode, updateGameState]);
+
+  // Game loop for local/tournament/AI modes - optimized to prevent multiple loops
+  useEffect(() => {
+    const isLocalMode = tournamentModeRef.current || gameModeRef.current === 'ai' || gameModeRef.current === 'local';
+    if (!isLocalMode) return;
+
+    // Don't start loop if there's a winner
+    if (winnerRef.current) return;
 
     let lastTime = performance.now();
-    let animationFrameId: number;
+    let animationFrameId: number | null = null;
+    let isRunning = true;
 
     const gameLoop = (currentTime: number) => {
-      const deltaTime = Math.min((currentTime - lastTime) / (1000 / 60), 2); // Cap delta time
+      // Check if game ended or component unmounted
+      if (!isRunning || winnerRef.current) {
+        if (animationFrameId !== null) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+        return;
+      }
+
+      // Calculate deltaTime: milliseconds since last frame, normalized to 60fps (16.67ms per frame)
+      // This ensures consistent speed regardless of frame rate
+      const elapsed = currentTime - lastTime;
+      const deltaTime = Math.min(Math.max(elapsed / 16.67, 0.1), 2.5); // Cap between 0.1 and 2.5x
       lastTime = currentTime;
 
-      if (!winner) {
-        const difficulty = (gameState.customisation?.aiDifficulty || 'medium') as 'easy' | 'medium' | 'hard';
-        updateGameState(keysPressed.current, gameState.mode === 'ai', difficulty, deltaTime);
-      }
+      // Update game state (ball and paddles movement)
+      const difficulty = (aiDifficultyRef.current || 'medium') as 'easy' | 'medium' | 'hard';
+      const isAIMode = gameModeRef.current === 'ai';
+      updateGameStateRef.current(keysPressed.current, isAIMode, difficulty, deltaTime);
 
       animationFrameId = requestAnimationFrame(gameLoop);
     };
 
+    // Start the game loop
     animationFrameId = requestAnimationFrame(gameLoop);
 
     return () => {
-      if (animationFrameId) {
+      isRunning = false;
+      if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
       }
     };
-  }, [tournamentMode, gameState.mode, gameState.customisation?.aiDifficulty, winner, updateGameState]);
+  }, [winner]); // Include winner in dependencies to restart loop when winner changes from non-null to null
 
 
   // Check for winner in local tournament, AI mode, and local mode
@@ -433,13 +472,17 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       } else if (gameState.mode === 'local' && localPlayers.length >= 2) {
         // Local mode - check for winner
         if (scores.player1 >= WINNING_SCORE) {
-          setWinner(localPlayers[0].name);
+          const winnerName = localPlayers[0].name;
+          setWinner(winnerName);
+          if (onGameOver) onGameOver(winnerName);
         } else if (scores.player2 >= WINNING_SCORE) {
-          setWinner(localPlayers[1].name);
+          const winnerName = localPlayers[1].name;
+          setWinner(winnerName);
+          if (onGameOver) onGameOver(winnerName);
         }
       }
     }
-  }, [scores, tournamentMode, gameState.mode, onTournamentMatchEnd, localPlayers, winner]);
+  }, [scores, tournamentMode, gameState.mode, onTournamentMatchEnd, localPlayers, winner, onGameOver]);
 
   // Check for winner in remote game
   useEffect(() => {
@@ -491,7 +534,47 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     if (tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local') {
       const { customisation } = gameState;
       // Local Tournament, AI mode, or Local mode Draw
-      ctx.fillStyle = customisation?.tableBg || '#333';
+
+      // Table background - handle both solid colors and gradients (same logic as remote mode)
+      const tableBg = customisation?.tableBg || '#15803d'; // Default to green, not white
+      if (tableBg && (tableBg.includes('gradient') || tableBg.includes('linear-gradient'))) {
+        // Handle gradient backgrounds
+        try {
+          // Try to parse gradient and create canvas gradient
+          const gradientMatch = tableBg.match(/linear-gradient\(([^)]+)\)/);
+          if (gradientMatch) {
+            const gradientParts = gradientMatch[1].split(',');
+            const colors = gradientParts.filter(part => part.trim().startsWith('#'));
+            if (colors.length > 0) {
+              // Create a linear gradient
+              const gradient = ctx.createLinearGradient(0, 0, GAME_WIDTH, GAME_HEIGHT);
+              colors.forEach((color, index) => {
+                const position = index / (colors.length - 1 || 1);
+                gradient.addColorStop(position, color.trim());
+              });
+              ctx.fillStyle = gradient;
+            } else {
+              // Fallback to first color found or default green
+              const colorMatch = tableBg.match(/#[0-9a-fA-F]{6}/);
+              ctx.fillStyle = colorMatch ? colorMatch[0] : '#15803d';
+            }
+          } else {
+            // Fallback to first color found or default green
+            const colorMatch = tableBg.match(/#[0-9a-fA-F]{6}/);
+            ctx.fillStyle = colorMatch ? colorMatch[0] : '#15803d';
+          }
+        } catch (e) {
+          // Fallback to solid color - ensure it's a valid color
+          const colorMatch = tableBg.match(/#[0-9a-fA-F]{6}/);
+          ctx.fillStyle = colorMatch ? colorMatch[0] : '#15803d';
+        }
+      } else if (tableBg && tableBg.startsWith('#')) {
+        // Solid color - validate it's a valid hex color
+        ctx.fillStyle = tableBg.match(/#[0-9a-fA-F]{6}/) ? tableBg : '#15803d';
+      } else {
+        // Invalid or missing tableBg - use default green
+        ctx.fillStyle = '#15803d';
+      }
       ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
       ctx.beginPath();
@@ -792,16 +875,23 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         <p className="text-lg mb-4">Final Score: {scores.player1} - {scores.player2}</p>
         <button
           onClick={() => {
+            keysPressed.current = {}; // Clear any pressed keys first
             setWinner(null);
             resetGameState();
-            keysPressed.current = {};
+            // Small delay to ensure state is reset before game loop restarts
+            setTimeout(() => {
+              if (onGameOver) onGameOver(null); // Notify parent that game is reset
+            }, 50);
           }}
           className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors"
         >
           Play Again
         </button>
         <button
-          onClick={handleExit}
+          onClick={() => {
+            if (onGameOver) onGameOver(null); // Notify parent before exit
+            handleExit();
+          }}
           className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors"
         >
           Back to Game Modes
@@ -816,18 +906,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className="flex justify-between w-full max-w-4xl mb-2">
-        <span className="text-white text-xl">
-            {isLocalMode
-              ? (gameState.mode === 'ai' ? 'You' : localPlayers[0]?.name)
-              : serverGameState?.player1.username}
-        </span>
-        <span className="text-white text-xl">
-            {isLocalMode
-              ? (gameState.mode === 'ai' ? 'AI' : localPlayers[1]?.name)
-              : serverGameState?.player2.username}
-        </span>
-      </div>
       <div className="relative w-full flex justify-center items-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
         <canvas
           ref={canvasRef}

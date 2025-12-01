@@ -37,7 +37,7 @@ export default function Navbar()
   const searchRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const deletedNotificationIdsRef = useRef<Set<number>>(new Set()); // Track locally deleted notification IDs
-  const {connect  , init } = useUserStore();
+  const {connect  , init, clearUser } = useUserStore();
 
   const setUsername = useUserStore.setState;
   const socket = useUserStore((state) => state.socket);
@@ -294,7 +294,22 @@ useEffect(() => {
 
   // Function to sync notifications from server
   const syncNotifications = React.useCallback(async () => {
-    if (!user?.access_token) return;
+    // Check if token exists and is valid
+    if (!user?.access_token) {
+      return;
+    }
+
+    // Check if token appears to be expired or invalid (basic validation)
+    try {
+      const tokenParts = user.access_token.split('.');
+      if (tokenParts.length !== 3) {
+        console.warn('[Navbar] Invalid token format, skipping notification sync');
+        return;
+      }
+    } catch (e) {
+      console.warn('[Navbar] Error validating token, skipping notification sync');
+      return;
+    }
 
     try {
       const result = await axios.get(
@@ -343,21 +358,25 @@ useEffect(() => {
           // Silently fail for network errors - backend might be down or unreachable
           // Only log in development mode
           if (process.env.NODE_ENV === 'development') {
-            console.warn('Failed to sync notifications: Network error (backend may be unreachable)');
+            console.warn('[Navbar] Failed to sync notifications: Network error (backend may be unreachable)');
           }
           return;
         }
 
         // 401 Unauthorized - token expired or invalid
         if (error.response?.status === 401) {
-          console.warn('Failed to sync notifications: Unauthorized (token expired or invalid). Stopping further sync attempts.');
+          // Silently handle 401 - token is expired/invalid, user may need to re-login
+          // Only log in development mode to avoid console spam
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Navbar] Failed to sync notifications: Unauthorized (token expired or invalid). Stopping further sync attempts.');
+          }
           return;
         }
       }
 
       // Log other errors only in development
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to sync notifications:', error);
+        console.error('[Navbar] Failed to sync notifications:', error);
       }
     }
   }, [user?.access_token, addPendingRequestsArray]);
@@ -648,6 +667,18 @@ useEffect(() => {
       return;
     }
 
+    // Validate token format before making request
+    try {
+      const tokenParts = user.access_token.split('.');
+      if (tokenParts.length !== 3) {
+        toast.error('Authentication error. Please log in again.');
+        return;
+      }
+    } catch (e) {
+      toast.error('Authentication error. Please log in again.');
+      return;
+    }
+
     // Track this notification as deleted to prevent syncNotifications from re-adding it
     deletedNotificationIdsRef.current.add(item.notify_id);
 
@@ -707,9 +738,22 @@ useEffect(() => {
         router.push('/game/customize');
       }
     } catch (error: any) {
-      console.error('Error accepting game challenge:', error);
+      // Handle 401 Unauthorized specifically
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        toast.error('Your session has expired. Please log in again.');
+        // Clear invalid token state
+        if (user) {
+          clearUser();
+        }
+        router.push('/login');
+        return;
+      }
+
+      console.error('[AcceptGameChallenge] Error accepting game challenge:', error);
       toast.error(error.response?.data?.message || 'Failed to accept game challenge');
+
       // Re-add notification if error occurred (though navigation might prevent this)
+      deletedNotificationIdsRef.current.delete(item.notify_id);
       setNotification(prev => {
         if (!prev.find(n => n.notify_id === item.notify_id)) {
           return [...prev, item];

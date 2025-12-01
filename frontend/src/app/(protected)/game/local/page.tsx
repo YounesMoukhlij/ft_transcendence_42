@@ -29,7 +29,7 @@ const getProfileImageUrl = (profileImg: string | null | undefined): string => {
 
 export default function LocalGamePage() {
   const { t } = useTranslation();
-  const { gameState } = useGameContext();
+  const { gameState, setGameMode } = useGameContext();
   const { user } = useUserStore();
   const router = useRouter();
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -39,23 +39,69 @@ export default function LocalGamePage() {
   const [player1ProfileImg, setPlayer1ProfileImg] = useState<string>(defaultProfileImg);
   const [player2ProfileImg, setPlayer2ProfileImg] = useState<string>(defaultProfileImg);
   const profileImagesFetched = useRef<Set<string>>(new Set()); // Track which player IDs we've fetched
+  const [gameOver, setGameOver] = useState<boolean>(false); // Track if game is over
 
-  // Set page title
+  // Set page title and ensure game mode is set to local
   useEffect(() => {
     document.title = t('game.localMultiplayerPingPong');
-  }, [t]);
+    setGameMode('local');
+  }, [t, setGameMode]);
+
+  // Automatically enter fullscreen when game starts
+  useEffect(() => {
+    const container = gameContainerRef.current;
+    if (!container) return;
+
+    // Check if already in fullscreen
+    if (
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement ||
+      (document as any).msFullscreenElement
+    ) {
+      return; // Already in fullscreen
+    }
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(async () => {
+      try {
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+          container.focus();
+        } else if ((container as any).webkitRequestFullscreen) {
+          await (container as any).webkitRequestFullscreen();
+          container.focus();
+        } else if ((container as any).mozRequestFullScreen) {
+          await (container as any).mozRequestFullScreen();
+          container.focus();
+        } else if ((container as any).msRequestFullscreen) {
+          await (container as any).msRequestFullscreen();
+          container.focus();
+        }
+      } catch (error) {
+        // User may have denied fullscreen or browser doesn't support it
+        console.log('Auto-fullscreen not available:', error);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []); // Run once on mount
 
   // Fetch player profile images when players are available
   useEffect(() => {
-    if (!gameState.players || !gameState.players[0] || !gameState.players[1] || !user?.access_token) return;
+    if (!gameState.players || !gameState.players[0] || !gameState.players[1]) return;
 
     const player1 = gameState.players[0];
     const player2 = gameState.players[1];
 
     // Set Player 1 profile image
-    // If player has an ID, try to fetch from backend; otherwise use their avatar
-    if (player1.id && !profileImagesFetched.current.has(`player1-${player1.id}`)) {
-      // Try to fetch profile image from backend if user ID exists
+    // First, try to use avatar from player object (works even without token)
+    if (player1.avatar) {
+      setPlayer1ProfileImg(getProfileImageUrl(player1.avatar));
+    }
+
+    // If player has an ID and we have an access token, try to fetch from backend for updated image
+    if (player1.id && user?.access_token && !profileImagesFetched.current.has(`player1-${player1.id}`)) {
       const fetchPlayer1Profile = async () => {
         try {
           // If player1 is the logged-in user, use their profile image directly
@@ -66,7 +112,7 @@ export default function LocalGamePage() {
           }
 
           // Otherwise, fetch by username if available
-          if (player1.name) {
+          if (player1.name && user?.access_token) {
             const response = await axios.get(
               `${getBackendURL()}/getUserStats/${player1.name}`,
               {
@@ -78,30 +124,25 @@ export default function LocalGamePage() {
               const profileImg = response.data.profile_img || response.data.avatar;
               setPlayer1ProfileImg(getProfileImageUrl(profileImg));
               profileImagesFetched.current.add(`player1-${player1.id}`);
-              return;
             }
           }
         } catch (error) {
-          console.error(`[LocalGame] Error fetching profile for Player 1:`, error);
-        }
-
-        // Fallback to avatar from player object
-        if (player1.avatar) {
-          setPlayer1ProfileImg(getProfileImageUrl(player1.avatar));
-          profileImagesFetched.current.add(`player1-${player1.id}`);
+          // Silently fail - we already have the avatar from player object
+          console.debug(`[LocalGame] Could not fetch updated profile for Player 1, using avatar from player object`);
         }
       };
 
       fetchPlayer1Profile();
-    } else if (player1.avatar && !player1.id) {
-      // No ID, just use avatar directly
-      setPlayer1ProfileImg(getProfileImageUrl(player1.avatar));
     }
 
     // Set Player 2 profile image
-    // If player has an ID, try to fetch from backend; otherwise use their avatar
-    if (player2.id && !profileImagesFetched.current.has(`player2-${player2.id}`)) {
-      // Try to fetch profile image from backend if user ID exists
+    // First, try to use avatar from player object (works even without token)
+    if (player2.avatar) {
+      setPlayer2ProfileImg(getProfileImageUrl(player2.avatar));
+    }
+
+    // If player has an ID and we have an access token, try to fetch from backend for updated image
+    if (player2.id && user?.access_token && !profileImagesFetched.current.has(`player2-${player2.id}`)) {
       const fetchPlayer2Profile = async () => {
         try {
           // If player2 is the logged-in user, use their profile image directly
@@ -112,7 +153,7 @@ export default function LocalGamePage() {
           }
 
           // Otherwise, fetch by username if available
-          if (player2.name) {
+          if (player2.name && user?.access_token) {
             const response = await axios.get(
               `${getBackendURL()}/getUserStats/${player2.name}`,
               {
@@ -124,31 +165,26 @@ export default function LocalGamePage() {
               const profileImg = response.data.profile_img || response.data.avatar;
               setPlayer2ProfileImg(getProfileImageUrl(profileImg));
               profileImagesFetched.current.add(`player2-${player2.id}`);
-              return;
             }
           }
         } catch (error) {
-          console.error(`[LocalGame] Error fetching profile for Player 2:`, error);
-        }
-
-        // Fallback to avatar from player object
-        if (player2.avatar) {
-          setPlayer2ProfileImg(getProfileImageUrl(player2.avatar));
-          profileImagesFetched.current.add(`player2-${player2.id}`);
+          // Silently fail - we already have the avatar from player object
+          console.debug(`[LocalGame] Could not fetch updated profile for Player 2, using avatar from player object`);
         }
       };
 
       fetchPlayer2Profile();
-    } else if (player2.avatar && !player2.id) {
-      // No ID, just use avatar directly
-      setPlayer2ProfileImg(getProfileImageUrl(player2.avatar));
     }
   }, [gameState.players, user]);
 
   useEffect(() => {
     if (!gameState.players || !gameState.players[1]?.name) {
       router.replace('/game/player2');
+      return;
     }
+
+    // Reset gameOver state when players change (new game setup)
+    setGameOver(false);
   }, [gameState.players, router]);
 
   // Toggle fullscreen - defined first so it can be used in other hooks
@@ -177,12 +213,17 @@ export default function LocalGamePage() {
         // Enter fullscreen
         if (container.requestFullscreen) {
           await container.requestFullscreen();
+          // Ensure focus for keyboard controls
+          container.focus();
         } else if ((container as any).webkitRequestFullscreen) {
           await (container as any).webkitRequestFullscreen();
+          container.focus();
         } else if ((container as any).mozRequestFullScreen) {
           await (container as any).mozRequestFullScreen();
+          container.focus();
         } else if ((container as any).msRequestFullscreen) {
           await (container as any).msRequestFullscreen();
+          container.focus();
         }
       }
     } catch (error) {
@@ -249,15 +290,16 @@ export default function LocalGamePage() {
   return (
     <div
       ref={gameContainerRef}
-      className={`flex flex-col items-center justify-center w-full transition-all duration-300 ${
+      tabIndex={-1}
+      className={`flex flex-col items-center justify-center w-full transition-all duration-300 focus:outline-none ${
         isFullscreen
           ? 'h-screen bg-black p-4'
-          : 'min-h-screen p-4'
+          : 'min-h-full p-4'
       }`}
     >
       <div className={`w-full flex flex-col items-center ${isFullscreen ? 'h-full justify-center' : 'max-w-4xl'}`}>
-        {/* Player Profile Images - Shown at top of game table */}
-        {gameState.players && gameState.players[0] && gameState.players[1] && !isFullscreen && (
+        {/* Player Profile Images - Shown at top of game table (hidden when game is over) */}
+        {!gameOver && gameState.players && gameState.players[0] && gameState.players[1] && !isFullscreen && (
           <div className="w-full max-w-4xl mb-4 px-4">
             <div className="flex items-center justify-between bg-gray-800/80 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
               {/* Player 1 */}
@@ -308,8 +350,8 @@ export default function LocalGamePage() {
           </div>
         )}
 
-        {/* Player Profile Images in Fullscreen - Minimal */}
-        {gameState.players && gameState.players[0] && gameState.players[1] && isFullscreen && (
+        {/* Player Profile Images in Fullscreen - Minimal (hidden when game is over) */}
+        {!gameOver && gameState.players && gameState.players[0] && gameState.players[1] && isFullscreen && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700 shadow-xl">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
@@ -355,12 +397,17 @@ export default function LocalGamePage() {
               height: 'auto'
             } : {}}
           >
-            <PingPongGame />
+            <PingPongGame
+              onGameOver={(winner) => {
+                // Set gameOver state based on whether there's a winner
+                setGameOver(winner !== null);
+              }}
+            />
           </div>
         </div>
 
-        {/* Controls and Info - Hidden in fullscreen */}
-        {!isFullscreen && (
+        {/* Controls and Info - Hidden in fullscreen and when game is over */}
+        {!isFullscreen && !gameOver && (
           <div className="w-full max-w-2xl mt-4 text-center space-y-4">
 
             {/* Controls Instructions */}
@@ -416,9 +463,9 @@ export default function LocalGamePage() {
           </div>
         )}
 
-        {/* Minimal UI in Fullscreen - Fixed Bottom */}
-        {isFullscreen && (
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-6 py-3 border border-gray-700 shadow-xl">
+        {/* Minimal UI in Fullscreen - Fixed Bottom (hidden when game is over) */}
+        {isFullscreen && !gameOver && (
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-6 py-3  border-gray-700 shadow-xl">
             <div className="flex items-center gap-4 text-white text-sm flex-wrap justify-center">
               <div>
                 <span className="opacity-70">P1: </span>
@@ -427,8 +474,17 @@ export default function LocalGamePage() {
                 <span className="font-semibold">↑ / ↓</span>
               </div>
               <div className="h-4 w-px bg-gray-600"></div>
+              <button
+                onClick={toggleFullscreen}
+                className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600  transition-colors text-sm font-medium flex items-center gap-2"
+                aria-label="Exit Fullscreen"
+              >
+                <IoContract className="w-4 h-4" />
+                Exit Fullscreen
+              </button>
+              <div className="h-4 w-px bg-gray-600"></div>
               <div className="opacity-70 text-xs">
-                Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded">F</kbd> to exit fullscreen
+                Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded">F</kbd> for fullscreen
               </div>
               <div className="h-4 w-px bg-gray-600"></div>
               <button

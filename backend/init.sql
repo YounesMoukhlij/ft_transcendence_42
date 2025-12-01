@@ -15,7 +15,7 @@ CREATE TABLE users (
     password TEXT,
     languages TEXT DEFAULT 'en',
     status BOOLEAN DEFAULT FALSE,
-    auth_method INTEGER DEFAULT 0, -- 0: local, 1: google, 2: Intra42 
+    auth_method INTEGER DEFAULT 0, -- 0: local, 1: google, 2: Intra42
     twoFA_enabled BOOLEAN DEFAULT FALSE,
     twoFA_secret TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -57,7 +57,7 @@ CREATE TABLE game_history (
     type TEXT DEFAULT 'casual',          -- 'casual' or 'tournament'
     tournament_id INTEGER,                -- FK if it's a tournament match
     tournament_round TEXT,                -- optional, e.g., 'Quarter-Final'
-    
+
     -- General data
     game_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     duration INTEGER,                     -- in seconds or minutes
@@ -134,6 +134,19 @@ CREATE TABLE tournaments (
     status TEXT DEFAULT 'upcoming',  -- upcoming, ongoing, finished
     description TEXT,
     blockchain_hash TEXT             -- optional, store hash of results on-chain
+);
+
+-- Game settings (customization preferences)
+CREATE TABLE game_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId INTEGER NOT NULL UNIQUE,
+    tableBg TEXT,
+    ballColor TEXT,
+    paddleColor TEXT,
+    aiDifficulty TEXT,  -- 'easy', 'medium', 'hard', or NULL
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES users(id_user)
 );
 
 
