@@ -106,11 +106,25 @@ export const useUserStore = create(
           return;
         }
 
-        // Build WebSocket URL using environment variables
+        // Build WebSocket URL using smart detection (works for both local and network IP)
         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        const host = process.env.NEXT_PUBLIC_BACKEND_IP || process.env.NEXT_PUBLIC_BACKENDIP || 'localhost';
-        const port = process.env.NEXT_PUBLIC_BACKEND_PORT || process.env.NEXT_PUBLIC_BACKENDPORT || '4444';
-        const url = `${protocol}://${host}:${port}/ws`;
+
+        // Smart host detection: use env var if set and not localhost, otherwise use current hostname
+        // This ensures network access works automatically
+        const envHost = process.env.NEXT_PUBLIC_BACKEND_IP || process.env.NEXT_PUBLIC_BACKENDIP;
+        const envPort = process.env.NEXT_PUBLIC_BACKEND_PORT || process.env.NEXT_PUBLIC_BACKENDPORT || '4444';
+
+        let host;
+        if (envHost && envHost.trim() !== '' && envHost !== 'localhost' && envHost !== '127.0.0.1') {
+          // Use env var if explicitly set to non-localhost
+          host = envHost;
+        } else {
+          // Use current hostname (runtime detection) - works for network access
+          // e.g., if frontend is at http://192.168.1.100:3000, WS will be at ws://192.168.1.100:4444/ws
+          host = window.location.hostname;
+        }
+
+        const url = `${protocol}://${host}:${envPort}/ws`;
 
         console.log('Attempting to connect WebSocket to:', url);
 

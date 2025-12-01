@@ -126,52 +126,82 @@ useEffect(() => {
   };
 
   async function DelteFriendRequest(notify_id){
-    toast.error('Deleted');
     const notificationItem = notificatiion.find(item => item.notify_id == notify_id);
     const sender_id = notificationItem?.sender_user;
     console.log("sender id: ", sender_id);
-    setNotification(prev => prev.filter(n => n.notify_id !== notify_id));
-    const res =  await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
-      params:{
-        id: notify_id,
-      },
-      headers: {
-        Authorization: `Bearer ${user.access_token}`
+
+    try {
+      setNotification(prev => prev.filter(n => n.notify_id !== notify_id));
+      const res = await axios.delete(`${getBackendURL()}/DeleteFriendRequest`, {
+        params:{
+          id: notify_id,
+        },
+        headers: {
+          Authorization: `Bearer ${user.access_token}`
+        },
+        timeout: 10000 // 10 second timeout
+      });
+
+      if (res.status == 200) {
+        removePendingRequests(sender_id);
+        toast.success('Deleted');
       }
-    });
-    if (res.status == 200)
-    {
-      removePendingRequests(sender_id);
+    } catch (error: any) {
+      console.error('Error deleting friend request:', error);
+      // Restore notification on error
+      if (notificationItem) {
+        setNotification(prev => [...prev, notificationItem]);
+      }
+
+      if (error.response?.status === 500) {
+        toast.error('Server error. Please try again.');
+      } else if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        toast.error('Cannot connect to server. Please check your network connection.');
+      } else {
+        toast.error('Failed to delete friend request. Please try again.');
+      }
     }
   }
 
   async function AcceptFriendRequest(item : any){
+    try {
+      const object = {
+        profile_img: item.sender_profile_img,
+        username: item.sender_username,
+        fullname:"say hello",
+        id_user: item.sender_user,
+        status:0,
+      }
+      const res = await axios.post(`${getBackendURL()}/AddFriend`,{
+        Freind_id: item.sender_user ,
+      },{
+        headers: {
+          Authorization: `Bearer ${user.access_token}`
+        },
+        timeout: 10000 // 10 second timeout
+      }
+    );
+      if (res.status === 200)
+      {
+        removePendingRequests(item.sender_user);
+        addFriend(object);
+        // Remove notification from local state immediately
+        setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
+        toast.success('Accepted');
+      }
+    } catch (error: any) {
+      console.error('Error accepting friend request:', error);
+      console.error('Attempted backend URL:', getBackendURL());
 
-    toast.success('Accepted');
-
-    const object = {
-      profile_img: item.sender_profile_img,
-      username: item.sender_username,
-      fullname:"say hello",
-      id_user: item.sender_user,
-      status:0,
-    }
-    const res = await axios.post(`${getBackendURL()}/AddFriend`,{
-      Freind_id: item.sender_user ,
-    },{
-      headers: {
-        Authorization: `Bearer ${user.access_token}`
+      if (error.response?.status === 500) {
+        toast.error('Server error. Please try again.');
+      } else if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        toast.error('Cannot connect to server. Please check your network connection.');
+      } else {
+        toast.error('Failed to accept friend request. Please try again.');
       }
     }
-  );
-  if (res.status === 200)
-  {
-    removePendingRequests(item.sender_user);
-    addFriend(object);
-    // Remove notification from local state immediately
-    setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
   }
-  };
 
 
 

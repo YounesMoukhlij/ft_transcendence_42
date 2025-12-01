@@ -62,6 +62,9 @@ export default function RemoteGameRoomPage() {
   const autoRedirectTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for auto-redirect after 1 minute
   const autoFullscreenAttemptedRef = useRef<boolean>(false); // Track if we've attempted auto-fullscreen
   const gameStartedRef = useRef<boolean>(false); // Track if game has started (serverGameState received)
+  const handleAcceptRematchRef = useRef<(() => void) | null>(null); // Ref for rematch handler
+  const handleDeclineRematchRef = useRef<(() => void) | null>(null); // Ref for decline handler
+  const messageHandlerAttachedRef = useRef<boolean>(false); // Track if message handler is attached
 
   useEffect(() => {
     document.title = t('game.onlineMultiplayerPingPong');
@@ -365,7 +368,16 @@ export default function RemoteGameRoomPage() {
     }
   }, [socket]);
 
+  // Update refs when callbacks change
   useEffect(() => {
+    handleAcceptRematchRef.current = handleAcceptRematch;
+    handleDeclineRematchRef.current = handleDeclineRematch;
+  }, [handleAcceptRematch, handleDeclineRematch]);
+
+  useEffect(() => {
+    // Reset message handler attachment flag when socket changes
+    messageHandlerAttachedRef.current = false;
+
     // Try to get WebSocket connection - first from store, then from globalSocket
     let activeSocket = socket;
 
@@ -384,7 +396,14 @@ export default function RemoteGameRoomPage() {
         const message = JSON.parse(event.data);
         switch (message.type) {
           case 'gameState':
-            setServerGameState(message.payload);
+            // Use functional update to prevent infinite loops
+            setServerGameState(prev => {
+              // Only update if the payload is actually different
+              if (JSON.stringify(prev) === JSON.stringify(message.payload)) {
+                return prev;
+              }
+              return message.payload;
+            });
             break;
           case 'opponentLeft':
             setOpponentLeft(true);
@@ -406,6 +425,7 @@ export default function RemoteGameRoomPage() {
             // Reset flags so fullscreen can trigger again for rematch
             autoFullscreenAttemptedRef.current = false;
             gameStartedRef.current = false;
+            // Use functional update to prevent infinite loops
             setServerGameState(message.payload);
             setRematchOffer(false);
             setRematchDeclinedMessage('');
@@ -423,7 +443,13 @@ export default function RemoteGameRoomPage() {
             });
             // Update final game state if provided
             if (message.payload.finalGameState) {
-              setServerGameState(message.payload.finalGameState);
+              // Use functional update to prevent infinite loops
+              setServerGameState(prev => {
+                if (JSON.stringify(prev) === JSON.stringify(message.payload.finalGameState)) {
+                  return prev;
+                }
+                return message.payload.finalGameState;
+              });
             }
             // If opponent quit, clear any rematch states since they're no longer in the room
             if (message.payload.reason === 'opponentQuit') {
@@ -435,9 +461,14 @@ export default function RemoteGameRoomPage() {
             }
             break;
           case 'matchFound':
-            // If we receive matchFound while on room page, update state
+            // If we receive matchFound while on room page, reset state to trigger re-render
             if (message.payload.roomCode === roomCode) {
-              setServerGameState(null); // Reset to trigger re-render
+              // Use functional update to check if we need to update
+              setServerGameState(prev => {
+                // If already null, no need to update
+                if (prev === null) return prev;
+                return null;
+              });
             }
             break;
           case 'error':
@@ -475,8 +506,11 @@ export default function RemoteGameRoomPage() {
               console.error('WebSocket connection timeout, redirecting to game home');
               router.push('/game');
             } else if (finalSocket && finalSocket.readyState === WebSocket.OPEN) {
-              // Socket is now open, set up message handler
-              finalSocket.addEventListener('message', handleMessage);
+              // Socket is now open, set up message handler (only if not already attached)
+              if (!messageHandlerAttachedRef.current) {
+                finalSocket.addEventListener('message', handleMessage);
+                messageHandlerAttachedRef.current = true;
+              }
             }
           }, 2000); // Wait 2 more seconds for connection
 
@@ -488,8 +522,11 @@ export default function RemoteGameRoomPage() {
           console.error('WebSocket connection not available, redirecting to game home');
           router.push('/game');
         } else {
-          // Socket is open, set up message handler
-          finalSocket.addEventListener('message', handleMessage);
+          // Socket is open, set up message handler (only if not already attached)
+          if (!messageHandlerAttachedRef.current) {
+            finalSocket.addEventListener('message', handleMessage);
+            messageHandlerAttachedRef.current = true;
+          }
         }
       }, 500); // Wait 500ms before checking
 
@@ -499,8 +536,11 @@ export default function RemoteGameRoomPage() {
     // If socket is connecting, wait for it to open
     if (activeSocket.readyState === WebSocket.CONNECTING) {
       const openHandler = () => {
-        // Socket is now open, set up message handler
-        activeSocket!.addEventListener('message', handleMessage);
+        // Socket is now open, set up message handler (only if not already attached)
+        if (!messageHandlerAttachedRef.current && activeSocket) {
+          activeSocket.addEventListener('message', handleMessage);
+          messageHandlerAttachedRef.current = true;
+        }
       };
 
       activeSocket.addEventListener('open', openHandler);
@@ -516,17 +556,22 @@ export default function RemoteGameRoomPage() {
       return () => {
         activeSocket?.removeEventListener('open', openHandler);
         activeSocket?.removeEventListener('message', handleMessage);
+        messageHandlerAttachedRef.current = false;
         clearTimeout(connectTimeout);
       };
     }
 
-    // Socket is open, set up message handler
-    activeSocket.addEventListener('message', handleMessage);
+    // Socket is open, set up message handler (only if not already attached)
+    if (!messageHandlerAttachedRef.current) {
+      activeSocket.addEventListener('message', handleMessage);
+      messageHandlerAttachedRef.current = true;
+    }
 
     return () => {
       activeSocket?.removeEventListener('message', handleMessage);
+      messageHandlerAttachedRef.current = false;
     };
-  }, [socket, handleAcceptRematch, handleDeclineRematch, roomCode, router, t]);
+  }, [socket, roomCode, router, t]); // Removed handleAcceptRematch and handleDeclineRematch from dependencies
 
   const leaveRoom = useCallback(() => {
     // Clear auto-redirect timer since user is leaving
