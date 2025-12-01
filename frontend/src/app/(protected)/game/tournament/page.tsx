@@ -168,6 +168,7 @@ export default function TournamentPage() {
   const [showRandomOpponentExpanded, setShowRandomOpponentExpanded] = useState(false);
   const [tournamentCancelledMessage, setTournamentCancelledMessage] = useState<string | null>(null);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [pendingTournamentIdFromStorage, setPendingTournamentIdFromStorage] = useState<string | null>(null);
 
 
 
@@ -248,10 +249,21 @@ export default function TournamentPage() {
     }
   }, [playerCount, tournamentType, defaultAvatars, user]);
 
+  // Read pendingTournamentId from sessionStorage safely (client-side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pendingId = sessionStorage.getItem('pendingTournamentId');
+      setPendingTournamentIdFromStorage(pendingId);
+    }
+  }, []);
+
   useEffect(() => {
     setGameMode('tournament');
 
     // Check if user is coming from accepting an invite (check sessionStorage)
+    // Only access sessionStorage in browser environment
+    if (typeof window === 'undefined') return;
+
     const pendingTournamentId = sessionStorage.getItem('pendingTournamentId');
     const pendingTournament = sessionStorage.getItem('pendingTournament');
     const isInvitedPlayer = sessionStorage.getItem('isInvitedPlayer') === 'true';
@@ -271,17 +283,23 @@ export default function TournamentPage() {
         // Use saved step if available, otherwise default to registration
         setTournamentStep(savedTournamentStep === 'registration' ? 'registration' : 'registration');
 
-        // Clear sessionStorage
-        sessionStorage.removeItem('pendingTournamentId');
-        sessionStorage.removeItem('pendingTournament');
-        sessionStorage.removeItem('isInvitedPlayer');
-        sessionStorage.removeItem('tournamentStep');
+        // Clear sessionStorage (only in browser)
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('pendingTournamentId');
+          sessionStorage.removeItem('pendingTournament');
+          sessionStorage.removeItem('isInvitedPlayer');
+          sessionStorage.removeItem('tournamentStep');
+          setPendingTournamentIdFromStorage(null); // Update state to reflect clearing
+        }
       } catch (err) {
         console.error('Error parsing pending tournament:', err);
-        sessionStorage.removeItem('pendingTournamentId');
-        sessionStorage.removeItem('pendingTournament');
-        sessionStorage.removeItem('isInvitedPlayer');
-        sessionStorage.removeItem('tournamentStep');
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('pendingTournamentId');
+          sessionStorage.removeItem('pendingTournament');
+          sessionStorage.removeItem('isInvitedPlayer');
+          sessionStorage.removeItem('tournamentStep');
+          setPendingTournamentIdFromStorage(null); // Update state to reflect clearing
+        }
       }
     } else if (!pendingTournamentId && !pendingTournament && !tournamentId && !remoteTournament) {
       // If user navigates directly to /game/tournament without any tournament context,
@@ -1214,7 +1232,8 @@ export default function TournamentPage() {
   if (tournamentStep === 'setup') {
     // Check if user is coming from accepting an invite (check sessionStorage)
     // ONLY show loading screen if pendingTournamentId exists (set when accepting invite)
-    const pendingTournamentId = sessionStorage.getItem('pendingTournamentId');
+    // Use state instead of direct sessionStorage access to avoid SSR issues
+    const pendingTournamentId = pendingTournamentIdFromStorage;
 
     // If user just accepted an invite, show loading screen while waiting for tournament data
     if (pendingTournamentId && tournamentType === 'remote' && !remoteTournament) {

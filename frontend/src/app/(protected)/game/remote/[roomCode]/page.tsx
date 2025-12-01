@@ -8,8 +8,27 @@ import { getWebSocket } from '@/components/globalSocket';
 import PingPongGame from '@/components/PingPongGame';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { IoExpand, IoContract } from 'react-icons/io5';
+import axios from 'axios';
+import { getBackendURL } from '@/lib/utils';
 
 import { ServerGameState } from '@/types/game';
+
+const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png';
+
+// Helper function to resolve profile image URL
+const getProfileImageUrl = (profileImg: string | null | undefined): string => {
+  if (!profileImg) return defaultProfileImg;
+
+  const API_URL = getBackendURL();
+
+  // If the path is from our DB (e.g., /uploads/...), prefix with API_URL
+  if (profileImg.startsWith('/uploads/')) {
+    return `${API_URL}${profileImg}`;
+  }
+
+  // Otherwise, it's a full URL (default or from OAuth), use it directly
+  return profileImg;
+};
 
 export default function RemoteGameRoomPage() {
   const { t } = useTranslation();
@@ -17,7 +36,7 @@ export default function RemoteGameRoomPage() {
   const params = useParams();
   const { roomCode } = params;
   const { setGameMode } = useGameContext();
-  const { socket } = useUserStore();
+  const { socket, user } = useUserStore();
 
   const [serverGameState, setServerGameState] = useState<ServerGameState | null>(null);
   const [opponentLeft, setOpponentLeft] = useState(false);
@@ -29,10 +48,83 @@ export default function RemoteGameRoomPage() {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Player profile images state
+  const [player1ProfileImg, setPlayer1ProfileImg] = useState<string>(defaultProfileImg);
+  const [player2ProfileImg, setPlayer2ProfileImg] = useState<string>(defaultProfileImg);
+  const [player1Username, setPlayer1Username] = useState<string>('');
+  const [player2Username, setPlayer2Username] = useState<string>('');
+  const profileImagesFetched = useRef<Set<number>>(new Set()); // Track which player IDs we've fetched
+
   useEffect(() => {
     document.title = t('game.onlineMultiplayerPingPong');
     setGameMode('remote');
   }, [setGameMode, t]);
+
+  // Fetch player profile images when gameState is available
+  useEffect(() => {
+    if (!serverGameState || !user?.access_token) return;
+
+    const fetchPlayerProfile = async (playerId: number, username: string, isPlayer1: boolean) => {
+      // Skip if we've already fetched this player's profile
+      if (profileImagesFetched.current.has(playerId)) return;
+
+      try {
+        const response = await axios.get(
+          `${getBackendURL()}/getUserStats/${username}`,
+          {
+            headers: { Authorization: `Bearer ${user.access_token}` }
+          }
+        );
+
+        if (response.data?.profile_img || response.data?.avatar) {
+          const profileImg = response.data.profile_img || response.data.avatar;
+          const resolvedImg = getProfileImageUrl(profileImg);
+
+          if (isPlayer1) {
+            setPlayer1ProfileImg(resolvedImg);
+          } else {
+            setPlayer2ProfileImg(resolvedImg);
+          }
+
+          profileImagesFetched.current.add(playerId);
+        }
+      } catch (error) {
+        console.error(`[RemoteGameRoom] Error fetching profile for ${username}:`, error);
+        // Use default image on error
+      }
+    };
+
+    // Fetch both players' profiles
+    if (serverGameState.player1?.id && serverGameState.player1?.username) {
+      setPlayer1Username(serverGameState.player1.username);
+      fetchPlayerProfile(
+        serverGameState.player1.id,
+        serverGameState.player1.username,
+        true
+      );
+
+      // If current user is player1, use their profile immediately
+      if (user?.id_user === serverGameState.player1.id && user?.profile_img) {
+        setPlayer1ProfileImg(getProfileImageUrl(user.profile_img));
+        profileImagesFetched.current.add(serverGameState.player1.id);
+      }
+    }
+
+    if (serverGameState.player2?.id && serverGameState.player2?.username) {
+      setPlayer2Username(serverGameState.player2.username);
+      fetchPlayerProfile(
+        serverGameState.player2.id,
+        serverGameState.player2.username,
+        false
+      );
+
+      // If current user is player2, use their profile immediately
+      if (user?.id_user === serverGameState.player2.id && user?.profile_img) {
+        setPlayer2ProfileImg(getProfileImageUrl(user.profile_img));
+        profileImagesFetched.current.add(serverGameState.player2.id);
+      }
+    }
+  }, [serverGameState, user]);
 
   // Toggle fullscreen - defined first so it can be used in other hooks
   const toggleFullscreen = useCallback(async () => {
@@ -403,6 +495,109 @@ export default function RemoteGameRoomPage() {
 
           {/* Game Container */}
           <div className={`w-full flex flex-col items-center ${isFullscreen ? 'h-full justify-center' : 'max-w-4xl'}`}>
+            {/* Player Profile Images - Shown at top of game table */}
+            {serverGameState && (player1Username || player2Username) && !isFullscreen && (
+              <div className="w-full max-w-4xl mb-4 px-4">
+                <div className="flex items-center justify-between bg-gray-800/80 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
+                  {/* Player 1 */}
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="relative">
+                      <img
+                        src={player1ProfileImg}
+                        alt={player1Username || 'Player 1'}
+                        className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-blue-400 shadow-lg"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = defaultProfileImg;
+                        }}
+                      />
+                      {serverGameState?.player1 && (
+                        <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-800 flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">{serverGameState.player1.score}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-semibold text-sm sm:text-base md:text-lg truncate">
+                        {player1Username || serverGameState?.player1?.username || 'Player 1'}
+                      </p>
+                      <p className="text-gray-400 text-xs sm:text-sm">Left Paddle</p>
+                    </div>
+                  </div>
+
+                  {/* VS Separator */}
+                  <div className="mx-4 sm:mx-6 flex-shrink-0">
+                    <span className="text-yellow-400 font-bold text-lg sm:text-xl md:text-2xl">VS</span>
+                  </div>
+
+                  {/* Player 2 */}
+                  <div className="flex items-center gap-3 flex-1 flex-row-reverse text-right">
+                    <div className="relative">
+                      <img
+                        src={player2ProfileImg}
+                        alt={player2Username || 'Player 2'}
+                        className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-red-400 shadow-lg"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = defaultProfileImg;
+                        }}
+                      />
+                      {serverGameState?.player2 && (
+                        <div className="absolute -bottom-1 -left-1 bg-red-500 rounded-full w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-800 flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">{serverGameState.player2.score}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-semibold text-sm sm:text-base md:text-lg truncate">
+                        {player2Username || serverGameState?.player2?.username || 'Player 2'}
+                      </p>
+                      <p className="text-gray-400 text-xs sm:text-sm">Right Paddle</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Player Profile Images in Fullscreen - Minimal */}
+            {serverGameState && (player1Username || player2Username) && isFullscreen && (
+              <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={player1ProfileImg}
+                      alt={player1Username || 'Player 1'}
+                      className="w-8 h-8 rounded-full object-cover border-2 border-blue-400"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = defaultProfileImg;
+                      }}
+                    />
+                    <span className="text-white text-xs font-semibold truncate max-w-[100px]">
+                      {player1Username || serverGameState?.player1?.username || 'P1'}
+                    </span>
+                    {serverGameState?.player1 && (
+                      <span className="text-blue-400 font-bold text-sm">{serverGameState.player1.score}</span>
+                    )}
+                  </div>
+                  <span className="text-yellow-400 font-bold">VS</span>
+                  <div className="flex items-center gap-2">
+                    {serverGameState?.player2 && (
+                      <span className="text-red-400 font-bold text-sm">{serverGameState.player2.score}</span>
+                    )}
+                    <span className="text-white text-xs font-semibold truncate max-w-[100px]">
+                      {player2Username || serverGameState?.player2?.username || 'P2'}
+                    </span>
+                    <img
+                      src={player2ProfileImg}
+                      alt={player2Username || 'Player 2'}
+                      className="w-8 h-8 rounded-full object-cover border-2 border-red-400"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = defaultProfileImg;
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className={`w-full flex justify-center ${isFullscreen ? 'flex-1 items-center' : ''}`}>
               <div
                 className={isFullscreen ? 'w-full h-full flex items-center justify-center' : 'w-full'}
