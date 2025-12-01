@@ -8,7 +8,7 @@ import { useTranslation } from '../../../contexts/LanguageContext'
 
 // Define the base URL of your backend API
 const API_URL = "http://" + process.env.NEXT_PUBLIC_BACKENDIP + ":" + process.env.NEXT_PUBLIC_BACKENDPORT;;
-const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg'
+const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png'
 
 
 interface DeleteConfirmationDialogProps {
@@ -444,11 +444,30 @@ const ProfileSettingsPage = () => {
     try {
       const response = await fetch(`${API_URL}/DeleteUserById/${user.id_user}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${user.access_token}`,
+        },
       })
-      const data = await response.json()
+
+      let data;
+      try {
+        data = await response.json()
+      } catch (jsonError) {
+        // If response is not valid JSON, handle it
+        console.error('Failed to parse response as JSON:', jsonError)
+        toast.error('Invalid response from server. Please try again.')
+        return
+      }
 
       if (!response.ok) {
-        toast.error(data.message || t('settings.errors.deleteFailed'))
+        const errorMessage = data?.message || data?.error || t('settings.errors.deleteFailed')
+        console.error('Account deletion failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          message: errorMessage,
+          details: data?.details
+        })
+        toast.error(errorMessage)
         return
       }
 
@@ -457,9 +476,10 @@ const ProfileSettingsPage = () => {
       setIsDeleteDialogOpen(false)
 
       router.push('/signIn')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Account deletion error:', error)
-      toast.error('An unexpected error occurred while deleting the account')
+      const errorMessage = error?.message || 'An unexpected error occurred while deleting the account'
+      toast.error(errorMessage)
     } finally {
       setIsDeletingAccount(false)
     }
@@ -501,7 +521,7 @@ const ProfileSettingsPage = () => {
   // --- END NEW ---
 
   return (
-    <div className="min-h-screen w-full bg-black text-white p-4 sm:p-6 md:p-10">
+    <div className="min-h-full w-full bg-transparent text-white p-4 sm:p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">

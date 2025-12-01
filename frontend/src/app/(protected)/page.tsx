@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useUserStore } from '../../store/userStore';
 import { useTranslation } from '../../contexts/LanguageContext';
 
-const DEFAULT_PROFILE_IMAGE = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
+const DEFAULT_PROFILE_IMAGE = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -37,7 +37,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-900 p-8 text-white">
+    <div className="min-h-full w-full flex flex-col items-center justify-center  p-8 text-white">
       <div className="border border-gray-700 bg-gray-800 p-8 rounded-2xl shadow-xl max-w-lg w-full">
         <h1 className="text-4xl font-extrabold text-center mb-6 text-blue-400">{t('home.welcome')}</h1>
         <div className='flex flex-col items-center justify-center'>

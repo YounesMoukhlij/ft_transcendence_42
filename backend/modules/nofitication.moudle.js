@@ -15,6 +15,24 @@ import jwt from 'jsonwebtoken';
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+  // Function to get expiration time (default: 5 minutes from now)
+  function ft_getExpiredTime(minutesFromNow = 5) {
+    const now = new Date();
+    const expired = new Date(now.getTime() + minutesFromNow * 60 * 1000); // Add minutes in milliseconds
+
+    const pad = (n) => n.toString().padStart(2, '0');
+
+    // Use 4-digit year for better date parsing compatibility
+    const year = expired.getFullYear().toString();
+    const month = pad(expired.getMonth() + 1);
+    const day = pad(expired.getDate());
+    const hours = pad(expired.getHours());
+    const minutes = pad(expired.getMinutes());
+    const seconds = pad(expired.getSeconds());
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
 
 
 export async function GetNotification(request, reply) {
@@ -22,8 +40,37 @@ export async function GetNotification(request, reply) {
     const query = request.server.db.prepare(` SELECT n.*, u.username AS sender_username, u.profile_img AS sender_profile_img FROM notification n JOIN users u ON n.sender_user = u.id_user WHERE n.getter_user = ?`);
     const notifications = query.all(request.user.id_user);
 
+    // Filter out expired notifications
+    const now = new Date();
+    const validNotifications = notifications.filter(notif => {
+      if (!notif.expired) {
+        return true; // No expiration set, keep it
+      }
+
+      // Parse the expired datetime string (format: YY-MM-DD HH:MM:SS or YYYY-MM-DD HH:MM:SS)
+      try {
+        // Try to parse the date - handle both 2-digit and 4-digit year formats
+        let expiredStr = notif.expired;
+        // If year is 2 digits, convert to 4 digits (assuming 20xx)
+        if (expiredStr && expiredStr.match(/^\d{2}-\d{2}-\d{2}/)) {
+          const parts = expiredStr.split(' ');
+          const datePart = parts[0].split('-');
+          if (datePart[0].length === 2) {
+            datePart[0] = '20' + datePart[0];
+            expiredStr = datePart.join('-') + ' ' + parts[1];
+          }
+        }
+
+        const expiredDate = new Date(expiredStr.replace(' ', 'T'));
+        return expiredDate > now;
+      } catch (e) {
+        console.error('Error parsing expired date:', notif.expired, e);
+        return true; // If parsing fails, keep the notification (don't filter it out)
+      }
+    });
+
     // Extract tournamentId from notifyBody for tournament invites
-    const processedNotifications = notifications.map(notif => {
+    const processedNotifications = validNotifications.map(notif => {
       if (notif.title === 'tournament invite' && notif.notifyBody) {
         try {
           const parsed = JSON.parse(notif.notifyBody);
@@ -423,7 +470,8 @@ export  function sendGameChallenge(request , reply){
     const query = request.server.db.prepare('SELECT profile_img FROM users where id_user = ?');
     const result = query.get(request.user.id_user);
 
-    const ExpiredTime =  ft_getTime();
+    // Set expiration time to 1 minute 30 seconds (1.5 minutes) from now for game challenges
+    const ExpiredTime = ft_getExpiredTime(1.5);
     const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody , expired) VALUES (?, ?, ?, ? , ?)`);
 
     const insertResult = insertQuery.run(Friend_id, title, request.user.id_user, "game challenge" , ExpiredTime);

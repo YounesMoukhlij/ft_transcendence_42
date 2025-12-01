@@ -56,7 +56,27 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
             for (const notif of notifications) {
               // Check if notification is expired
               const now = new Date();
-              const expired = notif.expired ? new Date(notif.expired) : null;
+              let expired = null;
+
+              if (notif.expired) {
+                try {
+                  // Parse the expired datetime string (format: YY-MM-DD HH:MM:SS or YYYY-MM-DD HH:MM:SS)
+                  let expiredStr = notif.expired;
+                  // If year is 2 digits, convert to 4 digits (assuming 20xx)
+                  if (expiredStr && expiredStr.match(/^\d{2}-\d{2}-\d{2}/)) {
+                    const parts = expiredStr.split(' ');
+                    const datePart = parts[0].split('-');
+                    if (datePart[0].length === 2) {
+                      datePart[0] = '20' + datePart[0];
+                      expiredStr = datePart.join('-') + ' ' + (parts[1] || '00:00:00');
+                    }
+                  }
+                  expired = new Date(expiredStr.replace(' ', 'T'));
+                } catch (e) {
+                  console.error(`[WebSocketHandler] Error parsing expired date for notification ${notif.notify_id}:`, notif.expired, e);
+                  expired = null; // If parsing fails, treat as no expiration
+                }
+              }
 
               if (!expired || expired > now) {
                 // Try to extract tournamentId from notifyBody if it's a JSON string

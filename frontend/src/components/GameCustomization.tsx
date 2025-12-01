@@ -74,13 +74,29 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
 
   const token = getToken();
 
-  const [tableBg, setTableBg] = useState<string | null>(null);
-  const [ballColor, setBallColor] = useState<string | null>(null);
-  const [paddleColor, setPaddleColor] = useState<string | null>(null);
-  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard' | null>(null);
+  // Helper function to get random defaults - generates all at once
+  const getRandomDefaults = useMemo(() => {
+    const randomTableBg = tableBackgrounds[Math.floor(Math.random() * tableBackgrounds.length)].value;
+    const randomBallColor = ballColors[Math.floor(Math.random() * ballColors.length)];
+    const randomPaddleColor = paddleColors[Math.floor(Math.random() * paddleColors.length)];
+    const randomAiDifficulty = (['easy', 'medium', 'hard'] as const)[Math.floor(Math.random() * 3)];
 
-  // For AI mode, difficulty is required; for other modes, it's not needed
-  const isReady = tableBg && ballColor && paddleColor && (gameState.mode === 'ai' ? aiDifficulty !== null : true);
+    return {
+      tableBg: randomTableBg,
+      ballColor: randomBallColor,
+      paddleColor: randomPaddleColor,
+      aiDifficulty: randomAiDifficulty
+    };
+  }, []); // Only generate once on mount
+
+  // Initialize with random defaults (only once on mount)
+  const [tableBg, setTableBg] = useState<string>(getRandomDefaults.tableBg);
+  const [ballColor, setBallColor] = useState<string>(getRandomDefaults.ballColor);
+  const [paddleColor, setPaddleColor] = useState<string>(getRandomDefaults.paddleColor);
+  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>(getRandomDefaults.aiDifficulty);
+
+  // Always ready since we have defaults pre-selected
+  const isReady = true;
 
   // Create axios instance with token, but only if token exists
   const axiosInstance = useMemo(() => {
@@ -99,15 +115,23 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
 
   useEffect(() => {
     const fetchCustomization = async () => {
-      // Don't fetch if no token - customization is optional
+      // Don't fetch if no token - customization is optional, use random defaults
       if (!token) {
-        console.warn('No token available, skipping customization fetch');
+        console.warn('No token available, using random defaults');
+        // Initialize game context with random defaults
+        setCustomisation({
+          tableBg: getRandomDefaults.tableBg,
+          ballColor: getRandomDefaults.ballColor,
+          paddleColor: getRandomDefaults.paddleColor,
+          aiDifficulty: gameState.mode === 'ai' ? getRandomDefaults.aiDifficulty : null
+        });
         return;
       }
 
       try {
         const response = await axiosInstance.get('/getGameCustomization');
-        if (response.data) {
+        if (response.data && response.data.tableBg && response.data.ballColor && response.data.paddleColor) {
+          // Use saved customization if available
           const { tableBg, ballColor, paddleColor, aiDifficulty } = response.data;
           setTableBg(tableBg);
           setBallColor(ballColor);
@@ -115,27 +139,41 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           if (aiDifficulty) setAiDifficulty(aiDifficulty);
           // Update the game context immediately
           setCustomisation({ tableBg, ballColor, paddleColor, aiDifficulty: aiDifficulty || null });
+        } else {
+          // No saved customization, use random defaults and update context
+          setCustomisation({
+            tableBg: getRandomDefaults.tableBg,
+            ballColor: getRandomDefaults.ballColor,
+            paddleColor: getRandomDefaults.paddleColor,
+            aiDifficulty: gameState.mode === 'ai' ? getRandomDefaults.aiDifficulty : null
+          });
         }
       } catch (error) {
         // Never redirect from customization fetch - it's optional
-        // User can still customize and play without saved preferences
+        // Use random defaults if fetch fails
         if (axios.isAxiosError(error)) {
           if (error.response?.status === 401) {
             // Auth issue, but don't redirect - customization is optional
-            console.warn('Could not fetch saved customization (auth issue, but non-critical)');
+            console.warn('Could not fetch saved customization (auth issue, but non-critical). Using random defaults.');
           } else {
             // For other errors, just log
-            console.warn('Could not fetch customization (non-critical):', error.message);
+            console.warn('Could not fetch customization (non-critical). Using random defaults:', error.message);
           }
         } else {
-          console.error('Error fetching game customization:', error);
+          console.error('Error fetching game customization. Using random defaults:', error);
         }
-        // Continue anyway - user can still customize manually
+        // Initialize game context with random defaults
+        setCustomisation({
+          tableBg: getRandomDefaults.tableBg,
+          ballColor: getRandomDefaults.ballColor,
+          paddleColor: getRandomDefaults.paddleColor,
+          aiDifficulty: gameState.mode === 'ai' ? getRandomDefaults.aiDifficulty : null
+        });
       }
     };
 
     fetchCustomization();
-  }, [token, setCustomisation, clearUser, router, axiosInstance]);
+  }, [token, setCustomisation, clearUser, router, axiosInstance, gameState.mode, getRandomDefaults]);
 
   const saveCustomization = async (customization: { tableBg: string; ballColor: string; paddleColor: string; aiDifficulty?: 'easy' | 'medium' | 'hard' | null; }) => {
     // If no token, skip saving (customization is optional for remote games)
@@ -167,24 +205,23 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
   };
 
   const handleStartGame = () => {
-    if (isReady) {
-      const customization = {
-        tableBg,
-        ballColor,
-        paddleColor,
-        ...(gameState.mode === 'ai' && { aiDifficulty })
-      };
-      setCustomisation(customization);
+    // Always ready since we have defaults pre-selected
+    const customization = {
+      tableBg,
+      ballColor,
+      paddleColor,
+      ...(gameState.mode === 'ai' && { aiDifficulty })
+    };
+    setCustomisation(customization);
 
-      // Try to save customization, but don't block game start if it fails
-      // This is non-critical - game can proceed without saving customization
-      saveCustomization(customization).catch(err => {
-        console.warn('Could not save customization, but continuing with game:', err);
-      });
+    // Try to save customization, but don't block game start if it fails
+    // This is non-critical - game can proceed without saving customization
+    saveCustomization(customization).catch(err => {
+      console.warn('Could not save customization, but continuing with game:', err);
+    });
 
-      // Start game regardless of customization save result
-      onStartGame(customization);
-    }
+    // Start game regardless of customization save result
+    onStartGame(customization);
   };
 
   return (
@@ -449,13 +486,6 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
             </div>
           </div>
 
-          {!isReady && (
-            <div className="text-center">
-              <p className="text-yellow-500 text-xs">
-                {t('game.allCustomizationOptionsRequired')}
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Action Buttons - Fixed at bottom */}
@@ -468,22 +498,14 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           </button>
           <button
             onClick={handleStartGame}
-            disabled={!isReady}
-            className={`pb-2 cursor-pointer bg-black border-2 border-white hover:bg-white hover:text-black px-6 py-2 rounded-xl text-base font-bold transition-all duration-300
-              ${isReady ? 'hover:scale-105' : 'cursor-not-allowed'}`}
+            className="pb-2 cursor-pointer bg-black border-2 border-white hover:bg-white hover:text-black px-6 py-2 rounded-xl text-base font-bold transition-all duration-300 hover:scale-105"
             style={{
-              boxShadow: isReady
-                ? `
-                  inset 0 1px 0 rgba(255,255,255,0.3),
-                  inset 0 -1px 0 rgba(0,0,0,0.3),
-                  0 4px 8px rgba(59,130,246,0.3),
-                  0 0 0 1px rgba(59,130,246,0.2)
-                `
-                : `
-                  inset 0 1px 0 rgba(255,255,255,0.1),
-                  inset 0 -1px 0 rgba(0,0,0,0.3),
-                  0 2px 4px rgba(0,0,0,0.2)
-                `,
+              boxShadow: `
+                inset 0 1px 0 rgba(255,255,255,0.3),
+                inset 0 -1px 0 rgba(0,0,0,0.3),
+                0 4px 8px rgba(59,130,246,0.3),
+                0 0 0 1px rgba(59,130,246,0.2)
+              `,
               textShadow: '0 1px 2px rgba(0,0,0,0.3)'
             }}
           >

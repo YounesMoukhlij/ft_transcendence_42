@@ -310,7 +310,7 @@ export default function RemoteGameRoomPage() {
       className={`flex flex-col items-center justify-center w-full transition-all duration-300 ${
         isFullscreen
           ? 'h-screen bg-black p-4'
-          : 'min-h-screen p-4 bg-transparent'
+          : 'min-h-full p-4 bg-transparent'
       }`}
     >
       {/* Game Over Screen */}

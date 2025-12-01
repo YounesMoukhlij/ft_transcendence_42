@@ -247,6 +247,18 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
       break;
     }
 
+    case 'cancelSearch': {
+      // Remove player from matchmaking queue
+      const removed = gameManager.removeFromMatchmakingQueue(userId);
+      if (removed) {
+        socket.send(JSON.stringify({ type: 'searchCancelled' }));
+        console.log(`[cancelSearch] User ${userId} cancelled matchmaking search`);
+      } else {
+        socket.send(JSON.stringify({ type: 'error', message: 'Not in matchmaking queue' }));
+      }
+      break;
+    }
+
     case 'inviteFriend': {
       // Handle friend invitation directly (not nested in 'game' action)
       const friendId = message.payload?.friendId;

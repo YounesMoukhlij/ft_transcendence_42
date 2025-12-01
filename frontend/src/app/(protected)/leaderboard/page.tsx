@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Trophy, User } from 'lucide-react';
 import { useTranslation } from '../../../contexts/LanguageContext';
 
-const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
+const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png';
 
 const getProfileImageUrl = (currentImg) => {
   if (!currentImg) return defaultProfileImg;
@@ -111,7 +111,7 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-black text-white p-4 sm:p-6 md:p-10">
+    <div className="min-h-full w-full bg-black text-white p-4 sm:p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">

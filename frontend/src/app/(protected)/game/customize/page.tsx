@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import GameCustomization from '@/components/GameCustomization';
@@ -15,6 +15,9 @@ export default function CustomizePage() {
   const [error, setError] = useState('');
   const { user, _hasHydrated, socket, isConnect: storeIsConnected, connect, initConnection } = useUserStore();
   const [socketConnected, setSocketConnected] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<number>(120); // 2 minutes in seconds
 
   // Ensure socket is connected for remote mode
   useEffect(() => {
@@ -166,6 +169,33 @@ export default function CustomizePage() {
     }
   }, [gameState.mode, router]);
 
+  // Cancel search handler
+  const handleCancelSearchRef = useRef<(() => void) | null>(null);
+
+  const handleCancelSearch = useCallback(() => {
+    // Clear timeouts
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+
+    // Send cancel message to server if socket is open
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'cancelSearch' }));
+    }
+
+    setIsSearching(false);
+    setTimeRemaining(120);
+    setError('');
+  }, [socket]);
+
+  // Update ref when handler changes
+  handleCancelSearchRef.current = handleCancelSearch;
+
   useEffect(() => {
     if (gameState.mode === 'remote') {
       if (!socket) return;
@@ -180,16 +210,48 @@ export default function CustomizePage() {
             if (typeof window !== 'undefined') {
               localStorage.removeItem('pendingChallengeId');
             }
+            // Clear timeout
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            if (searchTimeoutRef.current) {
+              clearTimeout(searchTimeoutRef.current);
+              searchTimeoutRef.current = null;
+            }
             setIsSearching(false);
+            setTimeRemaining(120);
             router.push(`/game/remote/${roomCode}`);
           } else if (message.type === 'waitingForOpponent') {
             console.log('[CustomizePage] Waiting for opponent to finish customization...');
             setIsSearching(true);
             setError('');
+          } else if (message.type === 'searchCancelled') {
+            console.log('[CustomizePage] Search cancelled successfully');
+            setIsSearching(false);
+            setTimeRemaining(120);
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            if (searchTimeoutRef.current) {
+              clearTimeout(searchTimeoutRef.current);
+              searchTimeoutRef.current = null;
+            }
           } else if (message.type === 'error') {
             console.error('[CustomizePage] Error from server:', message.message);
-            setError(message.message || 'An error occurred');
+            setError(message.message || t('game.anErrorOccurred'));
             setIsSearching(false);
+            setTimeRemaining(120);
+            // Clear timeout
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            if (searchTimeoutRef.current) {
+              clearTimeout(searchTimeoutRef.current);
+              searchTimeoutRef.current = null;
+            }
             // Clear challengeId on error so user can try again
             if (typeof window !== 'undefined') {
               localStorage.removeItem('pendingChallengeId');
@@ -207,6 +269,18 @@ export default function CustomizePage() {
       };
     }
   }, [socket, router, gameState.mode]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Removed aggressive redirect check - we'll check in handleStartGame instead
   // This prevents false redirects when user is actually logged in but store hasn't fully hydrated
@@ -282,6 +356,41 @@ export default function CustomizePage() {
       };
       socket.send(JSON.stringify(message));
       setIsSearching(true);
+      setTimeRemaining(120); // Reset to 2 minutes
+
+      // Set up 2-minute timeout for random matchmaking (not for friend challenges)
+      if (!challengeId) {
+        // Clear any existing timeouts
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+        }
+        if (searchTimeoutRef.current) {
+          clearTimeout(searchTimeoutRef.current);
+        }
+
+        // Start countdown timer
+        countdownIntervalRef.current = setInterval(() => {
+          setTimeRemaining((prev) => {
+            if (prev <= 1) {
+              // Timeout reached - cancel search and show error
+              if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
+              }
+              handleCancelSearchRef.current?.();
+              setError(t('game.searchTimeoutMessage'));
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        // Set main timeout to cancel after 2 minutes
+        searchTimeoutRef.current = setTimeout(() => {
+          handleCancelSearchRef.current?.();
+          setError(t('game.searchTimeoutMessage'));
+        }, 120000); // 2 minutes
+      }
 
       // Don't clear challengeId immediately - wait until match is found
       // It will be cleared when matchFound is received
@@ -332,17 +441,66 @@ export default function CustomizePage() {
       const challengeId = typeof window !== 'undefined' ? localStorage.getItem('pendingChallengeId') : null;
       const isFriendChallenge = !!challengeId;
 
+      // Format time remaining (MM:SS)
+      const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      };
+
       return (
-        <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
-          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-purple-500"></div>
-          <h1 className="text-2xl font-bold mt-8">
-            {isFriendChallenge ? t('game.waitingForFriend') : t('game.searchingForOpponent')}
-          </h1>
-          <p className="text-lg mt-2">
-            {isFriendChallenge
-              ? t('game.friendCustomizing')
-              : t('game.pleaseWaitForMatch')}
-          </p>
+        <div className="flex flex-col items-center justify-center h-full  text-white p-4">
+          <div className="max-w-md w-full">
+            {/* Loading Animation */}
+            <div className="flex justify-center mb-8">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-24 w-24 md:h-32 md:w-32 border-4 border-transparent border-t-purple-500 border-r-blue-500"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 md:w-20 md:w-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <span className="text-white font-bold text-lg md:text-xl">
+                      {!isFriendChallenge && formatTime(timeRemaining)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Text */}
+            <div className="text-center mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                {isFriendChallenge ? t('game.waitingForFriend') : t('game.searchingForOpponent')}
+              </h1>
+              <p className="text-gray-400 text-base md:text-lg">
+                {isFriendChallenge
+                  ? t('game.friendCustomizing')
+                  : t('game.pleaseWaitForMatch')}
+              </p>
+              {!isFriendChallenge && (
+                <p className="text-yellow-400 text-sm mt-2">
+                  {t('game.searchTimeoutWarning', { time: formatTime(timeRemaining) })}
+                </p>
+              )}
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-900/50 border border-red-500 rounded-lg text-center">
+                <p className="text-red-300 text-sm">{error}</p>
+              </div>
+            )}
+
+            {/* Cancel Button - Only show for random matchmaking */}
+            {!isFriendChallenge && (
+              <div className="flex justify-center">
+                <button
+                  onClick={handleCancelSearch}
+                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <span>{t('game.cancelSearch')}</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       );
     }

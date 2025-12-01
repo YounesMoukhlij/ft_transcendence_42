@@ -25,7 +25,7 @@ import pump from 'pump';
 const pipeline = promisify(stream.pipeline);
 
 // Constants
-const DEFAULT_PROFILE_IMAGE = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg";
+const DEFAULT_PROFILE_IMAGE = "https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png";
 const GOOGLE_CLIENT_ID = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com";
 const GOOGLE_CLIENT_SECRET = "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";
 const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
@@ -630,21 +630,120 @@ export async function getUserByEmail(request, reply) {
 
 export async function DeleteUserById(request, reply) {
     const { id } = request.params;
+    const authenticatedUserId = request.user?.id_user;
+    const userId = parseInt(id);
+
+    // Check if user is authenticated
+    if (!authenticatedUserId) {
+        return reply.code(401).send({ message: "Unauthorized" });
+    }
+
+    // Ensure users can only delete their own account
+    if (userId !== authenticatedUserId) {
+        return reply.code(403).send({ message: "Forbidden: You can only delete your own account" });
+    }
+
+    const db = request.server.db;
+    const usersSocket = request.server.users_socket;
+    const gameManager = request.server.gameManager;
 
     try {
-        const result = request.server.db
-            .prepare("DELETE FROM users WHERE id_user = ?")
-            .run(id);
+        // Verify user exists before attempting deletion
+        const userCheck = db.prepare("SELECT id_user FROM users WHERE id_user = ?").get(userId);
+        if (!userCheck) {
+            return reply.code(404).send({ message: "User not found" });
+        }
+
+        // 1. Clean up WebSocket connection and game sessions first
+        try {
+            const socket = usersSocket.get(userId.toString());
+            if (socket) {
+                try {
+                    if (socket.readyState === 1) { // WebSocket.OPEN
+                        socket.close();
+                    }
+                } catch (err) {
+                    console.error(`Error closing socket for user ${userId}:`, err);
+                }
+            }
+            usersSocket.delete(userId.toString());
+
+            // Clean up game-related data (matchmaking, rooms, tournaments)
+            if (gameManager) {
+                try {
+                    gameManager.handlePlayerDisconnect(userId);
+                } catch (err) {
+                    console.error(`Error cleaning up game data for user ${userId}:`, err);
+                }
+            }
+        } catch (err) {
+            console.error(`Error cleaning up socket/game data for user ${userId}:`, err);
+            // Continue with database cleanup even if socket cleanup fails
+        }
+
+        // 2. Delete all related data before deleting the user
+        // Delete messages sent by the user
+        try {
+            const deleteMessages = db.prepare("DELETE FROM message WHERE sender = ?");
+            deleteMessages.run(userId);
+        } catch (err) {
+            console.error(`Error deleting messages for user ${userId}:`, err);
+        }
+
+        // Delete notifications where user is sender or receiver
+        try {
+            const deleteNotifications = db.prepare("DELETE FROM notification WHERE sender_user = ? OR getter_user = ?");
+            deleteNotifications.run(userId, userId);
+        } catch (err) {
+            console.error(`Error deleting notifications for user ${userId}:`, err);
+        }
+
+        // Delete friend relationships (both directions)
+        try {
+            const deleteFriends = db.prepare("DELETE FROM friends WHERE user_id = ? OR friend_id = ?");
+            deleteFriends.run(userId, userId);
+        } catch (err) {
+            console.error(`Error deleting friends for user ${userId}:`, err);
+        }
+
+        // Delete friend requests (both as sender and receiver)
+        try {
+            const deleteFriendRequests = db.prepare("DELETE FROM friend_requests WHERE sender_id = ? OR receiver_id = ?");
+            deleteFriendRequests.run(userId, userId);
+        } catch (err) {
+            console.error(`Error deleting friend requests for user ${userId}:`, err);
+        }
+
+        // Delete game history (optional - can comment out if you want to keep historical records)
+        try {
+            const deleteGameHistory = db.prepare("DELETE FROM game_history WHERE user_win = ? OR user_lose = ?");
+            deleteGameHistory.run(userId, userId);
+        } catch (err) {
+            console.error(`Error deleting game history for user ${userId}:`, err);
+        }
+
+        // Finally, delete the user
+        const deleteUser = db.prepare("DELETE FROM users WHERE id_user = ?");
+        const result = deleteUser.run(userId);
 
         if (result.changes === 0) {
             return reply.code(404).send({ message: "User not found" });
         }
 
+        console.log(`User ${userId} deleted successfully`);
         return reply.code(200).send({ message: "User deleted successfully" });
+
     } catch (error) {
         console.error("Error deleting user:", error);
+        console.error("Error details:", {
+            message: error.message,
+            stack: error.stack,
+            userId: userId
+        });
+
         return reply.code(500).send({
-            message: "Error deleting user"
+            message: "Error deleting user",
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 }

@@ -36,6 +36,7 @@ export default function Navbar()
   const hamburgerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const deletedNotificationIdsRef = useRef<Set<number>>(new Set()); // Track locally deleted notification IDs
   const {connect  , init } = useUserStore();
 
   const setUsername = useUserStore.setState;
@@ -301,7 +302,8 @@ useEffect(() => {
         {
           headers: {
             Authorization: `Bearer ${user.access_token}`,
-          }
+          },
+          timeout: 5000, // 5 second timeout
         }
       );
 
@@ -310,6 +312,7 @@ useEffect(() => {
         const fetched = result.data.reverse();
         const fetchedIds = new Set(fetched.map(n => n.notify_id));
         const existingIds = new Set(prev.map(n => n.notify_id));
+        const deletedIds = deletedNotificationIdsRef.current;
 
         // Create a map of fetched notifications for quick lookup
         const fetchedMap = new Map(fetched.map(n => [n.notify_id, n]));
@@ -317,23 +320,45 @@ useEffect(() => {
         // Update existing notifications with latest data (including is_seen status)
         const updated = prev.map(existing => {
           const fetchedItem = fetchedMap.get(existing.notify_id);
-          if (fetchedItem) {
+          if (fetchedItem && typeof existing === 'object' && typeof fetchedItem === 'object') {
             // Merge to preserve any local changes while updating from server
             return { ...existing, ...fetchedItem };
           }
           return existing;
-        }).filter(n => fetchedIds.has(n.notify_id)); // Remove notifications that no longer exist on server
+        }).filter(n => fetchedIds.has(n.notify_id) && !deletedIds.has(n.notify_id)); // Remove notifications that no longer exist on server or are locally deleted
 
-        // Add new notifications from server
-        const newNotifications = fetched.filter(n => !existingIds.has(n.notify_id));
+        // Add new notifications from server (but ignore locally deleted ones)
+        const newNotifications = fetched.filter(n => !existingIds.has(n.notify_id) && !deletedIds.has(n.notify_id));
 
         // Combine: new ones first, then updated existing ones
         return [...newNotifications, ...updated];
       });
 
       addPendingRequestsArray(result.data.filter(object => object.title == "request friend"));
-    } catch (error) {
-      console.error('Failed to sync notifications:', error);
+    } catch (error: any) {
+      // Handle network errors and auth errors gracefully
+      if (axios.isAxiosError(error)) {
+        // Network error (backend unreachable, CORS, etc.)
+        if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+          // Silently fail for network errors - backend might be down or unreachable
+          // Only log in development mode
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Failed to sync notifications: Network error (backend may be unreachable)');
+          }
+          return;
+        }
+
+        // 401 Unauthorized - token expired or invalid
+        if (error.response?.status === 401) {
+          console.warn('Failed to sync notifications: Unauthorized (token expired or invalid). Stopping further sync attempts.');
+          return;
+        }
+      }
+
+      // Log other errors only in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to sync notifications:', error);
+      }
     }
   }, [user?.access_token, addPendingRequestsArray]);
 
@@ -403,6 +428,12 @@ useEffect(() => {
 
         if (type === "notify") {
           console.log("Notification data: ", data);
+
+          // Check if notification is in the deleted set - don't re-add deleted notifications
+          if (deletedNotificationIdsRef.current.has(data.notify_id)) {
+            console.log('[Navbar] Notification was deleted locally, skipping:', data.notify_id);
+            return;
+          }
 
           // Check if notification already exists to avoid duplicates
           setNotification(prev => {
@@ -487,15 +518,21 @@ useEffect(() => {
         }
         else if (type === "game_challenge_accepted") {
           // Inviter receives this when friend accepts
+          console.log('[Navbar] Received game_challenge_accepted:', data);
           toast.success(t('navbar.gameChallengeAccepted', { username: data.acceptedByUsername }));
+
           // Store challengeId for later use
           if (data.challengeId) {
+            console.log('[Navbar] Storing challengeId from game_challenge_accepted:', data.challengeId);
             localStorage.setItem('pendingChallengeId', data.challengeId);
+          } else {
+            console.warn('[Navbar] game_challenge_accepted message missing challengeId:', data);
           }
-          // Remove the game challenge notification since it was accepted
-          setNotification(prev => prev.filter(n =>
-            !(n.title === "game challenge" && n.sender_user === data.acceptedBy)
-          ));
+
+          // Note: The acceptor (User B) already removed their notification when they clicked Accept
+          // This message is sent to the inviter (User A), so we don't need to remove any notifications here
+          // The inviter wasn't viewing a notification - they sent the invitation
+
           // Navigate to customization page
           setGameMode('remote');
           router.push('/game/customize');
@@ -505,16 +542,27 @@ useEffect(() => {
           toast.error(t('navbar.gameChallengeDeclined', { username: data.declinedByUsername }));
           // Clear any pending challenge
           localStorage.removeItem('pendingChallengeId');
-          // Remove the game challenge notification since it was declined
-          setNotification(prev => prev.filter(n =>
-            !(n.title === "game challenge" && n.sender_user === data.declinedBy)
-          ));
+          // Track and remove the game challenge notification since it was declined
+          setNotification(prev => {
+            const filtered = prev.filter(n => {
+              if (n.title === "game challenge" && n.sender_user === data.declinedBy) {
+                deletedNotificationIdsRef.current.add(n.notify_id);
+                return false; // Remove this notification
+              }
+              return true;
+            });
+            return filtered;
+          });
         }
         else if (type === "start_game") {
           // Acceptor receives this - navigate to customization
           // Store challengeId for later use
+          console.log('[Navbar] Received start_game message:', data);
           if (data.challengeId) {
+            console.log('[Navbar] Storing challengeId from start_game:', data.challengeId);
             localStorage.setItem('pendingChallengeId', data.challengeId);
+          } else {
+            console.warn('[Navbar] start_game message missing challengeId:', data);
           }
           setGameMode('remote');
           router.push('/game/customize');
@@ -589,13 +637,29 @@ useEffect(() => {
 
 
   async function AcceptGameChallenge(item){
+    console.log('[AcceptGameChallenge] Starting accept process for challenge:', {
+      notify_id: item.notify_id,
+      sender_user: item.sender_user,
+      sender_username: item.sender_username
+    });
+
     if (!user?.access_token) {
       toast.error('You must be logged in to accept game challenges');
       return;
     }
 
+    // Track this notification as deleted to prevent syncNotifications from re-adding it
+    deletedNotificationIdsRef.current.add(item.notify_id);
+
+    // Remove notification from local state immediately (optimistic update)
+    setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
+
+    // Close notification dropdown for better UX
+    setNotificationIndex(false);
+
     try {
       // Call backend API to accept the challenge
+      console.log('[AcceptGameChallenge] Calling /startGame API with Friend_id:', item.sender_user);
       const res = await axios.post(
         `${getBackendURL()}/startGame`,
         { Friend_id: item.sender_user },
@@ -606,20 +670,36 @@ useEffect(() => {
         }
       );
 
-      if (res.status === 200) {
-        // Delete the notification
-        await axios.delete(
-          `${getBackendURL()}/DeleteNotification`,
-          {
-            params: { notifyId: item.notify_id },
-            headers: {
-              Authorization: `Bearer ${user.access_token}`
-            }
-          }
-        );
+      console.log('[AcceptGameChallenge] API response:', {
+        status: res.status,
+        data: res.data
+      });
 
-        // Remove from local state immediately
-        setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
+      if (res.status === 200) {
+        // Store challengeId for matching with the inviter
+        // This is critical for the game to start properly
+        if (res.data?.challengeId) {
+          console.log('[AcceptGameChallenge] Storing challengeId:', res.data.challengeId);
+          localStorage.setItem('pendingChallengeId', res.data.challengeId);
+        } else {
+          console.warn('[AcceptGameChallenge] No challengeId in response:', res.data);
+        }
+
+        // Delete the notification from backend
+        try {
+          await axios.delete(
+            `${getBackendURL()}/DeleteNotification`,
+            {
+              params: { notifyId: item.notify_id },
+              headers: {
+                Authorization: `Bearer ${user.access_token}`
+              }
+            }
+          );
+        } catch (deleteError) {
+          console.error('Error deleting notification:', deleteError);
+          // Continue even if deletion fails - already removed from UI
+        }
 
         // Set game mode and navigate to customization
         // The WebSocket message will also trigger navigation, but this ensures it happens
@@ -629,6 +709,13 @@ useEffect(() => {
     } catch (error: any) {
       console.error('Error accepting game challenge:', error);
       toast.error(error.response?.data?.message || 'Failed to accept game challenge');
+      // Re-add notification if error occurred (though navigation might prevent this)
+      setNotification(prev => {
+        if (!prev.find(n => n.notify_id === item.notify_id)) {
+          return [...prev, item];
+        }
+        return prev;
+      });
     }
   }
 
@@ -638,8 +725,43 @@ useEffect(() => {
       return;
     }
 
+    // Track this notification as deleted to prevent syncNotifications from re-adding it
+    deletedNotificationIdsRef.current.add(item.notify_id);
+
+    // Remove notification from local state immediately (optimistic update)
+    setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
+
+    // Close notification dropdown for better UX
+    setNotificationIndex(false);
+
+    // Notify the inviter via WebSocket immediately
+    console.log('[RejectGameChallenge] Sending decline notification to inviter:', {
+      declinedBy: user.id_user,
+      declinedByUsername: user.username,
+      friendId: item.sender_user,
+      socketReady: socket?.readyState === WebSocket.OPEN
+    });
+
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      const declineMessage = {
+        type: 'game_challenge_declined',
+        data: {
+          declinedBy: user.id_user,
+          declinedByUsername: user.username,
+          friendId: item.sender_user
+        }
+      };
+      socket.send(JSON.stringify(declineMessage));
+      console.log('[RejectGameChallenge] Decline message sent:', declineMessage);
+    } else {
+      console.warn('[RejectGameChallenge] Cannot send decline message - socket not ready:', {
+        hasSocket: !!socket,
+        readyState: socket?.readyState
+      });
+    }
+
     try {
-      // Delete the notification
+      // Delete the notification from backend
       await axios.delete(
         `${getBackendURL()}/DeleteNotification`,
         {
@@ -650,25 +772,17 @@ useEffect(() => {
         }
       );
 
-      // Remove from local state immediately
-      setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
-
-      // Notify the inviter via WebSocket if socket is available
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: 'game_challenge_declined',
-          data: {
-            declinedBy: user.id_user,
-            declinedByUsername: user.username,
-            friendId: item.sender_user
-          }
-        }));
-      }
-
       toast.info('Game challenge declined');
     } catch (error: any) {
       console.error('Error declining game challenge:', error);
-      toast.error('Failed to decline game challenge');
+      // Continue even if deletion fails - notification already removed from UI and sender notified
+      // Re-add notification if error occurred
+      setNotification(prev => {
+        if (!prev.find(n => n.notify_id === item.notify_id)) {
+          return [...prev, item];
+        }
+        return prev;
+      });
     }
   }
 
@@ -1001,167 +1115,178 @@ useEffect(() => {
                 </div>
               )}
             </div>
-          {notificationIndex && (
-    <div  ref={menuRef} className="testt z-50 absolute flex flex-col top-22 right-30 h-52 w-96 rounded-2xl bg-black text-white border-2 overflow-y-scroll gap-2 p-2 ">
-    {notificatiion.length === 0 ? (
-      <div className="text-center text-gray-400 py-6 text-lg font-medium">
-        {t('common.noNotifications')}
-      </div>
-    ) : (
-      [...notificatiion]
-        .map((item, index) => {
-          if (item.title === "game challenge") {
-            return (
-              <div
-                key={index}
-                className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
-              >
-                <img
-                  src={item.sender_profile_img}
-                  alt="profile"
-                  className="w-12 h-12 rounded-full border border-gray-600"
-                />
-                <div className="flex flex-col flex-1">
-                  <p className="text-lg font-semibold text-white">
-                    {item.sender_username}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    {t('navbar.invitedTo1v1')}{" "}
-                    <span className="text-blue-400 font-medium">1 vs 1 {t('common.game')}</span>
-                  </p>
-                </div>
-                {isTimeValid(item) ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => AcceptGameChallenge(item)}
-                      className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                    >
-                      {t('common.accept')}
-                    </button>
-                    <button
-                      onClick={() => RejectGameChallenge(item)}
-                      className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                    >
-                      {t('common.decline')}
-                    </button>
-                  </div>
-                ) : (
-                  <div className='flex justify-center '><p>{t('navbar.expired')}</p></div>
-                )}
-                </div>
-            );
-          }
 
-          if (item.title === "friend request accepted") {
-            return (
+            {/* Notification Icon and Dropdown */}
+            <div className="relative" ref={buttonRef}>
               <div
-                key={index}
-                className="flex items-center gap-3 p-3 border border-green-700 bg-green-900/20 rounded-xl hover:bg-green-800/30 transition"
+                className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400"
+                onClick={showNotification}
               >
-                <img
-                  src={item.sender_profile_img}
-                  alt="profile"
-                  className="w-12 h-12 rounded-full border border-green-500"
-                />
-                <div className="flex flex-col">
-                  <p className="text-white text-lg font-medium">
-                    {item.sender_username}
-                  </p>
-                  <p className="text-green-400 text-sm">
-                    {t('navbar.acceptedFriendRequest')}
-                  </p>
-                </div>
-              </div>
-            );
-          }
-
-          if (item.title === "tournament invite") {
-            return (
-              <div
-                key={index}
-                className="flex items-center gap-3 p-3 border border-purple-700 rounded-xl bg-gradient-to-r from-purple-800 to-purple-900 hover:from-purple-700 transition"
-              >
-                <img
-                  src={item.sender_profile_img}
-                  alt="profile"
-                  className="w-12 h-12 rounded-full border border-purple-600"
-                />
-                <div className="flex flex-col flex-1">
-                  <p className="text-lg font-semibold text-white">
-                    {item.sender_username}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    {t('navbar.invitedToTournamentText')}{" "}
-                    <span className="text-purple-400 font-medium">{t('common.game')}</span>
-                  </p>
-                </div>
-                {isTimeValid(item) ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => AcceptTournamentInvite(item)}
-                      className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                    >
-                      {t('common.accept')}
-                    </button>
-                    <button
-                      onClick={() => RejectTournamentInvite(item)}
-                      className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                    >
-                      {t('common.decline')}
-                    </button>
+                <IoNotificationsOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
+                {unseenCount > 0 && (
+                  <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
+                    <p>{unseenCount}</p>
                   </div>
-                ) : (
-                  <div className='flex justify-center '><p>{t('navbar.expired')}</p></div>
                 )}
               </div>
-            );
-          }
 
-          return (
-            <div
-              key={index}
-              className="flex flex-col border-t border-gray-700 py-3 px-2 bg-black/40 hover:bg-black/60 rounded-xl transition"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <img
-                    src={item.sender_profile_img}
-                    alt="profile"
-                    className="w-12 h-12 rounded-full border border-gray-600"
-                  />
-                  <p className="text-white text-lg ml-3">
-                    {item.sender_username}
-                  </p>
+              {/* Desktop Notification Dropdown - Only visible on md+ screens */}
+              {notificationIndex && (
+                <div ref={menuRef} className="hidden md:block z-50 absolute right-0 top-full mt-2 w-96 max-h-[70vh] rounded-2xl bg-black text-white border-2 overflow-y-auto gap-2 p-2 shadow-2xl">
+                  {notificatiion.length === 0 ? (
+                    <div className="text-center text-gray-400 py-6 text-lg font-medium">
+                      {t('common.noNotifications')}
+                    </div>
+                  ) : (
+                    [...notificatiion].map((item, index) => {
+                      if (item.title === "game challenge") {
+                        return (
+                          <div
+                            key={item.notify_id || index}
+                            className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
+                          >
+                            <img
+                              src={item.sender_profile_img}
+                              alt="profile"
+                              className="w-12 h-12 rounded-full border border-gray-600"
+                            />
+                            <div className="flex flex-col flex-1">
+                              <p className="text-lg font-semibold text-white">
+                                {item.sender_username}
+                              </p>
+                              <p className="text-sm text-gray-400">
+                                {t('navbar.invitedTo1v1')}{" "}
+                                <span className="text-blue-400 font-medium">1 vs 1 {t('common.game')}</span>
+                              </p>
+                            </div>
+                            {isTimeValid(item) ? (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => AcceptGameChallenge(item)}
+                                  className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                                >
+                                  {t('common.accept')}
+                                </button>
+                                <button
+                                  onClick={() => RejectGameChallenge(item)}
+                                  className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                                >
+                                  {t('common.decline')}
+                                </button>
+                              </div>
+                            ) : (
+                              <div className='flex justify-center'><p>{t('navbar.expired')}</p></div>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      if (item.title === "friend request accepted") {
+                        return (
+                          <div
+                            key={item.notify_id || index}
+                            className="flex items-center gap-3 p-3 border border-green-700 bg-green-900/20 rounded-xl hover:bg-green-800/30 transition"
+                          >
+                            <img
+                              src={item.sender_profile_img}
+                              alt="profile"
+                              className="w-12 h-12 rounded-full border border-green-500"
+                            />
+                            <div className="flex flex-col">
+                              <p className="text-white text-lg font-medium">
+                                {item.sender_username}
+                              </p>
+                              <p className="text-green-400 text-sm">
+                                {t('navbar.acceptedFriendRequest')}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (item.title === "tournament invite") {
+                        return (
+                          <div
+                            key={item.notify_id || index}
+                            className="flex items-center gap-3 p-3 border border-purple-700 rounded-xl bg-gradient-to-r from-purple-800 to-purple-900 hover:from-purple-700 transition"
+                          >
+                            <img
+                              src={item.sender_profile_img}
+                              alt="profile"
+                              className="w-12 h-12 rounded-full border border-purple-600"
+                            />
+                            <div className="flex flex-col flex-1">
+                              <p className="text-lg font-semibold text-white">
+                                {item.sender_username}
+                              </p>
+                              <p className="text-sm text-gray-400">
+                                {t('navbar.invitedToTournamentText')}{" "}
+                                <span className="text-purple-400 font-medium">{t('common.game')}</span>
+                              </p>
+                            </div>
+                            {isTimeValid(item) ? (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => AcceptTournamentInvite(item)}
+                                  className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                                >
+                                  {t('common.accept')}
+                                </button>
+                                <button
+                                  onClick={() => RejectTournamentInvite(item)}
+                                  className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                                >
+                                  {t('common.decline')}
+                                </button>
+                              </div>
+                            ) : (
+                              <div className='flex justify-center'><p>{t('navbar.expired')}</p></div>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={item.notify_id || index}
+                          className="flex flex-col border-t border-gray-700 py-3 px-2 bg-black/40 hover:bg-black/60 rounded-xl transition"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <img
+                                src={item.sender_profile_img}
+                                alt="profile"
+                                className="w-12 h-12 rounded-full border border-gray-600"
+                              />
+                              <p className="text-white text-lg ml-3">
+                                {item.sender_username}
+                              </p>
+                            </div>
+                            <p className="text-gray-400 text-sm">
+                              {item.timeAgo || "1d"}
+                            </p>
+                          </div>
+
+                          <div className="flex justify-between mt-3">
+                            <button
+                              onClick={() => AcceptFriendRequest(item)}
+                              className="w-[48%] bg-green-600 hover:bg-green-500 text-white py-1.5 rounded-lg border border-green-400"
+                            >
+                              {t('common.confirm')}
+                            </button>
+                            <button
+                              onClick={() => DelteFriendRequest(item.notify_id)}
+                              className="w-[48%] bg-gray-100 hover:bg-gray-200 text-black py-1.5 rounded-lg border border-white"
+                            >
+                              {t('common.delete')}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
-                <p className="text-gray-400 text-sm">
-                  {item.timeAgo || "1d"}
-                </p>
-              </div>
-
-              <div className="flex justify-between mt-3">
-                <button
-                  onClick={() => AcceptFriendRequest(item)}
-                  className="w-[48%] bg-green-600 hover:bg-green-500 text-white py-1.5 rounded-lg border border-green-400"
-                >
-                  {t('common.confirm')}
-                </button>
-                <button
-                  onClick={() => DelteFriendRequest(item.notify_id)}
-                  className="w-[48%] bg-gray-100 hover:bg-gray-200 text-black py-1.5 rounded-lg border border-white"
-                >
-                  {t('common.delete')}
-                </button>
-              </div>
-            </div>
-          );
-        })
-    )}
-  </div>
-)}
-
-          <div ref={buttonRef} className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
-              <IoNotificationsOutline  onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
-              <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
+              )}
             </div>
             {/* User Icon and Dropdown */}
             <div className="relative" ref={userDropdownRef}>
@@ -1361,7 +1486,7 @@ useEffect(() => {
                         if (item.title === "game challenge") {
                           return (
                             <div
-                              key={index}
+                              key={item.notify_id || index}
                               className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
                             >
                               <img
@@ -1403,7 +1528,7 @@ useEffect(() => {
                         if (item.title === "friend request accepted") {
                           return (
                             <div
-                              key={index}
+                              key={item.notify_id || index}
                               className="flex items-center gap-3 p-3 border border-green-700 bg-green-900/20 rounded-xl hover:bg-green-800/30 transition"
                             >
                               <img
@@ -1426,7 +1551,7 @@ useEffect(() => {
                         if (item.title === "tournament invite") {
                           return (
                             <div
-                              key={index}
+                              key={item.notify_id || index}
                               className="flex items-center gap-3 p-3 border border-purple-700 rounded-xl bg-gradient-to-r from-purple-800 to-purple-900 hover:from-purple-700 transition"
                             >
                               <img
@@ -1467,7 +1592,7 @@ useEffect(() => {
 
                         return (
                           <div
-                            key={index}
+                            key={item.notify_id || index}
                             className="flex flex-col border-t border-gray-700 py-3 px-2 bg-black/40 hover:bg-black/60 rounded-xl transition"
                           >
                             <div className="flex items-center justify-between">
