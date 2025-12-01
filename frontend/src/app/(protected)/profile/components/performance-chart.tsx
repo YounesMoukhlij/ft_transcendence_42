@@ -8,6 +8,7 @@ import { Button } from "./ui/button"
 import { useState, useEffect } from "react"
 import { useUserStore } from "@/store/userStore"
 import axios from "axios"
+import { useTranslation } from "../../../../contexts/LanguageContext"
 
 
 
@@ -23,7 +24,7 @@ interface PerformanceChartProps {
 
 
 export function PerformanceChart({username }: PerformanceChartProps) {
-
+  const { t } = useTranslation();
   const [illustration, setIllustration] = useState<"graph" | "chart">("graph");
 
 
@@ -35,11 +36,11 @@ export function PerformanceChart({username }: PerformanceChartProps) {
   useEffect(() => {
     const fetchPlayerProgressData = async () => {
       if (!currentUser?.access_token) {
-        setError("You must be logged in to view profiles");
+        setError(t('profile.mustBeLoggedIn'));
         return;
       }
       if (!targetUsername) {
-        setError("Username is missing");
+        setError(t('profile.usernameMissing'));
         return;
       }
 
@@ -54,12 +55,12 @@ export function PerformanceChart({username }: PerformanceChartProps) {
         setPerformanceData(res.data);
       } catch (err) {
         console.error(err);
-        setError(`Failed to load profile for ${targetUsername}`);
+        setError(t('profile.failedToLoad', { username: targetUsername }));
       }
     };
 
     fetchPlayerProgressData();
-  }, [targetUsername, currentUser]);
+  }, [targetUsername, currentUser, t]);
 
 
 
@@ -71,23 +72,23 @@ export function PerformanceChart({username }: PerformanceChartProps) {
           <div>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5 " />
-          Performance Trends
+          {t('profile.performanceTrends')}
         </CardTitle>
-           <CardDescription>Weakly wins and losses over time</CardDescription>
+           <CardDescription>{t('profile.weeklyWinsLosses')}</CardDescription>
         </div>
         <div>
           <Button data-state={illustration} onClick={()=> setIllustration("graph")}  variant="normal"  className="rounded data-[state=graph]:bg-primary mr-1">
-          Graph
-        </Button> 
+          {t('profile.graph')}
+        </Button>
         <Button data-state={illustration} onClick={()=> setIllustration("chart")} variant="normal"  className="data-[state=chart]:bg-primary">
-           Chart
-        </Button> 
+           {t('profile.chart')}
+        </Button>
         </div>
-         
+
           </div>
       </CardHeader>
       {
-        illustration == "graph" ? <IllustrationGraph data={performaceData} /> : <IllustrationChart  data={performaceData} /> 
+        illustration == "graph" ? <IllustrationGraph data={performaceData} /> : <IllustrationChart  data={performaceData} />
       }
     </Card>
   )

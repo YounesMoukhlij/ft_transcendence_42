@@ -11,6 +11,7 @@ import { FaUser, FaUpload, FaCrown, FaTrophy, FaGamepad, FaSearch, FaCheck, FaTi
 import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 // Move PlayerRegistration outside to prevent re-creation
 interface PlayerRegistrationProps {
@@ -51,9 +52,10 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
   onComplete,
   onBack
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="w-full max-w-6xl mx-auto h-full bg-gray-900 bg-opacity-90 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl border-2 border-purple-500 p-3 sm:p-6 lg:p-8">
-      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-300 mb-4 sm:mb-6 text-center">Register Players</h2>
+      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-300 mb-4 sm:mb-6 text-center">{t('game.registerPlayers')}</h2>
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
         {tempPlayers.map((player, index) => (
           <div key={player.id} className="bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-purple-400">
@@ -61,7 +63,7 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
               <div className="relative flex-shrink-0">
                 <img
                   src={player.avatar}
-                  alt={`Player ${index + 1}`}
+                  alt={`${t('game.player')} ${index + 1}`}
                   className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-purple-400"
                 />
                 <button className="absolute -bottom-1 -right-1 bg-purple-600 rounded-full p-1 hover:bg-purple-700">
@@ -72,7 +74,7 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
                 <div className="flex items-center gap-1 sm:gap-2 mb-2 flex-wrap">
                   <FaUser className="text-purple-400 text-sm" />
                   <span className="text-white font-semibold text-sm sm:text-base break-words">
-                    {index === 0 ? 'Host Player' : `Player ${index + 1}`}
+                    {index === 0 ? t('game.hostPlayer') : `${t('game.player')} ${index + 1}`}
                   </span>
                   {index === 0 && <FaCrown className="text-yellow-400 text-sm" />}
                 </div>
@@ -80,14 +82,14 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
                   type="text"
                   value={player.name}
                   onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                  placeholder={`Enter name for Player ${index + 1}`}
+                  placeholder={t('game.enterNameForPlayer', { number: index + 1 })}
                   className="w-full px-2 py-2 sm:px-3 text-sm sm:text-base bg-gray-700 text-white rounded-md sm:rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   disabled={index === 0} // Host name is pre-filled
                 />
               </div>
             </div>
             <div className="mt-3">
-              <label className="block text-xs sm:text-sm text-gray-300 mb-2">Choose Avatar:</label>
+              <label className="block text-xs sm:text-sm text-gray-300 mb-2">{t('game.chooseAvatar')}:</label>
               <div className="flex gap-1 sm:gap-2 flex-wrap">
                 {defaultAvatars.slice(0, 6).map((avatar, avatarIndex) => (
                   <button
@@ -110,14 +112,14 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
           onClick={onBack}
           className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
         >
-          Back
+          {t('game.back')}
         </button>
         <button
           onClick={onComplete}
           disabled={tempPlayers.filter(p => p.name.trim() !== '').length !== playerCount}
           className="px-6 py-2 sm:px-8 sm:py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-sm sm:text-base"
         >
-          Start Tournament
+          {t('game.startTournament')}
         </button>
       </div>
     </div>
@@ -127,6 +129,7 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
 PlayerRegistration.displayName = 'PlayerRegistration';
 
 export default function TournamentPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const user = useUserStore((state) => state.user);
   const setUser = useUserStore((state) => state.setUser);
@@ -1059,13 +1062,13 @@ export default function TournamentPage() {
     const winner = isComplete ? bracket[bracket.length - 1]?.winner : null;    return (
       <div className="w-full bg-gray-800 bg-opacity-90 rounded-lg sm:rounded-xl lg:rounded-2xl shadow-xl border border-purple-400 p-3 sm:p-4 lg:p-6">
         <h3 className="text-lg sm:text-xl font-bold text-purple-300 mb-3 sm:mb-4 text-center">
-          Tournament Bracket
+          {t('game.tournamentBracket')}
         </h3>
 
         {winner && (
           <div className="text-center mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-600 to-yellow-700 rounded-lg">
             <FaTrophy className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-300 mx-auto mb-2 sm:mb-3" />
-            <h4 className="text-base sm:text-lg font-bold text-white mb-1 sm:mb-2">Tournament Champion!</h4>
+            <h4 className="text-base sm:text-lg font-bold text-white mb-1 sm:mb-2">{t('game.tournamentChampion')}</h4>
             <div className="flex items-center justify-center gap-2 sm:gap-3">
               <img src={winner.avatar} alt={winner.name} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full" />
               <span className="text-sm sm:text-base lg:text-lg font-semibold text-white">{winner.name}</span>
@@ -1077,7 +1080,7 @@ export default function TournamentPage() {
           {Array.from({ length: rounds }, (_, roundIndex) => (
             <div key={roundIndex} className="flex flex-col gap-2 sm:gap-3 min-w-[140px] sm:min-w-[160px] lg:min-w-[180px] flex-shrink-0">
               <h4 className="text-xs sm:text-sm lg:text-md font-semibold text-purple-300 text-center">
-                {roundIndex === rounds - 1 ? 'Final' :
+                {roundIndex === rounds - 1 ? t('game.finalMatch').replace('!', '') :
                  roundIndex === rounds - 2 ? 'Semi-Final' :
                  'Quarter-Final'}
               </h4>
@@ -1096,7 +1099,7 @@ export default function TournamentPage() {
                           <span className="text-white truncate text-xs">{match.player1.name}</span>
                         </>
                       ) : (
-                        <span className="text-gray-400 text-xs">TBD</span>
+                        <span className="text-gray-400 text-xs">{t('game.tbd')}</span>
                       )}
                     </div>
                     <div className={`flex items-center gap-1 sm:gap-2 p-1 rounded text-xs ${
@@ -1108,7 +1111,7 @@ export default function TournamentPage() {
                           <span className="text-white truncate text-xs">{match.player2.name}</span>
                         </>
                       ) : (
-                        <span className="text-gray-400 text-xs">TBD</span>
+                        <span className="text-gray-400 text-xs">{t('game.tbd')}</span>
                       )}
                     </div>
                   </div>
@@ -1125,8 +1128,8 @@ export default function TournamentPage() {
               className="flex items-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs sm:text-sm"
             >
               <FaGamepad />
-              <span className="hidden sm:inline">Play Next Match</span>
-              <span className="sm:hidden">Next</span>
+              <span className="hidden sm:inline">{t('game.nextMatch')}</span>
+              <span className="sm:hidden">{t('game.nextMatch')}</span>
             </button>
           )}
         </div>
@@ -1146,23 +1149,23 @@ export default function TournamentPage() {
               <FaTimes className="text-white text-2xl sm:text-3xl" />
             </div>
             <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold text-red-400 mb-2 sm:mb-3">
-              Cancel Tournament?
+              {t('game.confirmCancel')}
             </h2>
             <p className="text-white text-sm xs:text-base sm:text-lg mb-6 sm:mb-8">
-              Are you sure you want to cancel this tournament? All players will be notified.
+              {t('game.confirmCancel')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <button
                 onClick={confirmCancelTournament}
                 className="px-6 py-2 sm:px-8 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm sm:text-base"
               >
-                Yes, Cancel Tournament
+                {t('game.yesCancel')}
               </button>
               <button
                 onClick={() => setShowCancelConfirmation(false)}
                 className="px-6 py-2 sm:px-8 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
               >
-                No, Keep Tournament
+                {t('game.noKeep')}
               </button>
             </div>
           </div>
@@ -1181,13 +1184,13 @@ export default function TournamentPage() {
               <FaTimes className="text-white text-2xl sm:text-3xl" />
             </div>
             <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold text-red-400 mb-2 sm:mb-3">
-              Tournament Cancelled
+              {t('game.tournamentCancelled')}
             </h2>
             <p className="text-white text-sm xs:text-base sm:text-lg mb-4 sm:mb-6">
               {tournamentCancelledMessage}
             </p>
             <p className="text-gray-300 text-xs sm:text-sm mb-6">
-              Redirecting to game page in a few seconds...
+              {t('common.loading')}...
             </p>
             <button
               onClick={() => {
@@ -1196,7 +1199,7 @@ export default function TournamentPage() {
               }}
               className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
             >
-              Go to Game Page Now
+              {t('game.backToGameMenu')}
             </button>
           </div>
         </div>
@@ -1218,10 +1221,10 @@ export default function TournamentPage() {
             <div className="flex flex-col items-center justify-center py-8 sm:py-12">
               <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-purple-300 mb-4 sm:mb-6"></div>
               <h2 className="text-lg xs:text-xl sm:text-2xl font-bold text-purple-300 mb-2 sm:mb-3 text-center">
-                Joining Tournament...
+                {t('game.joiningTournament')}
               </h2>
               <p className="text-gray-300 text-sm xs:text-base text-center">
-                Please wait while we connect you to the tournament.
+                {t('game.pleaseWaitConnect')}
               </p>
             </div>
           </div>
@@ -1232,11 +1235,11 @@ export default function TournamentPage() {
     return (
       <div className="flex items-center justify-center h-full p-1 xs:p-2 sm:p-4 md:p-8">
         <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl h-full bg-opacity-90 rounded-lg xs:rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl bg-gradient-to-br from-blue-700 via-purple-900 to-black border-2 border-white p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
-          <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-purple-300 mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-center">Tournament Setup</h1>
+          <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-purple-300 mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-center">{t('game.tournamentSetup')}</h1>
 
           <div className="space-y-2 xs:space-y-3 sm:space-y-4">
             <div>
-              <label className="block text-white text-xs xs:text-sm sm:text-base md:text-lg font-semibold mb-1 xs:mb-2 sm:mb-3 md:mb-4">Tournament Type</label>
+              <label className="block text-white text-xs xs:text-sm sm:text-base md:text-lg font-semibold mb-1 xs:mb-2 sm:mb-3 md:mb-4">{t('game.tournamentType')}</label>
               <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                 <button
                   onClick={() => setTournamentType('local')}
@@ -1246,8 +1249,8 @@ export default function TournamentPage() {
                       : 'border-gray-600 bg-gray-800'
                   }`}
                 >
-                  <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">Local Tournament</h3>
-                  <p className="text-gray-300 text-xs xs:text-sm">All players on the same device</p>
+                  <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">{t('game.localTournament')}</h3>
+                  <p className="text-gray-300 text-xs xs:text-sm">{t('game.allPlayersSameDevice')}</p>
                 </button>
                 <button
                   onClick={() => setTournamentType('remote')}
@@ -1257,14 +1260,14 @@ export default function TournamentPage() {
                       : 'border-gray-600 bg-gray-800'
                   }`}
                 >
-                  <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">Remote Tournament</h3>
-                  <p className="text-gray-300 text-xs xs:text-sm">Players join from different devices</p>
+                  <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">{t('game.remoteTournament')}</h3>
+                  <p className="text-gray-300 text-xs xs:text-sm">{t('game.playersJoinDifferentDevices')}</p>
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-white text-xs xs:text-sm sm:text-base md:text-lg font-semibold mb-1 xs:mb-2 sm:mb-3 md:mb-4">Player Count</label>
+              <label className="block text-white text-xs xs:text-sm sm:text-base md:text-lg font-semibold mb-1 xs:mb-2 sm:mb-3 md:mb-4">{t('game.playerCount')}</label>
               <div className="grid grid-cols-1 gap-2 sm:gap-3 md:gap-4">
                 <button
                   onClick={() => setPlayerCount(4)}
@@ -1274,8 +1277,8 @@ export default function TournamentPage() {
                       : 'border-gray-600 bg-gray-800'
                   }`}
                 >
-                  <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">4 Players</h3>
-                  <p className="text-gray-300 text-xs xs:text-sm">Semi-finals → Final</p>
+                  <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">{t('game.playersLabel')}</h3>
+                  <p className="text-gray-300 text-xs xs:text-sm">{t('game.semiFinalsFinal')}</p>
                 </button>
               </div>
             </div>
@@ -1293,7 +1296,7 @@ export default function TournamentPage() {
                     className="w-full sm:w-auto px-4 py-2 xs:px-6 xs:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base flex items-center justify-center gap-2"
                   >
                     <FaUser className="text-sm" />
-                    <span>Create Tournament</span>
+                    <span>{t('game.createTournament')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1303,11 +1306,11 @@ export default function TournamentPage() {
                     className="w-full sm:w-auto px-4 py-2 xs:px-6 xs:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base flex items-center justify-center gap-2"
                   >
                     <FaSearch className="text-sm" />
-                    <span>Join Tournament</span>
+                    <span>{t('game.joinTournament')}</span>
                 </button>
                 </div>
                 <p className="text-gray-300 text-xs xs:text-sm text-center">
-                  Create your own tournament or join an existing one
+                  {t('game.createOrJoin')}
                 </p>
               </div>
             )}
@@ -1318,14 +1321,14 @@ export default function TournamentPage() {
                 onClick={() => router.push('/game')}
                 className="w-full xs:w-auto px-3 py-2 xs:px-4 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base order-2 xs:order-1"
               >
-                Back
+                {t('game.back')}
               </button>
               {tournamentType === 'local' && (
                 <button
                   onClick={() => setTournamentStep('registration')}
                   className="w-full xs:w-auto px-4 py-2 xs:px-6 xs:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base order-1 xs:order-2"
                 >
-                  Continue
+                  {t('game.continue')}
                 </button>
               )}
             </div>
@@ -1344,19 +1347,19 @@ export default function TournamentPage() {
       <div className="flex flex-col items-center justify-center h-full p-1 xs:p-2 sm:p-4 md:p-8 relative">
         <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl mx-auto bg-gray-900 bg-opacity-90 rounded-lg xs:rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl border-2 border-purple-500 p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
           <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-purple-300 mb-3 xs:mb-4 sm:mb-6 text-center">
-            {isWaitingForPlayers ? 'Waiting for Players...' : 'Create Tournament'}
+            {isWaitingForPlayers ? t('game.waitingForPlayers') : t('game.createTournamentTitle')}
           </h2>
 
           {isWaitingForPlayers ? (
             <>
               <p className="text-white text-sm xs:text-base mb-4 sm:mb-6 text-center">
-                Players: {currentPlayerCount}/{playerCount}
+                {t('game.playersCount', { current: currentPlayerCount, total: playerCount })}
               </p>
 
               {/* Show current players */}
               {remoteTournament?.registeredPlayers && remoteTournament.registeredPlayers.length > 0 && (
                 <div className="mb-4 sm:mb-6">
-                  <h3 className="text-white text-sm sm:text-base mb-2 text-center">Current Players:</h3>
+                  <h3 className="text-white text-sm sm:text-base mb-2 text-center">{t('game.currentPlayers')}</h3>
                   <div className="grid gap-2 grid-cols-2">
                     {remoteTournament.registeredPlayers.map((player: Player, index: number) => (
                       <div key={player.id || `player-${index}`} className="bg-gray-800 rounded-lg p-2 border border-purple-400">
@@ -1391,18 +1394,18 @@ export default function TournamentPage() {
                   >
                     <FaSearch className="text-lg" />
                     <div className="text-left">
-                      <div className="font-bold">Find Random Opponent</div>
+                      <div className="font-bold">{t('game.findRandomOpponent')}</div>
                       <div className="text-xs sm:text-sm opacity-90">
                         {currentPlayerCount > 0
-                          ? `Continue searching (${currentPlayerCount}/${playerCount} players)`
-                          : 'Search for players looking to join tournaments'}
+                          ? t('game.continueSearching', { current: currentPlayerCount, total: playerCount })
+                          : t('game.searchForPlayers')}
                       </div>
                     </div>
                   </button>
                 ) : (
                   <div className="w-full bg-gray-800 rounded-lg p-3 sm:p-4 border border-yellow-400">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-white font-semibold text-sm sm:text-base">Searching for Random Opponent</h3>
+                      <h3 className="text-white font-semibold text-sm sm:text-base">{t('game.searchingForRandomOpponent')}</h3>
                       <button
                         onClick={() => {
                           setShowRandomOpponentExpanded(false);
@@ -1420,20 +1423,20 @@ export default function TournamentPage() {
                           <div className="w-8 h-8 mb-3 flex items-center justify-center">
                             <FaCheck className="text-green-400 text-2xl" />
                           </div>
-                          <p className="text-green-300 text-sm mb-2 font-semibold">Tournament Full!</p>
+                          <p className="text-green-300 text-sm mb-2 font-semibold">{t('game.tournamentFull')}</p>
                           <p className="text-gray-300 text-xs text-center">
-                            All {playerCount} players found. Tournament is ready to start.
+                            {t('game.allPlayersFound', { count: playerCount })}
                           </p>
                         </>
                       ) : (
                         <>
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400 mb-3"></div>
-                          <p className="text-white text-sm mb-2">Looking for available players...</p>
+                          <p className="text-white text-sm mb-2">{t('game.lookingForPlayers')}</p>
                           <p className="text-gray-300 text-xs text-center">
-                            Found: {currentPlayerCount}/{playerCount} players
+                            {t('game.foundPlayers', { current: currentPlayerCount, total: playerCount })}
                           </p>
                           {currentPlayerCount > 0 && (
-                            <p className="text-yellow-300 text-xs mt-2">Keep searching for more players...</p>
+                            <p className="text-yellow-300 text-xs mt-2">{t('game.keepSearching')}</p>
                           )}
                         </>
                       )}
@@ -1458,14 +1461,14 @@ export default function TournamentPage() {
                   >
                     <FaUser className="text-lg" />
                     <div className="text-left">
-                      <div className="font-bold">Invite Friend</div>
-                      <div className="text-xs sm:text-sm opacity-90">Invite a friend from your friends list</div>
+                      <div className="font-bold">{t('game.inviteFriend')}</div>
+                      <div className="text-xs sm:text-sm opacity-90">{t('game.inviteFriendFromList')}</div>
                     </div>
                   </button>
                 ) : (
                   <div className="w-full bg-gray-800 rounded-lg p-3 sm:p-4 border border-purple-400">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-white font-semibold text-sm sm:text-base">Select a Friend to Invite</h3>
+                      <h3 className="text-white font-semibold text-sm sm:text-base">{t('game.selectFriendToInvite')}</h3>
                       <button
                         onClick={() => setShowFriendsListExpanded(false)}
                         className="text-gray-400 hover:text-white text-sm"
@@ -1474,7 +1477,7 @@ export default function TournamentPage() {
                       </button>
                     </div>
                     {friends.length === 0 ? (
-                      <p className="text-gray-300 text-sm text-center py-2">You don't have any friends yet.</p>
+                      <p className="text-gray-300 text-sm text-center py-2">{t('game.noFriendsYet')}</p>
                     ) : (
                       <div className="space-y-2 max-h-60 overflow-y-auto">
                         {friends.map((friend, index) => (
@@ -1485,7 +1488,7 @@ export default function TournamentPage() {
                                 inviteToTournament((friend as any).id || (friend as any).id_user);
                                 setShowFriendsListExpanded(false);
                               } else {
-                                alert('Please wait for the tournament to be created first.');
+                                alert(t('game.pleaseWaitTournamentCreated'));
                               }
                             }}
                             className="w-full flex items-center justify-between bg-gray-700 hover:bg-gray-600 p-2 sm:p-3 rounded-lg transition-all"
@@ -1499,7 +1502,7 @@ export default function TournamentPage() {
                               <span className="text-white font-semibold text-sm sm:text-base">{friend.name}</span>
                             </div>
                             <div className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-xs sm:text-sm">
-                              Invite
+                              {t('game.invite')}
                             </div>
                           </button>
                         ))}
@@ -1512,7 +1515,7 @@ export default function TournamentPage() {
           ) : (
             <>
               <p className="text-white text-sm xs:text-base mb-4 sm:mb-6 text-center">
-                Choose how you want to find players for your tournament
+                {t('game.chooseHowToFindPlayers')}
               </p>
 
               <div className="space-y-3 sm:space-y-4">
@@ -1532,14 +1535,14 @@ export default function TournamentPage() {
                   >
                     <FaSearch className="text-lg" />
                     <div className="text-left">
-                      <div className="font-bold">Find Random Opponent</div>
-                      <div className="text-xs sm:text-sm opacity-90">Search for players looking to join tournaments</div>
+                      <div className="font-bold">{t('game.findRandomOpponent')}</div>
+                      <div className="text-xs sm:text-sm opacity-90">{t('game.searchForPlayers')}</div>
                     </div>
                   </button>
                 ) : (
                   <div className="w-full bg-gray-800 rounded-lg p-3 sm:p-4 border border-yellow-400">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-white font-semibold text-sm sm:text-base">Searching for Random Opponent</h3>
+                      <h3 className="text-white font-semibold text-sm sm:text-base">{t('game.searchingForRandomOpponent')}</h3>
                       <button
                         onClick={() => {
                           setShowRandomOpponentExpanded(false);
@@ -1557,20 +1560,20 @@ export default function TournamentPage() {
                           <div className="w-8 h-8 mb-3 flex items-center justify-center">
                             <FaCheck className="text-green-400 text-2xl" />
                           </div>
-                          <p className="text-green-300 text-sm mb-2 font-semibold">Tournament Full!</p>
+                          <p className="text-green-300 text-sm mb-2 font-semibold">{t('game.tournamentFull')}</p>
                           <p className="text-gray-300 text-xs text-center">
-                            All {playerCount} players found. Tournament is ready to start.
+                            {t('game.allPlayersFound', { count: playerCount })}
                           </p>
                         </>
                       ) : (
                         <>
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400 mb-3"></div>
-                          <p className="text-white text-sm mb-2">Looking for available players...</p>
+                          <p className="text-white text-sm mb-2">{t('game.lookingForPlayers')}</p>
                           <p className="text-gray-300 text-xs text-center">
-                            Found: {remoteTournament?.registeredPlayers?.length || 0}/{playerCount} players
+                            {t('game.foundPlayers', { current: remoteTournament?.registeredPlayers?.length || 0, total: playerCount })}
                           </p>
                           {(remoteTournament?.registeredPlayers?.length || 0) > 0 && (
-                            <p className="text-yellow-300 text-xs mt-2">Keep searching for more players...</p>
+                            <p className="text-yellow-300 text-xs mt-2">{t('game.keepSearching')}</p>
                           )}
                         </>
                       )}
@@ -1595,14 +1598,14 @@ export default function TournamentPage() {
                   >
                     <FaUser className="text-lg" />
                     <div className="text-left">
-                      <div className="font-bold">Invite Friend</div>
-                      <div className="text-xs sm:text-sm opacity-90">Invite a friend from your friends list</div>
+                      <div className="font-bold">{t('game.inviteFriend')}</div>
+                      <div className="text-xs sm:text-sm opacity-90">{t('game.inviteFriendFromList')}</div>
                     </div>
                   </button>
                 ) : (
                   <div className="w-full bg-gray-800 rounded-lg p-3 sm:p-4 border border-purple-400">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-white font-semibold text-sm sm:text-base">Select a Friend to Invite</h3>
+                      <h3 className="text-white font-semibold text-sm sm:text-base">{t('game.selectFriendToInvite')}</h3>
                       <button
                         onClick={() => setShowFriendsListExpanded(false)}
                         className="text-gray-400 hover:text-white text-sm"
@@ -1611,7 +1614,7 @@ export default function TournamentPage() {
                       </button>
                     </div>
                     {friends.length === 0 ? (
-                      <p className="text-gray-300 text-sm text-center py-2">You don't have any friends yet.</p>
+                      <p className="text-gray-300 text-sm text-center py-2">{t('game.noFriendsYet')}</p>
                     ) : (
                       <div className="space-y-2 max-h-60 overflow-y-auto">
                         {friends.map((friend, index) => (
@@ -1622,7 +1625,7 @@ export default function TournamentPage() {
                                 inviteToTournament((friend as any).id || (friend as any).id_user);
                                 setShowFriendsListExpanded(false);
                               } else {
-                                alert('Please wait for the tournament to be created first.');
+                                alert(t('game.pleaseWaitTournamentCreated'));
                               }
                             }}
                             className="w-full flex items-center justify-between bg-gray-700 hover:bg-gray-600 p-2 sm:p-3 rounded-lg transition-all"
@@ -1636,7 +1639,7 @@ export default function TournamentPage() {
                               <span className="text-white font-semibold text-sm sm:text-base">{friend.name}</span>
                             </div>
                             <div className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-xs sm:text-sm">
-                              Invite
+                              {t('game.invite')}
                             </div>
                           </button>
                         ))}
@@ -1654,7 +1657,7 @@ export default function TournamentPage() {
                 onClick={cancelTournament}
                 className="px-4 py-2 sm:px-6 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base"
               >
-                Cancel Tournament
+                {t('game.cancelTournament')}
               </button>
             )}
             <button
@@ -1668,7 +1671,7 @@ export default function TournamentPage() {
               }}
               className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base"
             >
-              Back
+              {t('game.back')}
             </button>
           </div>
         </div>
@@ -1684,11 +1687,11 @@ export default function TournamentPage() {
           }}>
             <div className="bg-gradient-to-br from-purple-800 to-blue-800 rounded-xl p-4 sm:p-6 md:p-8 text-center max-w-xs sm:max-w-sm md:max-w-md mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
-                Invite a Friend to Tournament
+                {t('game.inviteFriendToTournament')}
               </h3>
               {friends.length === 0 ? (
                 <div className="py-4">
-                  <p className="text-gray-300 text-sm mb-4">You don't have any friends yet.</p>
+                  <p className="text-gray-300 text-sm mb-4">{t('game.noFriendsYet')}</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
@@ -1703,14 +1706,14 @@ export default function TournamentPage() {
                           if (tournamentId) {
                             inviteToTournament((friend as any).id || (friend as any).id_user);
                           } else {
-                            alert('Please wait for the tournament to be created first.');
+                            alert(t('game.pleaseWaitTournamentCreated'));
                           }
                           setShowFriendsListModal(false);
                           setSelectedSlot(null);
                         }}
                         className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm"
                       >
-                        Invite
+                        {t('game.invite')}
                       </button>
                     </div>
                   ))}
@@ -1723,7 +1726,7 @@ export default function TournamentPage() {
                 }}
                 className="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -1743,7 +1746,7 @@ export default function TournamentPage() {
         <div className="flex flex-col items-center justify-center h-full p-1 xs:p-2 sm:p-4 md:p-8">
           <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl mx-auto bg-gray-900 bg-opacity-90 rounded-lg xs:rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl border-2 border-purple-500 p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
             <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-purple-300 mb-3 xs:mb-4 sm:mb-6 text-center">
-              Tournament Lobby
+              {t('game.tournamentLobby')}
             </h2>
 
             {/* Special waiting message for non-host players */}
@@ -1752,13 +1755,13 @@ export default function TournamentPage() {
                 <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
                   <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-purple-300"></div>
                   <h3 className="text-sm xs:text-base sm:text-lg lg:text-xl font-semibold text-purple-200 text-center">
-                    Waiting for Tournament to Start...
+                    {t('game.waitingForTournamentStart')}
                   </h3>
                 </div>
                 <p className="text-xs xs:text-sm text-gray-300 text-center">
                   {isFull
-                    ? "All players have joined! The host will start the tournament soon."
-                    : `Waiting for more players to join... (${currentPlayerCount}/${playerCount})`}
+                    ? t('game.allPlayersJoined')
+                    : t('game.waitingForMorePlayers', { current: currentPlayerCount, total: playerCount })}
                 </p>
               </div>
             )}
@@ -1768,10 +1771,10 @@ export default function TournamentPage() {
                 {(() => {
                   if (isFull) {
                     return isHost
-                      ? `All players ready! (${currentPlayerCount}/${playerCount}) - Customize game to start`
-                      : `All players ready! (${currentPlayerCount}/${playerCount}) - Waiting for host to start...`;
+                      ? t('game.allPlayersReady', { current: currentPlayerCount, total: playerCount })
+                      : t('game.allPlayersReadyWaiting', { current: currentPlayerCount, total: playerCount });
                   }
-                  return `Waiting for players... (${currentPlayerCount}/${playerCount})`;
+                  return t('game.waitingForPlayersCount', { current: currentPlayerCount, total: playerCount });
                 })()}
               </h3>
 
@@ -1794,12 +1797,12 @@ export default function TournamentPage() {
                           className="flex-1 sm:flex-initial px-4 py-2 sm:px-6 sm:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center gap-2"
                         >
                           <FaUser className="text-sm" />
-                          <span>Invite Friend</span>
+                          <span>{t('game.inviteFriend')}</span>
                         </button>
                       ) : (
                         <div className="flex-1 sm:flex-initial bg-gray-800 rounded-lg p-3 border border-purple-400">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-white font-semibold text-xs sm:text-sm">Select a Friend</h3>
+                            <h3 className="text-white font-semibold text-xs sm:text-sm">{t('game.selectAFriend')}</h3>
                             <button
                               onClick={() => setShowFriendsListExpanded(false)}
                               className="text-gray-400 hover:text-white"
@@ -1808,7 +1811,7 @@ export default function TournamentPage() {
                             </button>
                           </div>
                           {friends.length === 0 ? (
-                            <p className="text-gray-300 text-xs text-center py-1">No friends yet.</p>
+                            <p className="text-gray-300 text-xs text-center py-1">{t('game.noFriendsYetShort')}</p>
                           ) : (
                             <div className="space-y-1 max-h-40 overflow-y-auto">
                               {friends.map((friend, index) => (
@@ -1831,7 +1834,7 @@ export default function TournamentPage() {
                                     <span className="text-white truncate">{friend.name}</span>
                                   </div>
                                   <span className="px-2 py-0.5 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs">
-                                    Invite
+                                    {t('game.invite')}
                                   </span>
                                 </button>
                               ))}
@@ -1849,12 +1852,12 @@ export default function TournamentPage() {
                         {isFindingRandomOpponent ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Searching...</span>
+                            <span>{t('common.loading')}</span>
                           </>
                         ) : (
                           <>
                             <FaSearch className="text-sm" />
-                            <span>Find Random Opponent</span>
+                            <span>{t('game.findRandomOpponent')}</span>
                           </>
                         )}
                       </button>
@@ -1889,7 +1892,7 @@ export default function TournamentPage() {
                   {Array.from({ length: playerCount - (remoteTournament?.registeredPlayers?.length || 0) }).map((_, index) => (
                     <div key={`empty-${index}`} className="bg-gray-700 rounded-lg p-2 xs:p-3 border-2 border-dashed border-gray-500">
                       <div className="flex items-center justify-center h-full">
-                        <span className="text-gray-400 text-xs sm:text-sm">Empty Slot</span>
+                        <span className="text-gray-400 text-xs sm:text-sm">{t('game.emptySlot')}</span>
                       </div>
                     </div>
                   ))}
@@ -1901,7 +1904,7 @@ export default function TournamentPage() {
             {isHost && joinRequests.length > 0 && (
               <div className="mb-4 sm:mb-6">
                 <h3 className="text-base sm:text-lg lg:text-xl font-bold text-yellow-300 mb-3 sm:mb-4 text-center">
-                  Pending Join Requests ({joinRequests.length})
+                  {t('game.pendingJoinRequests', { count: joinRequests.length })}
                 </h3>
                 <div className="space-y-2 sm:space-y-3">
                   {joinRequests.map((request) => (
@@ -1918,7 +1921,7 @@ export default function TournamentPage() {
                               {request.player.name}
                             </h4>
                             <p className="text-gray-300 text-xs sm:text-sm">
-                              Requested {request.timestamp ? new Date(request.timestamp).toLocaleTimeString() : 'Recently'}
+                              {t('game.requested', { time: request.timestamp ? new Date(request.timestamp).toLocaleTimeString() : t('game.recently') })}
                             </p>
                           </div>
                         </div>
@@ -1928,7 +1931,7 @@ export default function TournamentPage() {
                             className="flex-1 xs:flex-initial px-2 py-1.5 sm:px-3 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs sm:text-sm font-semibold flex items-center justify-center gap-1"
                           >
                             <FaCheck className="w-3 h-3" />
-                            <span className="hidden xs:inline">Accept</span>
+                            <span className="hidden xs:inline">{t('game.accept')}</span>
                             <span className="xs:hidden">✓</span>
                           </button>
                           <button
@@ -1936,7 +1939,7 @@ export default function TournamentPage() {
                             className="flex-1 xs:flex-initial px-2 py-1.5 sm:px-3 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs sm:text-sm font-semibold flex items-center justify-center gap-1"
                           >
                             <FaReject className="w-3 h-3" />
-                            <span className="hidden xs:inline">Decline</span>
+                            <span className="hidden xs:inline">{t('game.decline')}</span>
                             <span className="xs:hidden">✗</span>
                           </button>
                         </div>
@@ -1953,28 +1956,28 @@ export default function TournamentPage() {
                   onClick={cancelTournament}
                   className="w-full xs:w-auto px-3 py-2 xs:px-4 sm:px-6 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base"
                 >
-                  Cancel Tournament
+                  {t('game.cancelTournament')}
                 </button>
               )}
               <button
                 onClick={() => setTournamentStep('setup')}
                 className="w-full xs:w-auto px-3 py-2 xs:px-4 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base order-2 xs:order-1"
               >
-                Back to Setup
+                {t('game.backToSetup')}
               </button>
               {remoteTournament?.status === 'playing' && (
                 <button
                   onClick={() => setTournamentStep('bracket')}
                   className="w-full xs:w-auto px-4 py-2 xs:px-6 xs:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base order-1 xs:order-2"
                 >
-                  View Bracket
+                  {t('game.viewBracket')}
                 </button>
               )}
             </div>
             {showAddPlayerModal && (
               <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-gradient-to-br from-purple-800 to-blue-800 rounded-xl p-4 sm:p-6 md:p-8 text-center max-w-xs sm:max-w-sm md:max-w-md mx-4">
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">Add Player to Slot {selectedSlot !== null ? selectedSlot + 1 : ''}</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">{t('game.addPlayerToSlot', { slot: selectedSlot !== null ? selectedSlot + 1 : '' })}</h3>
                   <div className="flex flex-col gap-4">
                     <button
                       onClick={() => {
@@ -1983,7 +1986,7 @@ export default function TournamentPage() {
                       }}
                       className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                     >
-                      Invite a friend
+                      {t('game.inviteAFriendButton')}
                     </button>
                     <button
                       onClick={() => {
@@ -1992,13 +1995,13 @@ export default function TournamentPage() {
                       }}
                       className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                     >
-                      Find random opponent
+                      {t('game.findRandomOpponentButton')}
                     </button>
                     <button
                       onClick={() => setShowAddPlayerModal(false)}
                       className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
@@ -2014,11 +2017,11 @@ export default function TournamentPage() {
               }}>
                 <div className="bg-gradient-to-br from-purple-800 to-blue-800 rounded-xl p-4 sm:p-6 md:p-8 text-center max-w-xs sm:max-w-sm md:max-w-md mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                   <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
-                    {selectedSlot !== null ? `Invite a friend to Slot ${selectedSlot + 1}` : 'Invite a Friend to Tournament'}
+                    {selectedSlot !== null ? t('game.inviteAFriendToSlot', { slot: selectedSlot + 1 }) : t('game.inviteFriendToTournament')}
                   </h3>
                   {friends.length === 0 ? (
                     <div className="py-4">
-                      <p className="text-gray-300 text-sm mb-4">You don't have any friends yet.</p>
+                      <p className="text-gray-300 text-sm mb-4">{t('game.noFriendsYet')}</p>
                     </div>
                   ) : (
                   <div className="flex flex-col gap-2">
@@ -2033,14 +2036,14 @@ export default function TournamentPage() {
                               if (tournamentId) {
                                 inviteToTournament((friend as any).id || (friend as any).id_user);
                               } else {
-                                alert('Please wait for the tournament to be created first.');
+                                alert(t('game.pleaseWaitTournamentCreated'));
                               }
                             setShowFriendsListModal(false);
                               setSelectedSlot(null);
                           }}
                           className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm"
                         >
-                          Invite
+                          {t('game.invite')}
                         </button>
                       </div>
                     ))}
@@ -2053,7 +2056,7 @@ export default function TournamentPage() {
                     }}
                     className="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 </div>
               </div>
@@ -2091,10 +2094,10 @@ export default function TournamentPage() {
       <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 md:p-8">
         <div className="mb-4 text-center">
           <h2 className="text-xl sm:text-2xl font-bold text-purple-300 mb-2">
-            Customize Tournament Game
+            {t('game.customizeTournamentGame')}
           </h2>
           <p className="text-gray-300 text-sm">
-            All {playerCount} players are ready. Customize the game settings to start the tournament.
+            {t('game.allPlayersReadyCustomize', { count: playerCount })}
           </p>
         </div>
         <GameCustomization
@@ -2129,7 +2132,7 @@ export default function TournamentPage() {
       // Return loading state while useEffect handles the redirect
       return (
         <div className="flex items-center justify-center h-full">
-          <div className="text-white">Loading next match...</div>
+          <div className="text-white">{t('game.loadingNextMatch')}</div>
         </div>
       );
     }
@@ -2140,9 +2143,9 @@ export default function TournamentPage() {
         <div className="bg-gray-900 border-b border-purple-500 p-2 sm:p-4 ">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="text-center sm:text-left">
-              <h2 className="text-lg sm:text-xl font-bold text-purple-300">Tournament Match</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-purple-300">{t('game.tournamentMatch')}</h2>
               <p className="text-sm text-gray-300">
-                Round {currentMatch.round} - Match {currentMatchIndex + 1}
+                {t('game.round')} {currentMatch.round} - {t('game.match')} {currentMatchIndex + 1}
               </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
@@ -2154,7 +2157,7 @@ export default function TournamentPage() {
                 />
                 <span className="text-white font-semibold text-sm sm:text-base">{currentMatch.player1.name}</span>
               </div>
-              <span className="text-purple-300 font-bold text-sm sm:text-base">VS</span>
+              <span className="text-purple-300 font-bold text-sm sm:text-base">{t('game.vs')}</span>
               <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-2 sm:px-3 py-1 sm:py-2">
                 <img
                   src={currentMatch.player2.avatar}
@@ -2180,7 +2183,7 @@ export default function TournamentPage() {
             <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
               <div className="bg-gradient-to-br from-purple-800 to-blue-800 rounded-xl p-4 sm:p-6 md:p-8 text-center max-w-xs sm:max-w-sm md:max-w-md mx-4">
                 <FaTrophy className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400 mx-auto mb-3 sm:mb-4" />
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Match Winner!</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">{t('game.matchWinner')}</h3>
                 <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                   <img
                     src={matchWinner.avatar}
@@ -2190,7 +2193,7 @@ export default function TournamentPage() {
                   <span className="text-lg sm:text-xl font-semibold text-white">{matchWinner.name}</span>
                 </div>
                 <p className="text-gray-300 text-sm sm:text-base">
-                  {isLastMatch ? 'Tournament Complete!' : 'Advancing to next round...'}
+                  {isLastMatch ? t('game.tournamentComplete') : t('game.advancingToNextRound')}
                 </p>
 
                 {/* Manual controls for match progression */}
@@ -2200,20 +2203,20 @@ export default function TournamentPage() {
                       onClick={proceedToNextMatch}
                       className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                     >
-                      Continue to Next Match
+                      {t('game.continueToNextMatch')}
                     </button>
                   )}
                   <button
                     onClick={() => setTournamentStep('bracket')}
                     className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                   >
-                    View Tournament Bracket
+                    {t('game.viewTournamentBracket')}
                   </button>
                   <button
                     onClick={() => router.push('/game')}
                     className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                   >
-                    Back to Game Modes
+                    {t('game.backToGameModes')}
                   </button>
                 </div>
               </div>
@@ -2229,13 +2232,13 @@ export default function TournamentPage() {
                 onClick={() => router.push('/game')}
                 className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
               >
-                Back to Game Modes
+                {t('game.backToGameModes')}
               </button>
               <button
                 onClick={() => setTournamentStep('bracket')}
                 className="px-3 py-2 sm:px-4 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm sm:text-base"
               >
-                View Bracket
+                {t('game.viewBracket')}
               </button>
 
               {/* Show Next Match button when current match is finished and there are more matches (not final match) */}
@@ -2244,7 +2247,7 @@ export default function TournamentPage() {
                   onClick={proceedToNextMatch}
                   className="px-3 py-2 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                 >
-                  Next Match
+                  {t('game.nextMatch')}
                 </button>
               )}
             </div>
@@ -2252,11 +2255,11 @@ export default function TournamentPage() {
             {/* Next Match Info */}
             {nextMatch && !showTournamentWinnerMessage && (
               <div className="text-center order-1 sm:order-2">
-                <p className="text-gray-300 text-xs sm:text-sm">Next Match:</p>
+                <p className="text-gray-300 text-xs sm:text-sm">{t('game.nextMatchLabel')}</p>
                 <div className="flex items-center gap-1 sm:gap-2 text-white text-sm">
-                  <span className="truncate max-w-16 sm:max-w-none">{nextMatch.player1?.name || 'TBD'}</span>
-                  <span className="text-purple-300">vs</span>
-                  <span className="truncate max-w-16 sm:max-w-none">{nextMatch.player2?.name || 'TBD'}</span>
+                  <span className="truncate max-w-16 sm:max-w-none">{nextMatch.player1?.name || t('game.tbd')}</span>
+                  <span className="text-purple-300">{t('game.vs')}</span>
+                  <span className="truncate max-w-16 sm:max-w-none">{nextMatch.player2?.name || t('game.tbd')}</span>
                 </div>
               </div>
             )}
@@ -2264,8 +2267,8 @@ export default function TournamentPage() {
             {/* Tournament Complete Info */}
             {isLastMatch && !showTournamentWinnerMessage && (
               <div className="text-center order-1 sm:order-2">
-                <p className="text-green-300 font-semibold text-sm sm:text-base">Final Match!</p>
-                <p className="text-gray-300 text-xs sm:text-sm">Winner takes the tournament</p>
+                <p className="text-green-300 font-semibold text-sm sm:text-base">{t('game.finalMatch')}</p>
+                <p className="text-gray-300 text-xs sm:text-sm">{t('game.winnerTakesTournament')}</p>
               </div>
             )}
           </div>
@@ -2280,11 +2283,11 @@ export default function TournamentPage() {
       <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 md:p-8">
         <div className="w-full max-w-xs sm:max-w-md md:max-w-4xl lg:max-w-6xl mx-auto">
           <div className="text-center mb-4 sm:mb-6">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-300 mb-2 sm:mb-4">Tournament Bracket</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-300 mb-2 sm:mb-4">{t('game.tournamentBracket')}</h1>
             <p className="text-gray-300 text-sm sm:text-base">
               {gameState.tournament?.bracket?.every(m => m.status === 'finished')
-                ? 'Tournament Complete!'
-                : 'Tournament Progress'}
+                ? t('game.tournamentComplete')
+                : t('game.tournamentProgress')}
             </p>
           </div>
 
@@ -2295,7 +2298,7 @@ export default function TournamentPage() {
               onClick={() => router.push('/game')}
               className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
             >
-              Back to Game Modes
+              {t('game.backToGameModes')}
             </button>
 
             {/* Return to current game if match is in progress */}
@@ -2310,7 +2313,7 @@ export default function TournamentPage() {
                     onClick={() => setTournamentStep('playing')}
                     className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                   >
-                    Return to Game
+                    {t('game.returnToGame')}
                   </button>
                 );
               }
@@ -2331,7 +2334,7 @@ export default function TournamentPage() {
                   }}
                   className="px-4 py-2 sm:px-6 sm:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                 >
-                  Continue Tournament
+                  {t('game.continueTournament')}
                 </button>
               ) : null;
             })()}
@@ -2340,7 +2343,7 @@ export default function TournamentPage() {
               onClick={() => setTournamentStep('setup')}
               className="px-4 py-2 sm:px-6 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm sm:text-base"
             >
-              New Tournament
+              {t('game.newTournament')}
             </button>
           </div>
         </div>
@@ -2355,24 +2358,24 @@ export default function TournamentPage() {
         <div className="w-full max-w-xs sm:max-w-md md:max-w-4xl lg:max-w-6xl bg-opacity-90 rounded-lg xs:rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl bg-gradient-to-br from-blue-700 via-purple-900 to-black border-2 border-white p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
           <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-purple-300 mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-center flex items-center justify-center gap-1 xs:gap-2">
             <FaSearch className="text-yellow-400 text-sm xs:text-base sm:text-lg" />
-            <span className="break-words">Available Tournaments</span>
+            <span className="break-words">{t('game.availableTournaments')}</span>
           </h1>
 
           {isSearching ? (
             <div className="text-center py-6 xs:py-8">
               <div className="animate-spin rounded-full h-8 w-8 xs:h-10 xs:w-10 sm:h-12 sm:w-12 border-b-2 border-purple-400 mx-auto mb-3 xs:mb-4"></div>
-              <p className="text-white text-sm xs:text-base">Searching for tournaments...</p>
+              <p className="text-white text-sm xs:text-base">{t('game.searchingForTournaments')}</p>
             </div>
           ) : (
             <>
               {availableTournaments.length === 0 ? (
                 <div className="text-center py-6 xs:py-8">
-                  <p className="text-gray-300 mb-3 xs:mb-4 text-sm xs:text-base">No open tournaments found</p>
+                  <p className="text-gray-300 mb-3 xs:mb-4 text-sm xs:text-base">{t('game.noOpenTournaments')}</p>
                   <button
                     onClick={searchTournaments}
                     className="px-3 py-2 xs:px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm xs:text-base"
                   >
-                    Refresh Search
+                    {t('game.refreshSearch')}
                   </button>
                 </div>
               ) : (
@@ -2395,19 +2398,19 @@ export default function TournamentPage() {
                                 {tournament.name}
                               </h3>
                               <p className="text-gray-400 text-xs sm:text-sm truncate">
-                                Hosted by {tournament.host.name}
+                                {t('game.hostedBy', { name: tournament.host.name })}
                               </p>
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-1 xs:gap-2 text-xs">
                             <span className="bg-purple-600 bg-opacity-30 text-purple-300 px-2 py-1 rounded text-xs">
-                              {tournament.playerCount || tournament.maxPlayers} Players
+                              {tournament.playerCount || tournament.maxPlayers} {t('game.players')}
                             </span>
                             <span className="bg-blue-600 bg-opacity-30 text-blue-300 px-2 py-1 rounded text-xs">
-                              {tournament.registeredPlayers?.length || tournament.currentPlayers}/{tournament.playerCount || tournament.maxPlayers} Joined
+                              {tournament.registeredPlayers?.length || tournament.currentPlayers}/{tournament.playerCount || tournament.maxPlayers} {t('game.joined')}
                             </span>
                             <span className="bg-green-600 bg-opacity-30 text-green-300 px-2 py-1 rounded text-xs">
-                              {tournament.type ? tournament.type.charAt(0).toUpperCase() + tournament.type.slice(1) : 'Tournament'}
+                              {tournament.type ? tournament.type.charAt(0).toUpperCase() + tournament.type.slice(1) : t('game.tournament')}
                             </span>
                           </div>
                         </div>
@@ -2416,9 +2419,9 @@ export default function TournamentPage() {
                             <div className="text-center bg-yellow-600 bg-opacity-20 border border-yellow-500 rounded-lg px-2 xs:px-3 py-2 w-full xs:w-auto">
                               <div className="flex items-center justify-center gap-1 xs:gap-2 mb-1">
                                 <FaClock className="text-yellow-400 text-xs xs:text-sm" />
-                                <span className="text-yellow-400 text-xs xs:text-sm font-semibold">Request Pending</span>
+                                <span className="text-yellow-400 text-xs xs:text-sm font-semibold">{t('game.requestPending')}</span>
                               </div>
-                              <p className="text-gray-400 text-xs">Waiting for host approval</p>
+                              <p className="text-gray-400 text-xs">{t('game.waitingForHostApproval')}</p>
                             </div>
                           ) : (
                             <button
@@ -2426,7 +2429,7 @@ export default function TournamentPage() {
                               disabled={(tournament.registeredPlayers?.length || tournament.currentPlayers) >= (tournament.playerCount || tournament.maxPlayers)}
                               className="w-full xs:w-auto px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-xs xs:text-sm"
                             >
-                              {(tournament.registeredPlayers?.length || tournament.currentPlayers) >= (tournament.playerCount || tournament.maxPlayers) ? 'Full' : 'Request to Join'}
+                              {(tournament.registeredPlayers?.length || tournament.currentPlayers) >= (tournament.playerCount || tournament.maxPlayers) ? t('game.full') : t('game.requestToJoin')}
                             </button>
                           )}
                         </div>
@@ -2443,13 +2446,13 @@ export default function TournamentPage() {
               onClick={() => setTournamentStep('setup')}
               className="w-full xs:w-auto px-3 py-2 xs:px-4 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base"
             >
-              Back to Setup
+              {t('game.backToSetup')}
             </button>
             <button
               onClick={searchTournaments}
               className="w-full xs:w-auto px-3 py-2 xs:px-4 sm:px-6 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base"
             >
-              Refresh Search
+              {t('game.refreshSearch')}
             </button>
           </div>
         </div>
@@ -2461,13 +2464,13 @@ export default function TournamentPage() {
   return (
     <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 md:p-8">
       <div className="text-center">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4">Tournament Feature</h2>
-        <p className="text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base">Tournament setup and registration only</p>
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4">{t('game.tournamentFeature')}</h2>
+        <p className="text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base">{t('game.tournamentSetupRegistrationOnly')}</p>
         <button
           onClick={() => router.push('/game')}
           className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
         >
-          Back to Game Modes
+          {t('game.backToGameModes')}
         </button>
       </div>
     </div>

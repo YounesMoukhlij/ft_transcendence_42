@@ -14,6 +14,7 @@ import { PlayerBanner } from "./player-banner"
 import { RankBanner } from "./rank-banner"
 import { useCountUp, formatDuration } from "../hooks/useCountUp"
 import { User } from "@/types/user"
+import { useTranslation } from "../../../../contexts/LanguageContext"
 
 
 interface ProfileProps {
@@ -29,11 +30,11 @@ function resolveImage(path: string) {
 }
 
 export  function Profile({user} : ProfileProps)  {
-
-const [overviewV, setOverviewV] = useState(true);
-const [matchHistoryV, setMatchHistoryV] = useState(false);
-const [AnalyticsV, setAnalyticsV] = useState(false);
-const [activeTab, setActiveTab] = useState("overview")
+  const { t } = useTranslation();
+  const [overviewV, setOverviewV] = useState(true);
+  const [matchHistoryV, setMatchHistoryV] = useState(false);
+  const [AnalyticsV, setAnalyticsV] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview")
 
 
 
@@ -68,8 +69,8 @@ const getRank = (): "gold" | "silver" | "bronze" => {
 }
 
 const recentMatches = user.recentMatches;
-  
-const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel / 10, 700); 
+
+const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel / 10, 700);
 
 
   return (
@@ -81,14 +82,14 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="transform hover:scale-105 transition duration-300 ease-in-out cursor-pointer">
-            <RankBanner rank="bronze" title="Bronze League" description="Entry Level Players" count={userStats.bronzePlayers} />
+            <RankBanner rank="bronze" title={t('profile.bronzeLeague')} description={t('profile.entryLevelPlayers')} count={userStats.bronzePlayers} />
           </div>
           <div className="transform hover:scale-105 transition duration-300 ease-in-out cursor-pointer">
-            <RankBanner rank="silver" title="Silver League" description="Intermediate Players" count={userStats.silverPlayers} />
+            <RankBanner rank="silver" title={t('profile.silverLeague')} description={t('profile.intermediatePlayers')} count={userStats.silverPlayers} />
           </div>
           <div className="transform hover:scale-105 transition duration-300 ease-in-out cursor-pointer">
-            <RankBanner rank="gold" title="Gold League" description="Elite Players" count={userStats.goldPlayers} />
-          </div> 
+            <RankBanner rank="gold" title={t('profile.goldLeague')} description={t('profile.elitePlayers')} count={userStats.goldPlayers} />
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 ">
@@ -99,7 +100,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
               onClick={() => {setOverviewV(true); setAnalyticsV(false); setMatchHistoryV(false);}}
             >
               <BarChart3 className="w-4 h-4" />
-              Overview
+              {t('profile.overview')}
             </TabsTrigger>
             <TabsTrigger
               value="matches"
@@ -107,7 +108,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
               onClick={() => {setOverviewV(false); setMatchHistoryV(true); setAnalyticsV(false); }}
             >
               <Calendar className="w-4 h-4" />
-              Match History
+              {t('profile.matchHistory')}
             </TabsTrigger>
             <TabsTrigger
               value="performance"
@@ -115,7 +116,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
               onClick={() => {setOverviewV(false); setMatchHistoryV(false); setAnalyticsV(true);}}
             >
               <TrendingUp className="w-4 h-4" />
-              Analytics
+              {t('profile.analytics')}
             </TabsTrigger>
           </TabsList>
           <TabsContent data-showo={overviewV} value="overview" className="space-y-6 transition-all duration-300 opacity-0 scale-95  data-[showo=true]:opacity-100 data-[showo=true]:scale-100">
@@ -124,11 +125,11 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="bg-card/60 backdrop-blur-sm border-border/50 cosmic-glow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-card-foreground">Experience level</CardTitle>
+                  <CardTitle className="text-sm font-medium text-card-foreground">{t('profile.experienceLevel')}</CardTitle>
                   <Target className="h-2 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">Level {userStats.level}</div>
+                  <div className="text-2xl font-bold text-primary">{t('profile.level')} {userStats.level}</div>
                   <Progress value={_levelProgress} className="mt-2 " />
                     <p className="text-xs text-muted-foreground pt-2">{userStats.experience} / {userStats.level * userStats.expForLevel + userStats.expForLevel}</p>
                 </CardContent>
@@ -136,7 +137,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
 
               <Card className="bg-card/60 backdrop-blur-sm border-border/50 cosmic-glow-accent">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-card-foreground">Total Tournaments</CardTitle>
+                  <CardTitle className="text-sm font-medium text-card-foreground">{t('profile.totalTournaments')}</CardTitle>
                   <Trophy className="h-4 w-4 text-accent" />
                 </CardHeader>
                 <CardContent>
@@ -147,7 +148,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
 
               <Card className="bg-card/60 backdrop-blur-sm border-border/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-card-foreground">Total Battles</CardTitle>
+                  <CardTitle className="text-sm font-medium text-card-foreground">{t('profile.totalBattles')}</CardTitle>
                   <Activity className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -160,12 +161,12 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
 
               <Card className="bg-card/60 backdrop-blur-sm border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-sm font-medium text-card-foreground">Avg Score</CardTitle>
+                  <CardTitle className="text-sm font-medium text-card-foreground">{t('profile.avgScore')}</CardTitle>
                   <Award className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-card-foreground">{userStats?.averageScore?.toFixed(2)}</div>
-                  <p className="text-xs text-muted-foreground">points per battle</p>
+                  <p className="text-xs text-muted-foreground">{t('profile.pointsPerBattle')}</p>
                 </CardContent>
               </Card>
             </div>
@@ -174,9 +175,9 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-card-foreground">
                   <Clock className="w-5 h-5 text-primary" />
-                  Recent Matches
+                  {t('profile.recentMatches')}
                 </CardTitle>
-                <CardDescription className="text-muted-foreground">Your latest game results</CardDescription>
+                <CardDescription className="text-muted-foreground">{t('profile.latestGameResults')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -190,10 +191,10 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
                           variant={match.result === "Win" ? "default" : "destructive"}
                           className={match.result === "Win" ? "bg-accent text-accent-foreground" : ""}
                         >
-                          {match.result === "Win" ? "Victory" : "Defeat"}
+                          {match.result === "Win" ? t('profile.victory') : t('profile.defeat')}
                         </Badge>
                         <div>
-                          <p className="font-medium text-card-foreground">vs {match.opponent}</p>
+                          <p className="font-medium text-card-foreground">{t('profile.vs')} {match.opponent}</p>
                           <p className="text-sm text-muted-foreground">{match.game_date}</p>
                         </div>
                       </div>
@@ -209,7 +210,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
                   className="w-full mt-4 bg-transparent border-primary text-primary hover:bg-primary hover:text-primary-foreground cosmic-glow"
                   onClick={() => setActiveTab("matches")}
                 >
-                  View All Battles
+                  {t('profile.viewAllBattles')}
                 </Button>
               </CardContent>
             </Card>

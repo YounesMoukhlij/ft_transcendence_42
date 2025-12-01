@@ -3,15 +3,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline, IoTrophyOutline} from "react-icons/io5";
+import { useTranslation } from '../contexts/LanguageContext';
 
 export default function Sidebar() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const navItems = [
-    { path: '/profile', icon: <IoPersonOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: 'Profile' },
-    { path: '/chat', icon: <IoChatbubbleOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: 'Chat' },
-    { path: '/game', icon: <IoGameControllerOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: 'Game' },
-    { path: '/leaderboard', icon: <IoTrophyOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: 'Leaderboard' },
-    { path: '/settings', icon: <IoSettingsOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: 'Settings' },
+    { path: '/profile', icon: <IoPersonOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: t('common.profile') },
+    { path: '/chat', icon: <IoChatbubbleOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: t('common.chat') },
+    { path: '/game', icon: <IoGameControllerOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: t('common.game') },
+    { path: '/leaderboard', icon: <IoTrophyOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: t('common.leaderboard') },
+    { path: '/settings', icon: <IoSettingsOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: t('common.settings') },
   ];
 
   return (
@@ -23,7 +25,7 @@ export default function Sidebar() {
               {item.icon}
 
               <span className="
-                absolute left-1/2 -bottom-8 -translate-x-1/2 
+                absolute left-1/2 -bottom-8 -translate-x-1/2
                 whitespace-nowrap
                 px-2 py-1 rounded-md
                 bg-gray-700 text-white text-xs opacity-0

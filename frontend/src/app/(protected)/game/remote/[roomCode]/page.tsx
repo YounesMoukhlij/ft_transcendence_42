@@ -6,10 +6,12 @@ import { useGameContext } from '@/components/GameContext';
 import { useUserStore } from '@/store/userStore';
 import { getWebSocket } from '@/components/globalSocket';
 import PingPongGame from '@/components/PingPongGame';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 import { ServerGameState } from '@/types/game';
 
 export default function RemoteGameRoomPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
   const { roomCode } = params;
@@ -25,9 +27,9 @@ export default function RemoteGameRoomPage() {
   const [gameOver, setGameOver] = useState<{winner: string; finalScore: any} | null>(null);
 
   useEffect(() => {
-    document.title = 'Online Multiplayer Ping Pong';
+    document.title = t('game.onlineMultiplayerPingPong');
     setGameMode('remote');
-  }, [setGameMode]);
+  }, [setGameMode, t]);
 
   const handleAcceptRematch = useCallback(() => {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -72,7 +74,7 @@ export default function RemoteGameRoomPage() {
             setRematchRequested(false); // Reset request status when offer received
             break;
           case 'rematch:declined':
-            setRematchDeclinedMessage('Your opponent declined the rematch.');
+            setRematchDeclinedMessage(t('game.opponentDeclinedRematch'));
             setRematchRequested(false); // Reset request status
             break;
           case 'rematch:start':
@@ -100,7 +102,7 @@ export default function RemoteGameRoomPage() {
             }
             break;
           case 'error':
-            setError(message.message || 'An error occurred');
+            setError(message.message || t('game.anErrorOccurred'));
             break;
           default:
             console.log('Unhandled game message:', message);
@@ -205,7 +207,7 @@ export default function RemoteGameRoomPage() {
           onClick={() => router.push('/game')}
           className="mt-4 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
         >
-          Back to Game Menu
+          {t('game.backToGameMenu')}
         </button>
       </div>
     );
@@ -214,35 +216,35 @@ export default function RemoteGameRoomPage() {
   return (
     <div className="flex flex-col items-center justify-center h-[100%] w-[100%] bg-transparent">
       <div className="mb-4 text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">Online Game</h2>
-        <p className="text-gray-300">Room: {roomCode}</p>
+        <h2 className="text-2xl font-bold text-white mb-2">{t('game.onlineGame')}</h2>
+        <p className="text-gray-300">{t('game.room')}: {roomCode}</p>
         <div className="flex justify-center gap-4 mt-2">
           <button
             onClick={leaveRoom}
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
           >
-            Leave Game
+            {t('game.leaveGame')}
           </button>
         </div>
       </div>
       {gameOver ? (
         <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
-          <h2 className="text-4xl font-bold mb-4">Game Over</h2>
-          <p className="text-2xl mt-4 mb-6">{gameOver.winner} is the winner!</p>
+          <h2 className="text-4xl font-bold mb-4">{t('game.gameOver')}</h2>
+          <p className="text-2xl mt-4 mb-6">{t('game.isTheWinner', { winner: gameOver.winner })}</p>
           <p className="text-lg mb-4">
-            Final Score: {gameOver.finalScore.player1} - {gameOver.finalScore.player2}
+            {t('game.finalScore')}: {gameOver.finalScore.player1} - {gameOver.finalScore.player2}
           </p>
 
           {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage}</p>}
 
           {rematchOffer ? (
             <div>
-              <p className="text-yellow-400 mb-4">Your opponent requested a rematch!</p>
+              <p className="text-yellow-400 mb-4">{t('game.opponentRequestedRematch')}</p>
               <button
                 onClick={handleAcceptRematch}
                 className="mt-4 px-6 py-3 bg-yellow-500 rounded-lg text-lg hover:bg-yellow-600 transition-colors"
               >
-                Accept Rematch
+                {t('game.acceptRematch')}
               </button>
               <button
                 onClick={() => {
@@ -253,11 +255,11 @@ export default function RemoteGameRoomPage() {
                 }}
                 className="mt-4 ml-4 px-6 py-3 bg-red-500 rounded-lg text-lg hover:bg-red-600 transition-colors"
               >
-                Decline
+                {t('common.decline')}
               </button>
             </div>
           ) : rematchRequested ? (
-            <p className="text-yellow-400 mb-4">Waiting for opponent to accept rematch...</p>
+            <p className="text-yellow-400 mb-4">{t('game.waitingForOpponentRematch')}</p>
           ) : (
             <button
               onClick={() => {
@@ -269,7 +271,7 @@ export default function RemoteGameRoomPage() {
               }}
               className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors"
             >
-              Request Rematch
+              {t('game.requestRematch')}
             </button>
           )}
 
@@ -277,7 +279,7 @@ export default function RemoteGameRoomPage() {
             onClick={leaveRoom}
             className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors"
           >
-            Back to Game Lobby
+            {t('game.backToGameLobby')}
           </button>
         </div>
       ) : (

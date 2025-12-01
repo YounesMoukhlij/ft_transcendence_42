@@ -4,6 +4,7 @@ import { Camera, Save, User, Mail, Lock, Globe, ChevronDown, Shield, HelpCircle 
 import { useUserStore } from '../../../store/userStore'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '../../../contexts/LanguageContext'
 
 // Define the base URL of your backend API
 const API_URL = "http://" + process.env.NEXT_PUBLIC_BACKENDIP + ":" + process.env.NEXT_PUBLIC_BACKENDPORT;;
@@ -17,41 +18,41 @@ interface DeleteConfirmationDialogProps {
   isLoading: boolean
 }
 
-// This component remains unchanged
-const DeleteConfirmationDialog = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  isLoading 
+const DeleteConfirmationDialog = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  isLoading
 }: DeleteConfirmationDialogProps) => {
+  const { t } = useTranslation()
   if (!isOpen) return null
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      
 
-      <div 
+
+      <div
         className="relative bg-black rounded-2xl shadow-2xl w-full max-w-md border"
         onClick={(e) => e.stopPropagation()}
       >
 
         <div className="flex justify-center pt-8 pb-4">
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-            <svg 
-              className="w-8 h-8 text-red-500" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className="w-8 h-8 text-red-500"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
           </div>
@@ -59,10 +60,10 @@ const DeleteConfirmationDialog = ({
 
         <div className="px-8 pb-6">
           <h2 className="text-2xl font-bold text-white text-center mb-3">
-            Delete Account ?
+            {t('settings.deleteAccountTitle')}
           </h2>
           <p className="text-gray-400 text-center leading-relaxed">
-            This action is permanent and cannot be undone. All your data, settings, and content will be permanently deleted.
+            {t('settings.deleteAccountMessage')}
           </p>
         </div>
 
@@ -73,7 +74,7 @@ const DeleteConfirmationDialog = ({
             disabled={isLoading}
             className="flex-1 px-6 py-3 rounded-xl font-semibold text-sm sm:text-base border border-white hover:bg-gray-500 hover:cursor-pointer"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -82,30 +83,30 @@ const DeleteConfirmationDialog = ({
           >
             {isLoading ? (
               <>
-                <svg 
-                  className="animate-spin h-5 w-5" 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle 
-                    className="opacity-25" 
-                    cx="12" 
-                    cy="12" 
-                    r="10" 
-                    stroke="currentColor" 
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
                     strokeWidth="4"
                   />
-                  <path 
-                    className="opacity-75" 
-                    fill="currentColor" 
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                Deleting...
+                {t('settings.deleting')}
               </>
             ) : (
-              'Delete Account'
+              t('settings.deleteAccount')
             )}
           </button>
         </div>
@@ -144,7 +145,7 @@ function SwitchButton({ label, checked, onChange }) {
 }
 
 const ProfileSettingsPage = () => {
- 
+  const { t, language, setLanguage } = useTranslation()
   const user = useUserStore((state) => state.user);
   const setUser = useUserStore((state) => state.setUser)
   const hasHydrated = useUserStore((state) => state._hasHydrated);
@@ -154,14 +155,14 @@ const ProfileSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
-  
-  const [is2FAEnabled, setIs2FAEnabled] = useState(false) 
+
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false)
   const [previewImage, setPreviewImage] = useState(null) // Kept for UI preview
-  
+
   // --- NEW --- State to hold the actual file for upload
   const [imageFile, setImageFile] = useState(null);
-  
-  const [activeTab, setActiveTab] = useState('profile') 
+
+  const [activeTab, setActiveTab] = useState('profile')
 
   const [formData, setFormData] = useState({
     languages: 'en',
@@ -173,19 +174,19 @@ const ProfileSettingsPage = () => {
     confirmPassword: '',
     currentPassword: '',
   })
-  
-  // Languages data (remains unchanged)
+
+  // Languages data
   const languages = [
     { id: 'en', label: 'English', flag: '🇬🇧' },
     { id: 'es', label: 'Spanish', flag: '🇪🇸' },
-    { id: 'tz', label: 'Tamazight', flag: '🇲🇦' },
+    { id: 'tz', label: 'Tamazight', flag: 'MA' },
     { id: 'fr', label: 'French', flag: '🇫🇷' },
   ]
 
-  
-  const authMethod = user?.auth_method || 0 
+
+  const authMethod = user?.auth_method || 0
   const isPasswordAuth = authMethod === 0
-  
+
 
   // This useEffect remains unchanged
   useEffect(() => {
@@ -210,20 +211,24 @@ const ProfileSettingsPage = () => {
 
   }, [user, router, hasHydrated])
 
-  
-  // Loading state remains unchanged
+
+  // Loading state
   if (!user) {
     return (
       <div className="min-h-screen w-full bg-black text-white flex items-center justify-center">
-        <p>Loading user data...</p>
+        <p>{t('common.loading')}...</p>
       </div>
     )
   }
 
-  // This function remains unchanged
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+
+    // Update language in context when language changes
+    if (name === 'languages' && value !== language) {
+      setLanguage(value as 'en' | 'es' | 'fr' | 'tz')
+    }
   }
 
   const handleImageClick = () => fileInputRef.current?.click()
@@ -233,10 +238,10 @@ const ProfileSettingsPage = () => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      toast.error('Please upload a valid image file')
+      toast.error(t('settings.validation.imageInvalid'))
       return
     }
-    
+
     // 1. Store the raw file object for uploading
     setImageFile(file);
 
@@ -251,27 +256,27 @@ const ProfileSettingsPage = () => {
     setIsLoading(true)
 
     try {
-      // Form validation remains the same
+      // Form validation
       if (!formData.username.trim()) {
-        toast.error('Username is required')
-        setIsLoading(false) // Added this to stop execution
+        toast.error(t('settings.validation.usernameRequired'))
+        setIsLoading(false)
         return
       }
       if (!formData.email.trim()) {
-        toast.error('Email is required')
-        setIsLoading(false) // Added this to stop execution
+        toast.error(t('settings.validation.emailRequired'))
+        setIsLoading(false)
         return
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(formData.email)) {
-        toast.error('Please enter a valid email address')
-        setIsLoading(false) // Added this to stop execution
+        toast.error(t('settings.validation.emailInvalid'))
+        setIsLoading(false)
         return
       }
-      
+
       // --- NEW --- Create FormData to send file and text
       const dataToSave = new FormData();
-      
+
       // Append all text-based form fields
       dataToSave.append('languages', formData.languages);
       dataToSave.append('username', formData.username);
@@ -283,10 +288,10 @@ const ProfileSettingsPage = () => {
       }
 
       const token = user.access_token;
-      
+
       const response = await fetch(`${API_URL}/updateUserInfo`, {
         method: 'POST',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${user.access_token}`
         },
 
@@ -296,20 +301,25 @@ const ProfileSettingsPage = () => {
       const data = await response.json()
 
       if (!response.ok || data.code === 409 || !data.success) {
-        toast.error(data.message || 'Failed to update profile')
-        return // Do not proceed on failure
+        toast.error(data.message || t('settings.errors.updateFailed'))
+        return
       }
 
-      toast.success('Profile updated successfully!')
-      
+      toast.success(t('settings.profileUpdated'))
+
+      // Update language in context when user changes language
+      if (formData.languages !== language) {
+        setLanguage(formData.languages as 'en' | 'es' | 'fr' | 'tz')
+      }
+
       // --- MODIFIED --- Update user state from the backend's response
       // The backend now sends back the updated user object
       const updatedUser = {
         ...user,
         ...data.user, // Merge the updated fields (e.g., new profile_img path)
       }
-      setUser(updatedUser) 
-      
+      setUser(updatedUser)
+
       // Clear the temporary states
       setPreviewImage(null)
       setImageFile(null)
@@ -322,7 +332,7 @@ const ProfileSettingsPage = () => {
       setIsLoading(false)
     }
   }
-  
+
   // --- All functions below remain unchanged ---
 
   const handleSaveSecurity = async () => {
@@ -330,7 +340,7 @@ const ProfileSettingsPage = () => {
 
     if (is2FAEnabled) {
       if (!formData.currentPassword.trim()) {
-        toast.error('Current password is required')
+        toast.error(t('settings.validation.currentPasswordRequired'))
         setIsLoading(false)
         return
       }
@@ -338,18 +348,18 @@ const ProfileSettingsPage = () => {
 
     if (isPasswordAuth) {
       if (formData.newPassword.trim() !== '' && formData.currentPassword.trim() === '') {
-        toast.error('Current password is required to set a new password')
+        toast.error(t('settings.validation.currentPasswordRequiredForNew'))
         setIsLoading(false)
         return
       }
       if (formData.newPassword.trim() !== '') {
         if (formData.newPassword.length < 8) {
-          toast.error('New password must be at least 8 characters long')
+          toast.error(t('settings.validation.passwordMinLength'))
           setIsLoading(false)
           return
         }
         if (formData.newPassword !== formData.confirmPassword) {
-          toast.error('New password and confirmation do not match')
+          toast.error(t('settings.validation.passwordMismatch'))
           setIsLoading(false)
           return
         }
@@ -359,7 +369,7 @@ const ProfileSettingsPage = () => {
     try {
       const response = await fetch(`${API_URL}/updateUserPassword`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' 
+        headers: { 'Content-Type': 'application/json'
           , Authorization: `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
@@ -367,15 +377,15 @@ const ProfileSettingsPage = () => {
           new_password: formData.newPassword,
         }),
       })
-      
+
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        toast.error(data.message || 'Failed to update security settings')
+        toast.error(data.message || t('settings.errors.securityUpdateFailed'))
         return
       }
 
-      toast.success('Password  updated successfully!')
+      toast.success(t('settings.passwordUpdated'))
 
       setUser({ ...user })
 
@@ -401,7 +411,7 @@ const ProfileSettingsPage = () => {
     try {
       const response = await fetch(`${API_URL}/update2FA`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' , 
+        headers: { 'Content-Type': 'application/json' ,
           Authorization: `Bearer ${user.access_token}`},
         body: JSON.stringify({
           twofa: twofavalue,
@@ -410,15 +420,15 @@ const ProfileSettingsPage = () => {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        toast.error(data.message || 'Failed to update 2FA settings')
+        toast.error(data.message || t('settings.errors.twoFactorUpdateFailed'))
         return
       }
 
       setIs2FAEnabled(!is2FAEnabled)
       setUser({ ...user, is2FAEnabled: !is2FAEnabled })
-      toast.success(`Two-Factor Authentication ${!is2FAEnabled ? 'enabled' : 'disabled'} successfully!`)
+      toast.success(!is2FAEnabled ? t('settings.twoFactorEnabled') : t('settings.twoFactorDisabled'))
       // set a timeout to clear the message after 3 seconds
-      
+
 
     } catch (error) {
       console.error('2FA update error:', error)
@@ -430,7 +440,7 @@ const ProfileSettingsPage = () => {
 
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
-    
+
     try {
       const response = await fetch(`${API_URL}/DeleteUserById/${user.id_user}`, {
         method: 'DELETE',
@@ -438,11 +448,11 @@ const ProfileSettingsPage = () => {
       const data = await response.json()
 
       if (!response.ok) {
-        toast.error(data.message || 'Failed to delete account')
+        toast.error(data.message || t('settings.errors.deleteFailed'))
         return
       }
 
-      toast.success('Account deleted successfully!')
+      toast.success(t('settings.deleteAccount') + ' ' + t('common.save'))
       setUser(null)
       setIsDeleteDialogOpen(false)
 
@@ -455,7 +465,7 @@ const ProfileSettingsPage = () => {
     }
   }
 
-  const TabButton = ({ tab, icon: Icon, label }) => (
+  const TabButton = ({ tab, icon: Icon, labelKey }) => (
     <button
       onClick={() => setActiveTab(tab)}
       className={`flex items-center justify-center gap-3  py-3 rounded-xl font-medium  w-1/4 hover:cursor-pointer ${
@@ -465,7 +475,7 @@ const ProfileSettingsPage = () => {
       }`}
     >
       <Icon size={20} />
-      <span>{label}</span>
+      <span>{t(labelKey)}</span>
     </button>
   )
 
@@ -475,16 +485,16 @@ const ProfileSettingsPage = () => {
     if (previewImage) {
       return previewImage;
     }
-    
+
     // Get the current image path from the user state or use default
     const currentImg = user.profile_img || defaultProfileImg;
 
     // 2. If the path is from our DB (e.g., /uploads/...), prefix with API_URL
     if (currentImg && currentImg.startsWith('/uploads/')) {
       // e.g., http://localhost:4444/uploads/12345.png
-      return `${API_URL}${currentImg}`; 
+      return `${API_URL}${currentImg}`;
     }
-    
+
     // 3. Otherwise, it's a full URL (default or from OAuth), use it directly
     return currentImg;
   }
@@ -495,22 +505,22 @@ const ProfileSettingsPage = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Account Settings</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">{t('settings.title')}</h1>
           <p className="text-gray-500 text-sm sm:text-base">
-            Manage your profile and preferences
+            {t('settings.subtitle')}
           </p>
         </div>
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap justify-center gap-2 mb-6 ">
-          <TabButton tab="profile" icon={User} label="Profile" />
-          <TabButton tab="security" icon={Shield} label="Security" />
-          <TabButton tab="help" icon={HelpCircle} label="Help" />
+          <TabButton tab="profile" icon={User} labelKey="settings.profile" />
+          <TabButton tab="security" icon={Shield} labelKey="settings.security" />
+          <TabButton tab="help" icon={HelpCircle} labelKey="settings.help" />
         </div>
 
         {/* Profile Card */}
         <div className="border border-gray-700 rounded-2xl shadow-lg bg-black">
-          
+
           {/* PROFILE TAB */}
           {activeTab === 'profile' && (
             <>
@@ -549,7 +559,7 @@ const ProfileSettingsPage = () => {
                         htmlFor="languages"
                         className="flex items-center gap-2 text-gray-400 text-sm mb-2"
                       >
-                        <Globe size={18} /> Preferred Language
+                        <Globe size={18} /> {t('settings.preferredLanguage')}
                       </label>
                       <div className="relative">
                         <select
@@ -580,26 +590,26 @@ const ProfileSettingsPage = () => {
 
                 {/* Username */}
                 <div>
-                  <label className="text-gray-400 text-sm mb-1 block">Username</label>
+                  <label className="text-gray-400 text-sm mb-1 block">{t('settings.username')}</label>
                   <input
                     type="text"
                     name="username"
                     value={formData.username}
                     onChange={handleInputChange}
-                    placeholder="Enter username"
+                    placeholder={t('settings.usernamePlaceholder')}
                     className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white"
                   />
                 </div>
 
                 {/* Full Name */}
                 <div>
-                  <label className="text-gray-400 text-sm mb-1 block">Full Name</label>
+                  <label className="text-gray-400 text-sm mb-1 block">{t('settings.fullname')}</label>
                   <input
                     type="text"
                     name="fullname"
                     value={formData.fullname}
                     onChange={handleInputChange}
-                    placeholder="Enter full name"
+                    placeholder={t('settings.fullnamePlaceholder')}
                     className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white  appearance-none"
                   />
                 </div>
@@ -608,14 +618,14 @@ const ProfileSettingsPage = () => {
                 {/* Email (Combined and Conditional) */}
                 <div className="md:col-span-2">
                   <label className="text-gray-400 text-sm mb-1 block">
-                    {isPasswordAuth ? 'Email' : 'Email (You cannot change your email)'}
+                    {isPasswordAuth ? t('settings.email') : t('settings.emailOAuth')}
                   </label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="Enter email"
+                    placeholder={t('settings.emailPlaceholder')}
                     disabled={!isPasswordAuth}
                     className={
                       isPasswordAuth
@@ -627,19 +637,19 @@ const ProfileSettingsPage = () => {
 
                 {/* Bio */}
                 <div className="md:col-span-2 scrollbar-hide">
-                  <label className="text-gray-400 text-sm mb-1 block">Bio</label>
+                  <label className="text-gray-400 text-sm mb-1 block">{t('settings.bio')}</label>
                   <textarea
                     name="bio"
                     rows={4}
                     value={formData.bio}
                     onChange={handleInputChange}
-                    placeholder="Tell us about yourself..."
+                    placeholder={t('settings.bioPlaceholder')}
                     className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white resize-none overflow-hidden"
                   />
                 </div>
               </div>
 
-              {/* Save Button for Profile (This section remains unchanged) */}
+              {/* Save Button for Profile */}
               <div className="flex justify-around p-3 sm:p-8 border-t border-gray-700">
                 <button
                   onClick={handleSaveProfile}
@@ -650,7 +660,7 @@ const ProfileSettingsPage = () => {
                     : 'border border-white hover:bg-gray-500 hover:text-white '
                   }`}
                 >
-                  {isLoading ? 'Saving...' : 'Save Profile Changes'}
+                  {isLoading ? t('settings.saving') : t('settings.saveProfileChanges')}
                 </button>
                 <button
                   onClick={() => setIsDeleteDialogOpen(true)}
@@ -661,18 +671,18 @@ const ProfileSettingsPage = () => {
                     : 'border border-red-600 text-white hover:bg-red-500 '
                   }`}
                 >
-                  Delete Account
+                  {t('settings.deleteAccount')}
                 </button>
               </div>
             </>
           )}
 
-          {/* SECURITY TAB (This section remains unchanged) */}
+          {/* SECURITY TAB */}
           {activeTab === 'security' && (
             <div className="p-6 sm:p-8">
               <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-2">Security Settings</h2>
-                <p className="text-gray-500">Manage your password and security preferences</p>
+                <h2 className="text-2xl font-bold mb-2">{t('settings.securitySettings')}</h2>
+                <p className="text-gray-500">{t('settings.securitySubtitle')}</p>
               </div>
 
               {/* OAuth Info Message */}
@@ -681,7 +691,7 @@ const ProfileSettingsPage = () => {
                   <p className='text-sm text-gray-500 flex items-start gap-2'>
                     <Lock size={16} className='mt-0.5 flex-shrink-0' />
                     <span>
-                      You signed in with <strong className='text-white'>{authMethod === 1 ? 'Google' : '42'}</strong>. Password management is not available for OAuth accounts.
+                      {t('settings.oauthMessage', { provider: authMethod === 1 ? 'Google' : '42' })}
                     </span>
                   </p>
                 </div>
@@ -689,7 +699,7 @@ const ProfileSettingsPage = () => {
 
               {/* Password Fields and 2FA Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 {/* Password Fields */}
                 {isPasswordAuth && (
                   <>
@@ -697,16 +707,16 @@ const ProfileSettingsPage = () => {
                     <div className="md:col-span-2">
                       <label htmlFor="currentPassword" className='flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2'>
                         <Lock size={16} />
-                        Current Password
+                        {t('settings.currentPassword')}
                       </label>
-                      <input 
-                        type="password" 
+                      <input
+                        type="password"
                         id="currentPassword"
                         name="currentPassword"
                         value={formData.currentPassword}
                         onChange={handleInputChange}
                         className='w-full p-3 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm hover:border-white placeholder-gray-500'
-                        placeholder="Enter current password"
+                        placeholder={t('settings.currentPasswordPlaceholder')}
                       />
                     </div>
 
@@ -714,16 +724,16 @@ const ProfileSettingsPage = () => {
                     <div>
                       <label htmlFor="newPassword" className='flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2'>
                         <Lock size={16} />
-                        New Password (optional)
+                        {t('settings.newPassword')}
                       </label>
-                      <input 
-                        type="password" 
+                      <input
+                        type="password"
                         id="newPassword"
                         name="newPassword"
                         value={formData.newPassword}
                         onChange={handleInputChange}
                         className='w-full p-3 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm hover:border-white placeholder-gray-500'
-                        placeholder="Enter new password"
+                        placeholder={t('settings.newPasswordPlaceholder')}
                       />
                     </div>
 
@@ -731,45 +741,45 @@ const ProfileSettingsPage = () => {
                     <div>
                       <label htmlFor="confirmPassword" className='flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2'>
                         <Lock size={16} />
-                        Confirm New Password
+                        {t('settings.confirmPassword')}
                       </label>
-                      <input 
-                        type="password" 
+                      <input
+                        type="password"
                         id="confirmPassword"
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
                         className='w-full p-3 border-2 border-gray-400 bg-black rounded-xl focus:ring-2 focus:ring-white focus:border-white transition-all outline-none text-white text-sm hover:border-white placeholder-gray-500'
-                        placeholder="Confirm new password"
+                        placeholder={t('settings.confirmPasswordPlaceholder')}
                       />
                     </div>
                   </>
                 )}
-                
+
                 {/* Security Preferences Section */}
                 <div className="mt-8 pt-6 border-t border-gray-700 w-full md:col-span-2">
-                  <h3 className="text-lg font-semibold mb-4">Security Preferences</h3>
-                  
+                  <h3 className="text-lg font-semibold mb-4">{t('settings.securitySettings')}</h3>
+
                   {/* 2FA Toggle */}
                   <div className={`flex items-center justify-between p-2 border border-gray-500 rounded-xl ${!isPasswordAuth ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <div className="flex items-center gap-3">
                       <Shield size={20} className="text-gray-400" />
                       <div>
-                        <p className="font-medium">Two-Factor Authentication</p>
-                        <p className="text-sm text-gray-400">Add an extra layer of security to your account</p>
+                        <p className="font-medium">{t('settings.twoFactorAuth')}</p>
+                        <p className="text-sm text-gray-400">{t('settings.twoFactorAuthDesc')}</p>
                       </div>
                     </div>
                     <SwitchButton
-                      label={is2FAEnabled ? 'Enabled' : 'Disabled'}
+                      label={is2FAEnabled ? t('settings.enabled') : t('settings.disabled')}
                       checked={is2FAEnabled}
                      onChange={() => isPasswordAuth && handleToggle2FA()}
                     />
                   </div>
-                  
+
                   {/* Message for OAuth users */}
                   {!isPasswordAuth && (
                     <p className="text-sm text-gray-400 mt-2">
-                      Two-Factor Authentication settings are managed through your external provider ({authMethod === 1 ? 'Google' : '42'}) or are disabled for OAuth accounts.
+                      {t('settings.oauth2FAMessage', { provider: authMethod === 1 ? 'Google' : '42' })}
                     </p>
                   )}
                 </div>
@@ -779,25 +789,25 @@ const ProfileSettingsPage = () => {
               <div className="flex justify-end pt-6 mt-6 border-t border-gray-700">
                 <button
                   onClick={handleSaveSecurity}
-                  disabled={isLoading || !isPasswordAuth} 
+                  disabled={isLoading || !isPasswordAuth}
                   className={`px-6 py-3 rounded-xl font-semibold text-sm transition ${
                     (isLoading || !isPasswordAuth)
                     ? 'bg-gray-600 cursor-not-allowed opacity-50'
                     : 'bg-white text-black hover:bg-gray-500 hover:text-white  hover:cursor-pointer'
                   }`}
                 >
-                  {isLoading ? 'Saving...' : 'Update Security Settings'}
+                  {isLoading ? t('settings.saving') : t('settings.updateSecuritySettings')}
                 </button>
               </div>
             </div>
           )}
 
-          {/* HELP TAB (This section remains unchanged) */}
+          {/* HELP TAB */}
           {activeTab === 'help' && (
             <div className="p-6 sm:p-8">
               <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-2">Help & Support</h2>
-                <p className="text-gray-500">Get help with your account and application</p>
+                <h2 className="text-2xl font-bold mb-2">{t('settings.helpTitle')}</h2>
+                <p className="text-gray-500">{t('settings.helpSubtitle')}</p>
               </div>
 
               <div className="space-y-6">
@@ -805,25 +815,25 @@ const ProfileSettingsPage = () => {
                 <div className="bg-black rounded-xl p-6">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <HelpCircle size={20} />
-                    Frequently Asked Questions
+                    {t('settings.faq')}
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <p className="font-medium text-white mb-2">How do I reset my password?</p>
+                      <p className="font-medium text-white mb-2">{t('settings.faqPassword')}</p>
                       <p className="text-gray-400 text-sm">
-                        Go to the Security tab and use the password reset form. You'll need to provide your current password and set a new one.
+                        {t('settings.faqPasswordAnswer')}
                       </p>
                     </div>
                     <div>
-                      <p className="font-medium text-white mb-2">What is Two-Factor Authentication?</p>
+                      <p className="font-medium text-white mb-2">{t('settings.faq2FA')}</p>
                       <p className="text-gray-400 text-sm">
-                        2FA adds an extra layer of security by requiring a verification code from your mobile device when signing in.
+                        {t('settings.faq2FAAnswer')}
                       </p>
                     </div>
                     <div>
-                      <p className="font-medium text-white mb-2">Can I change my username?</p>
+                      <p className="font-medium text-white mb-2">{t('settings.faqUsername')}</p>
                       <p className="text-gray-400 text-sm">
-                        Yes, you can change your username in the Profile tab. Note that your old username may become available for others.
+                        {t('settings.faqUsernameAnswer')}
                       </p>
                     </div>
                   </div>
@@ -831,26 +841,26 @@ const ProfileSettingsPage = () => {
 
                 {/* Contact Support */}
                 <div className="bg-black rounded-xl p-6">
-                  <h3 className="text-lg font-semibold mb-4">Contact Support</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('settings.contactSupport')}</h3>
                   <p className="text-gray-400 mb-4">
-                    If you need further assistance, please contact our support team:
+                    {t('settings.contactSupportDesc')}
                   </p>
                   <div className="space-y-2">
-                    <p className="text-white">📧 Email: support@ponggame.com</p>
-                    <p className="text-white">🕒 Response Time: 24-48 hours</p>
+                    <p className="text-white">📧 {t('settings.supportEmail')}</p>
+                    <p className="text-white">🕒 {t('settings.responseTime')}</p>
                   </div>
                 </div>
 
                 {/* Application Info */}
                 <div className="bg-black rounded-xl p-6">
-                  <h3 className="text-lg font-semibold mb-4">Application Information</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('settings.appInfo')}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-400">Version</p>
+                      <p className="text-gray-400">{t('settings.version')}</p>
                       <p className="text-white">1.0.0</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Last Updated</p>
+                      <p className="text-gray-400">{t('settings.lastUpdated')}</p>
                       <p className="text-white">November 2024</p>
                     </div>
                   </div>

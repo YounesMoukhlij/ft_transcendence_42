@@ -1,38 +1,22 @@
+'use client';
+'use client';
+import React from 'react';
 import Link from 'next/link';
 import { Trophy, User } from 'lucide-react';
-import { cookies } from "next/headers";    // <-- added
+import { useTranslation } from '../../../contexts/LanguageContext';
 
-const BACK_API = 'http://localhost:4444';
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 
 const getProfileImageUrl = (currentImg) => {
   if (!currentImg) return defaultProfileImg;
+  const API_URL = `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}`;
 
   if (currentImg && currentImg.startsWith('/uploads/')) {
-    return `${BACK_API}${currentImg}`;
+    return `${API_URL}${currentImg}`;
   }
 
   return currentImg;
 };
-
-// --- Fetch leaderboard with token from cookies ---
-async function getLeaderboardData() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-
-  const res = await fetch("http://localhost:4444/leaderboard", {
-    cache: "no-store",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch data");
-  }
-
-  return res.json();
-}
 
 // --- Single Row Component ---
 const LeaderboardItem = ({ player, rank }) => (
@@ -82,17 +66,49 @@ const LeaderboardItem = ({ player, rank }) => (
 );
 
 // --- Page Component ---
-export default async function LeaderboardPage() {
-  let data;
-  let error = null;
+export default function LeaderboardPage() {
+  const { t } = useTranslation();
+  const [data, setData] = React.useState(null);
+  const [error, setError] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
 
-  try {
-    data = await getLeaderboardData();
-  } catch (err) {
-    error = 'Failed to load leaderboard. Please try again later.';
-  }
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user-storage') || '{}')?.state?.user;
+        if (!user?.access_token) {
+          setError(t('leaderboard.failedToLoad'));
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/leaderboard`, {
+          headers: {
+            Authorization: `Bearer ${user.access_token}`,
+          }
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch');
+        const result = await res.json();
+        setData(result);
+      } catch (err) {
+        setError(t('leaderboard.failedToLoad'));
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [t]);
 
   const leaderboard = data?.leaderboard || [];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full bg-black text-white flex items-center justify-center">
+        <p>{t('common.loading')}...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-black text-white p-4 sm:p-6 md:p-10">
@@ -101,10 +117,10 @@ export default async function LeaderboardPage() {
         <div className="text-center mb-8">
           <h1 className="flex items-center justify-center gap-3 text-3xl sm:text-4xl font-bold mb-2">
             <Trophy className="text-blue-400" size={36} color={'white'} />
-            Leaderboard
+            {t('leaderboard.title')}
           </h1>
           <p className="text-gray-500 text-sm sm:text-base">
-            See who's on top of the game
+            {t('leaderboard.subtitle')}
           </p>
         </div>
 
@@ -117,8 +133,8 @@ export default async function LeaderboardPage() {
           {!error && leaderboard.length === 0 && (
             <div className="flex flex-col items-center justify-center p-10 gap-4 text-gray-500">
               <User size={48} />
-              <p className="text-lg font-semibold">No players found</p>
-              <p className="text-sm">The leaderboard is currently empty.</p>
+              <p className="text-lg font-semibold">{t('leaderboard.noPlayers')}</p>
+              <p className="text-sm">{t('leaderboard.empty')}</p>
             </div>
           )}
 

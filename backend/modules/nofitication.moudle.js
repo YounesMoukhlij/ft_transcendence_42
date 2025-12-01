@@ -170,32 +170,47 @@ export async function sendRequestFriend(request, reply) {
     const result = insertQuery.run(friend_id, title, request.user.id_user, "request friend");
     const insertedId = result.lastInsertRowid;
 
+    // Prepare notification data
+    const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
+    const profileResult = query1.get(request.user.id_user);
 
+    const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ? AND title = ? ORDER BY notify_id DESC LIMIT 1");
+    const notifyResult = query2.get(friend_id, request.user.id_user, title);
+
+    const notifyObject = {
+      getter_user: friend_id,
+      sender_user: request.user.id_user,
+      sender_username: request.user.username,
+      title: title,
+      sender_profile_img: profileResult?.profile_img || '',
+      notify_id: notifyResult?.notify_id || insertedId
+    };
+
+    // Send notification via WebSocket if recipient is online
     if (socket) {
-
-      const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
-      const result = query1.get(request.user.id_user);
-
-      const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
-      const res = query2.get(friend_id, request.user.id_user);
-
-      const object = {
-        getter_user: friend_id,
-        sender_user: request.user.id_user,
-        sender_username: request.user.username,
-        title: title,
-        sender_profile_img: result.profile_img,
-        notify_id: res.notify_id
-      };
-      socket.send(JSON.stringify({
-        type: "notify",
-        data: object
-      }));
+      // Check if socket is in OPEN state (readyState === 1)
+      if (socket.readyState === 1) { // WebSocket.OPEN
+        try {
+          socket.send(JSON.stringify({
+            type: "notify",
+            data: notifyObject
+          }));
+          console.log(`[sendRequestFriend] Notification sent via WebSocket to user ${friend_id} (notify_id: ${notifyObject.notify_id})`);
+        } catch (sendError) {
+          console.error(`[sendRequestFriend] Error sending WebSocket notification to user ${friend_id}:`, sendError);
+          // Notification is still saved in DB, will be synced on next connection
+        }
+      } else {
+        console.log(`[sendRequestFriend] User ${friend_id} socket exists but not OPEN (readyState: ${socket.readyState}). Notification saved in DB.`);
+      }
+    } else {
+      console.log(`[sendRequestFriend] User ${friend_id} is offline. Notification saved in DB and will be synced on reconnect.`);
     }
 
     return reply.code(200).send(insertedId);
 
   } catch (err) {
+    console.error('[sendRequestFriend] Error:', err);
     reply.code(500).send({ error: "Internal server error" });
   }
 }

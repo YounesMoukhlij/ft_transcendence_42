@@ -15,9 +15,11 @@ import { getWebSocket } from './globalSocket';
 
 import '../app/(protected)/chat/page.css'
 import { removeRequestMeta } from 'next/dist/server/request-meta';
+import { useTranslation } from '../contexts/LanguageContext';
 
 export default function Navbar()
 {
+  const { t } = useTranslation();
   const router = useRouter();
   const { setGameMode } = useGameContext();
   const [isOpen, setIsOpen] = useState(false);
@@ -38,7 +40,7 @@ export default function Navbar()
 
   const setUsername = useUserStore.setState;
   const socket = useUserStore((state) => state.socket);
-  const {addFriend, removeFriend ,friends , addPendingRequests, addPendingRequestsArray, removePendingRequests, removeSentRequests} = useUserStore();
+  const {addFriend, removeFriend ,friends , addPendingRequests, addPendingRequestsArray, removePendingRequests, removeSentRequests, sentRequests, pendingRequests, addSentRequests} = useUserStore();
 
 
 
@@ -124,9 +126,10 @@ useEffect(() => {
 
   async function DelteFriendRequest(notify_id){
     toast.error('Deleted');
-    const sender_id = notificatiion.filter(item => item.notify_id == notify_id)[0].sender_user;
+    const notificationItem = notificatiion.find(item => item.notify_id == notify_id);
+    const sender_id = notificationItem?.sender_user;
     console.log("sender id: ", sender_id);
-    setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
+    setNotification(prev => prev.filter(n => n.notify_id !== notify_id));
     const res =  await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
       params:{
         id: notify_id,
@@ -164,8 +167,8 @@ useEffect(() => {
   {
     removePendingRequests(item.sender_user);
     addFriend(object);
-    // Remove notification from local state
-    setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
+    // Remove notification from local state immediately
+    setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
   }
   };
 
@@ -174,25 +177,26 @@ useEffect(() => {
 
 
   function showNotification(){
+    const wasOpen = notificationIndex;
     setNotificationIndex(!notificationIndex);
 
-    // Mark all notifications as seen in local state immediately
-    if (!notificationIndex) { // Only when opening (not closing)
+    // Mark all notifications as seen in local state immediately when opening
+    if (!wasOpen) { // Only when opening (not closing)
       setNotification(prev => prev.map(n => ({ ...n, is_seen: true })));
       SetunseenCount(0);
 
       // Also update on backend
-      try{
+      if (user?.access_token) {
         axios.post(`${getBackendURL()}/NotificationSeen`,
-        {},
-        {
-          headers:{
-            Authorization: `Bearer ${user.access_token}`
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${user.access_token}`
+            }
           }
-        }
-      );
-      }catch(err){
-        console.error('Failed to mark notifications as seen:', err);
+        ).catch(err => {
+          console.error('Failed to mark notifications as seen:', err);
+        });
       }
     }
   }
@@ -222,6 +226,130 @@ useEffect(() => {
     localStorage.removeItem('user-storage');
     router.push('/signIn');
   };
+
+  // Function to determine friend request button state
+  const getFriendButtonState = (resultUser: any) => {
+    // Don't show button for self
+    if (resultUser.id_user === user?.id_user) {
+      return null;
+    }
+
+    // Check if already a friend
+    const isFriend = friends?.some((f: any) => f.id_user === resultUser.id_user);
+    if (isFriend) {
+      return { state: 'friend', text: t('navbar.alreadyFriend'), disabled: true };
+    }
+
+    // Check if request already sent
+    const requestSent = sentRequests?.some((r: any) => r.getter_user === resultUser.id_user);
+    if (requestSent) {
+      return { state: 'sent', text: t('navbar.friendRequestSent'), disabled: true };
+    }
+
+    // Check if there's a pending request from them
+    const hasPendingRequest = pendingRequests?.some((r: any) => r.sender_user === resultUser.id_user);
+    if (hasPendingRequest) {
+      return { state: 'pending', text: t('navbar.pendingRequest'), disabled: true };
+    }
+
+    // Can send friend request
+    return { state: 'add', text: t('navbar.addFriend'), disabled: false };
+  };
+
+  // Function to send friend request
+  const handleSendFriendRequest = async (resultUser: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user?.access_token) {
+      toast.error(t('navbar.friendRequestFailed'));
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${getBackendURL()}/sendRequestFriend`,
+        { friend_id: resultUser.id_user },
+        {
+          headers: {
+            Authorization: `Bearer ${user.access_token}`
+          }
+        }
+      );
+
+      if (res.status === 200) {
+        // Add to sent requests
+        addSentRequests({
+          getter_user: resultUser.id_user,
+          notify_id: res.data,
+        });
+        toast.success(t('navbar.friendRequestSentSuccess', { username: resultUser.username }));
+      }
+    } catch (error: any) {
+      console.error('Error sending friend request:', error);
+      toast.error(error.response?.data?.message || t('navbar.friendRequestFailed'));
+    }
+  };
+
+  // Function to sync notifications from server
+  const syncNotifications = React.useCallback(async () => {
+    if (!user?.access_token) return;
+
+    try {
+      const result = await axios.get(
+        `${getBackendURL()}/GetNotification`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.access_token}`,
+          }
+        }
+      );
+
+      // Merge intelligently - update existing, add new, remove deleted
+      setNotification(prev => {
+        const fetched = result.data.reverse();
+        const fetchedIds = new Set(fetched.map(n => n.notify_id));
+        const existingIds = new Set(prev.map(n => n.notify_id));
+
+        // Create a map of fetched notifications for quick lookup
+        const fetchedMap = new Map(fetched.map(n => [n.notify_id, n]));
+
+        // Update existing notifications with latest data (including is_seen status)
+        const updated = prev.map(existing => {
+          const fetchedItem = fetchedMap.get(existing.notify_id);
+          if (fetchedItem) {
+            // Merge to preserve any local changes while updating from server
+            return { ...existing, ...fetchedItem };
+          }
+          return existing;
+        }).filter(n => fetchedIds.has(n.notify_id)); // Remove notifications that no longer exist on server
+
+        // Add new notifications from server
+        const newNotifications = fetched.filter(n => !existingIds.has(n.notify_id));
+
+        // Combine: new ones first, then updated existing ones
+        return [...newNotifications, ...updated];
+      });
+
+      addPendingRequestsArray(result.data.filter(object => object.title == "request friend"));
+    } catch (error) {
+      console.error('Failed to sync notifications:', error);
+    }
+  }, [user?.access_token, addPendingRequestsArray]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Initial fetch
+    syncNotifications();
+
+    // Set up periodic syncing every 5 seconds to catch any missed updates
+    const syncInterval = setInterval(() => {
+      syncNotifications();
+    }, 5000);
+
+    return () => clearInterval(syncInterval);
+  }, [user, syncNotifications]);
 
   // Debounced search
   useEffect(() => {
@@ -253,51 +381,6 @@ useEffect(() => {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, user?.access_token]);
 
-  useEffect(() => {
-
-    if (!user)
-        return ;
-    async function get_notify() {
-      try {
-        const result = await axios.get(
-          `${getBackendURL()}/GetNotification`,
-          {
-            headers:{
-              Authorization: `Bearer ${user.access_token}`,
-            }
-          }
-        );
-        // Only update if we don't have notifications yet, or merge intelligently
-        setNotification(prev => {
-          // If we have no notifications, just set them
-          if (prev.length === 0) {
-            return result.data.reverse();
-          }
-
-          // Otherwise, merge intelligently - add new ones, keep existing ones that aren't in fetched list
-          const fetched = result.data.reverse();
-          const fetchedIds = new Set(fetched.map(n => n.notify_id));
-          const existingIds = new Set(prev.map(n => n.notify_id));
-
-          // Add new notifications from server
-          const newNotifications = fetched.filter(n => !existingIds.has(n.notify_id));
-
-          // Keep existing notifications that are still on server (not deleted)
-          const stillExisting = prev.filter(n => fetchedIds.has(n.notify_id));
-
-          // Combine: new ones first, then existing ones
-          return [...newNotifications, ...stillExisting];
-        });
-        addPendingRequestsArray(result.data.filter(object => object.title == "request friend"));
-
-
-      } catch (error) {
-        console.error('Failed to fetch notifications', error);
-      }
-    }
-    get_notify();
-
-  }, [user]); // Removed 'friends' dependency to avoid unnecessary refetches
 
   useEffect( () => {
     connect();
@@ -343,27 +426,30 @@ useEffect(() => {
 
             console.log('[Navbar] Adding new notification:', newNotification);
 
-            if (data.title == "request friend") {
-              addPendingRequests({
-                sender_user: data.sender_user,
-                sender_username: data.sender_username,
-                notify_id: data.notify_id,
-              });
-            }
-            else if (data.title == "friend request accepted") {
-              removeSentRequests(data.sender_user);
-              addFriend({
-                id_user: data.sender_user,
-              });
-            }
-            else if (data.title == "game challenge") {
-              // Show toast for game challenge
-              toast.info(`${data.sender_username} invited you to play a game!`);
-            }
-            else if (data.title == "tournament invite") {
-              // Show toast for tournament invite
-              toast.info(`${data.sender_username} invited you to join a tournament!`);
-            }
+            // Defer state updates to avoid "Cannot update during render" error
+            setTimeout(() => {
+              if (data.title == "request friend") {
+                addPendingRequests({
+                  sender_user: data.sender_user,
+                  sender_username: data.sender_username,
+                  notify_id: data.notify_id,
+                });
+              }
+              else if (data.title == "friend request accepted") {
+                removeSentRequests(data.sender_user);
+                addFriend({
+                  id_user: data.sender_user,
+                });
+              }
+              else if (data.title == "game challenge") {
+                // Show toast for game challenge
+                toast.info(t('navbar.invitedToGame', { username: data.sender_username }));
+              }
+              else if (data.title == "tournament invite") {
+                // Show toast for tournament invite
+                toast.info(t('navbar.invitedToTournament', { username: data.sender_username }));
+              }
+            }, 0);
 
             return [newNotification, ...prev];
           });
@@ -374,17 +460,26 @@ useEffect(() => {
           // The actual notification will come via "notify" type, so we just log it here
         }
         else if (type == "unfriend") {
-          removeFriend(data.id_user);
+          // Defer state update to avoid render issues
+          setTimeout(() => {
+            removeFriend(data.id_user);
+          }, 0);
         }
         else if (type == "rejected") {
-          removeSentRequests(data.getter_user);
+          // Defer state updates to avoid render issues
+          setTimeout(() => {
+            removeSentRequests(data.getter_user);
+          }, 0);
           // Remove the rejected friend request notification
           setNotification(prev => prev.filter(n =>
             !(n.title === "request friend" && n.sender_user === data.getter_user)
           ));
         }
         else if (type == "canceled request") {
-          removePendingRequests(data.sender_user);
+          // Defer state updates to avoid render issues
+          setTimeout(() => {
+            removePendingRequests(data.sender_user);
+          }, 0);
           // Remove the canceled friend request notification
           setNotification(prev => prev.filter(n =>
             !(n.title === "request friend" && n.sender_user === data.sender_user)
@@ -392,7 +487,7 @@ useEffect(() => {
         }
         else if (type === "game_challenge_accepted") {
           // Inviter receives this when friend accepts
-          toast.success(`${data.acceptedByUsername} accepted your game challenge!`);
+          toast.success(t('navbar.gameChallengeAccepted', { username: data.acceptedByUsername }));
           // Store challengeId for later use
           if (data.challengeId) {
             localStorage.setItem('pendingChallengeId', data.challengeId);
@@ -407,7 +502,7 @@ useEffect(() => {
         }
         else if (type === "game_challenge_declined") {
           // Inviter receives this when friend declines
-          toast.error(`${data.declinedByUsername} declined your game challenge.`);
+          toast.error(t('navbar.gameChallengeDeclined', { username: data.declinedByUsername }));
           // Clear any pending challenge
           localStorage.removeItem('pendingChallengeId');
           // Remove the game challenge notification since it was declined
@@ -430,6 +525,18 @@ useEffect(() => {
           console.log('[Navbar] Notification deleted by other user:', notifyId);
           setNotification(prev => prev.filter(n => n.notify_id !== notifyId));
         }
+        else if (type === "notification_updated") {
+          // Handle notification updates (e.g., is_seen status changed)
+          console.log('[Navbar] Notification updated:', data);
+          setNotification(prev => prev.map(n =>
+            n.notify_id === data.notify_id ? { ...n, ...data } : n
+          ));
+        }
+        else if (type === "notifications_synced") {
+          // Backend sent a sync signal - refresh notifications
+          console.log('[Navbar] Notifications sync signal received');
+          syncNotifications();
+        }
       } catch (error) {
         console.error('[Navbar] Error parsing WebSocket message:', error);
       }
@@ -447,32 +554,7 @@ useEffect(() => {
         // This handles cases where notifications were sent before the listener was set up
         if (user?.access_token) {
           syncTimeout = setTimeout(() => {
-            axios.get(
-              `${getBackendURL()}/GetNotification`,
-              {
-                headers: {
-                  Authorization: `Bearer ${user.access_token}`,
-                }
-              }
-            ).then(result => {
-              setNotification(prev => {
-                const fetched = result.data.reverse();
-                const fetchedIds = new Set(fetched.map(n => n.notify_id));
-                const existingIds = new Set(prev.map(n => n.notify_id));
-
-                // Add new notifications from server
-                const newNotifications = fetched.filter(n => !existingIds.has(n.notify_id));
-
-                // Keep existing notifications that are still on server (not deleted)
-                const stillExisting = prev.filter(n => fetchedIds.has(n.notify_id));
-
-                // Combine: new ones first, then existing ones
-                return [...newNotifications, ...stillExisting];
-              });
-              addPendingRequestsArray(result.data.filter(object => object.title == "request friend"));
-            }).catch(error => {
-              console.error('Failed to sync notifications after socket ready:', error);
-            });
+            syncNotifications();
           }, 1500); // Wait 1.5 seconds after socket is ready to request notifications (gives backend time to send)
         }
       }
@@ -501,7 +583,7 @@ useEffect(() => {
         clearTimeout(syncTimeout);
       }
     };
-  }, [socket, router, setGameMode, user?.access_token, addPendingRequestsArray]);
+  }, [socket, router, setGameMode, user?.access_token, addPendingRequestsArray, addPendingRequests, removeSentRequests, addFriend, removeFriend, removePendingRequests, t, syncNotifications]);
 
 
 
@@ -536,8 +618,8 @@ useEffect(() => {
           }
         );
 
-        // Remove from local state
-        setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+        // Remove from local state immediately
+        setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
 
         // Set game mode and navigate to customization
         // The WebSocket message will also trigger navigation, but this ensures it happens
@@ -568,8 +650,8 @@ useEffect(() => {
         }
       );
 
-      // Remove from local state
-      setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+      // Remove from local state immediately
+      setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
 
       // Notify the inviter via WebSocket if socket is available
       if (socket && socket.readyState === WebSocket.OPEN) {
@@ -650,12 +732,12 @@ useEffect(() => {
         }
       );
 
-      // Remove from local state
-      setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+      // Remove from local state immediately
+      setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
 
       // Wait for the tournamentJoined message before navigating
       // This ensures the tournament page receives the correct state
-      toast.success('Tournament invitation accepted! Redirecting...');
+      toast.success(t('navbar.tournamentInviteAccepted'));
 
       // Set up a listener for tournamentJoined message
       const handleTournamentJoined = (event: MessageEvent) => {
@@ -759,8 +841,8 @@ useEffect(() => {
         }
       );
 
-      // Remove from local state
-      setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+      // Remove from local state immediately
+      setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
 
       toast.info('Tournament invitation declined');
     } catch (error: any) {
@@ -790,10 +872,10 @@ useEffect(() => {
   }, [mobileMenuOpen]);
 
   const sidebarItems = [
-    { path: '/game', icon: <IoGameControllerOutline className="text-white text-2xl" />, alt: 'Game' },
-    { path: '/chat', icon: <IoChatbubbleOutline className="text-white text-2xl" />, alt: 'Chat' },
-    { path: '/profile', icon: <IoPersonOutline className="text-white text-2xl" />, alt: 'Profile' },
-    { path: '/settings', icon: <IoSettingsOutline className="text-white text-2xl" />, alt: 'Settings' },
+    { path: '/game', icon: <IoGameControllerOutline className="text-white text-2xl" />, alt: 'Game', key: 'game' },
+    { path: '/chat', icon: <IoChatbubbleOutline className="text-white text-2xl" />, alt: 'Chat', key: 'chat' },
+    { path: '/profile', icon: <IoPersonOutline className="text-white text-2xl" />, alt: 'Profile', key: 'profile' },
+    { path: '/settings', icon: <IoSettingsOutline className="text-white text-2xl" />, alt: 'Settings', key: 'settings' },
   ];
 
   return (
@@ -839,7 +921,7 @@ useEffect(() => {
                   <div className="p-4">
                     <input
                       type="text"
-                      placeholder="Search users..."
+                      placeholder={t('navbar.searchUsers')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
@@ -848,7 +930,7 @@ useEffect(() => {
 
                     {isSearching && (
                       <div className="mt-4 text-center text-gray-400">
-                        <p>Searching...</p>
+                        <p>{t('navbar.searching')}</p>
                       </div>
                     )}
 
@@ -856,35 +938,55 @@ useEffect(() => {
                       <div className="mt-4 max-h-96 overflow-y-auto">
                         {searchResults.length === 0 ? (
                           <div className="text-center text-gray-400 py-6">
-                            <p>No users found</p>
+                            <p>{t('navbar.noUsersFound')}</p>
                           </div>
                         ) : (
                           <div className="space-y-2">
-                            {searchResults.map((result) => (
-                              <Link
-                                key={result.id_user}
-                                href={`/profile/${result.username}`}
-                                onClick={() => {
-                                  setSearchOpen(false);
-                                  setSearchQuery('');
-                                  setSearchResults([]);
-                                }}
-                                className="flex items-center gap-3 p-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition cursor-pointer"
-                              >
-                                <img
-                                  src={result.profile_img || '/profileface.png'}
-                                  alt={result.username}
-                                  className="w-10 h-10 rounded-full border border-gray-600"
-                                />
-                                <div className="flex-1">
-                                  <p className="text-white font-semibold">{result.username}</p>
-                                  {result.fullname && (
-                                    <p className="text-gray-400 text-sm">{result.fullname}</p>
+                            {searchResults.map((result) => {
+                              const buttonState = getFriendButtonState(result);
+                              return (
+                                <div
+                                  key={result.id_user}
+                                  className="flex items-center gap-3 p-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition"
+                                >
+                                  <Link
+                                    href={`/profile/${result.username}`}
+                                    onClick={() => {
+                                      setSearchOpen(false);
+                                      setSearchQuery('');
+                                      setSearchResults([]);
+                                    }}
+                                    className="flex items-center gap-3 flex-1 cursor-pointer"
+                                  >
+                                    <img
+                                      src={result.profile_img || '/profileface.png'}
+                                      alt={result.username}
+                                      className="w-10 h-10 rounded-full border border-gray-600"
+                                    />
+                                    <div className="flex-1">
+                                      <p className="text-white font-semibold">{result.username}</p>
+                                      {result.fullname && (
+                                        <p className="text-gray-400 text-sm">{result.fullname}</p>
+                                      )}
+                                    </div>
+                                    <div className={`w-3 h-3 rounded-full ${result.status === 1 ? 'bg-green-500' : 'bg-gray-500'}`} />
+                                  </Link>
+                                  {buttonState && (
+                                    <button
+                                      onClick={(e) => handleSendFriendRequest(result, e)}
+                                      disabled={buttonState.disabled}
+                                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
+                                        buttonState.disabled
+                                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                          : 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
+                                      }`}
+                                    >
+                                      {buttonState.text}
+                                    </button>
                                   )}
                                 </div>
-                                <div className={`w-3 h-3 rounded-full ${result.status === 1 ? 'bg-green-500' : 'bg-gray-500'}`} />
-                              </Link>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -892,7 +994,7 @@ useEffect(() => {
 
                     {searchQuery.trim().length < 2 && (
                       <div className="mt-4 text-center text-gray-400 py-6">
-                        <p>Type at least 2 characters to search</p>
+                        <p>{t('navbar.typeToSearch')}</p>
                       </div>
                     )}
                   </div>
@@ -900,10 +1002,10 @@ useEffect(() => {
               )}
             </div>
           {notificationIndex && (
-    <div  ref={menuRef} className=" testt z-50 absolute flex flex-col top-22 right-30 h-52 w-96 rounded-2xl bg-black text-white border-2 overflow-y-scroll gap-2 p-2 ">
+    <div  ref={menuRef} className="testt z-50 absolute flex flex-col top-22 right-30 h-52 w-96 rounded-2xl bg-black text-white border-2 overflow-y-scroll gap-2 p-2 ">
     {notificatiion.length === 0 ? (
       <div className="text-center text-gray-400 py-6 text-lg font-medium">
-        No notifications
+        {t('common.noNotifications')}
       </div>
     ) : (
       [...notificatiion]
@@ -924,8 +1026,8 @@ useEffect(() => {
                     {item.sender_username}
                   </p>
                   <p className="text-sm text-gray-400">
-                    invited you to a{" "}
-                    <span className="text-blue-400 font-medium">1 vs 1 game</span>
+                    {t('navbar.invitedTo1v1')}{" "}
+                    <span className="text-blue-400 font-medium">1 vs 1 {t('common.game')}</span>
                   </p>
                 </div>
                 {isTimeValid(item) ? (
@@ -934,17 +1036,17 @@ useEffect(() => {
                       onClick={() => AcceptGameChallenge(item)}
                       className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
                     >
-                      Accept
+                      {t('common.accept')}
                     </button>
                     <button
                       onClick={() => RejectGameChallenge(item)}
                       className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
                     >
-                      Decline
+                      {t('common.decline')}
                     </button>
                   </div>
                 ) : (
-                  <div className='flex justify-center '><p>expired</p></div>
+                  <div className='flex justify-center '><p>{t('navbar.expired')}</p></div>
                 )}
                 </div>
             );
@@ -966,7 +1068,7 @@ useEffect(() => {
                     {item.sender_username}
                   </p>
                   <p className="text-green-400 text-sm">
-                    accepted your friend request
+                    {t('navbar.acceptedFriendRequest')}
                   </p>
                 </div>
               </div>
@@ -989,8 +1091,8 @@ useEffect(() => {
                     {item.sender_username}
                   </p>
                   <p className="text-sm text-gray-400">
-                    invited you to join a{" "}
-                    <span className="text-purple-400 font-medium">tournament</span>
+                    {t('navbar.invitedToTournamentText')}{" "}
+                    <span className="text-purple-400 font-medium">{t('common.game')}</span>
                   </p>
                 </div>
                 {isTimeValid(item) ? (
@@ -999,17 +1101,17 @@ useEffect(() => {
                       onClick={() => AcceptTournamentInvite(item)}
                       className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
                     >
-                      Accept
+                      {t('common.accept')}
                     </button>
                     <button
                       onClick={() => RejectTournamentInvite(item)}
                       className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
                     >
-                      Decline
+                      {t('common.decline')}
                     </button>
                   </div>
                 ) : (
-                  <div className='flex justify-center '><p>expired</p></div>
+                  <div className='flex justify-center '><p>{t('navbar.expired')}</p></div>
                 )}
               </div>
             );
@@ -1041,13 +1143,13 @@ useEffect(() => {
                   onClick={() => AcceptFriendRequest(item)}
                   className="w-[48%] bg-green-600 hover:bg-green-500 text-white py-1.5 rounded-lg border border-green-400"
                 >
-                  Confirm
+                  {t('common.confirm')}
                 </button>
                 <button
                   onClick={() => DelteFriendRequest(item.notify_id)}
                   className="w-[48%] bg-gray-100 hover:bg-gray-200 text-black py-1.5 rounded-lg border border-white"
                 >
-                  Delete
+                  {t('common.delete')}
                 </button>
               </div>
             </div>
@@ -1104,7 +1206,7 @@ useEffect(() => {
                         className="flex items-center gap-3 px-4 py-3 text-white hover:bg-gray-800 transition cursor-pointer"
                       >
                         <IoPersonOutline className="text-xl" />
-                        <span>Profile</span>
+                        <span>{t('common.profile')}</span>
                       </Link>
 
                       <Link
@@ -1113,7 +1215,7 @@ useEffect(() => {
                         className="flex items-center gap-3 px-4 py-3 text-white hover:bg-gray-800 transition cursor-pointer"
                       >
                         <IoSettingsOutline className="text-xl" />
-                        <span>Settings</span>
+                        <span>{t('common.settings')}</span>
                       </Link>
 
                       <div
@@ -1124,7 +1226,7 @@ useEffect(() => {
                         className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-gray-800 transition cursor-pointer border-t border-gray-700 mt-2"
                       >
                         <IoLogOutOutline className="text-xl" />
-                        <span>Logout</span>
+                        <span>{t('common.logout')}</span>
                       </div>
                     </div>
                   </div>
@@ -1132,6 +1234,281 @@ useEffect(() => {
               )}
             </div>
           </div>
+
+          {/* Mobile Search and Notifications - Show when opened from mobile menu */}
+          {searchOpen && (
+            <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20 px-4">
+              <div className="relative w-full max-w-md bg-black border-2 border-white rounded-2xl shadow-2xl z-50">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-white text-lg font-semibold">{t('common.search')}</h3>
+                    <button
+                      onClick={() => {
+                        setSearchOpen(false);
+                        setSearchQuery('');
+                        setSearchResults([]);
+                      }}
+                      className="text-white hover:text-gray-400"
+                    >
+                      <IoCloseOutline className="text-2xl" />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder={t('navbar.searchUsers')}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+                    autoFocus
+                  />
+
+                  {isSearching && (
+                    <div className="mt-4 text-center text-gray-400">
+                      <p>{t('navbar.searching')}</p>
+                    </div>
+                  )}
+
+                  {!isSearching && searchQuery.trim().length >= 2 && (
+                    <div className="mt-4 max-h-96 overflow-y-auto">
+                      {searchResults.length === 0 ? (
+                        <div className="text-center text-gray-400 py-6">
+                          <p>{t('navbar.noUsersFound')}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {searchResults.map((result) => {
+                            const buttonState = getFriendButtonState(result);
+                            return (
+                              <div
+                                key={result.id_user}
+                                className="flex items-center gap-3 p-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition"
+                              >
+                                <Link
+                                  href={`/profile/${result.username}`}
+                                  onClick={() => {
+                                    setSearchOpen(false);
+                                    setSearchQuery('');
+                                    setSearchResults([]);
+                                  }}
+                                  className="flex items-center gap-3 flex-1 cursor-pointer"
+                                >
+                                  <img
+                                    src={result.profile_img || '/profileface.png'}
+                                    alt={result.username}
+                                    className="w-10 h-10 rounded-full border border-gray-600"
+                                  />
+                                  <div className="flex-1">
+                                    <p className="text-white font-semibold">{result.username}</p>
+                                    {result.fullname && (
+                                      <p className="text-gray-400 text-sm">{result.fullname}</p>
+                                    )}
+                                  </div>
+                                  <div className={`w-3 h-3 rounded-full ${result.status === 1 ? 'bg-green-500' : 'bg-gray-500'}`} />
+                                </Link>
+                                {buttonState && (
+                                  <button
+                                    onClick={(e) => handleSendFriendRequest(result, e)}
+                                    disabled={buttonState.disabled}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
+                                      buttonState.disabled
+                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                        : 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
+                                    }`}
+                                  >
+                                    {buttonState.text}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {searchQuery.trim().length < 2 && (
+                    <div className="mt-4 text-center text-gray-400 py-6">
+                      <p>{t('navbar.typeToSearch')}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {notificationIndex && (
+            <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20 px-4">
+              <div ref={menuRef} className="relative w-full max-w-md bg-black border-2 border-white rounded-2xl shadow-2xl z-50 max-h-[70vh] overflow-y-auto">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-white text-lg font-semibold">{t('common.notifications')}</h3>
+                    <button
+                      onClick={() => {
+                        setNotificationIndex(false);
+                      }}
+                      className="text-white hover:text-gray-400"
+                    >
+                      <IoCloseOutline className="text-2xl" />
+                    </button>
+                  </div>
+                  {notificatiion.length === 0 ? (
+                    <div className="text-center text-gray-400 py-6 text-lg font-medium">
+                      {t('common.noNotifications')}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {[...notificatiion].map((item, index) => {
+                        if (item.title === "game challenge") {
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
+                            >
+                              <img
+                                src={item.sender_profile_img}
+                                alt="profile"
+                                className="w-12 h-12 rounded-full border border-gray-600"
+                              />
+                              <div className="flex flex-col flex-1">
+                                <p className="text-lg font-semibold text-white">
+                                  {item.sender_username}
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  {t('navbar.invitedTo1v1')}{" "}
+                                  <span className="text-blue-400 font-medium">1 vs 1 {t('common.game')}</span>
+                                </p>
+                              </div>
+                              {isTimeValid(item) ? (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => AcceptGameChallenge(item)}
+                                    className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                                  >
+                                    {t('common.accept')}
+                                  </button>
+                                  <button
+                                    onClick={() => RejectGameChallenge(item)}
+                                    className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                                  >
+                                    {t('common.decline')}
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className='flex justify-center'><p>{t('navbar.expired')}</p></div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        if (item.title === "friend request accepted") {
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-3 p-3 border border-green-700 bg-green-900/20 rounded-xl hover:bg-green-800/30 transition"
+                            >
+                              <img
+                                src={item.sender_profile_img}
+                                alt="profile"
+                                className="w-12 h-12 rounded-full border border-green-500"
+                              />
+                              <div className="flex flex-col">
+                                <p className="text-white text-lg font-medium">
+                                  {item.sender_username}
+                                </p>
+                                <p className="text-green-400 text-sm">
+                                  {t('navbar.acceptedFriendRequest')}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (item.title === "tournament invite") {
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-3 p-3 border border-purple-700 rounded-xl bg-gradient-to-r from-purple-800 to-purple-900 hover:from-purple-700 transition"
+                            >
+                              <img
+                                src={item.sender_profile_img}
+                                alt="profile"
+                                className="w-12 h-12 rounded-full border border-purple-600"
+                              />
+                              <div className="flex flex-col flex-1">
+                                <p className="text-lg font-semibold text-white">
+                                  {item.sender_username}
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  {t('navbar.invitedToTournamentText')}{" "}
+                                  <span className="text-purple-400 font-medium">{t('common.game')}</span>
+                                </p>
+                              </div>
+                              {isTimeValid(item) ? (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => AcceptTournamentInvite(item)}
+                                    className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                                  >
+                                    {t('common.accept')}
+                                  </button>
+                                  <button
+                                    onClick={() => RejectTournamentInvite(item)}
+                                    className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
+                                  >
+                                    {t('common.decline')}
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className='flex justify-center'><p>{t('navbar.expired')}</p></div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={index}
+                            className="flex flex-col border-t border-gray-700 py-3 px-2 bg-black/40 hover:bg-black/60 rounded-xl transition"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <img
+                                  src={item.sender_profile_img}
+                                  alt="profile"
+                                  className="w-12 h-12 rounded-full border border-gray-600"
+                                />
+                                <p className="text-white text-lg ml-3">
+                                  {item.sender_username}
+                                </p>
+                              </div>
+                              <p className="text-gray-400 text-sm">
+                                {item.timeAgo || "1d"}
+                              </p>
+                            </div>
+
+                            <div className="flex justify-between mt-3">
+                              <button
+                                onClick={() => AcceptFriendRequest(item)}
+                                className="w-[48%] bg-green-600 hover:bg-green-500 text-white py-1.5 rounded-lg border border-green-400"
+                              >
+                                {t('common.confirm')}
+                              </button>
+                              <button
+                                onClick={() => DelteFriendRequest(item.notify_id)}
+                                className="w-[48%] bg-gray-100 hover:bg-gray-200 text-black py-1.5 rounded-lg border border-white"
+                              >
+                                {t('common.delete')}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Mobile Hamburger Menu */}
           <div className="md:hidden relative" ref={hamburgerRef}>
@@ -1157,7 +1534,7 @@ useEffect(() => {
               <div className="flex flex-col gap-4">
                 {/* Sidebar Items */}
                 <div className="border-b border-gray-600 pb-4">
-                  <h3 className="text-white text-sm font-semibold mb-3">Navigation</h3>
+                  <h3 className="text-white text-sm font-semibold mb-3">{t('navbar.navigation')}</h3>
                   <div className="flex flex-col gap-3">
                     {sidebarItems.map((item, index) => (
                       <Link href={item.path} key={item.path} onClick={() => setMobileMenuOpen(false)}>
@@ -1170,18 +1547,38 @@ useEffect(() => {
                           }}
                         >
                           {item.icon}
-                          <span className="text-white">{item.alt}</span>
+                          <span className="text-white">{t(`common.${item.key}`)}</span>
                         </div>
                       </Link>
                     ))}
                   </div>
                 </div>
 
+                {/* User Info Section */}
+                {user && (
+                  <div className="border-b border-gray-600 pb-4">
+                    <h3 className="text-white text-sm font-semibold mb-3">{t('navbar.userInfo') || 'User Info'}</h3>
+                    <div className="flex items-center gap-3 p-2 rounded-lg bg-gray-800/50">
+                      <img
+                        src={user.profile_img || '/profileface.png'}
+                        alt={user.username}
+                        className="w-10 h-10 rounded-full border border-gray-600"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold truncate">{user.username}</p>
+                        <p className="text-gray-400 text-sm truncate">{user.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Navbar Right Section Items */}
                 <div>
-                  <h3 className="text-white text-sm font-semibold mb-3">Actions</h3>
+                  <h3 className="text-white text-sm font-semibold mb-3">{t('navbar.actions')}</h3>
                   <div className="flex flex-col gap-3">
-                    <div
+                    <Link
+                      href={`/profile/${user?.username}`}
+                      onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 cursor-pointer ${
                         mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
                       }`}
@@ -1190,9 +1587,13 @@ useEffect(() => {
                       }}
                     >
                       <IoPersonCircleOutline className="text-white text-xl" />
-                      <span className="text-white">Profile</span>
-                    </div>
+                      <span className="text-white">{t('common.profile')}</span>
+                    </Link>
                     <div
+                      onClick={() => {
+                        setSearchOpen(true);
+                        setMobileMenuOpen(false);
+                      }}
                       className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 cursor-pointer ${
                         mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
                       }`}
@@ -1201,9 +1602,13 @@ useEffect(() => {
                       }}
                     >
                       <IoSearchOutline className="text-white text-xl" />
-                      <span className="text-white">Search</span>
+                      <span className="text-white">{t('common.search')}</span>
                     </div>
                     <div
+                      onClick={() => {
+                        showNotification();
+                        setMobileMenuOpen(false);
+                      }}
                       className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 cursor-pointer ${
                         mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
                       }`}
@@ -1211,11 +1616,33 @@ useEffect(() => {
                         animationDelay: '700ms'
                       }}
                     >
-                      <IoNotificationsOutline   className="text-white text-xl " />
-                      <span className="text-white">Notifications</span>
+                      <IoNotificationsOutline className="text-white text-xl" />
+                      <span className="text-white">{t('common.notifications')}</span>
+                      {unseenCount > 0 && (
+                        <span className="ml-auto bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                          {unseenCount}
+                        </span>
+                      )}
                     </div>
-                    <div
+                    <Link
+                      href="/settings"
+                      onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 cursor-pointer ${
+                        mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
+                      }`}
+                      style={{
+                        animationDelay: '750ms'
+                      }}
+                    >
+                      <IoSettingsOutline className="text-white text-xl" />
+                      <span className="text-white">{t('common.settings')}</span>
+                    </Link>
+                    <div
+                      onClick={() => {
+                        handleLogout();
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 cursor-pointer text-red-400 ${
                         mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
                       }`}
                       style={{
@@ -1223,7 +1650,7 @@ useEffect(() => {
                       }}
                     >
                       <IoLogOutOutline className="text-white text-xl" />
-                      <span className="text-white">Logout</span>
+                      <span className="text-white">{t('common.logout')}</span>
                     </div>
                   </div>
                 </div>

@@ -7,8 +7,10 @@ import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
 import { useGameContext } from '@/components/GameContext';
 import { toast } from 'sonner';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 export default function InviteFriendPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useUserStore();
   const { gameState, setCustomisation } = useGameContext();
@@ -40,14 +42,14 @@ export default function InviteFriendPage() {
         setFriendsList(response.data || []);
       } catch (error) {
         console.error('Error fetching friends:', error);
-        setError('Failed to load friends list');
+        setError(t('game.failedToSendInvitation'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchFriends();
-  }, [user]);
+  }, [user, t]);
 
   // Listen for WebSocket messages (game challenge declines and status updates)
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function InviteFriendPage() {
           const friendId = message.data?.declinedBy;
           if (friendId) {
             setDeclinedFriends(prev => new Set([...prev, friendId]));
-            toast.error(`${message.data.declinedByUsername} declined your game challenge.`);
+            toast.error(t('game.friendDeclinedChallenge', { username: message.data.declinedByUsername }));
           }
         }
         // Handle friend status updates (online/offline)
@@ -94,7 +96,7 @@ export default function InviteFriendPage() {
   // Send game invitation to a friend
   const sendInvitation = async (friend: any) => {
     if (!user?.access_token) {
-      setError('You must be logged in to send invitations');
+      setError(t('game.mustBeLoggedIn'));
       return;
     }
 
@@ -119,7 +121,7 @@ export default function InviteFriendPage() {
       if (response.data) {
         // Success - invitation sent
         // The notification will appear in the Navbar notification area
-        toast.success(`Game invitation sent to ${friend.username || friend.name}!`);
+        toast.success(t('game.gameInvitationSent', { username: friend.username || friend.name }));
         // Remove from declined list if it was there
         setDeclinedFriends(prev => {
           const newSet = new Set(prev);
@@ -130,9 +132,9 @@ export default function InviteFriendPage() {
     } catch (error: any) {
       console.error('Error sending invitation:', error);
       if (error.response?.status === 401) {
-        setError('You must be logged in to send invitations');
+        setError(t('game.mustBeLoggedIn'));
       } else {
-        setError(error.response?.data?.message || 'Failed to send invitation. Please try again.');
+        setError(error.response?.data?.message || t('game.failedToSendInvitation'));
       }
     } finally {
       setSendingInvitation(null);
@@ -143,7 +145,7 @@ export default function InviteFriendPage() {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="mt-4 text-gray-400">Loading friends...</p>
+        <p className="mt-4 text-gray-400">{t('game.loadingFriends')}</p>
       </div>
     );
   }
@@ -151,7 +153,7 @@ export default function InviteFriendPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
       <div className="w-full max-w-2xl">
-        <h1 className="text-4xl font-bold mb-6 text-center">Invite a Friend to Play</h1>
+        <h1 className="text-4xl font-bold mb-6 text-center">{t('game.inviteFriendToPlay')}</h1>
 
         {error && (
           <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-center">
@@ -160,12 +162,12 @@ export default function InviteFriendPage() {
         )}
 
         <div className="bg-gray-800 rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Your Friends</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('game.yourFriends')}</h2>
 
           {friendsList.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-400 text-lg mb-2">No friends found</p>
-              <p className="text-gray-500 text-sm">Add friends to invite them to play!</p>
+              <p className="text-gray-400 text-lg mb-2">{t('game.noFriendsFound')}</p>
+              <p className="text-gray-500 text-sm">{t('game.addFriendsToInvite')}</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -212,14 +214,14 @@ export default function InviteFriendPage() {
                           {friend.username || friend.name}
                         </p>
                         <p className={`text-sm ${friend.status ? 'text-green-400' : 'text-gray-400'}`}>
-                          {friend.status ? 'Online' : 'Offline'}
+                          {friend.status ? t('game.online') : t('game.offline')}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex flex-col items-end gap-1">
                       {wasDeclined && (
-                        <span className="text-xs text-red-400">Declined</span>
+                        <span className="text-xs text-red-400">{t('game.declined')}</span>
                       )}
                       <button
                         disabled={isSending}
@@ -231,7 +233,7 @@ export default function InviteFriendPage() {
                             : 'bg-blue-600 hover:bg-blue-500 text-white'
                         }`}
                       >
-                        {isSending ? 'Sending...' : wasDeclined ? 'Re-invite' : 'Invite'}
+                        {isSending ? t('game.sending') : wasDeclined ? t('game.reInvite') : t('game.invite')}
                       </button>
                     </div>
                   </div>
@@ -243,8 +245,7 @@ export default function InviteFriendPage() {
 
         <div className="bg-blue-900/30 border border-blue-500 rounded-lg p-4 mb-6">
           <p className="text-blue-200 text-sm">
-            <strong>Note:</strong> When you invite a friend, they will receive a notification in their notification area.
-            They can accept or decline the invitation from there.
+            <strong>{t('game.note')}:</strong> {t('game.inviteNotificationNote')}
           </p>
         </div>
 
@@ -253,13 +254,13 @@ export default function InviteFriendPage() {
             onClick={() => router.back()}
             className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors font-semibold"
           >
-            Back
+            {t('game.back')}
           </button>
           <button
             onClick={() => router.push('/game')}
             className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-semibold"
           >
-            Game Menu
+            {t('game.gameMenu')}
           </button>
         </div>
       </div>

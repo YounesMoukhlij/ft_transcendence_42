@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useCountUp } from "../hooks/useCountUp"
 import { useUserStore } from "@/store/userStore";
 import axios from "axios"
+import { useTranslation } from "../../../../contexts/LanguageContext"
 
 import { useEffect, useState } from "react"
 
@@ -41,19 +42,20 @@ interface Friend {
 
 
 export function StatsOverview({ userStats }: StatsOverviewProps) {
-const { user: currentUser, friends, addFriend, removeFriend, pendingRequests, addPendingRequests, removePendingRequests,  sentRequests, addSentRequests, removeSentRequests  } = useUserStore();
+  const { t } = useTranslation();
+  const { user: currentUser, friends, addFriend, removeFriend, pendingRequests, addPendingRequests, removePendingRequests,  sentRequests, addSentRequests, removeSentRequests  } = useUserStore();
 
-const _winRate = useCountUp(userStats.winRate, 700) || 0;
-const _totalMatches = useCountUp(userStats.totalMatches, 700);
-const _wins = useCountUp(userStats.wins, 700);
-const _avgPoints = useCountUp(Math.round(userStats.averageScore * 100) / 100, 700);
+  const _winRate = useCountUp(userStats.winRate, 700) || 0;
+  const _totalMatches = useCountUp(userStats.totalMatches, 700);
+  const _wins = useCountUp(userStats.wins, 700);
+  const _avgPoints = useCountUp(Math.round(userStats.averageScore * 100) / 100, 700);
 
-console.log("The friends are: ", friends);
-console.log("Pending list: ", pendingRequests);
-console.log("Friend request sent list: ", sentRequests);
+  console.log("The friends are: ", friends);
+  console.log("Pending list: ", pendingRequests);
+  console.log("Friend request sent list: ", sentRequests);
 
-const [friendshipText, setFriendshipText] = useState("Add Friend");
-const [disabled, setDisabled] = useState(false);
+  const [friendshipText, setFriendshipText] = useState(t('profile.addFriend'));
+  const [disabled, setDisabled] = useState(false);
 
 
 // 1. isSelfProfile
@@ -62,29 +64,29 @@ const isSelfProfile: boolean =
 
 
 
-// 3. friendship Status 
+// 3. friendship Status
 
 useEffect(() => {
-  const friendshipStatus = () => 
+  const friendshipStatus = () =>
 {
   // handleClick();
   if (sentRequests?.find(friend => friend.getter_user === userStats.id))
-    setFriendshipText("Cancel request");
+    setFriendshipText(t('profile.cancelRequest'));
 
   else if (friends?.find(friend => friend.id_user === userStats.id))
   {
-    setFriendshipText("Unfriend");
+    setFriendshipText(t('profile.unfriend'));
   }
 
   else if (pendingRequests?.find(friend => friend.sender_user === userStats.id))
-   setFriendshipText("Accept");
+   setFriendshipText(t('profile.accept'));
   else
   {
-    setFriendshipText("Add friend");
+    setFriendshipText(t('profile.addFriend'));
   }
 }
 friendshipStatus();
-}, [pendingRequests, sentRequests, friends]) 
+}, [pendingRequests, sentRequests, friends, t])
 
 
 
@@ -100,27 +102,27 @@ function handleClick() {
 
 
 
-const handleAction = () => 
+const handleAction = () =>
 {
   // handleClick();
-  if (friendshipText === "Cancel request")
+  if (friendshipText === t('profile.cancelRequest'))
   {
 
-  
+
     handleCancelFriendRequest();
 
   }
-  else if (friendshipText === "Unfriend")
+  else if (friendshipText === t('profile.unfriend'))
   {
     handleUnfriend();
 
   }
-  else if (friendshipText === "Add friend")
+  else if (friendshipText === t('profile.addFriend'))
   {
     handleAddFriend();
-  
+
   }
-  else if (friendshipText === "Accept")
+  else if (friendshipText === t('profile.accept'))
   {
     handleAcceptFriend();
   }
@@ -188,7 +190,7 @@ const handleAcceptFriend = async () => {
 
 
 
-const handleUnfriend = async () => 
+const handleUnfriend = async () =>
 {
    try {
       //  Get conversation ID
@@ -215,7 +217,7 @@ const handleUnfriend = async () =>
           friend_id: userStats.id,
         },{
           headers: {
-            Authorization: `Bearer ${currentUser.access_token}` 
+            Authorization: `Bearer ${currentUser.access_token}`
           }
         }
       );
@@ -287,7 +289,7 @@ const handleCancelFriendRequest = async () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Player Profile
+            {t('profile.playerProfile')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -296,38 +298,38 @@ const handleCancelFriendRequest = async () => {
               <Trophy className="w-10 h-10 text-primary" />
             </div>
             <h3 className="font-bold text-lg">{userStats.fullName}</h3>
-        
-            
+
+
             {
               !isSelfProfile &&
              <>
             <Button
               onClick={handleAction}
-              data-state={friendshipText !== "Unfriend"}
+              data-state={friendshipText !== t('profile.unfriend')}
               variant="outline"
               disabled={disabled}
 
               className="w-fullmt-2 mr-2 bg-transparent data-[state=false]:border-destructive data-[state=false]:text-destructive data-[state=false]:hover:bg-destructive border-primary data-[state=false]:hover:text-destructive-foreground text-primary hover:bg-primary hover:text-primary-foreground cosmic-glow rounded-xxl">
               {friendshipText}
             </Button>
-            {friendshipText == "Accept" && 
-                  <Button 
-            variant="destructive" 
+            {friendshipText == t('profile.accept') &&
+                  <Button
+            variant="destructive"
             className="mt-2"
             onClick={rejectFriendRequest}
             disabled={disabled}
             >
-              Reject
+              {t('profile.reject')}
             </Button>
           }
 
-            {friendshipText == "Unfriend" &&
-             <Button 
-             variant="default" 
+            {friendshipText == t('profile.unfriend') &&
+             <Button
+             variant="default"
              className="mt-2"
              onClick={() => router.push(`/chat`)}
              >
-              message
+              {t('profile.message')}
             </Button>
             }
             </>
@@ -341,27 +343,27 @@ const handleCancelFriendRequest = async () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
-            Performance Summary
+            {t('profile.performanceSummary')}
           </CardTitle>
-          <CardDescription>Your overall statistics and achievements</CardDescription>
+          <CardDescription>{t('profile.overallStatistics')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-primary/5 rounded-lg">
               <div className="text-2xl font-bold text-primary">{_winRate}%</div>
-              <div className="text-sm text-muted-foreground">Win Rate</div>
+              <div className="text-sm text-muted-foreground">{t('profile.winRate')}</div>
             </div>
             <div className="text-center p-4 bg-accent/5 rounded-lg">
               <div className="text-2xl font-bold text-accent">{_wins}</div>
-              <div className="text-sm text-muted-foreground">Total Wins</div>
+              <div className="text-sm text-muted-foreground">{t('profile.totalWins')}</div>
             </div>
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="text-2xl font-bold">{_totalMatches}</div>
-              <div className="text-sm text-muted-foreground">Matches Played</div>
+              <div className="text-sm text-muted-foreground">{t('profile.matchesPlayed')}</div>
             </div>
             <div className="text-center p-4 bg-secondary/5 rounded-lg">
               <div className="text-2xl font-bold text-secondary">{_avgPoints}</div>
-              <div className="text-sm text-muted-foreground">Avg Points</div>
+              <div className="text-sm text-muted-foreground">{t('profile.avgPoints')}</div>
             </div>
           </div>
         </CardContent>

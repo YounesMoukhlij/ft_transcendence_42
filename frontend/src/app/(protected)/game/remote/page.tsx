@@ -10,9 +10,11 @@ import GameCustomization from '@/components/GameCustomization';
 import { useUserStore } from '@/store/userStore';
 import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 
 export default function RemoteGamePage() {
+  const { t } = useTranslation();
   type GlobalStoreType = {
     socket: WebSocket | null;
     isConnect: boolean;
@@ -42,7 +44,7 @@ export default function RemoteGamePage() {
 
         const findMatch = () => {
           if (socketStatus !== 'open') {
-            setError('Connecting to the server... Please wait a moment.');
+            setError(t('game.connectingToServer'));
             return;
           }
           setError('');
@@ -52,7 +54,7 @@ export default function RemoteGamePage() {
         // Show customization before inviting friend
         const handleInviteFriendClick = () => {
           if (socketStatus !== 'open') {
-            setError('Connecting to the server... Please wait a moment.');
+            setError(t('game.connectingToServer'));
             return;
           }
           setError('');
@@ -67,11 +69,11 @@ export default function RemoteGamePage() {
           const username = (globalStore.getState() as GlobalStoreType).username || '';
           const userStore = globalStore.getState() as any;
           if (!socket || !username.trim()) {
-            setError('No username found. Please log in.');
+            setError(t('game.noUsernameFound'));
             return;
           }
           if (socket.readyState !== WebSocket.OPEN) {
-            setError('Socket not connected. Please try again.');
+            setError(t('game.socketNotConnected'));
             return;
           }
           setIsSearching(true);
@@ -95,11 +97,11 @@ export default function RemoteGamePage() {
         const sendInvitationToFriend = (friend: any) => {
           const username = (globalStore.getState() as GlobalStoreType).username || user?.username || '';
           if (!socket || !username.trim()) {
-            setError('No username found. Please log in.');
+            setError(t('game.noUsernameFound'));
             return;
           }
           if (socket.readyState !== WebSocket.OPEN) {
-            setError('Connection not ready. Please wait a moment and try again.');
+            setError(t('game.connectionNotReady'));
             return;
           }
 
@@ -129,9 +131,9 @@ export default function RemoteGamePage() {
 
         // Set page title and game mode
         useEffect(() => {
-          document.title = 'Online Multiplayer Ping Pong';
+          document.title = t('game.onlineMultiplayerPingPong');
           setGameMode('remote'); // Ensure remote mode is set
-        }, [setGameMode]);
+        }, [setGameMode, t]);
 
         // Initialize WebSocket connection
         useEffect(() => {
@@ -150,7 +152,7 @@ export default function RemoteGamePage() {
 
           ws.onerror = () => {
             setSocketStatus('closed');
-            setError('WebSocket connection failed. Please refresh the page.');
+            setError(t('game.websocketConnectionFailed'));
           }
 
           const handleMessage = (event: MessageEvent) => {
@@ -182,7 +184,7 @@ export default function RemoteGamePage() {
                 const roomCode = message.payload.roomCode;
                 const inviterCustomization = message.payload.customization || {};
 
-                const accept = window.confirm(`${inviter.username} invited you to play a game. Accept?`);
+                const accept = window.confirm(t('game.invitedToPlayGame', { username: inviter.username }));
 
                 if (accept) {
                   // Get customization from gameState, with defaults if not set
@@ -221,14 +223,14 @@ export default function RemoteGamePage() {
               } else if (message.type === 'gameInvitationDeclined') {
                 setPendingInvitation(null);
                 setIsSearching(false);
-                alert('Your friend declined the game invitation.');
+                alert(t('game.friendDeclinedInvitation'));
                 setError('');
               } else if (message.type === 'gameInvitationSent') {
                 // Confirmation that invitation was sent
                 setError('');
                 console.log('Invitation sent successfully');
               } else if (message.type === 'error') {
-                setError(message.message || 'An error occurred');
+                setError(message.message || t('game.anErrorOccurred'));
                 setIsSearching(false);
                 setPendingInvitation(null);
               }
@@ -351,7 +353,7 @@ export default function RemoteGamePage() {
       if (!gameState.mode) {
         return (
           <div className="flex items-center justify-center h-[100%] w-[100%]">
-            <div className="text-white">Loading...</div>
+            <div className="text-white">{t('common.loading')}</div>
           </div>
         );
       }
@@ -364,20 +366,20 @@ export default function RemoteGamePage() {
         return (
           <div className="flex flex-col items-center justify-center h-[100%] w-[100%] bg-transparent">
             <div className="mb-4 text-center">
-              <h2 className="text-2xl font-bold text-white mb-2">Online Game</h2>
-              <p className="text-gray-300">Room: {gameState.gameRoom?.id}</p>
+              <h2 className="text-2xl font-bold text-white mb-2">{t('game.onlineGame')}</h2>
+              <p className="text-gray-300">{t('game.room')}: {gameState.gameRoom?.id}</p>
               <div className="flex justify-center gap-4 mt-2">
                 <button
                   onClick={leaveRoom}
                   className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                 >
-                  Leave Game
+                  {t('game.leaveGame')}
                 </button>
                 <button
                   onClick={() => router.push('/game')}
                   className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
                 >
-                  Back to Game Modes
+                  {t('game.backToGameModes')}
                 </button>
               </div>
             </div>
@@ -390,12 +392,12 @@ export default function RemoteGamePage() {
         return (
           <div className="flex flex-col items-center justify-center h-[100%] w-[100%] bg-transparent">
             <div className="text-center max-w-md mx-auto p-8">
-              <h1 className="text-4xl font-bold text-white mb-6">Waiting for Player</h1>
+              <h1 className="text-4xl font-bold text-white mb-6">{t('game.waitingForPlayer')}</h1>
 
               {/* Game Customization - Only for Host */}
               {gameState.isHost && (
                 <div className="bg-gray-800 rounded-lg p-6 mb-8">
-                  <h3 className="text-xl font-semibold text-white mb-4">Customize Game</h3>
+                  <h3 className="text-xl font-semibold text-white mb-4">{t('game.customizeGame')}</h3>
 
                   <div className="space-y-4">
                     <button
@@ -403,18 +405,18 @@ export default function RemoteGamePage() {
                       className={`w-full px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-semibold ${isSearching ? 'opacity-60 cursor-not-allowed' : ''}`}
                       disabled={isSearching}
                     >
-                      {isSearching ? 'Searching for Opponent...' : 'Find Match (Auto)'}
+                      {isSearching ? t('game.searchingForOpponentDots') : t('game.findMatchAuto')}
                     </button>
                     <div>
                       <label className="block text-white text-sm font-bold mb-2">
-                        Table Background
+                        {t('game.tableBackground')}
                       </label>
                       <select
                         value={gameState.customisation.tableBg || ''}
                         onChange={(e) => updateGameSetting('tableBg', e.target.value)}
                         className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Default</option>
+                        <option value="">{t('game.default')}</option>
                         <option value="space">Space</option>
                         <option value="neon">Neon</option>
                         <option value="retro">Retro</option>
@@ -423,14 +425,14 @@ export default function RemoteGamePage() {
 
                     <div>
                       <label className="block text-white text-sm font-bold mb-2">
-                        Ball Color
+                        {t('game.ballColor')}
                       </label>
                       <select
                         value={gameState.customisation.ballColor || ''}
                         onChange={(e) => updateGameSetting('ballColor', e.target.value)}
                         className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Default</option>
+                        <option value="">{t('game.default')}</option>
                         <option value="#FF0000">Red</option>
                         <option value="#00FF00">Green</option>
                         <option value="#0000FF">Blue</option>
@@ -441,14 +443,14 @@ export default function RemoteGamePage() {
 
                     <div>
                       <label className="block text-white text-sm font-bold mb-2">
-                        Paddle Color
+                        {t('game.paddleColor')}
                       </label>
                       <select
                         value={gameState.customisation.paddleColor || ''}
                         onChange={(e) => updateGameSetting('paddleColor', e.target.value)}
                         className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Default</option>
+                        <option value="">{t('game.default')}</option>
                         <option value="#FF0000">Red</option>
                         <option value="#00FF00">Green</option>
                         <option value="#0000FF">Blue</option>
@@ -461,7 +463,7 @@ export default function RemoteGamePage() {
               )}
 
               <div className="bg-gray-800 rounded-lg p-4 mb-6">
-                <h3 className="text-lg font-semibold text-white mb-2">Players ({gameState.players.length}/2)</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">{t('game.players')} ({gameState.players.length}/2)</h3>
                 {gameState.players.map((player, index) => (
                   <div key={player.id} className="text-gray-300 py-1">
                     {index + 1}. {player.name}
@@ -473,7 +475,7 @@ export default function RemoteGamePage() {
                 onClick={leaveRoom}
                 className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
-                Cancel Game
+                {t('game.cancelGame')}
               </button>
             </div>
           </div>
@@ -485,27 +487,27 @@ export default function RemoteGamePage() {
           return (
             <div className="flex flex-col items-center justify-center h-[100%] w-[100%] bg-transparent">
               <div className="text-center max-w-lg mx-auto p-8">
-                <h1 className="text-4xl font-bold text-white mb-6">Online Multiplayer</h1>
+                <h1 className="text-4xl font-bold text-white mb-6">{t('game.onlineMultiplayerPingPong')}</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <div className="space-y-4">
                   <button
                     onClick={handleInviteFriendClick}
                     className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                   >
-                    Invite a Friend
+                    {t('game.inviteAFriend')}
                   </button>
                   <button
                     onClick={findMatch}
                     className="w-full px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-semibold"
                   >
-                    Search Random Opponent
+                    {t('game.searchRandomOpponentButton')}
                   </button>
                 </div>
                 <button
                   onClick={() => router.push('/game')}
                   className="mt-8 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
                 >
-                  Back to Game Modes
+                  {t('game.backToGameModes')}
                 </button>
               </div>
             </div>
@@ -516,11 +518,11 @@ export default function RemoteGamePage() {
           return (
             <div className="flex flex-col items-center justify-center h-[100%] w-[100%] bg-transparent">
               <div className="text-center max-w-lg mx-auto p-8">
-                <h1 className="text-4xl font-bold text-white mb-6">Invite a Friend</h1>
+                <h1 className="text-4xl font-bold text-white mb-6">{t('game.inviteAFriend')}</h1>
                 <div className="bg-gray-800 rounded-lg p-6 mb-8">
                   <div className="py-2 max-h-64 overflow-y-auto">
                     {friendsList.length === 0 ? (
-                      <p className="text-gray-400 text-center py-4 text-sm">No friends found</p>
+                      <p className="text-gray-400 text-center py-4 text-sm">{t('game.noFriendsFound')}</p>
                     ) : (
                       friendsList.map((friend) => {
                         const isPending = pendingInvitation?.friend?.id_user === friend.id_user ||
@@ -558,19 +560,19 @@ export default function RemoteGamePage() {
                                   {friend.username || friend.name}
                                 </p>
                                 <p className={`text-xs ${friend.status ? 'text-green-400' : 'text-gray-400'}`}>
-                                  {friend.status ? 'Online' : 'Offline'}
+                                  {friend.status ? t('game.online') : t('game.offline')}
                                 </p>
                               </div>
                             </div>
                             <span className={`text-xs ${isPending ? 'text-yellow-400' : 'text-blue-400'}`}>
-                              {isPending ? 'Invited...' : 'Invite'}
+                              {isPending ? t('game.sending') : t('game.invite')}
                             </span>
                           </div>
                         );
                       })
                     )}
                     {friendsList.length === 0 && (
-                      <p className="text-gray-400 text-center py-4 text-sm">No friends found</p>
+                      <p className="text-gray-400 text-center py-4 text-sm">{t('game.noFriendsFound')}</p>
                     )}
                   </div>
                 </div>
@@ -578,7 +580,7 @@ export default function RemoteGamePage() {
                   onClick={() => setSelection('menu')}
                   className="mt-8 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
                 >
-                  Back
+                  {t('game.back')}
                 </button>
               </div>
             </div>

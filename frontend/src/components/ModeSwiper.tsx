@@ -10,18 +10,20 @@ import Image from 'next/image';
 import styles from './modeswiper.module.css';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from './GameContext';
+import { useTranslation } from '../contexts/LanguageContext';
 
 export default function ModeSwiper()
 {
+    const { t } = useTranslation();
     const router = useRouter();
     const { setGameMode } = useGameContext();
 
     const modes = [
-      { id: 1, title: "Game vs Human", description: "Play online", buttonname: "Tournament", image: "/tournament.png", mode: 'tournament' as const },
-      { id: 2, title: "Remote Game", description: "Play with a friend online", buttonname: "1v1 Remote", image: "/1v1.png", mode: 'remote-options' as const },
-      { id: 3, title: "Game vs AI", description: "Play against computer", buttonname: "AI", image: "/robot.png", mode: 'ai' as const },
-      { id: 4, title: "Game vs Human", description: "Play with a friend", buttonname: "1 Versus 1", image: "/1v1.png", mode: 'local' as const },
-      { id: 5, title: "Tic Tac Toe", description: "Play X O game locally", buttonname: "X O Game", image: "/1v1.png", mode: 'tic-tac-toe' as const },
+      { id: 1, title: t('game.gameVsHuman'), description: t('game.playOnline'), buttonname: t('game.tournament'), image: "/tournament.png", mode: 'tournament' as const },
+      { id: 2, title: t('game.remoteGame'), description: t('game.playWithFriendOnline'), buttonname: t('game.1v1Remote'), image: "/1v1.png", mode: 'remote-options' as const },
+      { id: 3, title: t('game.gameVsHuman'), description: t('game.playAgainstComputer'), buttonname: t('game.ai'), image: "/robot.png", mode: 'ai' as const },
+      { id: 4, title: t('game.gameVsHuman'), description: t('game.playWithFriend'), buttonname: t('game.1Versus1'), image: "/1v1.png", mode: 'local' as const },
+      { id: 5, title: t('game.ticTacToe'), description: t('game.playXOGameLocally'), buttonname: t('game.xOGame'), image: "/1v1.png", mode: 'tic-tac-toe' as const },
     ];
 
     const handleClick = (mode: 'ai' | 'local' | 'tournament' | 'remote' | 'remote-options' | 'tic-tac-toe') => {

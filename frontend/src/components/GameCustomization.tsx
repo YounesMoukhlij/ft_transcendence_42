@@ -6,6 +6,7 @@ import { useGameContext } from './GameContext';
 import { useUserStore } from '../store/userStore';
 import axios from 'axios';
 import { getBackendURL } from '../lib/utils';
+import { useTranslation } from '../contexts/LanguageContext';
 
 const tableBackgrounds = [
   { name: 'Classic Green', value: '#15803d', type: 'color' },
@@ -39,6 +40,7 @@ interface GameCustomizationProps {
 }
 
 const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGame, isSocketConnected }) => {
+  const { t } = useTranslation();
   const router = useRouter();
   const { gameState, setCustomisation } = useGameContext();
   const { user, clearUser } = useUserStore();
@@ -202,7 +204,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
             style={{
               textShadow: '0 2px 4px rgba(0,0,0,0.3)'
             }}>
-          Customize Your Playground
+          {t('game.customizeYourPlayground')}
         </h1>
 
         {/* Main Content Area */}
@@ -216,7 +218,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
                   WebkitTextFillColor: 'transparent',
                   textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }}>
-              Table Background
+              {t('game.tableBackground')}
             </h2>
             <div className="flex gap-3 justify-center">
               {tableBackgrounds.map((bg) => (
@@ -268,7 +270,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
                   WebkitTextFillColor: 'transparent',
                   textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }}>
-              Ball Color
+              {t('game.ballColor')}
             </h2>
             <div className="flex gap-3 flex-wrap justify-center">
               {ballColors.map((color) => (
@@ -308,7 +310,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
                   WebkitTextFillColor: 'transparent',
                   textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }}>
-              Paddle Color
+              {t('game.paddleColor')}
             </h2>
             <div className="flex gap-3 flex-wrap justify-center">
               {paddleColors.map((color) => (
@@ -349,7 +351,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
                     WebkitTextFillColor: 'transparent',
                     textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                   }}>
-                AI Difficulty
+                {t('game.aiDifficulty')}
               </h2>
               <div className="flex gap-3 justify-center">
                 {(['easy', 'medium', 'hard'] as const).map((difficulty) => (
@@ -380,7 +382,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
                     }}
                     onClick={() => setAiDifficulty(difficulty)}
                   >
-                    {difficulty}
+                    {t(`game.${difficulty}`)}
                   </button>
                 ))}
               </div>
@@ -396,7 +398,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
                   WebkitTextFillColor: 'transparent',
                   textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }}>
-              Preview
+              {t('game.preview')}
             </h2>
             <div className="w-[40%] h-32 self-center rounded-xl border-2 border-gray-700 flex items-center justify-center relative overflow-hidden"
               style={{
@@ -450,7 +452,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           {!isReady && (
             <div className="text-center">
               <p className="text-yellow-500 text-xs">
-                All customization options must be selected to start the game
+                {t('game.allCustomizationOptionsRequired')}
               </p>
             </div>
           )}
@@ -462,7 +464,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
             onClick={onBack}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm"
           >
-            Back to Player Setup
+            {t('game.backToPlayerSetup')}
           </button>
           <button
             onClick={handleStartGame}
@@ -486,10 +488,8 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
             }}
           >
             {gameState.mode === 'remote' && !isSocketConnected
-              ? 'Connecting...'
-              : gameState.mode === 'remote' && isSocketConnected
-              ? 'Start Game'
-              : 'Start Game'}
+              ? t('game.connecting')
+              : t('game.startGame')}
           </button>
         </div>
 

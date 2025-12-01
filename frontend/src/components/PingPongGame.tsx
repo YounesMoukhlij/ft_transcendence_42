@@ -14,25 +14,35 @@ const BALL_RADIUS = 10;
 const WINNING_SCORE = 5;
 const AI_WINNING_SCORE = 15; // AI games are first to 15 points
 
-// AI difficulty settings
+// Game constants for smooth gameplay
+const PADDLE_SPEED = 10; // Pixels per frame at 60 FPS (600 pixels/second)
+const BALL_INITIAL_SPEED = 6;
+const BALL_MAX_SPEED = 14;
+const BALL_SPEED_INCREMENT = 0.05; // Speed increase per collision
+const BALL_MIN_SPEED = 5;
+
+// AI difficulty settings - improved for better gameplay
 const AI_DIFFICULTY_SETTINGS = {
   easy: {
-    speed: 4,           // Slower movement
-    reactionDelay: 0.3, // Delay before reacting
-    accuracy: 0.7,      // 70% accuracy in positioning
+    speed: 5,           // Moderate movement speed
+    reactionDelay: 0.25, // Delay before reacting
+    accuracy: 0.75,      // 75% accuracy in positioning
     prediction: false,   // No prediction
+    maxSpeed: 0.85,      // AI moves at 85% max speed
   },
   medium: {
-    speed: 6,           // Medium movement
-    reactionDelay: 0.15, // Small delay
-    accuracy: 0.85,     // 85% accuracy
+    speed: 7,           // Medium movement speed
+    reactionDelay: 0.1, // Small delay
+    accuracy: 0.88,     // 88% accuracy
     prediction: true,    // Basic prediction
+    maxSpeed: 0.92,      // AI moves at 92% max speed
   },
   hard: {
-    speed: 8,           // Fast movement
+    speed: 9,           // Fast movement
     reactionDelay: 0,   // Instant reaction
-    accuracy: 0.95,     // 95% accuracy
+    accuracy: 0.96,     // 96% accuracy
     prediction: true,   // Advanced prediction
+    maxSpeed: 1.0,      // AI can move at full speed
   },
 };
 
@@ -61,30 +71,35 @@ const useLocalGameState = (players: Player[]) => {
     ball: {
       x: GAME_WIDTH / 2,
       y: GAME_HEIGHT / 2,
-      vx: 5,
-      vy: 5,
+      vx: BALL_INITIAL_SPEED,
+      vy: BALL_INITIAL_SPEED,
+      speed: BALL_INITIAL_SPEED, // Track current speed
     },
   });
 
   const resetGameState = useCallback(() => {
+    // Random initial direction
+    const angle = (Math.random() * Math.PI / 3) - Math.PI / 6; // -30 to +30 degrees
+    const speed = BALL_INITIAL_SPEED;
     setGameState({
       scores: { player1: 0, player2: 0 },
       paddles: [GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2],
       ball: {
         x: GAME_WIDTH / 2,
         y: GAME_HEIGHT / 2,
-        vx: Math.random() > 0.5 ? 5 : -5,
-        vy: Math.random() > 0.5 ? 5 : -5,
+        vx: Math.random() > 0.5 ? speed * Math.cos(angle) : -speed * Math.cos(angle),
+        vy: speed * Math.sin(angle),
+        speed: speed,
       },
     });
   }, []);
 
-  const updateGameState = useCallback((keysPressed: { [key: string]: boolean }, isAIMode: boolean = false, difficulty: 'easy' | 'medium' | 'hard' = 'medium') => {
+  const updateGameState = useCallback((keysPressed: { [key: string]: boolean }, isAIMode: boolean = false, difficulty: 'easy' | 'medium' | 'hard' = 'medium', deltaTime: number = 1) => {
     setGameState(prev => {
-      // Paddles
+      // Paddles - smooth movement based on delta time
       const newPaddles = [...prev.paddles];
-      if (keysPressed['w']) newPaddles[0] -= 8;
-      if (keysPressed['s']) newPaddles[0] += 8;
+      if (keysPressed['w']) newPaddles[0] -= PADDLE_SPEED * deltaTime;
+      if (keysPressed['s']) newPaddles[0] += PADDLE_SPEED * deltaTime;
 
       // AI controls player 2 paddle (right side)
       if (isAIMode) {
@@ -94,71 +109,141 @@ const useLocalGameState = (players: Player[]) => {
         const ballVy = prev.ball.vy;
         const ballY = prev.ball.y;
         const aiPaddleCenter = newPaddles[1] + PADDLE_HEIGHT / 2;
+        const aiPaddleX = GAME_WIDTH - PADDLE_WIDTH - 10;
 
         // Calculate target position with prediction for medium/hard
         let targetY = ballY;
 
         if (settings.prediction && ballVx > 0) {
           // Predict where the ball will be when it reaches the AI paddle
-          const distanceToPaddle = (GAME_WIDTH - PADDLE_WIDTH - 10) - ballX;
-          const timeToReach = distanceToPaddle / Math.abs(ballVx);
-          const predictedY = ballY + (ballVy * timeToReach);
+          const distanceToPaddle = aiPaddleX - ballX;
+          if (Math.abs(ballVx) > 0.1) {
+            const timeToReach = distanceToPaddle / Math.abs(ballVx);
+            let predictedY = ballY + (ballVy * timeToReach);
 
-          // Clamp prediction to valid range
-          targetY = Math.max(BALL_RADIUS, Math.min(GAME_HEIGHT - BALL_RADIUS, predictedY));
+            // Account for wall bounces
+            while (predictedY < BALL_RADIUS || predictedY > GAME_HEIGHT - BALL_RADIUS) {
+              if (predictedY < BALL_RADIUS) {
+                predictedY = BALL_RADIUS + (BALL_RADIUS - predictedY);
+              } else {
+                predictedY = (GAME_HEIGHT - BALL_RADIUS) - (predictedY - (GAME_HEIGHT - BALL_RADIUS));
+              }
+            }
+
+            targetY = predictedY;
+          }
         }
 
         // Apply accuracy (for easy/medium, AI might not be perfectly accurate)
-        const accuracyOffset = (1 - settings.accuracy) * (Math.random() - 0.5) * PADDLE_HEIGHT;
+        const accuracyOffset = (1 - settings.accuracy) * (Math.random() - 0.5) * PADDLE_HEIGHT * 0.5;
         targetY += accuracyOffset;
 
         // Only move AI if ball is on the right side or moving towards AI
-        const shouldReact = ballX > GAME_WIDTH / 2 || (ballVx > 0 && ballX > GAME_WIDTH / 3);
+        const shouldReact = ballX > GAME_WIDTH / 3 && (ballVx > 0 || ballX > GAME_WIDTH / 2);
 
         if (shouldReact) {
-          const targetPaddleY = targetY - PADDLE_HEIGHT / 2;
-          const diff = targetPaddleY - newPaddles[1];
+          const targetPaddleCenter = targetY;
+          const diff = targetPaddleCenter - aiPaddleCenter;
 
-          // Apply reaction delay for easy/medium
-          const reactionFactor = settings.reactionDelay > 0 ? 0.7 : 1;
+          // Apply reaction delay for easy/medium (smoother movement)
+          const reactionFactor = settings.reactionDelay > 0 ? 1 - settings.reactionDelay : 1;
 
-          // Move towards target with difficulty-based speed
-          if (Math.abs(diff) > 2) {
-            const moveAmount = diff * reactionFactor;
-            if (diff > 0) {
-              newPaddles[1] += Math.min(settings.speed, Math.abs(moveAmount)) * Math.sign(moveAmount);
-            } else {
-              newPaddles[1] += Math.max(-settings.speed, moveAmount);
-            }
+          // Smooth movement towards target with difficulty-based speed
+          if (Math.abs(diff) > 1) {
+            const maxMoveSpeed = settings.speed * settings.maxSpeed;
+            const moveSpeed = Math.min(maxMoveSpeed, Math.abs(diff) * 0.15);
+            const moveAmount = Math.sign(diff) * moveSpeed * reactionFactor * deltaTime;
+            newPaddles[1] += moveAmount;
           }
         }
       } else {
         // Human controls for player 2 in local/tournament mode
-        if (keysPressed['ArrowUp']) newPaddles[1] -= 8;
-        if (keysPressed['ArrowDown']) newPaddles[1] += 8;
+        if (keysPressed['ArrowUp']) newPaddles[1] -= PADDLE_SPEED * deltaTime;
+        if (keysPressed['ArrowDown']) newPaddles[1] += PADDLE_SPEED * deltaTime;
       }
 
       newPaddles[0] = Math.max(0, Math.min(newPaddles[0], GAME_HEIGHT - PADDLE_HEIGHT));
       newPaddles[1] = Math.max(0, Math.min(newPaddles[1], GAME_HEIGHT - PADDLE_HEIGHT));
 
-      // Ball
-      let { x, y, vx, vy } = prev.ball;
-      x += vx;
-      y += vy;
+      // Ball - improved physics with better collision
+      let { x, y, vx, vy, speed } = prev.ball;
+      // Ensure speed property exists (fallback for legacy state)
+      if (speed === undefined) {
+        speed = Math.sqrt(vx * vx + vy * vy) || BALL_INITIAL_SPEED;
+      }
+      x += vx * deltaTime;
+      y += vy * deltaTime;
 
-      // Wall collision
-      if (y - BALL_RADIUS < 0 || y + BALL_RADIUS > GAME_HEIGHT) {
-        vy = -vy;
+      // Wall collision with proper bounce
+      if (y - BALL_RADIUS <= 0) {
+        y = BALL_RADIUS;
+        vy = -Math.abs(vy); // Ensure positive direction after bounce
+      } else if (y + BALL_RADIUS >= GAME_HEIGHT) {
+        y = GAME_HEIGHT - BALL_RADIUS;
+        vy = Math.abs(vy); // Ensure negative direction after bounce
       }
 
-      // Paddle collision
-      if (x - BALL_RADIUS < 10 + PADDLE_WIDTH && x - BALL_RADIUS > 10 && y > newPaddles[0] && y < newPaddles[0] + PADDLE_HEIGHT) {
-        vx = -vx * 1.02;
-        x = 10 + PADDLE_WIDTH + BALL_RADIUS; // prevent sticking
+      // Improved paddle collision with angle calculation
+      const paddle1X = 10 + PADDLE_WIDTH;
+      const paddle1Top = newPaddles[0];
+      const paddle1Bottom = newPaddles[0] + PADDLE_HEIGHT;
+      const paddle1Center = newPaddles[0] + PADDLE_HEIGHT / 2;
+
+      const paddle2X = GAME_WIDTH - PADDLE_WIDTH - 10;
+      const paddle2Top = newPaddles[1];
+      const paddle2Bottom = newPaddles[1] + PADDLE_HEIGHT;
+      const paddle2Center = newPaddles[1] + PADDLE_HEIGHT / 2;
+
+      // Check collision with left paddle (player 1)
+      if (x - BALL_RADIUS <= paddle1X && x - BALL_RADIUS >= 10 &&
+          y + BALL_RADIUS >= paddle1Top && y - BALL_RADIUS <= paddle1Bottom &&
+          vx < 0) {
+        // Calculate hit position relative to paddle center (-0.5 to 0.5)
+        const hitPos = (y - paddle1Center) / (PADDLE_HEIGHT / 2);
+        const clampedHitPos = Math.max(-0.9, Math.min(0.9, hitPos));
+
+        // Calculate angle based on hit position (max 60 degrees)
+        const maxAngle = Math.PI / 3; // 60 degrees
+        const angle = clampedHitPos * maxAngle;
+
+        // Increase speed slightly on collision
+        speed = Math.min(speed * 1.05, BALL_MAX_SPEED);
+
+        // Set new velocity with angle (normalized to maintain speed)
+        const magnitude = Math.sqrt(vx * vx + vy * vy) || speed;
+        const newSpeed = Math.min(Math.max(magnitude, BALL_MIN_SPEED), BALL_MAX_SPEED);
+        vx = Math.abs(Math.cos(angle) * newSpeed);
+        vy = Math.sin(angle) * newSpeed;
+        speed = newSpeed;
+
+        // Prevent sticking
+        x = paddle1X + BALL_RADIUS + 1;
       }
-      if (x + BALL_RADIUS > GAME_WIDTH - PADDLE_WIDTH - 10 && x + BALL_RADIUS < GAME_WIDTH - 10 && y > newPaddles[1] && y < newPaddles[1] + PADDLE_HEIGHT) {
-        vx = -vx * 1.02;
-        x = GAME_WIDTH - PADDLE_WIDTH - 10 - BALL_RADIUS; // prevent sticking
+
+      // Check collision with right paddle (player 2 / AI)
+      if (x + BALL_RADIUS >= paddle2X && x + BALL_RADIUS <= GAME_WIDTH - 10 &&
+          y + BALL_RADIUS >= paddle2Top && y - BALL_RADIUS <= paddle2Bottom &&
+          vx > 0) {
+        // Calculate hit position relative to paddle center (-0.5 to 0.5)
+        const hitPos = (y - paddle2Center) / (PADDLE_HEIGHT / 2);
+        const clampedHitPos = Math.max(-0.9, Math.min(0.9, hitPos));
+
+        // Calculate angle based on hit position (max 60 degrees)
+        const maxAngle = Math.PI / 3; // 60 degrees
+        const angle = clampedHitPos * maxAngle;
+
+        // Increase speed slightly on collision
+        speed = Math.min(speed * 1.05, BALL_MAX_SPEED);
+
+        // Set new velocity with angle (going left, normalized to maintain speed)
+        const magnitude = Math.sqrt(vx * vx + vy * vy) || speed;
+        const newSpeed = Math.min(Math.max(magnitude, BALL_MIN_SPEED), BALL_MAX_SPEED);
+        vx = -Math.abs(Math.cos(angle) * newSpeed);
+        vy = Math.sin(angle) * newSpeed;
+        speed = newSpeed;
+
+        // Prevent sticking
+        x = paddle2X - BALL_RADIUS - 1;
       }
 
       const newScores = { ...prev.scores };
@@ -177,10 +262,12 @@ const useLocalGameState = (players: Player[]) => {
         ? {
             x: GAME_WIDTH / 2,
             y: GAME_HEIGHT / 2,
-            vx: Math.random() > 0.5 ? 5 : -5,
-            vy: Math.random() > 0.5 ? 2 : -2,
+            // Reset ball with random angle
+            speed: BALL_INITIAL_SPEED,
+            vx: Math.random() > 0.5 ? BALL_INITIAL_SPEED : -BALL_INITIAL_SPEED,
+            vy: (Math.random() - 0.5) * 3, // Random vertical velocity
           }
-        : { x, y, vx, vy };
+        : { x, y, vx, vy, speed };
 
       return {
         scores: newScores,
@@ -292,17 +379,33 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     };
   }, [socket, user, winner, tournamentMode, gameState.mode]);
 
-  // Game loop for local tournament, AI mode, and local mode
+  // Game loop for local tournament, AI mode, and local mode - improved with delta time
   useEffect(() => {
     const isLocalMode = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
     if (!isLocalMode || winner) return;
 
-    const gameLoop = setInterval(() => {
-      const difficulty = (gameState.customisation?.aiDifficulty || 'medium') as 'easy' | 'medium' | 'hard';
-      updateGameState(keysPressed.current, gameState.mode === 'ai', difficulty);
-    }, 1000 / 60); // 60 FPS
+    let lastTime = performance.now();
+    let animationFrameId: number;
 
-    return () => clearInterval(gameLoop);
+    const gameLoop = (currentTime: number) => {
+      const deltaTime = Math.min((currentTime - lastTime) / (1000 / 60), 2); // Cap delta time
+      lastTime = currentTime;
+
+      if (!winner) {
+        const difficulty = (gameState.customisation?.aiDifficulty || 'medium') as 'easy' | 'medium' | 'hard';
+        updateGameState(keysPressed.current, gameState.mode === 'ai', difficulty, deltaTime);
+      }
+
+      animationFrameId = requestAnimationFrame(gameLoop);
+    };
+
+    animationFrameId = requestAnimationFrame(gameLoop);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [tournamentMode, gameState.mode, gameState.customisation?.aiDifficulty, winner, updateGameState]);
 
 
@@ -399,18 +502,32 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Player 1 paddle (left side - human player)
+      // Player 1 paddle (left side - human player) - with shadow
+      ctx.save();
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = customisation?.paddleColor || '#ff0000';
       ctx.fillStyle = customisation?.paddleColor || '#ff0000';
       ctx.fillRect(10, paddles[0], PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.restore();
 
-      // Player 2 paddle (right side - AI in AI mode, human in tournament mode)
-      ctx.fillStyle = gameState.mode === 'ai' ? '#888888' : (customisation?.paddleColor || '#0000ff');
+      // Player 2 paddle (right side - AI in AI mode, human in tournament mode) - with shadow
+      ctx.save();
+      const paddle2Color = gameState.mode === 'ai' ? '#888888' : (customisation?.paddleColor || '#0000ff');
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = paddle2Color;
+      ctx.fillStyle = paddle2Color;
       ctx.fillRect(GAME_WIDTH - PADDLE_WIDTH - 10, paddles[1], PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.restore();
 
+      // Ball with glow effect for better visibility
+      ctx.save();
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = customisation?.ballColor || '#fff';
       ctx.fillStyle = customisation?.ballColor || '#fff';
       ctx.fill();
+      ctx.restore();
 
       ctx.fillStyle = '#fff';
       ctx.font = '45px Arial';

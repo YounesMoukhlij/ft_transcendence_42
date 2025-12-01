@@ -8,12 +8,14 @@ import { useState, useEffect} from "react"
 import { GameDetails } from "@/types/user"
 import { useUserStore } from "@/store/userStore";
 import axios from "axios"
+import { useTranslation } from "../../../../contexts/LanguageContext"
 
 interface MatchHistoryTableProps {
   username: string
 }
 
 export function MatchHistoryTable({username} : MatchHistoryTableProps) {
+  const { t } = useTranslation();
   const { user: currentUser } = useUserStore();
   const [selectedMatch, setSelectedMatch] = useState<GameDetails | null>(null)
   const [matchHistory, setMatchHistory] = useState<GameDetails[] | null>(null)
@@ -26,11 +28,11 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
    useEffect(() => {
     const fetchMatchHistory = async () => {
       if (!currentUser?.access_token) {
-        setError("You must be logged in to view profiles");
+        setError(t('profile.mustBeLoggedIn'));
         return;
       }
       if (!targetUsername) {
-        setError("Username is missing");
+        setError(t('profile.usernameMissing'));
         return;
       }
 
@@ -44,12 +46,12 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
         setMatchHistory(res.data);
       } catch (err) {
         console.error(err);
-        setError(`Failed to load profile for ${targetUsername}`);
+        setError(t('profile.failedToLoad', { username: targetUsername }));
       }
     };
 
     fetchMatchHistory();
-  }, [targetUsername, currentUser]);
+  }, [targetUsername, currentUser, t]);
 
   return (
     <Card>
@@ -58,9 +60,9 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Match History
+              {t('profile.matchHistory')}
             </CardTitle>
-            <CardDescription>Complete record of all your matches</CardDescription>
+            <CardDescription>{t('profile.completeRecord')}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -69,19 +71,19 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Date</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Opponent</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Result</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Score</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Duration</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.date')}</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.opponent')}</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.result')}</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.score')}</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.duration')}</th>
               </tr>
             </thead>
             <tbody>
               {
-                matchHistory 
+                matchHistory
               && matchHistory.map((match) => (
                 <tr key={match.id} className="border-b hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedMatch(match)}>
-              
+
                   <td className="py-3 px-4 text-sm">{match.game_date.substring(0, match.game_date.length - 3)}</td>
                   <td className="py-3 px-4 font-medium">{match.opponent}</td>
                   <td className="py-3 px-4">

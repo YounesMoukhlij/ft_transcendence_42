@@ -18,6 +18,7 @@ import { HiXMark } from "react-icons/hi2";
 import { useRouter } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import { toast } from 'sonner';
+import { useTranslation } from '../../../contexts/LanguageContext';
 
 interface Friend {
   id_user: string,
@@ -137,6 +138,7 @@ interface Test1Props {
 }
 
 function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test1Props) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState<string>('');
 
 
@@ -147,12 +149,12 @@ function Test1({ friends, setMessages, setRoom, setImg, SetSelectContact }: Test
   return (
     <div className="flex flex-col h-full">
       <div>
-        <h1 className="italic text-[40px] sm:text-[50px] md:text-[60px] lg:text-[70px] p-[5px]">Chats</h1>
+        <h1 className="italic text-[40px] sm:text-[50px] md:text-[60px] lg:text-[70px] p-[5px]">{t('chat.title')}</h1>
       </div>
       <div className="flex justify-around self-center w-[90%] rounded-[2rem] border-2 border-solid">
         <input
           className="text-[16px] sm:text-[20px] md:text-[22px] lg:text-[25px] w-4/5 h-[3rem] sm:h-[3.5rem] md:h-[4rem] lg:h-[4.5rem] pl-4 outline-none"
-          placeholder="Search for a friend"
+          placeholder={t('chat.searchPlaceholder')}
           value={searchTerm}
           onChange={handleChange}
         />
@@ -229,6 +231,7 @@ interface InviterData {
 }
 
 export default function ChatPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { setGameMode } = useGameContext();
   const { friends, addFriend, removeFriend, setFriends, updateFriendStatus, updateLastMessage  } = useUserStore();
@@ -318,7 +321,7 @@ export default function ChatPage() {
       }
       else if (type === "game_challenge_accepted") {
         // Inviter receives this when friend accepts
-        toast.success(`${data.acceptedByUsername} accepted your game challenge!`);
+        toast.success(t('chat.gameChallengeAccepted', { username: data.acceptedByUsername }));
         // Store challengeId for later use
         if (data.challengeId) {
           localStorage.setItem('pendingChallengeId', data.challengeId);
@@ -329,7 +332,7 @@ export default function ChatPage() {
       }
       else if (type === "game_challenge_declined") {
         // Inviter receives this when friend declines
-        toast.error(`${data.declinedByUsername} declined your game challenge.`);
+        toast.error(t('chat.gameChallengeDeclined', { username: data.declinedByUsername }));
         // Clear any pending challenge
         localStorage.removeItem('pendingChallengeId');
       }
@@ -578,7 +581,7 @@ export default function ChatPage() {
       // Navigation will happen via the "start_game" WebSocket message
     }catch(err){
       console.error('Error accepting game challenge:', err);
-      toast.error('Failed to accept game challenge');
+      toast.error(t('chat.failedToAcceptChallenge'));
     }
   }
 
@@ -643,7 +646,7 @@ export default function ChatPage() {
                   alt="Inviter"
                 />
                 <p className="text-base sm:text-lg md:text-2xl lg:text-3xl text-white text-center sm:text-left">
-                  {InviterData.username} invited you for a 1 vs 1 game
+                  {t('chat.invitedForGame', { username: InviterData.username })}
                 </p>
               </div>
 
@@ -670,7 +673,7 @@ export default function ChatPage() {
                 <p className="self-center text-[0.8rem] sm:text-[1rem] md:text-[1.2rem] lg:text-[1.5rem] pl-[1rem]">
                   {room}
                 </p>
-                {isTyping &&  <p className='text-green-400 pl-[1rem]'>typing...</p>}
+                {isTyping &&  <p className='text-green-400 pl-[1rem]'>{t('chat.typing')}</p>}
                 </div>
               </div>
 
@@ -686,19 +689,19 @@ export default function ChatPage() {
                       (double_block === 1 && user_block === user.username) || double_block === 2 ? (
                           <button
                             className="w-full h-full" onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block) }>
-                            Deblock
+                            {t('chat.deblock')}
                           </button>
                         ) : (
                           <button
                             className="w-full h-full"
-                            onClick={() => handleBlock(room, setDboubleBlock, double_block, Setuser_block, user_block)}>Block
+                            onClick={() => handleBlock(room, setDboubleBlock, double_block, Setuser_block, user_block)}>{t('chat.block')}
                           </button>
                        )
                       }
                       </div>
                       <div className="w-full border h-10 border-solid text-center bg-black hover:bg-amber-400 text-xs sm:text-sm">
                         <button  className='w-full h-full' onClick={() => handleUnfriend(room, removeFriend)}>
-                          Unfriend
+                          {t('chat.unfriend')}
                         </button>
                       </div>
                     </div>
@@ -711,7 +714,7 @@ export default function ChatPage() {
             {!SelectContact && (
               <div className='flex flex-col items-center justify-center w-full h-full text-center'>
                 <h3 className="text-sm sm:text-base lg:text-lg mb-4">
-                  Please select an item to see your conversations.
+                  {t('chat.selectContact')}
                 </h3>
                 <img className="w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64" src="/animation.gif" alt="animation" />
               </div>
@@ -719,7 +722,7 @@ export default function ChatPage() {
             { SelectContact && (
               <div className="flex w-[90%] sm:w-[80%] lg:w-[25rem] bg-[rgb(168,147,104)] self-center mt-4 sm:mt-8 p-3 sm:p-4 rounded-[10px]">
                 <p className="text-xs sm:text-sm">
-                  The messages are end to end encrypted. Only people in this chat can read this conversation, so enjoy with your friend.
+                  {t('chat.encryptedMessage')}
                 </p>
               </div>
             )}
@@ -758,31 +761,31 @@ export default function ChatPage() {
               {double_block === 2 ? (
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
                   <div className="flex justify-around w-full h-full items-center px-2">
-                    <p className="text-xs sm:text-sm">You can't send to this contact. Please deblock first.</p>
+                    <p className="text-xs sm:text-sm">{t('chat.cannotSendDeblock')}</p>
                     <button
                       onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block)}
                       className="h-[1.5rem] w-[5rem] sm:h-[2rem] sm:w-[7rem] bg-white text-black rounded-[8px] text-xs sm:text-sm"
                     >
-                      Deblock
+                      {t('chat.deblock')}
                     </button>
                   </div>
                 </div>
               ) : double_block === 1 && user_block === user.username ? (
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
                   <div className="flex justify-around w-full h-full items-center px-2">
-                    <p className="text-xs sm:text-sm">You can't send to this contact. Please deblock first.</p>
+                    <p className="text-xs sm:text-sm">{t('chat.cannotSendDeblock')}</p>
                     <button
                       onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block)}
                       className="h-[1.5rem] w-[5rem] sm:h-[2rem] sm:w-[7rem] bg-white text-black rounded-[8px] text-xs sm:text-sm"
                     >
-                      Deblock
+                      {t('chat.deblock')}
                     </button>
                   </div>
                 </div>
               ) : double_block === 1 && user.username !== user_block ? (
                 <div className="flex items-center h-[9%] sm:h-[10%] justify-between bg-[#1B1B1B] mt-4 pl-2 sm:pl-4 rounded-b-[35px]">
                   <div className="flex justify-around w-full h-full items-center">
-                    <p className="text-xs sm:text-sm">Sorry You can't send message to this contact</p>
+                    <p className="text-xs sm:text-sm">{t('chat.cannotSendBlocked')}</p>
                   </div>
                 </div>
               ) : (
@@ -801,7 +804,7 @@ export default function ChatPage() {
                   <div className="flex-1 mx-2 sm:mx-4">
                     <input
                       className="w-full h-8 sm:h-10 lg:h-12 bg-black p-2 sm:p-4 rounded-[20px] sm:rounded-[50px] outline-none text-xs sm:text-sm lg:text-base"
-                      placeholder="Message"
+                      placeholder={t('chat.messagePlaceholder')}
                       onKeyDown={handleEnterKey}
                       value={input}
                       onChange={(e) => setEmoji(e.target.value)}
@@ -820,16 +823,16 @@ export default function ChatPage() {
                       <div className="absolute inset-0 bg-black/50" onClick={() => setConfirm(false)}></div>
                       <div className="relative flex flex-col justify-between w-full max-w-sm sm:max-w-md lg:max-w-lg h-32 sm:h-36 bg-gray-500 text-center border p-3 sm:p-4 rounded-2xl border-solid">
                         <p className="text-xs sm:text-sm lg:text-base">
-                          You are about to request a game session with {room}
+                          {t('chat.gameInviteConfirm', { room })}
                         </p>
                         <div className="flex items-end justify-between h-1/2 px-2">
                           <div className="text-center w-[45%] h-[70%] border bg-[rgb(201,49,38)] flex justify-center rounded-2xl border-solid items-center">
                             <button onClick={() => setConfirm(false)} className="w-full h-full text-xs sm:text-sm">
-                              Cancel
+                              {t('common.cancel')}
                             </button>
                           </div>
                           <div className="text-center border h-[70%] w-[45%] bg-[rgb(14,154,54)] flex justify-center  rounded-2xl border-solid items-center">
-                              <button onClick={() => send_game_invite(localStorage.getItem('friend_id')) } className="text-xs sm:text-sm w-full h-full">Confirm</button>
+                              <button onClick={() => send_game_invite(localStorage.getItem('friend_id')) } className="text-xs sm:text-sm w-full h-full">{t('common.confirm')}</button>
                           </div>
                         </div>
                       </div>

@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import GameCustomization from '@/components/GameCustomization';
 import { useUserStore } from '@/store/userStore';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 export default function CustomizePage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { gameState, setCustomisation } = useGameContext();
   const [isSearching, setIsSearching] = useState(false);
@@ -147,16 +149,16 @@ export default function CustomizePage() {
   useEffect(() => {
     const title =
       gameState.mode === 'ai'
-        ? 'AI Game Customization'
+        ? t('game.aiGameCustomization')
         : gameState.mode === 'local'
-        ? 'Local Game Customization'
+        ? t('game.localGameCustomization')
         : gameState.mode === 'tournament'
-        ? 'Online Game Customization'
+        ? t('game.onlineGameCustomization')
         : gameState.mode === 'remote'
-        ? 'Remote Game Customization'
-        : 'Game Customization';
+        ? t('game.remoteGameCustomization')
+        : t('game.gameCustomization');
     document.title = title;
-  }, [gameState.mode]);
+  }, [gameState.mode, t]);
 
   useEffect(() => {
     if (!gameState.mode) {
@@ -249,13 +251,13 @@ export default function CustomizePage() {
 
       // Check if we have a valid user with username
       if (!currentUser || !currentUser.username) {
-        alert('You must be logged in to play a remote game. Please log in and try again.');
+        alert(t('game.mustBeLoggedIn'));
         router.push('/signIn');
         return;
       }
 
       if (!socket || socket.readyState !== WebSocket.OPEN) {
-        alert('WebSocket not connected. Please wait a moment and try again.');
+        alert(t('game.websocketNotConnected'));
         return;
       }
 
@@ -319,7 +321,7 @@ export default function CustomizePage() {
         return (
           <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
             <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-purple-500"></div>
-            <h1 className="text-2xl font-bold mt-8">Loading User Data...</h1>
+            <h1 className="text-2xl font-bold mt-8">{t('game.loadingUserData')}</h1>
           </div>
         );
       }
@@ -334,12 +336,12 @@ export default function CustomizePage() {
         <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-purple-500"></div>
           <h1 className="text-2xl font-bold mt-8">
-            {isFriendChallenge ? 'Waiting for your friend...' : 'Searching for an opponent...'}
+            {isFriendChallenge ? t('game.waitingForFriend') : t('game.searchingForOpponent')}
           </h1>
           <p className="text-lg mt-2">
             {isFriendChallenge
-              ? 'Your friend is customizing their game. Please wait...'
-              : 'Please wait while we find a match for you.'}
+              ? t('game.friendCustomizing')
+              : t('game.pleaseWaitForMatch')}
           </p>
         </div>
       );

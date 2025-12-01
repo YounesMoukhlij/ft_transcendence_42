@@ -4,15 +4,17 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import PingPongGame from '@/components/PingPongGame';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 export default function LocalGamePage() {
+  const { t } = useTranslation();
   const { gameState } = useGameContext();
   const router = useRouter();
 
   // Set page title
   useEffect(() => {
-    document.title = 'Local Multiplayer Ping Pong';
-  }, []);
+    document.title = t('game.localMultiplayerPingPong');
+  }, [t]);
 
   useEffect(() => {
     if (!gameState.players || !gameState.players[1]?.name) {
@@ -36,7 +38,7 @@ export default function LocalGamePage() {
           onClick={() => router.push('/game')}
           className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200"
         >
-          Back to Game Modes
+          {t('game.backToGameModes')}
         </button>
       </div>
     </div>

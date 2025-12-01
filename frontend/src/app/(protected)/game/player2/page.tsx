@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import { useUserStore } from '@/store/userStore';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 const predefinedAvatars = [
   '/profileface.png',
@@ -11,6 +12,7 @@ const predefinedAvatars = [
 ];
 
 function Player2Setup() {
+  const { t } = useTranslation();
   const { gameState, setPlayers } = useGameContext();
   const router = useRouter();
   const user = useUserStore((state) => state.user);
@@ -71,17 +73,17 @@ function Player2Setup() {
   return (
     <div className="flex flex-col items-center justify-center h-full bg-transparent p-4">
       <div className="w-full max-w-lg bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-700 p-8">
-        <h1 className="text-2xl font-bold text-white mb-4 text-center">Player 2 Setup</h1>
+        <h1 className="text-2xl font-bold text-white mb-4 text-center">{t('game.player2Setup')}</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="text-white">Name</label>
+          <label className="text-white">{t('game.name')}</label>
           <input
             className="p-2 rounded bg-gray-700 text-white border border-gray-600"
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="Enter your name"
+            placeholder={t('game.enterYourName')}
             maxLength={16}
           />
-          <label className="text-white mt-2">Choose an avatar</label>
+          <label className="text-white mt-2">{t('game.chooseAnAvatar')}</label>
           <div className="flex gap-4 mb-2">
             {predefinedAvatars.map(src => (
               <img
@@ -94,12 +96,12 @@ function Player2Setup() {
             ))}
             <label className="w-16 h-16 flex items-center justify-center rounded-full border-2 border-gray-500 bg-gray-700 cursor-pointer">
               <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-              <span className="text-white text-xs">Upload</span>
+              <span className="text-white text-xs">{t('game.upload')}</span>
             </label>
           </div>
           {avatar && (
             <div className="flex flex-col items-center">
-              <span className="text-white text-xs mb-1">Preview:</span>
+              <span className="text-white text-xs mb-1">{t('game.preview')}:</span>
               <img src={avatar} alt="preview" className="w-16 h-16 rounded-full border-2 border-blue-400" />
             </div>
           )}
@@ -108,7 +110,7 @@ function Player2Setup() {
             className="mt-4 bg-black hover:bg-white hover:text-black border-2 border-white text-white font-bold py-2 px-4 rounded"
             disabled={!name && !avatar}
           >
-            Continue
+            {t('game.continue')}
           </button>
         </form>
       </div>
