@@ -177,13 +177,23 @@ export default function RemoteGameRoomPage() {
             break;
           case 'gameOver':
             // Game ended, winner is in message.payload.winner
+            console.log('[RemoteGameRoom] Game over received:', message.payload);
             setGameOver({
               winner: message.payload.winner,
-              finalScore: message.payload.finalScore
+              finalScore: message.payload.finalScore,
+              reason: message.payload.reason,
+              message: message.payload.message
             });
             // Update final game state if provided
             if (message.payload.finalGameState) {
               setServerGameState(message.payload.finalGameState);
+            }
+            // If opponent quit, clear any rematch states since they're no longer in the room
+            if (message.payload.reason === 'opponentQuit') {
+              setRematchOffer(false);
+              setRematchRequested(false);
+              setRematchDeclinedMessage('');
+              setOpponentLeft(true);
             }
             break;
           case 'matchFound':
@@ -318,53 +328,65 @@ export default function RemoteGameRoomPage() {
         <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
           <h2 className="text-4xl font-bold mb-4">{t('game.gameOver')}</h2>
           <p className="text-2xl mt-4 mb-6">{t('game.isTheWinner', { winner: gameOver.winner })}</p>
+
+          {/* Show opponent quit message if applicable */}
+          {gameOver.reason === 'opponentQuit' && gameOver.message && (
+            <p className="text-yellow-400 text-lg mb-4 font-semibold">{gameOver.message}</p>
+          )}
+
           <p className="text-lg mb-4">
             {t('game.finalScore')}: {gameOver.finalScore.player1} - {gameOver.finalScore.player2}
           </p>
 
-          {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage}</p>}
+          {/* Only show rematch options if opponent didn't quit (they're still available for rematch) */}
+          {gameOver.reason !== 'opponentQuit' && (
+            <>
+              {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage}</p>}
 
-          {rematchOffer ? (
-            <div>
-              <p className="text-yellow-400 mb-4">{t('game.opponentRequestedRematch')}</p>
-              <button
-                onClick={handleAcceptRematch}
-                className="mt-4 px-6 py-3 bg-yellow-500 rounded-lg text-lg hover:bg-yellow-600 transition-colors"
-              >
-                {t('game.acceptRematch')}
-              </button>
-              <button
-                onClick={() => {
-                  if (socket && socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ type: 'rematch:decline' }));
-                    setRematchOffer(false);
-                  }
-                }}
-                className="mt-4 ml-4 px-6 py-3 bg-red-500 rounded-lg text-lg hover:bg-red-600 transition-colors"
-              >
-                {t('common.decline')}
-              </button>
-            </div>
-          ) : rematchRequested ? (
-            <p className="text-yellow-400 mb-4">{t('game.waitingForOpponentRematch')}</p>
-          ) : (
-            <button
-              onClick={() => {
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                  socket.send(JSON.stringify({ type: 'rematch:request' }));
-                  setRematchRequested(true);
-                  setRematchDeclinedMessage(''); // Clear any previous decline message
-                }
-              }}
-              className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors"
-            >
-              {t('game.requestRematch')}
-            </button>
+              {rematchOffer ? (
+                <div>
+                  <p className="text-yellow-400 mb-4">{t('game.opponentRequestedRematch')}</p>
+                  <button
+                    onClick={handleAcceptRematch}
+                    className="mt-4 px-6 py-3 bg-yellow-500 rounded-lg text-lg hover:bg-yellow-600 transition-colors"
+                  >
+                    {t('game.acceptRematch')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (socket && socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: 'rematch:decline' }));
+                        setRematchOffer(false);
+                      }
+                    }}
+                    className="mt-4 ml-4 px-6 py-3 bg-red-500 rounded-lg text-lg hover:bg-red-600 transition-colors"
+                  >
+                    {t('common.decline')}
+                  </button>
+                </div>
+              ) : rematchRequested ? (
+                <p className="text-yellow-400 mb-4">{t('game.waitingForOpponentRematch')}</p>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                      socket.send(JSON.stringify({ type: 'rematch:request' }));
+                      setRematchRequested(true);
+                      setRematchDeclinedMessage(''); // Clear any previous decline message
+                    }
+                  }}
+                  className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors"
+                >
+                  {t('game.requestRematch')}
+                </button>
+              )}
+            </>
           )}
 
+          {/* Always show back to lobby button */}
           <button
             onClick={leaveRoom}
-            className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors"
+            className={`mt-4 ${gameOver.reason !== 'opponentQuit' ? 'ml-4' : ''} px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors`}
           >
             {t('game.backToGameLobby')}
           </button>
