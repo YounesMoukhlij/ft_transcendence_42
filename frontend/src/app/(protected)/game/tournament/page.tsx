@@ -8,6 +8,7 @@ import GameCustomization from '@/components/GameCustomization';
 import { getWebSocket } from '@/components/globalSocket';
 import { useUserStore } from '@/store/userStore';
 import { FaUser, FaUpload, FaCrown, FaTrophy, FaGamepad, FaSearch, FaCheck, FaTimes as FaReject, FaClock, FaTimes } from 'react-icons/fa';
+import { IoExpand, IoContract } from 'react-icons/io5';
 import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -147,6 +148,8 @@ export default function TournamentPage() {
   const [tempPlayers, setTempPlayers] = useState<Player[]>([]);
   const [matchWinner, setMatchWinner] = useState<Player | null>(null);
   const [showTournamentWinnerMessage, setShowTournamentWinnerMessage] = useState(false);
+  const gameContainerRef = React.useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // New state for tournament search and join requests
   const [availableTournaments, setAvailableTournaments] = useState<RemoteTournament[]>([]);
@@ -2125,6 +2128,98 @@ export default function TournamentPage() {
     );
   }
 
+  // Toggle fullscreen - defined before playing step
+  const toggleFullscreen = useCallback(async () => {
+    const container = gameContainerRef.current;
+    if (!container) return;
+
+    try {
+      if (
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      ) {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen();
+        }
+      } else {
+        // Enter fullscreen
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if ((container as any).webkitRequestFullscreen) {
+          await (container as any).webkitRequestFullscreen();
+        } else if ((container as any).mozRequestFullScreen) {
+          await (container as any).mozRequestFullScreen();
+        } else if ((container as any).msRequestFullscreen) {
+          await (container as any).msRequestFullscreen();
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling fullscreen:', error);
+    }
+  }, []);
+
+  // Fullscreen change handler
+  useEffect(() => {
+    if (tournamentStep !== 'playing') return;
+
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, [tournamentStep]);
+
+  // Keyboard shortcut for fullscreen (F key)
+  useEffect(() => {
+    if (tournamentStep !== 'playing') return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only trigger if not typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // F key or F11 for fullscreen toggle
+      if (e.key === 'f' || e.key === 'F' || e.key === 'F11') {
+        // Prevent default F11 behavior if it's F11
+        if (e.key === 'F11') {
+          e.preventDefault();
+        }
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [tournamentStep, toggleFullscreen]);
+
   // Playing phase - show the actual game
   if (tournamentStep === 'playing') {
     // Use memoized current match
@@ -2138,9 +2233,17 @@ export default function TournamentPage() {
     }
 
     return (
-      <div className="flex flex-col h-full bg-black opacity-90">
-        {/* Tournament Header */}
-        <div className="bg-gray-900 border-b border-purple-500 p-2 sm:p-4 ">
+      <div
+        ref={gameContainerRef}
+        className={`flex flex-col transition-all duration-300 ${
+          isFullscreen
+            ? 'h-screen bg-black'
+            : 'h-full bg-black opacity-90'
+        }`}
+      >
+        {/* Tournament Header - Hidden in fullscreen */}
+        {!isFullscreen && (
+          <div className="bg-gray-900 border-b border-purple-500 p-2 sm:p-4 ">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="text-center sm:text-left">
               <h2 className="text-lg sm:text-xl font-bold text-purple-300">{t('game.tournamentMatch')}</h2>
@@ -2169,14 +2272,26 @@ export default function TournamentPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Game Area */}
-        <div className="flex-1 relative">
-          <PingPongGame
-            tournamentMode={true}
-            tournamentPlayers={currentPlayers}
-            onTournamentMatchEnd={handleGameComplete}
-          />
+        <div className={`relative ${isFullscreen ? 'flex-1 flex items-center justify-center' : 'flex-1'}`}>
+          <div
+            className={isFullscreen ? 'w-full h-full flex items-center justify-center' : 'w-full h-full'}
+            style={isFullscreen ? {
+              aspectRatio: '4/3',
+              maxWidth: '95vw',
+              maxHeight: '95vh',
+              width: 'auto',
+              height: 'auto'
+            } : {}}
+          >
+            <PingPongGame
+              tournamentMode={true}
+              tournamentPlayers={currentPlayers}
+              onTournamentMatchEnd={handleGameComplete}
+            />
+          </div>
 
           {/* Winner Announcement Modal */}
           {showTournamentWinnerMessage && matchWinner && (
@@ -2224,16 +2339,35 @@ export default function TournamentPage() {
           )}
         </div>
 
-        {/* Tournament Controls */}
-        <div className="bg-gray-900 border-t border-purple-500 p-2 sm:p-4">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-4 order-2 sm:order-1">
-              <button
-                onClick={() => router.push('/game')}
-                className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
-              >
-                {t('game.backToGameModes')}
-              </button>
+        {/* Tournament Controls - Hidden in fullscreen */}
+        {!isFullscreen && (
+          <div className="bg-gray-900 border-t border-purple-500 p-2 sm:p-4">
+            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-4 order-2 sm:order-1">
+                <button
+                  onClick={() => router.push('/game')}
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                >
+                  {t('game.backToGameModes')}
+                </button>
+                {/* Fullscreen Button */}
+                <button
+                  onClick={toggleFullscreen}
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold text-sm sm:text-base flex items-center gap-2"
+                  aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                >
+                  {isFullscreen ? (
+                    <>
+                      <IoContract className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="hidden sm:inline">Exit Fullscreen</span>
+                    </>
+                  ) : (
+                    <>
+                      <IoExpand className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="hidden sm:inline">Fullscreen</span>
+                    </>
+                  )}
+                </button>
               <button
                 onClick={() => setTournamentStep('bracket')}
                 className="px-3 py-2 sm:px-4 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm sm:text-base"
@@ -2273,6 +2407,45 @@ export default function TournamentPage() {
             )}
           </div>
         </div>
+        )}
+
+        {/* Minimal UI in Fullscreen - Fixed Bottom */}
+        {isFullscreen && (
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-6 py-3 border border-purple-500 shadow-xl">
+            <div className="flex items-center gap-4 text-white text-sm flex-wrap justify-center">
+              <div>
+                <span className="opacity-70">Round {currentMatch.round} - Match {currentMatchIndex + 1}</span>
+              </div>
+              <div className="h-4 w-px bg-gray-600"></div>
+              <div className="flex items-center gap-2">
+                <img src={currentMatch.player1.avatar} alt={currentMatch.player1.name} className="w-6 h-6 rounded-full" />
+                <span className="font-semibold">{currentMatch.player1.name}</span>
+                <span className="mx-2 opacity-50">vs</span>
+                <img src={currentMatch.player2.avatar} alt={currentMatch.player2.name} className="w-6 h-6 rounded-full" />
+                <span className="font-semibold">{currentMatch.player2.name}</span>
+              </div>
+              <div className="h-4 w-px bg-gray-600"></div>
+              <div>
+                <span className="opacity-70">P1: </span>
+                <span className="font-semibold">W/S</span>
+                <span className="opacity-70 ml-3">P2: </span>
+                <span className="font-semibold">↑/↓</span>
+              </div>
+              <div className="h-4 w-px bg-gray-600"></div>
+              <div className="opacity-70 text-xs">
+                Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded">F</kbd> to exit fullscreen
+              </div>
+              <div className="h-4 w-px bg-gray-600"></div>
+              <button
+                onClick={toggleFullscreen}
+                className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 rounded transition-colors text-sm font-medium flex items-center gap-2"
+              >
+                <IoContract className="w-4 h-4" />
+                Exit Fullscreen
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

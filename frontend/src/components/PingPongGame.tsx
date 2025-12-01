@@ -828,12 +828,21 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
               : serverGameState?.player2.username}
         </span>
       </div>
-      <canvas
-        ref={canvasRef}
-        width={GAME_WIDTH}
-        height={GAME_HEIGHT}
-        className="bg-gray-800 rounded-lg shadow-lg"
-      />
+      <div className="relative w-full flex justify-center items-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
+        <canvas
+          ref={canvasRef}
+          width={GAME_WIDTH}
+          height={GAME_HEIGHT}
+          className="bg-gray-800 rounded-lg shadow-lg"
+          style={{
+            width: '100%',
+            height: '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            objectFit: 'contain',
+          }}
+        />
+      </div>
       <div className="mt-4 text-center text-white">
         {gameState.mode === 'ai' ? (
           <>
