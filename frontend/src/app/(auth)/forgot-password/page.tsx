@@ -13,14 +13,12 @@ const STEPS = {
 };
 
 const ForgotPasswordPage = () => {
-  // State for multi-step form logic
-  // VERIFY_CODE - ENTER_EMAIL - RESET_PASSWORD
   const [currentStep, setCurrentStep] = useState(STEPS.ENTER_EMAIL);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [resetToken, setResetToken] = useState(''); // To store the temporary token from the backend
+  const [resetToken, setResetToken] = useState('');
   // router
   const router = useRouter();
 
@@ -41,7 +39,6 @@ const ForgotPasswordPage = () => {
     setError(null);
     
     try {
-      // const response = await fetch('http://localhost:4444/forgotPassword', {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/forgotPassword`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,7 +69,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/verifyResetCode`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/verifyCode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -84,7 +81,7 @@ const ForgotPasswordPage = () => {
       }
 
       toast.success(data.message);
-      setResetToken(data.resetToken); // Save the temporary token
+      setResetToken(data.resetToken);
       setCurrentStep(STEPS.RESET_PASSWORD);
 
     } catch (err) {

@@ -6,7 +6,7 @@ import { useUserStore } from './store/userStore'
 
 
 // Define your protected and public paths
-const PROTECTED_PATHS = ['/chat', '/profile', '/dashboard', '/settings']
+const PROTECTED_PATHS = ['/chat', '/profile', '/dashboard', '/settings', '/leaderboard']
 const PUBLIC_PATHS = ['/signIn', '/signUp']
 
 export function middleware(request: NextRequest) {

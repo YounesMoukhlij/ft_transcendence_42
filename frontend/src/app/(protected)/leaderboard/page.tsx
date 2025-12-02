@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { Trophy, User } from 'lucide-react';
+import { redirect } from 'next/navigation'; // Correct import for App Router
+import { cookies } from 'next/headers'; // To access cookies on the server
 
 const BACK_API = 'http://localhost:4444';
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
-
 
 const getProfileImageUrl = (currentImg) => {
   if (!currentImg) {
@@ -12,16 +13,24 @@ const getProfileImageUrl = (currentImg) => {
   if (currentImg && currentImg.startsWith('/uploads/')) {
     return `${BACK_API}${currentImg}`;
   }
-  
   return currentImg;
 };
 
 // --- Simplified data fetching function ---
-async function getLeaderboardData() {
-  // Fetch the default leaderboard (e.g., page 1, limit 10)
+async function getLeaderboardData(token) {
+  // Pass the token dynamically
   const res = await fetch(`${BACK_API}/leaderboard`, {
-    cache: 'no-store',
+    cache: 'no-store', // Ensures SSR (dynamic fetching every request)
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
   });
+
+
+  if (res.status === 401) {
+    return null;
+  }
 
   if (!res.ok) {
     throw new Error('Failed to fetch data');
@@ -30,39 +39,67 @@ async function getLeaderboardData() {
   return res.json();
 }
 
-// --- A styled component for each leaderboard row ---
+
 const LeaderboardItem = ({ player, rank }) => (
-    <Link href={`/profile/${player.username}`} className="block">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700 last:border-b-0 cursor-pointer ">
-            
-            <div className="flex items-center gap-4">
-                <div className={`text-gray-400 font-semibold text-lg ${rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-400' : rank === 3 ? 'text-yellow-800' : 'text-white'}`}># {rank}</div>
-                <img
-                    src={getProfileImageUrl(player.profile_img)}
-                    alt={player.username}
-                    className={`w-12 h-12 rounded-full object-cover border-2 border-gray-600 ${rank === 1 ? 'border-yellow-400' : rank === 2 ? 'border-gray-400' : rank === 3 ? 'border-yellow-800' : ''}`}
-                />
-                <div>
-                    <h2 className="text-white font-semibold text-base sm:text-lg">
-                        {player.username}
-                    </h2>
-                </div>
-            </div>
-            <div className="text-right">
-                <p className="text-gray-400 font-bold text-lg">{player.xp} XP</p>
-            </div>
+  <Link href={`/profile/${player.username}`} className="block">
+    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-900 transition-colors">
+      <div className="flex items-center gap-4">
+        <div className={`font-semibold text-lg ${rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-400' : rank === 3 ? 'text-yellow-800' : 'text-gray-400'}`}>
+          # {rank}
         </div>
-    </Link>
+        <img
+          src={getProfileImageUrl(player.profile_img)}
+          alt={player.username}
+          className={`w-12 h-12 rounded-full object-cover border-2 border-gray-600 ${rank === 1 ? 'border-yellow-400' : rank === 2 ? 'border-gray-400' : rank === 3 ? 'border-yellow-800' : ''}`}
+        />
+        <div>
+          <h2 className="text-white font-semibold text-base sm:text-lg">
+            {player.username}
+          </h2>
+        </div>
+      </div>
+      <div className="text-right">
+        <p className="text-gray-400 font-bold text-lg">{player.xp} XP</p>
+      </div>
+    </div>
+  </Link>
 );
 
-// --- The main async Page Component (no searchParams) ---
+// --- The main async Page Component ---
 export default async function LeaderboardPage() {
+  // 1. Get the token from cookies (SSR)
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value; 
+  // 2. Immediate check: If no token exists, redirect immediately
+  if (!token) {
+    redirect('/signIn');
+  }
+
   let data;
   let error = null;
 
   try {
-    data = await getLeaderboardData();
+    // 3. Fetch data using the token
+    data = await getLeaderboardData(token);
+    
+    // 4. Handle 401 from API (getLeaderboardData returns null on 401)
+    if (data === null) {
+      // We must call redirect OUTSIDE the try block if we want to be safe, 
+      // or ensure the catch block doesn't swallow the NEXT_REDIRECT error.
+      // However, calling it here will throw an error caught below.
+      // See the "catch" block for the fix.
+      redirect('/signIn');
+    }
+
   } catch (err) {
+    // CRITICAL: Next.js redirects work by throwing a specific error 'NEXT_REDIRECT'.
+    // We must identify if the error is a redirect, and if so, re-throw it.
+    if (err.message === 'NEXT_REDIRECT') {
+      throw err;
+    }
+    
+    // Handle actual errors (like 500 server error or network fail)
+    console.error("Leaderboard fetch error:", err);
     error = 'Failed to load leaderboard. Please try again later.';
   }
 
@@ -74,7 +111,7 @@ export default async function LeaderboardPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="flex items-center justify-center gap-3 text-3xl sm:text-4xl font-bold mb-2">
-            <Trophy className="text-blue-400" size={36} color ={'white'} />
+            <Trophy className="text-blue-400" size={36} color={'white'} />
             Leaderboard
           </h1>
           <p className="text-gray-500 text-sm sm:text-base">
@@ -107,8 +144,6 @@ export default async function LeaderboardPage() {
               ))}
             </div>
           )}
-
-          {/* Pagination is removed */}
         </div>
       </div>
     </div>

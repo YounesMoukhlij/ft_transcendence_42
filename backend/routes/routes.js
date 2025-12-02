@@ -22,12 +22,29 @@ import {
     generate2FA,        
     verifyAndEnable2FA, 
     loginVerify2FA,
-    leaderboard      
+    leaderboard,
+    me
 
 } from '../modules/userAuth.module.js';
 
 
 export default async function routes(fastify, options) {
+
+    fastify.addHook('onRequest' , async (request , reply) => {
+    const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser" , "/getUserById/1", "/forgotPassword",
+       "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/auth/42", "/42Auth", "/2fa/login-verify", "/getAllUsers"]; ///2fa/login-verify hadi ila kan login b token o daz 
+
+    const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
+
+    if (publicRoutes.includes(pathname)) return;
+    try {
+      await request.jwtVerify();
+    } catch (err) {
+      return reply.code(401).send({ message: "unauthorized" });
+    }
+  });
+  
+
     // Existing routes
     fastify.get('/', aaa);
     fastify.get('/Xprank', Xprank);
@@ -38,7 +55,7 @@ export default async function routes(fastify, options) {
    
     // User management routes
     fastify.post('/AddUser', AddUser);
-    fastify.get('/getAllUsers',{ preHandler: [fastify.authenticate] }, getAllUsers);
+    fastify.get('/getAllUsers', getAllUsers);
     fastify.get('/getUserById/:id', getUserById);
     fastify.get('/getUserByEmail/:email', getUserByEmail);
     fastify.delete('/DeleteUserById/:id', DeleteUserById);
@@ -56,7 +73,7 @@ export default async function routes(fastify, options) {
     fastify.post('/update2FA', { preHandler: [fastify.authenticate] }, update2FA);
     
     // Step 1 of enabling 2FA (setup)
-    fastify.post('/2fa/generate', { preHandler: [fastify.authenticate] }, generate2FA);
+    fastify.post('/2fa/generate', { preHandler: [fastify.authenticate] }, generate2FA); // khasra
     
     // Step 2 of enabling 2FA (setup)
     fastify.post('/2fa/verify', { preHandler: [fastify.authenticate] }, verifyAndEnable2FA);
@@ -90,4 +107,6 @@ export default async function routes(fastify, options) {
     // Step 2: 42 redirects here with code
     fastify.get('/42Auth', FortyTwoAuth);
 
+    // /me that take token and return user info
+    fastify.get('/me', me);
 }

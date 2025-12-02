@@ -144,7 +144,7 @@ const ProfileSettingsPage = () => {
       if (imageFile) {
         dataToSave.append('profile_image', imageFile, imageFile.name)
       }
-      console.log('from env============');
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/updateUserInfo`, {
         method: 'POST',
         headers: {
@@ -323,7 +323,10 @@ const ProfileSettingsPage = () => {
     setIsDeletingAccount(true)
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/DeleteUserById/${user.id_user}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`
+        }
       })
       const data = await response.json()
       if (!response.ok) {

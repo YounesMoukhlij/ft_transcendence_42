@@ -3,18 +3,6 @@ import React from 'react'
 import { useState } from 'react';
 import toast from 'react-toastify';
 
-const qrCode = () => {
-    const [qrCodeUrl, setQrCodeUrl] = useState("");
-    
-    
-    return (
-        <div className='min-h-screen w-full flex items-center justify-center bg-black p-3 sm:p-4 md:p-6 lg:p-8'> 
-         <div className="flex flex-col items-center justify-center h-screen bg-black">
-
-         </div>
-        </div>
-    )
-}
 
 
 const _2fa = () => {

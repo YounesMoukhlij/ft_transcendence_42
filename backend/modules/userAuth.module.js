@@ -32,16 +32,37 @@ const GOOGLE_CLIENT_SECRET = "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";
 const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
 const FRONTEND_URL = "http://localhost:3000/";
 const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
-const OAUTH42_SECRET = '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';
+const OAUTH42_SECRET = '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';
 const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
 const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
 
 
-//leaderboard
+export async function me (request, reply) {
+    const token = request.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return reply.code(401).send({ success: false, message: "No token provided" });
+    }
+    try {
+        const user = request.server.db
+            .prepare("SELECT * FROM users WHERE access_token = ?")
+            .get(token);
+        if (!user) {
+            return reply.code(401).send({ success: false, message: "Invalid token" });
+        }
+        // remove sensitive info from user object
+        const { password, ...safeUser } = user;
+        console.log("\n\n\nme function returning user:", safeUser, "\n\n\n\n");
+        return reply.code(200).send(safeUser);
+    } catch (error) {
+        console.error("Error fetching user info:", error);
+        return reply.code(500).send({ success: false, message: "Error fetching user info" });
+    }
+}
 
+
+//leaderboard
 export async function leaderboard(request, reply)
 {
-    // Implementation for leaderboard
     try {
         const leaderboardUsers = request.server.db
             .prepare("SELECT username, profile_img, xp FROM users ORDER BY xp DESC")
@@ -682,8 +703,112 @@ const transporter = nodemailer.createTransport({
     pass: EMAIL_PASS, 
   },
 });
+
+
+
 async function sendVerificationCode(userEmail, code) {
-  const mailOptions = { /* ... (mail options unchanged) ... */ };
+  console.log(`Preparing to send verification code to ${userEmail}`);
+  console.log(`Generated code: ${code}`);
+  const mailOptions = {
+    from: `Zmoumni`,
+    to: userEmail,
+    subject: 'Your Verification Code', 
+    html  : `   <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>Password Recovery</title>
+                <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700;800&display=swap" rel="stylesheet" />
+                <style>
+                    body {
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                    font-family: 'Fira Sans', Arial, Helvetica, sans-serif;
+                    color: #2D3A41;
+                    -webkit-font-smoothing: antialiased;
+                    }
+                    .container {
+                    max-width: 600px;
+                    margin: 30px auto;
+                    background: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.08);
+                    }
+                    .header {
+                    background-color: #1B1B1B;
+                    text-align: center;
+                    padding: 40px 20px;
+                    }
+                    .header span {
+                    color: #40be65;
+                    font-weight: 500;
+                    font-size: 14px;
+                    display: block;
+                    margin-bottom: 10px;
+                    }
+                    .header h1 {
+                    color: #ffffff;
+                    font-weight: 800;
+                    font-size: 32px;
+                    margin: 0;
+                    }
+                    .content {
+                    padding: 40px 30px;
+                    text-align: center;
+                    }
+                    .content p {
+                    color: #555555;
+                    font-size: 16px;
+                    line-height: 1.6;
+                    margin: 0 0 20px;
+                    }
+                    .code-box {
+                    background-color: #f4f4f4;
+                    display: inline-block;
+                    padding: 15px 25px;
+                    font-size: 24px;
+                    font-weight: 800;
+                    color: #c83434;
+                    border-radius: 6px;
+                    letter-spacing: 2px;
+                    margin: 10px 0 25px;
+                    }
+                    .footer {
+                    text-align: center;
+                    padding: 20px;
+                    font-size: 13px;
+                    color: #888888;
+                    }
+                </style>
+                </head>
+                <body>
+                <div class="container">
+                    <div class="header">
+                    <span>Support</span>
+                    <h1>Recover Your Account</h1>
+                    </div>
+                    <div class="content">
+                    <p>Salam Allah Alaykom,</p>
+                    <p>We received a request to reset your password for the account:</p>
+                    <img src="https://postimg.cc/8FV14g5K" alt="User Avatar"  style="border-radius: 50%; margin-bottom: 20px;" />
+                    <p>Enter the following verification code to proceed. This code is valid for <strong>60 seconds</strong>:</p>
+                    <div class="code-box">${code}</div>
+                    <p>If you did not request a password reset, please ignore this email.</p>
+                    <p>Thanks,<br><strong>The ft_transcendence_42 Team</strong></p>
+                    </div>
+                    <div class="footer">
+                    <p>© 2025 ft_transcendence_42. All rights reserved.</p>
+                    </div>
+                </div>
+                </body>
+                </html>
+` 
+  };
+
+  // 4. Send the email
   try {
     let info = await transporter.sendMail(mailOptions);
     console.log('Message sent: %s', info.messageId);
@@ -693,10 +818,128 @@ async function sendVerificationCode(userEmail, code) {
     return { success: false, message: 'Failed to send code.' };
   }
 }
-export async function forgotPassword(request, reply) { /* ... (function unchanged) ... */ }
-export async function verifyCode(request, reply) { /* ... (function unchanged) ... */ }
-export async function resetPasswordWithToken(request, reply) { /* ... (function unchanged) ... */ }
 
+
+// ====== PASSWORD RESET (EMAILJS) ======
+export async function forgotPassword(request, reply) {
+    const { email } = request.body;
+    const redis = request.server.redis;
+
+    if (!email) {
+        return reply.code(400).send({ success: false, message: "Email is required." });
+    }
+
+    try {
+        // check if auth_method is 0 (normal auth)
+        const authMethod = request.server.db.prepare("SELECT auth_method FROM users WHERE email = ?").get(email);
+        if (!authMethod || authMethod.auth_method !== 0) {
+            return reply.code(400).send(
+                {
+                    success: false, 
+                    message: "Password reset is only available for standard authentication users. Use OAuth to log in."
+                }
+            );
+        }
+        const user = request.server.db.prepare("SELECT username FROM users WHERE email = ?").get(email);
+        if (!user) {
+            // This is a good security practice to prevent email enumeration.
+            console.log(`Password reset attempt for non-existent email: ${email}`);
+            return reply.code(200).send(
+                {
+                    success: true, 
+                    message: "This email does not exist in our databases. :("
+                }
+            );
+        }
+
+        
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        console.log(`Generated code for ${email}: ${code}`);
+        await redis.set(`reset:${email}`, code, { EX: 120 });
+
+        sendVerificationCode(email, code);
+        
+        console.log(`Verification code sent to ${email}`);
+        return reply.code(200).send({ success: true, message: "A verification code has been sent to your email." });
+
+    } catch (error) {
+        console.error("Error in sendVerificationCode:", error.text || error);
+        return reply.code(500).send({ success: false, message: "Failed to send verification code." });
+    }
+}
+
+// --- STEP 2: Verify the Code and Create a Temporary Token ---
+export async function verifyCode(request, reply) {
+    const { email, code } = request.body;
+    const redis = request.server.redis;
+
+    if (!email || !code) {
+        return reply.code(400).send({ success: false, message: "Email and code are required." });
+    }
+
+    try {
+        const redisKey = `reset:${email}`;
+        const storedCode = await redis.get(redisKey);
+
+        if (!storedCode || storedCode !== code) {
+            return reply.code(400).send({ success: false, message: "Invalid or expired code." });
+        }
+        await redis.del(redisKey);
+
+        // Generate a short-lived JWT token that gives the user permission to change their password.
+        const user = request.server.db.prepare("SELECT id_user, username, email FROM users WHERE email = ?").get(email);
+        const resetToken = jwt.sign(
+            { id_user: user.id_user, email: user.email, purpose: 'password-reset' },
+            SECRET,
+            { expiresIn: '5m' } // This token is only valid for 5 minutes
+        );
+
+        return reply.code(200).send({ success: true, message: "Code verified.", resetToken: resetToken });
+
+    } catch (error) {
+        console.error("Error in verifyCode:", error);
+        return reply.code(500).send({ success: false, message: "An error occurred during code verification." });
+    }
+}
+
+// --- STEP 3: Reset the Password Using the Temporary Token ---
+export async function resetPasswordWithToken(request, reply) {
+    const { resetToken, newPassword } = request.body;
+
+    if (!resetToken || !newPassword) {
+        return reply.code(400).send({ success: false, message: "Token and new password are required." });
+    }
+
+    try {
+        // Verify the temporary token.
+        const decoded = jwt.verify(resetToken, SECRET);
+
+        // Extra check to ensure this token was for password reset.
+        if (decoded.purpose !== 'password-reset') {
+            return reply.code(401).send({ success: false, message: "Invalid token purpose." });
+        }
+
+        const hashedPassword = await hashPassword(newPassword);
+
+        // Update the password in the database.
+        const result = request.server.db
+            .prepare("UPDATE users SET password = ? WHERE id_user = ?")
+            .run(hashedPassword, decoded.id_user);
+
+        if (result.changes === 0) {
+            return reply.code(404).send({ success: false, message: "User not found." });
+        }
+
+        return reply.code(200).send({ success: true, message: "Password has been reset successfully." });
+
+    } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError) {
+            return reply.code(401).send({ success: false, message: "Invalid or expired token." });
+        }
+        console.error("Error in resetPasswordWithToken:", error);
+        return reply.code(500).send({ success: false, message: "An error occurred while resetting the password." });
+    }
+}
 
 // ====== GOOGLE OAUTH ======
 
@@ -757,7 +1000,7 @@ export async function GoogleAuth(request, reply) {
                 googleUser.name,
                 googleUser.email, 
                 // bigger profile image from google
-                googleUser.picture,
+                googleUser.picture.replace('=s96-c', '=s600-c'),
                 1,
             );
             userId = result.lastInsertRowid;
@@ -782,7 +1025,7 @@ export async function GoogleAuth(request, reply) {
             .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
             .run(token, refreshToken, userId);
 
-        return reply.redirect(`${FRONTEND_URL}/signIn?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}`);
+        return reply.redirect(`${FRONTEND_URL}/signIn?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}&token=${token}`);
 
     } catch (error) {
         console.error('Google auth failed:', error);
@@ -870,7 +1113,7 @@ export async function FortyTwoAuth(request, reply) {
             .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
             .run(token, refreshToken, userId);
 
-        return reply.redirect(`${FRONTEND_URL}/signIn/?42Auth=success&userId=${userId}&isNewUser=${isNewUser}`);
+        return reply.redirect(`${FRONTEND_URL}/signIn/?42Auth=success&userId=${userId}&isNewUser=${isNewUser}&token=${token}`);
 
     } catch (error) {
         console.error('42 auth failed:', error);

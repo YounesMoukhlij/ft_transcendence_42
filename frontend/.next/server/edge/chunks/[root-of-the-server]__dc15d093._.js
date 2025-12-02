@@ -34,7 +34,8 @@ const PROTECTED_PATHS = [
     '/chat',
     '/profile',
     '/dashboard',
-    '/settings'
+    '/settings',
+    '/leaderboard'
 ];
 const PUBLIC_PATHS = [
     '/signIn',

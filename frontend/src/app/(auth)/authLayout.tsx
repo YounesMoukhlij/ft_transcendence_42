@@ -312,7 +312,8 @@ function SignInForm({ onToggle }: SignInFormProps) {
     const userId = searchParams.get('userId')
     const authError = searchParams.get('error')
     const isNewUser = searchParams.get('isNewUser')
-    const twoFARequired = searchParams.get('2fa_required') // <-- NEW
+    const twoFARequired = searchParams.get('2fa_required')
+    const token = searchParams.get('token')
 
     // --- NEW: Handle 2FA required from OAuth ---
     if (twoFARequired === 'true' && userId) {
@@ -355,29 +356,32 @@ function SignInForm({ onToggle }: SignInFormProps) {
       // (Fetch user data unchanged - this is now the "2FA NOT required" flow)
       const fetchUserData = async () => {
         try {
-          const response = await fetch(`${API_URL}/getUserById/${userId}`)
-          
+          // const response = await fetch(`${API_URL}/getUserById/${userId}`)
+          const response = await fetch(`${API_URL}/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+         
           if (!response.ok) {
             toast.error('Failed to retrieve user data')
-            // router.push('/signIn')
+            router.push('/signIn')
             return
           }
+          
 
           const userData = await response.json()
           console.log('Google OAuth user data:', userData)
           
-          setUser(userData, userData.refresh_token) 
-          document.cookie = `auth_token=${userData.access_token}; 4`;
+          setUser(userData, userData.refresh_token) // avatar
+          document.cookie = `auth_token=${userData.access_token}; path=/`;
           
           const message = isNewUser === 'true' 
             ? `Welcome ${userData.username}! Account created successfully.`
             : `Welcome back, ${userData.username}!`
           
           toast.success(message)
-          // // router.push('/signIn')
-          
-            router.push('/')
-          
+          router.push('/')
         } catch (err) {
           console.error('Failed to fetch user data:', err)
           toast.error('Failed to retrieve user information')
@@ -401,6 +405,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
     const isNewUser = searchParams.get('isNewUser')
     const authError = searchParams.get('error')
     const twoFARequired = searchParams.get('2fa_required')
+    const token = searchParams.get('token')
     
     // --- NEW: Handle 2FA required from OAuth ---
     if (twoFARequired === 'true' && userId && !fortyTwoAuth) { // Check !fortyTwoAuth to avoid conflict with google
@@ -409,11 +414,9 @@ function SignInForm({ onToggle }: SignInFormProps) {
       
       setTempUserId(userId);
       setShow2FAInput(true);
-      // toast.info('Please enter your 2FA code to complete login.');
-      // // router.push('/signIn'); // Clean URL
       return;
     }
-    // --- END NEW ---
+    
 
     // Skip if no OAuth parameters present
     if (!fortyTwoAuth && !authError && !twoFARequired) {
@@ -443,11 +446,16 @@ function SignInForm({ onToggle }: SignInFormProps) {
       // (Fetch user data unchanged - this is now the "2FA NOT required" flow)
       const fetchUserData = async () => {
         try {
-          const response = await fetch(`${API_URL}/getUserById/${userId}`)
-          
+          // const response = await fetch(`${API_URL}/getUserById/${userId}`)
+          const response = await fetch(`${API_URL}/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
           if (!response.ok) {
             toast.error('Failed to retrieve user data')
-            // router.push('/signIn')
+            router.push('/signIn')
             return
           }
 
@@ -462,8 +470,6 @@ function SignInForm({ onToggle }: SignInFormProps) {
             : `Welcome back, ${userData.username}!`
           
           toast.success(message)
-          // router.push('/signIn')
-          
           router.push('/')
         } catch (err) {
           console.error('Failed to fetch user data:', err)
@@ -566,7 +572,7 @@ function SignInForm({ onToggle }: SignInFormProps) {
       // Call the NEW backend endpoint
       const response = await fetch(`${API_URL}/2fa/login-verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json'},
         body: JSON.stringify({ 
           userId: parseInt(tempUserId), // Send the stored user ID
           token: twoFACode          // Send the 6-digit code

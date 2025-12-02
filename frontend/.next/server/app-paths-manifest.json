@@ -1,7 +1,6 @@
 {
   "/(auth)/forgot-password/page": "app/(auth)/forgot-password/page.js",
   "/(auth)/signIn/page": "app/(auth)/signIn/page.js",
-  "/(protected)/chat/page": "app/(protected)/chat/page.js",
   "/(protected)/leaderboard/page": "app/(protected)/leaderboard/page.js",
   "/(protected)/settings/page": "app/(protected)/settings/page.js",
   "/_not-found/page": "app/_not-found/page.js",

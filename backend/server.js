@@ -11,7 +11,7 @@ import { createClient } from 'redis'; // Import the Redis client
 //Import plugins for file uploads and serving static files
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
-
+import fastifyJwt from '@fastify/jwt';
 const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +25,9 @@ const app = fastify({
   logger: true, // It's good practice to enable logging
   bodyLimit: 10 * 1024 * 1024, // 10MB
 });
+
+
+app.register(fastifyJwt, { secret:SECRET});
 
 // Initialize SQLite Database
 const db = new Database('Database.db');
@@ -41,21 +44,21 @@ async function startServer() {
 
     // --- Redis Client Setup ---
     // 1. Create the Redis client
-    // console.log('Connecting to Redis...');
-    // const redisClient = createClient({
-    //   url: process.env.REDIS_URL || 'redis://localhost:6379'
-    // });
+    console.log('Connecting to Redis...');
+    const redisClient = createClient({
+      url: process.env.REDIS_URL || 'redis://localhost:6379'
+    });
 
-    // // 2. Add an error listener to catch connection issues
-    // redisClient.on('error', err => app.log.error('Redis Client Error', err));
+    // 2. Add an error listener to catch connection issues
+    redisClient.on('error', err => app.log.error('Redis Client Error', err));
 
-    // // 3. Connect to the Redis server
-    // await redisClient.connect();
-    // app.log.info('Successfully connected to Redis.');
+    // 3. Connect to the Redis server
+    await redisClient.connect();
+    app.log.info('Successfully connected to Redis.');
 
-    // // 4. Decorate the Fastify instance with the Redis client
-    // // This makes it available in all routes via `request.server.redis`
-    // app.decorate('redis', redisClient);
+    // 4. Decorate the Fastify instance with the Redis client
+    // This makes it available in all routes via `request.server.redis`
+    app.decorate('redis', redisClient);
 
 
     // --- CORS Registration ---
