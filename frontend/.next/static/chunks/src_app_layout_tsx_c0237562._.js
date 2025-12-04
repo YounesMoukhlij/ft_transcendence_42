@@ -6,7 +6,7 @@
   "static/chunks/node_modules_react-icons_lib_74ccc930._.js",
   "static/chunks/node_modules_axios_lib_99999129._.js",
   "static/chunks/node_modules_281a5e3e._.js",
-  "static/chunks/src_components_e8b4750f._.js",
+  "static/chunks/src_abd0e06a._.js",
   "static/chunks/_40a32467._.css"
 ],
     source: "dynamic"

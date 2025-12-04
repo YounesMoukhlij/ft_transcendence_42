@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { Trophy, User } from 'lucide-react';
-import { redirect } from 'next/navigation'; // Correct import for App Router
-import { cookies } from 'next/headers'; // To access cookies on the server
+import { Trophy, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 const BACK_API = 'http://localhost:4444';
 const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 
-const getProfileImageUrl = (currentImg) => {
+const getProfileImageUrl = (currentImg: string) => {
   if (!currentImg) {
     return defaultProfileImg;
   }
@@ -16,36 +16,37 @@ const getProfileImageUrl = (currentImg) => {
   return currentImg;
 };
 
-// --- Simplified data fetching function ---
-async function getLeaderboardData(token) {
-  // Pass the token dynamically
-  const res = await fetch(`${BACK_API}/leaderboard`, {
-    cache: 'no-store', // Ensures SSR (dynamic fetching every request)
+// --- Updated data fetching function with Pagination ---
+async function getLeaderboardData(token: string, page: number) {
+  const limit = 10;
+  // We pass ?page=X&limit=10 to the backend
+  const res = await fetch(`${BACK_API}/leaderboard?page=${page}&limit=${limit}`, {
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
   });
 
-
   if (res.status === 401) {
     return null;
   }
 
   if (!res.ok) {
+    // If backend doesn't support pagination queries yet, it might just return all data.
+    // That is fine, but for true pagination, backend must handle these params.
     throw new Error('Failed to fetch data');
   }
 
   return res.json();
 }
 
-
-const LeaderboardItem = ({ player, rank }) => (
+const LeaderboardItem = ({ player, rank }: { player: any, rank: number }) => (
   <Link href={`/profile/${player.username}`} className="block">
     <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-900 transition-colors">
       <div className="flex items-center gap-4">
-        <div className={`font-semibold text-lg ${rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-400' : rank === 3 ? 'text-yellow-800' : 'text-gray-400'}`}>
-          # {rank}
+        <div className={`font-semibold text-lg w-8 ${rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-400' : rank === 3 ? 'text-yellow-800' : 'text-gray-400'}`}>
+          #{rank}
         </div>
         <img
           src={getProfileImageUrl(player.profile_img)}
@@ -66,44 +67,48 @@ const LeaderboardItem = ({ player, rank }) => (
 );
 
 // --- The main async Page Component ---
-export default async function LeaderboardPage() {
-  // 1. Get the token from cookies (SSR)
+// Next.js App Router pages receive 'searchParams' as a prop
+export default async function LeaderboardPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value; 
-  // 2. Immediate check: If no token exists, redirect immediately
+  const token = cookieStore.get('auth_token')?.value;
+
   if (!token) {
     redirect('/signIn');
   }
+
+  // 1. Get current page from URL, default to 1
+  // Await searchParams because in Next.js 15+ strictly it might be a promise, 
+  // but usually in page props it's accessible.
+  // Note: If you are on Next.js 15, searchParams is a Promise.
+  // If older Next.js 13/14, you can use it directly. Assuming typical usage:
+  const params = await searchParams; 
+  const currentPage = Number(params?.page) || 1;
 
   let data;
   let error = null;
 
   try {
-    // 3. Fetch data using the token
-    data = await getLeaderboardData(token);
-    
-    // 4. Handle 401 from API (getLeaderboardData returns null on 401)
+    data = await getLeaderboardData(token, currentPage);
+
     if (data === null) {
-      // We must call redirect OUTSIDE the try block if we want to be safe, 
-      // or ensure the catch block doesn't swallow the NEXT_REDIRECT error.
-      // However, calling it here will throw an error caught below.
-      // See the "catch" block for the fix.
       redirect('/signIn');
     }
-
-  } catch (err) {
-    // CRITICAL: Next.js redirects work by throwing a specific error 'NEXT_REDIRECT'.
-    // We must identify if the error is a redirect, and if so, re-throw it.
+  } catch (err: any) {
     if (err.message === 'NEXT_REDIRECT') {
       throw err;
     }
-    
-    // Handle actual errors (like 500 server error or network fail)
     console.error("Leaderboard fetch error:", err);
     error = 'Failed to load leaderboard. Please try again later.';
   }
 
   const leaderboard = data?.leaderboard || [];
+  
+  // Logic to determine if we can go next (assuming backend returns empty array if no more data)
+  const hasMore = leaderboard.length === 10; 
 
   return (
     <div className="min-h-screen w-full bg-black text-white p-4 sm:p-6 md:p-10">
@@ -120,7 +125,7 @@ export default async function LeaderboardPage() {
         </div>
 
         {/* Leaderboard Card */}
-        <div className="border border-gray-700 rounded-2xl shadow-lg bg-black overflow-hidden ">
+        <div className="border border-gray-700 rounded-2xl shadow-lg bg-black overflow-hidden mb-6">
           {error && (
             <p className="p-6 text-center text-red-500">{error}</p>
           )}
@@ -129,22 +134,58 @@ export default async function LeaderboardPage() {
             <div className="flex flex-col items-center justify-center p-10 gap-4 text-gray-500">
               <User size={48} />
               <p className="text-lg font-semibold">No players found</p>
-              <p className="text-sm">The leaderboard is currently empty.</p>
+              <p className="text-sm">Page {currentPage} is empty.</p>
             </div>
           )}
 
           {!error && leaderboard.length > 0 && (
             <div className='gap-2'>
-              {leaderboard.map((player, index) => (
+              {leaderboard.map((player: any, index: number) => (
                 <LeaderboardItem
                   key={player.username}
                   player={player}
-                  rank={index + 1}
+                  // Calculate absolute rank based on page number
+                  // Page 1: 1-10, Page 2: 11-20
+                  rank={(currentPage - 1) * 10 + (index + 1)}
                 />
               ))}
             </div>
           )}
         </div>
+
+        {/* --- Simple Pagination Controls --- */}
+        <div className="flex items-center justify-center gap-4">
+          {/* Previous Button */}
+          <Link
+            href={currentPage > 1 ? `/leaderboard?page=${currentPage - 1}` : '#'}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition-colors ${
+              currentPage <= 1
+                ? 'opacity-50 cursor-not-allowed text-gray-600'
+                : 'hover:bg-gray-900 text-white'
+            }`}
+            aria-disabled={currentPage <= 1}
+          >
+            <ChevronLeft size={20} />
+          </Link>
+
+          <span className="text-gray-400 font-mono">
+            Page {currentPage}
+          </span>
+
+          {/* Next Button */}
+          <Link
+            href={hasMore ? `/leaderboard?page=${currentPage + 1}` : '#'}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition-colors ${
+              !hasMore
+                ? 'opacity-50 cursor-not-allowed text-gray-600'
+                : 'hover:bg-gray-900 text-white'
+            }`}
+            aria-disabled={!hasMore}
+          >
+            <ChevronRight size={20} />
+          </Link>
+        </div>
+
       </div>
     </div>
   );

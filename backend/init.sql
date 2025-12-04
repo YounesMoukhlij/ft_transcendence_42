@@ -95,22 +95,22 @@ CREATE TABLE message (
 );
 
 -- Insert users
--- INSERT INTO users (username, fullname, profile_img, email, password, xp) 
--- VALUES 
--- ('ziko', 'ziko User', 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png', 'ziko@example.com', 'hashed_password_123', 233),
--- ('younes', 'Younes User', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCMDKvDLrPdTJtG5O4y3W61Wdqg20GwOOpUA&s', 'younes@example.com', 'hashed_password_456', 53),
--- ('abechcha', 'abechcha User', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCMDKvDLrPdTJtG5O4y3W61Wdqg20GwOOpUA&s', 'abechcha@example.com', 'hashed_password_456', 432),
--- ('test1', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test1@example.com', 'hashed_password_456', 68),
--- ('test2', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test2@example.com', 'hashed_password_456', 66),
--- ('test3', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test3@example.com', 'hashed_password_456', 46),
--- ('test4', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test4@example.com', 'hashed_password_456', 0),
--- ('test5', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test5@example.com', 'hashed_password_456', 0),
--- ('test6', 'test User', 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg', 'test6@example.com', 'hashed_password_456', 0),
--- ('test7', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test7@example.com', 'hashed_password_456', 0),
--- ('test8', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test8@example.com', 'hashed_password_456', 0),
--- ('test9', 'test User', 'https://cdn.intra.42.fr/users/806ad2f231069b86aff6a24a34070d1b/zalaksya.jpg', 'test9@example.com', 'hashed_password_456', 13),
--- ('test12', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test12@example.com', 'hashed_password_456', 0),
--- ('tesdt12', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'tesdt12@example.com', 'hashed_password_456', 4564);
+INSERT INTO users (username, fullname, profile_img, email, password, xp) 
+VALUES 
+('ziko', 'ziko User', 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png', 'ziko@example.com', 'hashed_password_123', 233),
+('younes', 'Younes User', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCMDKvDLrPdTJtG5O4y3W61Wdqg20GwOOpUA&s', 'younes@example.com', 'hashed_password_456', 53),
+('abechcha', 'abechcha User', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCMDKvDLrPdTJtG5O4y3W61Wdqg20GwOOpUA&s', 'abechcha@example.com', 'hashed_password_456', 432),
+('test1', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test1@example.com', 'hashed_password_456', 68),
+('test2', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test2@example.com', 'hashed_password_456', 66),
+('test3', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test3@example.com', 'hashed_password_456', 46),
+('test4', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test4@example.com', 'hashed_password_456', 0),
+('test5', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test5@example.com', 'hashed_password_456', 0),
+('test6', 'test User', 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg', 'test6@example.com', 'hashed_password_456', 0),
+('test7', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test7@example.com', 'hashed_password_456', 0),
+('test8', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test8@example.com', 'hashed_password_456', 0),
+('test9', 'test User', 'https://cdn.intra.42.fr/users/806ad2f231069b86aff6a24a34070d1b/zalaksya.jpg', 'test9@example.com', 'hashed_password_456', 13),
+('test12', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'test12@example.com', 'hashed_password_456', 0),
+('tesdt12', 'test User', 'https://www.shutterstock.com/image-vector/black-woman-smiling-portrait-vector-600nw-2281497689.jpg', 'tesdt12@example.com', 'hashed_password_456', 4564);
 
 -- Insert a room
 -- INSERT INTO room (members, room_name, iconPad)

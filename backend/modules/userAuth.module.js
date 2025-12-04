@@ -61,12 +61,23 @@ export async function me (request, reply) {
 
 
 //leaderboard
-export async function leaderboard(request, reply)
-{
+export async function leaderboard(request, reply) {
     try {
+        // 1. Get and validate query parameters
+        // request.query parameters are usually strings, so we parse them.
+        const page = parseInt(request.query.page) || 1;
+        const limit = parseInt(request.query.limit) || 10;
+        
+        // 2. Calculate the OFFSET
+        // Page 1: offset 0, Page 2: offset 10, etc.
+        const offset = (page - 1) * limit;
+
+        // 3. Update SQL query with LIMIT and OFFSET
+        // using '?' placeholders prevents SQL injection
         const leaderboardUsers = request.server.db
-            .prepare("SELECT username, profile_img, xp FROM users ORDER BY xp DESC")
-            .all();
+            .prepare("SELECT username, profile_img, xp FROM users ORDER BY xp DESC LIMIT ? OFFSET ?")
+            .all(limit, offset);
+
         return reply.code(200).send({ success: true, leaderboard: leaderboardUsers });
     } catch (error) {
         console.error("Error fetching leaderboard:", error);

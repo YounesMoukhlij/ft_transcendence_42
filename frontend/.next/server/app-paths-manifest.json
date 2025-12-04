@@ -1,7 +1,7 @@
 {
-  "/(auth)/forgot-password/page": "app/(auth)/forgot-password/page.js",
   "/(auth)/signIn/page": "app/(auth)/signIn/page.js",
   "/(protected)/leaderboard/page": "app/(protected)/leaderboard/page.js",
+  "/(protected)/profile/page": "app/(protected)/profile/page.js",
   "/(protected)/settings/page": "app/(protected)/settings/page.js",
   "/_not-found/page": "app/_not-found/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
