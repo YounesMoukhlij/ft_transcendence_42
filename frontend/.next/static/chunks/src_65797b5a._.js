@@ -1696,7 +1696,6 @@ const ProfileSettingsPage = ()=>{
                 setIsLoading(false);
                 return;
             }
-            // ... (Rest of existing logic)
             const dataToSave = new FormData();
             dataToSave.append('languages', formData.languages);
             dataToSave.append('username', formData.username);

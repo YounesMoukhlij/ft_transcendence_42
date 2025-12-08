@@ -17,6 +17,7 @@ import { GiPingPongBat } from 'react-icons/gi';
 import Link from 'next/link';
 import axios from 'axios';
 import { globalStore } from '../components/globalStore';
+import Logo from '../components/Logo';
 
 // Define types for TypeScript safety
 interface Notification {
@@ -133,11 +134,12 @@ export default function Navbar() {
         <div className="mx-auto w-full max-w-[98%] border-2 border-gray-500 bg-black rounded-3xl px-4 py-3 flex justify-between items-center shadow-xl">
           
           {/* Left: Logo */}
-          <div className="flex items-center gap-2">
-            <GiPingPongBat
+          <div className="flex items-center gap-2 ml-5">
+            <Logo size={40} />
+            {/* <GiPingPongBat 
               className="text-white w-8 h-8 md:w-10 md:h-10 cursor-pointer animate-spin"
               style={{ animation: 'spin 6s linear infinite' }}
-            />
+            /> */}
           </div>
 
           {/* Right: Desktop Actions */}

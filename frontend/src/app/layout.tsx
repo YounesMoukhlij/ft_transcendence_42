@@ -19,36 +19,36 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       {/* 1. h-screen: Force body to be exactly screen height 
-         2. overflow-hidden: Prevent the whole page from scrolling (we scroll inner content instead)
+          2. overflow-hidden: Prevent the body itself from scrolling (we scroll inner content instead)
       */}
       <body className="h-screen bg-black overflow-hidden text-white">
-        <GameProvider>
+        {/* <GameProvider> */}
           {/* Navbar is fixed (z-50), so it sits on top of everything */}
           <Navbar />
           
           {/* Main Container:
              1. pt-24 md:pt-28: Adds TOP padding to account for the fixed Navbar height. 
-                This prevents content from being hidden behind the navbar.
              2. h-full: Fills the screen height.
-             3. flex: Positions Sidebar and Content side-by-side.
+             3. overflow-hidden: Ensures no leakage from this container triggers parent scroll.
           */}
-          <div className="flex h-full pt-24 md:pt-28 gap-4 p-4 box-border">
+          <div className="flex h-full pt-24 md:pt-28 gap-4 p-4 box-border overflow-hidden">
             
             {/* Sidebar Component */}
             <Sidebar />
             
             {/* Content Area:
-               1. overflow-y-auto: Only this part scrolls.
-               2. w-full: Takes remaining width.
-               3. relative z-0: Ensures it stays behind any dropdowns/modals.
+               1. overflow-y-auto: Scroll ONLY vertically IF content exceeds height ("if needed").
+               2. overflow-x-hidden: Prevent horizontal scrolling completely.
+               3. w-full: Takes remaining width.
+               4. h-full: Fills the flex container's available height.
             */}
-            <div className="w-full md:w-[90%] bg-transparent h-full overflow-y-auto rounded-3xl relative z-0 no-scrollbar">
+            <div className="w-full md:w-[90%] bg-transparent h-full overflow-y-auto overflow-x-hidden rounded-3xl relative z-0 border-amber-100 border">
               {children}
             </div>
           </div>
           
           {/* <ParticlesBackground id="particles" /> */}
-        </GameProvider> 
+        {/* </GameProvider>  */}
 
         <ToastContainer 
           position="top-right" 
