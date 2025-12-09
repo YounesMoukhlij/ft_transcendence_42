@@ -124,7 +124,7 @@ const useLocalGameState = (players: Player[]) => {
           // Predict where the ball will be when it reaches the AI paddle
           const distanceToPaddle = aiPaddleX - ballX;
           if (Math.abs(ballVx) > 0.1) {
-            const timeToReach = distanceToPaddle / Math.abs(ballVx);
+          const timeToReach = distanceToPaddle / Math.abs(ballVx);
             let predictedY = ballY + (ballVy * timeToReach);
 
             // Account for wall bounces (with some error for lower difficulties)
@@ -184,10 +184,10 @@ const useLocalGameState = (players: Player[]) => {
                 // Sometimes move in wrong direction on easy (especially when ball is far)
                 if (difficulty === 'easy' && Math.random() < 0.15 && ballX < GAME_WIDTH * 0.8) {
                   newPaddles[1] -= moveAmount * 0.5; // Move opposite direction slightly
-                } else {
+            } else {
                   newPaddles[1] += moveAmount;
-                }
-              }
+            }
+          }
             }
             // If hesitating, paddle doesn't move (but ball still updates)
           }
@@ -358,9 +358,15 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   // Reset game state for new tournament match or AI game (only when mode changes)
   useEffect(() => {
     const currentMode = tournamentMode ? 'tournament' : gameState.mode;
-    const modeKey = `${currentMode}-${tournamentMode ? tournamentPlayers.length : ''}`;
+    // For tournament mode, include player IDs to detect when match changes
+    const playerKey = tournamentMode && localPlayers.length >= 2
+      ? `${localPlayers[0].id}-${localPlayers[1].id}`
+      : tournamentMode
+        ? `length-${tournamentPlayers.length}`
+        : '';
+    const modeKey = `${currentMode}-${playerKey}`;
 
-    // Only reset if the mode has actually changed
+    // Only reset if the mode has actually changed OR if it's a new tournament match (different players)
     if (gameInitializedRef.current !== modeKey) {
       if (tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local') {
         setWinner(null);
@@ -369,7 +375,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         gameInitializedRef.current = modeKey;
       }
     }
-  }, [tournamentPlayers, tournamentMode, gameState.mode, resetGameState]);
+  }, [tournamentPlayers, tournamentMode, gameState.mode, resetGameState, localPlayers]);
 
   // Keyboard controls for local, remote, and AI modes
   useEffect(() => {
@@ -1014,11 +1020,11 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   return (
     <div className="flex flex-col items-center justify-center">
       <div className="relative w-full flex justify-center items-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
-        <canvas
-          ref={canvasRef}
-          width={GAME_WIDTH}
-          height={GAME_HEIGHT}
-          className="bg-gray-800 rounded-lg shadow-lg"
+      <canvas
+        ref={canvasRef}
+        width={GAME_WIDTH}
+        height={GAME_HEIGHT}
+        className="bg-gray-800 rounded-lg shadow-lg"
           style={{
             width: '100%',
             height: '100%',

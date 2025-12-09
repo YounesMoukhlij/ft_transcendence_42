@@ -1680,6 +1680,109 @@ class GameManager {
     return bracket;
   }
 
+  // Report match result and advance bracket (for remote tournaments only)
+  reportMatchResult(tournamentId, matchId, winner) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    if (!tournament.bracket || !Array.isArray(tournament.bracket)) {
+      return { error: 'Tournament bracket not found' };
+    }
+
+    // Find the match
+    const match = tournament.bracket.find(m => m.id === matchId);
+    if (!match) {
+      return { error: 'Match not found' };
+    }
+
+    // Verify match is not already finished
+    if (match.status === 'finished') {
+      return { error: 'Match already finished' };
+    }
+
+    // Verify winner is one of the match players
+    const winnerId = typeof winner === 'string' ? winner : winner.id;
+    if (match.player1?.id !== winnerId && match.player2?.id !== winnerId) {
+      return { error: 'Winner is not a participant in this match' };
+    }
+
+    // Update match result
+    match.winner = winner;
+    match.status = 'finished';
+
+    // Advance winner to next round
+    const maxRounds = Math.max(...tournament.bracket.map(m => m.round));
+    if (match.round < maxRounds) {
+      const nextRound = match.round + 1;
+      const roundMatches = tournament.bracket.filter(m => m.round === match.round);
+      const matchIndexInRound = roundMatches.findIndex(m => m.id === match.id);
+      const nextMatchIndex = Math.floor(matchIndexInRound / 2);
+      const nextRoundMatches = tournament.bracket.filter(m => m.round === nextRound);
+      const nextMatch = nextRoundMatches[nextMatchIndex];
+
+      if (nextMatch) {
+        const positionInNext = matchIndexInRound % 2;
+        if (positionInNext === 0 && !nextMatch.player1) {
+          nextMatch.player1 = winner;
+        } else if (positionInNext === 1 && !nextMatch.player2) {
+          nextMatch.player2 = winner;
+        }
+      }
+    }
+
+    // Check if tournament is complete (all matches finished)
+    const allMatchesFinished = tournament.bracket.every(m => m.status === 'finished');
+    if (allMatchesFinished) {
+      tournament.status = 'completed';
+      const champion = tournament.bracket[tournament.bracket.length - 1].winner;
+      tournament.champion = champion;
+
+      // Broadcast tournament completion
+      this.broadcastTournamentCompletion(tournament);
+    } else {
+      // Broadcast bracket update
+      this.broadcastTournamentUpdate(tournament);
+    }
+
+    return { success: true, bracket: tournament.bracket };
+  }
+
+  // Broadcast tournament completion to all players
+  broadcastTournamentCompletion(tournament) {
+    const tournamentData = this.getTournamentData(tournament);
+    tournamentData.champion = tournament.champion;
+
+    const sentTo = new Set();
+
+    for (const player of tournament.registeredPlayers) {
+      if (sentTo.has(player.id)) continue;
+
+      const socket = this.usersSocket.get(player.id.toString());
+      if (socket) {
+        const sent = this.sendToPlayer(socket, {
+          type: 'tournamentCompleted',
+          data: tournamentData
+        });
+        if (sent) {
+          sentTo.add(player.id);
+        }
+      }
+    }
+
+    // Also notify host if not in registeredPlayers
+    if (!sentTo.has(tournament.host.id)) {
+      const hostSocket = this.usersSocket.get(tournament.host.id.toString());
+      if (hostSocket) {
+        this.sendToPlayer(hostSocket, {
+          type: 'tournamentCompleted',
+          data: tournamentData
+        });
+      }
+    }
+  }
+
   // Get tournament data (sanitized for client)
   getTournamentData(tournament) {
     return {

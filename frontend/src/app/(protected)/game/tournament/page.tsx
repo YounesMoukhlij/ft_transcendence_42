@@ -30,11 +30,13 @@ interface RemoteTournament {
   host: Player;
   maxPlayers: number;
   currentPlayers: number;
-  status: 'waiting' | 'in-progress' | 'finished' | 'playing';
+  status: 'waiting' | 'in-progress' | 'finished' | 'playing' | 'completed';
   isPrivate: boolean;
   registeredPlayers?: Player[];
   playerCount?: number;
   type?: string;
+  bracket?: any[];
+  champion?: Player;
 }
 
 interface JoinRequest {
@@ -150,6 +152,7 @@ export default function TournamentPage() {
   const [showTournamentWinnerMessage, setShowTournamentWinnerMessage] = useState(false);
   const gameContainerRef = React.useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isStartingTournament, setIsStartingTournament] = useState(false);
 
   // New state for tournament search and join requests
   const [availableTournaments, setAvailableTournaments] = useState<RemoteTournament[]>([]);
@@ -449,6 +452,50 @@ export default function TournamentPage() {
                 setCurrentMatchIndex(0);
               }
               setTournamentStep('bracket');
+            }
+
+            // For remote tournaments, sync bracket updates during gameplay
+            if (tournamentType === 'remote' && tournamentStep === 'playing' && message.data.bracket) {
+              // Update bracket state from backend
+              const updatedBracket = message.data.bracket;
+              const currentTournament = gameState.tournament;
+              if (currentTournament) {
+                setTournament({
+                  ...currentTournament,
+                  bracket: updatedBracket
+                });
+              }
+
+              // Update game context bracket
+              const currentMatch = updatedBracket[currentMatchIndex];
+              if (currentMatch && currentMatch.status === 'finished' && currentMatch.winner) {
+                // Match is finished - update local state
+                setMatchWinner(currentMatch.winner);
+                setShowTournamentWinnerMessage(true);
+              }
+            }
+            break;
+
+          case 'tournamentCompleted':
+            // Tournament is complete - for remote tournaments
+            if (tournamentType === 'remote' && message.data.bracket && message.data.champion) {
+              const currentTournament = gameState.tournament;
+              if (currentTournament) {
+                setTournament({
+                  ...currentTournament,
+                  bracket: message.data.bracket,
+                  status: 'finished'
+                });
+              }
+              // Update remote tournament state with champion
+              setRemoteTournament(prev => prev ? {
+                ...prev,
+                bracket: message.data.bracket,
+                status: 'completed' as const,
+                champion: message.data.champion
+              } : null);
+              // Transition to finished screen
+              setTournamentStep('finished');
             }
             break;
 
@@ -821,14 +868,46 @@ export default function TournamentPage() {
       return;
     }
 
-    updateTournamentMatch(currentMatch.id, {
-      winner,
-      status: 'finished',
-    });
+    // For REMOTE tournaments, send match result to backend
+    if (tournamentType === 'remote' && socket && tournamentId) {
+      socket.send(JSON.stringify({
+        type: 'game',
+        action: 'reportMatchResult',
+        payload: {
+          tournamentId: tournamentId,
+          matchId: currentMatch.id,
+          winner: winner
+        }
+      }));
+    }
+
+    // For LOCAL tournaments, update bracket locally
+    if (tournamentType === 'local') {
+      updateTournamentMatch(currentMatch.id, {
+        winner,
+        status: 'finished',
+      });
+    }
 
     setMatchWinner(winner);
     setShowTournamentWinnerMessage(true);
-  }, [currentMatchIndex, updateTournamentMatch, gameState.tournament?.bracket]);
+
+    // Check if tournament is complete (all matches finished) - for local tournaments
+    if (tournamentType === 'local') {
+      const bracket = gameState.tournament?.bracket || [];
+      // Get updated bracket state after the update
+      setTimeout(() => {
+        const updatedBracket = gameState.tournament?.bracket || [];
+        const isComplete = updatedBracket.every(m => m.status === 'finished');
+        if (isComplete && isLastMatch) {
+          // Tournament is complete - automatically transition to finished screen after a delay
+          setTimeout(() => {
+            setTournamentStep('finished');
+          }, 2000); // 2 second delay to show the match winner modal first
+        }
+      }, 100);
+    }
+  }, [currentMatchIndex, updateTournamentMatch, gameState.tournament?.bracket, tournamentType, isLastMatch, socket, tournamentId]);
 
   // Effect to advance winner to the next round
   useEffect(() => {
@@ -862,9 +941,122 @@ export default function TournamentPage() {
                   updateTournamentMatch(nextMatch.id, { player2: winner });
                 }
             }
+        } else {
+          // Final match finished - check if tournament is complete (for local tournaments)
+          if (tournamentType === 'local') {
+            const isComplete = bracket.every(m => m.status === 'finished');
+            if (isComplete) {
+              // Automatically transition to finished screen after showing match winner modal
+              setTimeout(() => {
+                setTournamentStep('finished');
+              }, 2500); // 2.5 second delay to allow match winner modal to be seen
+            }
+          }
         }
     }
-  }, [gameState.tournament?.bracket, updateTournamentMatch, currentMatchIndex, matchWinner]);
+  }, [gameState.tournament?.bracket, updateTournamentMatch, currentMatchIndex, matchWinner, tournamentType]);
+
+  // Toggle fullscreen - MUST be defined before any conditional returns
+  const toggleFullscreen = useCallback(async () => {
+    const container = gameContainerRef.current;
+    if (!container) return;
+
+    try {
+      if (
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      ) {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen();
+        }
+      } else {
+        // Enter fullscreen
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if ((container as any).webkitRequestFullscreen) {
+          await (container as any).webkitRequestFullscreen();
+        } else if ((container as any).mozRequestFullScreen) {
+          await (container as any).mozRequestFullScreen();
+        } else if ((container as any).msRequestFullscreen) {
+          await (container as any).msRequestFullscreen();
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling fullscreen:', error);
+    }
+  }, []);
+
+  // Fullscreen change handler
+  useEffect(() => {
+    if (tournamentStep !== 'playing') return;
+
+    const handleFullscreenChange = () => {
+      setIsFullscreen(
+        !!(document.fullscreenElement ||
+          (document as any).webkitFullscreenElement ||
+          (document as any).mozFullScreenElement ||
+          (document as any).msFullscreenElement)
+      );
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, [tournamentStep]);
+
+  // Keyboard shortcut for fullscreen (F key)
+  useEffect(() => {
+    if (tournamentStep !== 'playing') return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [tournamentStep, toggleFullscreen]);
+
+  // Auto-fullscreen for local tournament matches
+  const autoFullscreenAttemptedRef = React.useRef(false);
+  useEffect(() => {
+    if (tournamentStep === 'playing' && tournamentType === 'local' && !isFullscreen && !autoFullscreenAttemptedRef.current) {
+      // Delay to ensure container is ready
+      const timer = setTimeout(() => {
+        if (gameContainerRef.current) {
+          toggleFullscreen();
+          autoFullscreenAttemptedRef.current = true;
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+
+    // Reset the flag when leaving playing step or when match changes
+    if (tournamentStep !== 'playing') {
+      autoFullscreenAttemptedRef.current = false;
+    }
+  }, [tournamentStep, tournamentType, isFullscreen, toggleFullscreen, currentMatchIndex]);
 
   // Calculate match players for the current tournament match - stable version
   // const matchPlayers = useMemo(() => {
@@ -1058,6 +1250,7 @@ export default function TournamentPage() {
   const TournamentBracket: React.FC = React.memo(() => {
     const bracket = gameState.tournament?.bracket || [];
     const rounds = Math.max(...bracket.map(m => m.round));
+    const maxRound = Math.max(...bracket.map(m => m.round));
 
     const getRoundMatches = (round: number) => bracket.filter(m => m.round === round);
 
@@ -1080,19 +1273,21 @@ export default function TournamentPage() {
     };
 
     const isComplete = bracket.every(m => m.status === 'finished');
-    const winner = isComplete ? bracket[bracket.length - 1]?.winner : null;    return (
+    const champion = isComplete ? bracket[bracket.length - 1]?.winner : null;
+
+    return (
       <div className="w-full bg-gray-800 bg-opacity-90 rounded-lg sm:rounded-xl lg:rounded-2xl shadow-xl border border-purple-400 p-3 sm:p-4 lg:p-6">
         <h3 className="text-lg sm:text-xl font-bold text-purple-300 mb-3 sm:mb-4 text-center">
           {t('game.tournamentBracket')}
         </h3>
 
-        {winner && (
-          <div className="text-center mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-600 to-yellow-700 rounded-lg">
-            <FaTrophy className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-300 mx-auto mb-2 sm:mb-3" />
+        {champion && (
+          <div className="text-center mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 rounded-lg shadow-xl border-2 border-yellow-300 animate-pulse">
+            <FaTrophy className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-200 mx-auto mb-2 sm:mb-3 animate-bounce" />
             <h4 className="text-base sm:text-lg font-bold text-white mb-1 sm:mb-2">{t('game.tournamentChampion')}</h4>
             <div className="flex items-center justify-center gap-2 sm:gap-3">
-              <img src={winner.avatar} alt={winner.name} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full" />
-              <span className="text-sm sm:text-base lg:text-lg font-semibold text-white">{winner.name}</span>
+              <img src={champion.avatar} alt={champion.name} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-yellow-300 shadow-lg" />
+              <span className="text-sm sm:text-base lg:text-lg font-semibold text-white">{champion.name}</span>
             </div>
           </div>
         )}
@@ -1105,11 +1300,15 @@ export default function TournamentPage() {
                  roundIndex === rounds - 2 ? 'Semi-Final' :
                  'Quarter-Final'}
               </h4>
-              {getRoundMatches(roundIndex + 1).map((match) => (
+              {getRoundMatches(roundIndex + 1).map((match) => {
+                // Highlight champion's match in the final round
+                const isChampionMatch = champion && match.round === maxRound && match.winner?.id === champion.id;
+                return (
                 <div key={match.id} className={`bg-gray-700 rounded-md sm:rounded-lg p-2 sm:p-3 border ${
+                  isChampionMatch ? 'border-yellow-400 border-2 bg-gradient-to-br from-yellow-900/30 to-yellow-800/30 shadow-lg' :
                   match.status === 'finished' ? 'border-green-400' :
                   match.status === 'playing' ? 'border-blue-400' : 'border-gray-500'
-                }`}>
+                } ${isChampionMatch ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''}`}>
                   <div className="space-y-1">
                     <div className={`flex items-center gap-1 sm:gap-2 p-1 rounded text-xs ${
                       match.winner?.id === match.player1?.id ? 'bg-green-600' : 'bg-gray-600'
@@ -1137,23 +1336,27 @@ export default function TournamentPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           ))}
         </div>
 
-        <div className="flex justify-center gap-2 sm:gap-3 mt-3 sm:mt-4">
-          {!isComplete && getNextMatch() && (
-            <button
-              onClick={playNextMatch}
-              className="flex items-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs sm:text-sm"
-            >
-              <FaGamepad />
-              <span className="hidden sm:inline">{t('game.nextMatch')}</span>
-              <span className="sm:hidden">{t('game.nextMatch')}</span>
-            </button>
-          )}
-        </div>
+        {/* Next Match button - only show for remote tournaments, not local */}
+        {tournamentType !== 'local' && (
+          <div className="flex justify-center gap-2 sm:gap-3 mt-3 sm:mt-4">
+            {!isComplete && getNextMatch() && (
+              <button
+                onClick={playNextMatch}
+                className="flex items-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs sm:text-sm"
+              >
+                <FaGamepad />
+                <span className="hidden sm:inline">{t('game.nextMatch')}</span>
+                <span className="sm:hidden">{t('game.nextMatch')}</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   });
@@ -2103,13 +2306,40 @@ export default function TournamentPage() {
     }
   }
 
+  // Starting tournament phase (local only) - show loading screen
+  if (isStartingTournament && tournamentType === 'local') {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 md:p-8 bg-gradient-to-br from-purple-900 via-blue-900 to-black">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 sm:h-20 sm:w-20 border-b-2 border-purple-400 mx-auto mb-6 sm:mb-8"></div>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-300 mb-4 sm:mb-6">
+            {t('game.startingTournament')}
+          </h2>
+          <p className="text-gray-300 text-lg sm:text-xl">
+            {t('game.gettingReady')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Customization phase - Only host can customize when tournament has 4 players
   if (tournamentStep === 'customization') {
-    // Only show customization to host, and only if tournament has 4 players
-    if (!isHost || (remoteTournament?.registeredPlayers?.length || 0) < playerCount) {
-      // If not host or not enough players, go back to registration
-      setTournamentStep('registration');
-      return null;
+    // For local tournaments, always show customization
+    // For remote tournaments, only show customization to host, and only if tournament has enough players
+    if (tournamentType === 'remote') {
+      if (!isHost || (remoteTournament?.registeredPlayers?.length || 0) < playerCount) {
+        // If not host or not enough players, go back to registration
+        setTournamentStep('registration');
+        return null;
+      }
+    } else if (tournamentType === 'local') {
+      // For local tournaments, check if we have registered players
+      if (!registeredPlayers || registeredPlayers.length !== playerCount) {
+        // If not enough players registered, go back to registration
+        setTournamentStep('registration');
+        return null;
+      }
     }
 
     return (
@@ -2119,7 +2349,9 @@ export default function TournamentPage() {
             {t('game.customizeTournamentGame')}
           </h2>
           <p className="text-gray-300 text-sm">
-            {t('game.allPlayersReadyCustomize', { count: playerCount })}
+            {tournamentType === 'local'
+              ? t('game.customizeYourPlayground')
+              : t('game.allPlayersReadyCustomize', { count: playerCount })}
           </p>
         </div>
         <GameCustomization
@@ -2138,106 +2370,18 @@ export default function TournamentPage() {
                 }
               }));
             } else {
-              // Local tournament
-              startTournament(registeredPlayers);
+              // Local tournament - add delay before starting
+              setIsStartingTournament(true);
+              setTimeout(() => {
+                startTournament(registeredPlayers);
+                setIsStartingTournament(false);
+              }, 2000); // 2 second delay
             }
           }}
         />
       </div>
     );
   }
-
-  // Toggle fullscreen - defined before playing step
-  const toggleFullscreen = useCallback(async () => {
-    const container = gameContainerRef.current;
-    if (!container) return;
-
-    try {
-      if (
-        document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
-      ) {
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen();
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
-        }
-      } else {
-        // Enter fullscreen
-        if (container.requestFullscreen) {
-          await container.requestFullscreen();
-        } else if ((container as any).webkitRequestFullscreen) {
-          await (container as any).webkitRequestFullscreen();
-        } else if ((container as any).mozRequestFullScreen) {
-          await (container as any).mozRequestFullScreen();
-        } else if ((container as any).msRequestFullscreen) {
-          await (container as any).msRequestFullscreen();
-        }
-      }
-    } catch (error) {
-      console.error('Error toggling fullscreen:', error);
-    }
-  }, []);
-
-  // Fullscreen change handler
-  useEffect(() => {
-    if (tournamentStep !== 'playing') return;
-
-    const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen = !!(
-        document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
-      );
-      setIsFullscreen(isCurrentlyFullscreen);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-    };
-  }, [tournamentStep]);
-
-  // Keyboard shortcut for fullscreen (F key)
-  useEffect(() => {
-    if (tournamentStep !== 'playing') return;
-
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Only trigger if not typing in an input field
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      // F key or F11 for fullscreen toggle
-      if (e.key === 'f' || e.key === 'F' || e.key === 'F11') {
-        // Prevent default F11 behavior if it's F11
-        if (e.key === 'F11') {
-          e.preventDefault();
-        }
-        toggleFullscreen();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => {
-      window.removeEventListener('keydown', handleKeyPress);
-    };
-  }, [tournamentStep, toggleFullscreen]);
 
   // Playing phase - show the actual game
   if (tournamentStep === 'playing') {
@@ -2340,6 +2484,17 @@ export default function TournamentPage() {
                       {t('game.continueToNextMatch')}
                     </button>
                   )}
+                  {isLastMatch && tournamentType === 'local' && (
+                    <button
+                      onClick={() => {
+                        setShowTournamentWinnerMessage(false);
+                        setTournamentStep('finished');
+                      }}
+                      className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                    >
+                      {t('game.viewChampion')}
+                    </button>
+                  )}
                   <button
                     onClick={() => setTournamentStep('bracket')}
                     className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm sm:text-base"
@@ -2387,12 +2542,34 @@ export default function TournamentPage() {
                     </>
                   )}
                 </button>
-              <button
-                onClick={() => setTournamentStep('bracket')}
-                className="px-3 py-2 sm:px-4 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm sm:text-base"
-              >
-                {t('game.viewBracket')}
-              </button>
+              {/* View Bracket button - only show for remote tournaments or after match finishes (local) */}
+              {(tournamentType === 'remote' || showTournamentWinnerMessage) && (
+                <button
+                  onClick={() => setTournamentStep('bracket')}
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                >
+                  {t('game.viewBracket')}
+                </button>
+              )}
+
+              {/* Restart Tournament button - only for local tournaments */}
+              {tournamentType === 'local' && (
+                <button
+                  onClick={() => {
+                    if (window.confirm(t('game.restartTournamentConfirm') || 'Are you sure you want to restart the tournament? All progress will be lost.')) {
+                      setTournamentStep('setup');
+                      setCurrentMatchIndex(0);
+                      setMatchWinner(null);
+                      setShowTournamentWinnerMessage(false);
+                      setRegisteredPlayers([]);
+                      setTempPlayers([]);
+                    }
+                  }}
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                >
+                  {t('game.restartTournament')}
+                </button>
+              )}
 
               {/* Show Next Match button when current match is finished and there are more matches (not final match) */}
               {currentMatch?.status === 'finished' && nextMatch && !isLastMatch && (
@@ -2469,6 +2646,163 @@ export default function TournamentPage() {
     );
   }
 
+  // Tournament Finished phase - show champion and statistics (for local and remote tournaments)
+  if (tournamentStep === 'finished' && (tournamentType === 'local' || tournamentType === 'remote')) {
+    const bracket = gameState.tournament?.bracket || [];
+    const isComplete = bracket.every(m => m.status === 'finished');
+    // For remote tournaments, champion may come from backend
+    const champion = tournamentType === 'remote' && remoteTournament?.champion
+      ? remoteTournament.champion
+      : (isComplete ? bracket[bracket.length - 1]?.winner : null);
+    const totalMatches = bracket.length;
+    const finishedMatches = bracket.filter(m => m.status === 'finished').length;
+
+    // Calculate tournament statistics
+    const matchStatistics = bracket.map((match, index) => {
+      if (match.status === 'finished' && match.player1 && match.player2) {
+        return {
+          matchNumber: index + 1,
+          round: match.round,
+          player1: match.player1.name,
+          player2: match.player2.name,
+          winner: match.winner?.name || 'Unknown'
+        };
+      }
+      return null;
+    }).filter(Boolean);
+
+    if (!champion) {
+      // If no champion yet, go back to bracket view
+      return (
+        <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 md:p-8">
+          <div className="text-center">
+            <p className="text-white text-lg mb-4">{t('game.tournamentNotComplete')}</p>
+            <button
+              onClick={() => setTournamentStep('bracket')}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+            >
+              {t('game.viewBracket')}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-full p-2 sm:p-4 md:p-8 h-full ">
+        <div className="w-full h-[100%] b-4 border-white">
+          {/* Champion Celebration Section */}
+          <div className="text-center mb-4 sm:mb-6 animate-pulse">
+            <div className="bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-xl border-2 border-yellow-300">
+              <div className="flex justify-center mb-2 sm:mb-3">
+                <FaTrophy className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 text-yellow-200 animate-bounce" />
+              </div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 sm:mb-3">
+                🏆 {t('game.tournamentChampion')} 🏆
+              </h1>
+              <div className="flex flex-col items-center gap-2 sm:gap-3">
+                <img
+                  src={champion.avatar}
+                  alt={champion.name}
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-yellow-300 shadow-lg"
+                />
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                  {champion.name}
+                </h2>
+                <div className="bg-yellow-400/20 rounded-lg px-3 py-1 sm:px-4 sm:py-2">
+                  <p className="text-yellow-200 text-sm sm:text-base md:text-lg font-semibold">
+                    {t('game.tournamentWinner')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tournament Statistics */}
+          <div className="bg-gray-800/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 mb-4 sm:mb-6 shadow-xl border border-purple-400 max-h-[60vh] overflow-y-auto">
+            <h3 className="text-lg sm:text-xl font-bold text-purple-300 mb-3 sm:mb-4 text-center">
+              {t('game.tournamentStatistics')}
+            </h3>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="bg-gray-700/50 rounded-lg p-2 sm:p-3 text-center">
+                <div className="text-xl sm:text-2xl font-bold text-purple-300 mb-0.5 sm:mb-1">{totalMatches}</div>
+                <div className="text-gray-300 text-xs sm:text-sm">{t('game.totalMatches')}</div>
+              </div>
+              <div className="bg-gray-700/50 rounded-lg p-2 sm:p-3 text-center">
+                <div className="text-xl sm:text-2xl font-bold text-green-300 mb-0.5 sm:mb-1">{finishedMatches}</div>
+                <div className="text-gray-300 text-xs sm:text-sm">{t('game.completedMatches')}</div>
+              </div>
+              <div className="bg-gray-700/50 rounded-lg p-2 sm:p-3 text-center">
+                <div className="text-xl sm:text-2xl font-bold text-yellow-300 mb-0.5 sm:mb-1">{playerCount}</div>
+                <div className="text-gray-300 text-xs sm:text-sm">{t('game.totalPlayers')}</div>
+              </div>
+            </div>
+
+            {/* Match Results */}
+            {matchStatistics.length > 0 && (
+              <div>
+                <h4 className="text-base sm:text-lg font-semibold text-purple-300 mb-2 sm:mb-3">
+                  {t('game.matchResults')}
+                </h4>
+                <div className="space-y-1.5 sm:space-y-2">
+                  {matchStatistics.map((stat: any, index: number) => (
+                    <div
+                      key={index}
+                      className="bg-gray-700/50 rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3"
+                    >
+                      <div className="text-center sm:text-left flex-1 min-w-0">
+                        <div className="text-purple-300 font-semibold text-xs sm:text-sm truncate">
+                          {stat.round === 2 ? t('game.finalMatch') : stat.round === 1 ? 'Semi-Final' : `Match ${stat.matchNumber}`}
+                        </div>
+                        <div className="text-gray-300 text-xs truncate">
+                          {stat.player1} vs {stat.player2}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-green-600/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 flex-shrink-0">
+                        <FaTrophy className="text-yellow-400 text-xs" />
+                        <span className="text-green-300 font-semibold text-xs sm:text-sm truncate max-w-[100px] sm:max-w-none">{stat.winner}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col h-[10%] sm:flex-row justify-center gap-3 sm:gap-4">
+            <button
+              onClick={() => {
+                // Reset tournament state and go back to setup
+                setTournamentStep('setup');
+                setCurrentMatchIndex(0);
+                setMatchWinner(null);
+                setShowTournamentWinnerMessage(false);
+                setRegisteredPlayers([]);
+                setTempPlayers([]);
+              }}
+              className="px-3 py-3 sm:px-4 sm:py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all hover:scale-105"
+            >
+              {t('game.newTournament')}
+            </button>
+            <button
+              onClick={() => setTournamentStep('bracket')}
+              className="px-3 py-3 sm:px-8 sm:py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all hover:scale-105"
+            >
+              {t('game.viewBracket')}
+            </button>
+            <button
+              onClick={() => router.push('/game')}
+              className="px-3 py-3 sm:px-8 sm:py-4 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all hover:scale-105"
+            >
+              {t('game.backToGameModes')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Bracket phase - show tournament results and allow navigation
   if (tournamentStep === 'bracket') {
     return (
@@ -2486,6 +2820,31 @@ export default function TournamentPage() {
           <TournamentBracket />
 
           <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mt-4 sm:mt-6">
+            {/* Back button for local tournaments - return to match winner modal */}
+            {tournamentType === 'local' && (() => {
+              const bracket = gameState.tournament?.bracket || [];
+              const currentMatch = bracket[currentMatchIndex];
+              // Show back button if there's a finished match (came from match winner modal)
+              if (currentMatch && currentMatch.status === 'finished') {
+                return (
+                  <button
+                    onClick={() => {
+                      setTournamentStep('playing');
+                      // Re-show the match winner message if match is finished
+                      if (currentMatch.winner) {
+                        setMatchWinner(currentMatch.winner);
+                        setShowTournamentWinnerMessage(true);
+                      }
+                    }}
+                    className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                  >
+                    {t('game.back')}
+                  </button>
+                );
+              }
+              return null;
+            })()}
+
             <button
               onClick={() => router.push('/game')}
               className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
@@ -2510,25 +2869,28 @@ export default function TournamentPage() {
                 );
               }
 
-              // Otherwise, show continue tournament for next match if available
-              const nextMatch = bracket.find((m, index) =>
-                m.status === 'pending' &&
-                m.player1 &&
-                m.player2 &&
-                index !== currentMatchIndex
-              );
-              return nextMatch ? (
-                <button
-                  onClick={() => {
-                    const nextIndex = bracket.findIndex(m => m.id === nextMatch.id);
-                    setCurrentMatchIndex(nextIndex);
-                    setTournamentStep('playing');
-                  }}
-                  className="px-4 py-2 sm:px-6 sm:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base"
-                >
-                  {t('game.continueTournament')}
-                </button>
-              ) : null;
+              // Otherwise, show continue tournament for next match if available (only for remote tournaments)
+              if (tournamentType === 'remote') {
+                const nextMatch = bracket.find((m, index) =>
+                  m.status === 'pending' &&
+                  m.player1 &&
+                  m.player2 &&
+                  index !== currentMatchIndex
+                );
+                return nextMatch ? (
+                  <button
+                    onClick={() => {
+                      const nextIndex = bracket.findIndex(m => m.id === nextMatch.id);
+                      setCurrentMatchIndex(nextIndex);
+                      setTournamentStep('playing');
+                    }}
+                    className="px-4 py-2 sm:px-6 sm:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                  >
+                    {t('game.continueTournament')}
+                  </button>
+                ) : null;
+              }
+              return null;
             })()}
 
             <button

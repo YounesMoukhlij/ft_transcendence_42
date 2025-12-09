@@ -834,8 +834,64 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
             message: result.error
           }));
         } else {
-          // Success - tournamentStarted message will be sent via broadcastTournamentUpdate
-          // which is called in startTournament
+        // Success - tournamentStarted message will be sent via broadcastTournamentUpdate
+        // which is called in startTournament
+        }
+        return;
+      }
+
+      if (action === 'reportMatchResult') {
+        const tournamentId = payload.tournamentId;
+        const matchId = payload.matchId;
+        const winner = payload.winner;
+
+        if (!tournamentId || !matchId || !winner) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID, Match ID, and Winner are required'
+          }));
+          return;
+        }
+
+        // Verify user is in the tournament
+        const tournament = gameManager.tournaments.get(tournamentId);
+        if (!tournament) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament not found'
+          }));
+          return;
+        }
+
+        // Verify user is registered in the tournament
+        const isPlayerInTournament = tournament.registeredPlayers.some(
+          p => p.id === userId || p.id === userId.toString()
+        );
+        if (!isPlayerInTournament) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'You are not registered in this tournament'
+          }));
+          return;
+        }
+
+        // Report match result
+        const result = gameManager.reportMatchResult(tournamentId, matchId, winner);
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          // Success - bracket update will be broadcasted via reportMatchResult
+          socket.send(JSON.stringify({
+            type: 'matchResultReported',
+            data: {
+              tournamentId,
+              matchId,
+              bracket: result.bracket
+            }
+          }));
         }
         return;
       }

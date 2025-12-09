@@ -438,6 +438,16 @@
     "tournamentFeature": "Tarrayt n umussu",
     "tournamentSetupRegistrationOnly": "Asbeddi d akcam n umussu kan",
     "tournamentChampion": "Aneɣlaf n umussu!",
+    "tournamentWinner": "Anebru n umussu",
+    "tournamentStatistics": "Tidelliwin n umussu",
+    "totalMatches": "Timriwin meṛṛa",
+    "completedMatches": "Timriwin yekfan",
+    "totalPlayers": "Imuraren meṛṛa",
+    "matchResults": "Igma n timriwin",
+    "viewChampion": "Wali aneɣlaf",
+    "restartTournament": "Ales asenker n umussu",
+    "restartTournamentConfirm": "Tebɣiḍ ad talseḍ asenker n umussu? Aɣawas meṛṛa ad yekkes.",
+    "tournamentNotComplete": "Amussu ur yekfa ara yakan",
     "tournamentCancelled": "Amussu yettwasefsex",
     "tournamentWasCancelled": "Amussu yettwasefsex.",
     "tournamentFinished": "Amussu yekfa",
@@ -453,7 +463,9 @@
     "allCustomizationOptionsRequired": "Akk iɣewwaṛen n usemres ilaq ad ttwafren i wakken ad tebduḍ urar",
     "backToPlayerSetup": "Uɣal ɣer usbeddi n yimarigen",
     "connecting": "Aqqen...",
-    "startGame": "Bdu urar"
+    "startGame": "Bdu urar",
+    "startingTournament": "Asenker n umussu...",
+    "gettingReady": "Asebter i umussu"
   }
 }
 
