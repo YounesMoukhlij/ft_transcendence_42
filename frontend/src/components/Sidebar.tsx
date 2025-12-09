@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline, IoChevronBackCircleOutline, IoTrophyOutline  } from "react-icons/io5";
+import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline, IoChevronBackCircleOutline, IoTrophyOutline, IoExitOutline } from "react-icons/io5";
 
 export default function Sidebar()
 {
@@ -19,8 +19,8 @@ export default function Sidebar()
   ];
 
   return (
-      <aside className="  md:flex w-[8vw] lg:w-[6%] h-full items-center justify-center  rounded-3xl p-1 md:p-2">
-        <div className="fixed top-[25%] bottom-20 border-2 border-gray-500  gap-8 md:gap-10  md:m-3 rounded-3xl p-2 md:p-5 flex flex-col items-center justify-evenly h-auto ">
+      <aside className="  md:flex w-[8vw] lg:w-[6%] h-full items-center justify-center  rounded-3xl p-1 md:p-2 gap-4">
+        <div className="fixed border-2 border-gray-500  gap-8 md:gap-10  md:m-3 rounded-3xl p-2 md:p-5 flex flex-col items-center justify-evenly h-auto ">
           {navItems.map((item) => (
             <Link href={item.path} key={item.path}>
               <span className=" cursor-pointer ">
@@ -29,6 +29,16 @@ export default function Sidebar()
             </Link>
           ))}
         </div>
+        {/* <div className='fixed bottom-[5%] border-red-400 border-2 p-3 rounded-full flex items-center justify-center hover:cursor-pointer'>
+          <button
+            onClick={() => console.log("Logout clicked")}
+            className="text-red-400 hover:scale-125 transition-all duration-300 hover:cursor-pointer hover:text-red-500"
+            >
+            <IoExitOutline 
+            className="w-6 h-6 md:w-8 md:h-8"
+             />
+          </button>
+        </div> */}
       </aside>
   );
 }

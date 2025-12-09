@@ -29,7 +29,6 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$api$2f$server$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/node_modules/next/dist/esm/api/server.js [middleware-edge] (ecmascript) <module evaluation>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/esm/server/web/spec-extension/response.js [middleware-edge] (ecmascript)");
 ;
-// Define your protected and public paths
 const PROTECTED_PATHS = [
     '/chat',
     '/profile',
@@ -42,33 +41,25 @@ const PUBLIC_PATHS = [
     '/signUp'
 ];
 function middleware(request) {
-    // const { user } = useUserStore.getState();
-    // const token = user?.token;
-    // request.cookies.set('auth_token', "testtttttttttttttttttttttttttttttttttttttttttttttttttttttt");
-    // if (token) {
-    //   request.cookies.set('auth_token', token);
-    // }
-    // console.log('middleware - user:', token);
-    // ⚠️ IMPORTANT: Replace 'auth_token' with the actual name of your authentication cookie.
+    // Check for the cookie
     const isAuthenticated = request.cookies.has('auth_token');
     const currentPath = request.nextUrl.pathname;
     const isProtectedPath = PROTECTED_PATHS.some((path)=>currentPath.startsWith(path));
     const isPublicPath = PUBLIC_PATHS.some((path)=>currentPath.startsWith(path));
-    // 1. If trying to access a PROTECTED route without a token, redirect to signIn
+    // 1. Protect private routes
     if (isProtectedPath && !isAuthenticated) {
         const signInUrl = new URL('/signIn', request.url);
-        // Optional: Add a redirect query parameter to return the user after login
-        // signInUrl.searchParams.set('redirect', currentPath) 
+        // It's good practice to send them back to where they were trying to go after login
+        // signInUrl.searchParams.set('callbackUrl', currentPath) 
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(signInUrl);
     }
-    // 2. If trying to access a PUBLIC route while ALREADY logged in, redirect to dashboard
-    // if (isPublicPath && isAuthenticated) {
-    //   return NextResponse.redirect(new URL('/', request.url))
-    // }
+    // 2. Redirect logged-in users away from Public routes (Optional but recommended)
+    if (isPublicPath && isAuthenticated) {
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/', request.url));
+    }
     return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].next();
 }
 const config = {
-    // Use a regex to match all paths except for static files, API calls, etc.
     matcher: [
         '/((?!api|_next/static|_next/image|favicon.ico|assets).*)'
     ]

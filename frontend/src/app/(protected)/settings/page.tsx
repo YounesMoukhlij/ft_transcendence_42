@@ -4,8 +4,10 @@ import { User, Shield, HelpCircle, ChevronDown } from 'lucide-react'
 import { useUserStore } from '../../../store/userStore'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
+import axios from 'axios' // Import Axios
+import api from '@/lib/api' // Custom API wrapper
 
-// helper components
+// Helper components
 import DeleteConfirmationDialog from './components/DeleteConfirmationDialog'
 import TwoFAModal from './components/TwoFAModal'
 import ProfileTab from './components/profile/page'
@@ -13,26 +15,38 @@ import SecurityTab from './components/security/page'
 import HelpTab from './components/help/page'
 import Loading from '@/components/loading/page'
 
+// Define API URL
+const API_URL = process.env.NEXT_PUBLIC_BACK_API || 'http://localhost:4444'
+const DEFAULT_PROFILE_IMG = process.env.NEXT_PUBLIC_DEFAULT_PROFILE_IMG || 'https://cdn.intra.42.fr/users/default.jpg'
+
 const ProfileSettingsPage = () => {
   const user = useUserStore((state) => state.user)
   const setUser = useUserStore((state) => state.setUser)
   const hasHydrated = useUserStore((state) => state._hasHydrated)
-  const router = useRouter()
-  const fileInputRef = useRef(null)
   
-  // State
+  const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // --- STATE MANAGEMENT ---
   const [isLoading, setIsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('profile')
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Profile Image State
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+
+  // Modal States
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  
+  // 2FA States
   const [is2FAEnabled, setIs2FAEnabled] = useState(false)
   const [show2FAModal, setShow2FAModal] = useState(false)
   const [otpAuthUrl, setOtpAuthUrl] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
-  const [previewImage, setPreviewImage] = useState(null)
-  const [imageFile, setImageFile] = useState(null)
-  const [activeTab, setActiveTab] = useState('profile')
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  // Form Data State
   const [formData, setFormData] = useState({
     languages: 'en',
     username: '',
@@ -44,7 +58,7 @@ const ProfileSettingsPage = () => {
     currentPassword: ''
   })
 
-  // Data for Tabs
+  // Static Data
   const tabItems = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Shield },
@@ -61,12 +75,14 @@ const ProfileSettingsPage = () => {
   const authMethod = user?.auth_method || 0
   const isPasswordAuth = authMethod === 0
 
+  // --- EFFECTS ---
   useEffect(() => {
     if (!hasHydrated) return
     if (!user) {
       router.push('/signIn')
       return
     }
+
     setFormData({
       languages: user.languages || 'en',
       username: user.username || '',
@@ -77,26 +93,20 @@ const ProfileSettingsPage = () => {
       confirmPassword: '',
       currentPassword: ''
     })
+
     setIs2FAEnabled(user.twoFA_enabled || false)
   }, [user, router, hasHydrated])
 
-  if (!user) {
-    return (
-      <div className="min-h-screen w-full bg-black text-white flex items-center justify-center">
-        <Loading />
-      </div>
-    )
-  }
+  // --- HANDLERS ---
 
-  // --- Handlers (Kept same as before) ---
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleImageClick = () => fileInputRef.current?.click()
 
-  const handleImageChange = (e) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
@@ -109,34 +119,30 @@ const ProfileSettingsPage = () => {
     reader.readAsDataURL(file)
   }
 
+  const getProfileImageUrl = () => {
+    if (previewImage) return previewImage
+    const currentImg = user.profile_img || DEFAULT_PROFILE_IMG
+    if (currentImg && currentImg.startsWith('/uploads/')) {
+      return `${API_URL}${currentImg}`
+    }
+    return currentImg
+  }
+
+  // 1. SAVE PROFILE (Axios)
   const handleSaveProfile = async () => {
     setIsLoading(true)
     try {
-      if (!formData.username.trim() || !formData.email.trim()) {
-        toast.error('Username and Email are required')
-        setIsLoading(false)
+      // Basic validation
+      if (!formData.username.trim()) {
+        toast.error('Username is required')
         return
       }
-      if (formData.username.length < 3 || formData.username.length > 8) {
-        toast.error('Username must be between 3 and 8 characters')
-        setIsLoading(false)
+      if (!formData.email.trim()) {
+        toast.error('Email is required')
         return
       }
-      if (formData.newPassword || formData.confirmPassword) {
-        if (formData.newPassword !== formData.confirmPassword) {
-          toast.error('New password and confirmation do not match')
-          setIsLoading(false)
-          return
-        }
-        if (formData.newPassword.length < 6) {
-          toast.error('New password must be at least 6 characters long')
-          setIsLoading(false)
-          return
-        }
-      }
-      if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        toast.error('Please enter a valid email address')
-        setIsLoading(false)
+      if (formData.username.length < 3 || formData.username.length > 20) {
+        toast.error('Username must be between 3 and 20 characters')
         return
       }
 
@@ -146,57 +152,233 @@ const ProfileSettingsPage = () => {
       dataToSave.append('fullname', formData.fullname)
       dataToSave.append('email', formData.email)
       dataToSave.append('bio', formData.bio)
-      if (imageFile) dataToSave.append('profile_image', imageFile, imageFile.name)
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/updateUserInfo`, {
-        method: 'POST',
+      if (imageFile) {
+        dataToSave.append('profile_image', imageFile, imageFile.name)
+      }
+
+      // Axios automatically sets the Content-Type to multipart/form-data when passed FormData
+      const response = await api.post(`${API_URL}/updateUserInfo`, dataToSave, {
         headers: { Authorization: `Bearer ${user.access_token}` },
-        body: dataToSave
       })
-      const data = await response.json()
-      if (!response.ok || !data.success) {
-        toast.error(data.message || 'Failed to update')
+      console.log('Profile update response:', response)
+      const data = response.data
+      if (!data.success) {
+        toast.error(data.message || 'Failed to update profile')
         return
       }
+
       toast.success('Profile updated successfully!')
-      setUser({ ...user, ...data.user })
+      // Update global store
+      const updatedUser = { ...user, ...data.user }
+      setUser(updatedUser)
+      
+      // Reset image states
       setPreviewImage(null)
       setImageFile(null)
-    } catch (error) {
-      console.error(error)
-      toast.error('Error updating profile')
+
+    } catch (error: any) {
+      console.error('Profile update error:', error)
+      const msg = error.response?.data?.message || 'An unexpected error occurred while updating profile.'
+      toast.error(msg)
     } finally {
       setIsLoading(false)
     }
   }
 
+  // 2. SAVE SECURITY (Axios)
   const handleSaveSecurity = async () => {
     setIsLoading(true)
-    // ... (Existing security logic simplified for brevity in this view, logic remains same)
+
+    // Validation checks
+    if (is2FAEnabled && !formData.currentPassword.trim()) {
+        toast.error('Current password is required')
+        setIsLoading(false)
+        return
+    }
+
+    if (isPasswordAuth) {
+        if (formData.newPassword.trim() !== '' && formData.currentPassword.trim() === '') {
+            toast.error('Current password is required to set a new password')
+            setIsLoading(false)
+            return
+        }
+        if (formData.newPassword.trim() !== '') {
+            if (formData.newPassword.length < 8) {
+                toast.error('New password must be at least 8 characters long')
+                setIsLoading(false)
+                return
+            }
+            if (formData.newPassword !== formData.confirmPassword) {
+                toast.error('New password and confirmation do not match')
+                setIsLoading(false)
+                return
+            }
+        }
+    }
+
     try {
-        // Mock fetch for brevity, assume logic from previous step is here
-        toast.success('Security settings updated') 
-    } catch (error) {
-       toast.error('Error updating security')
+      if (formData.newPassword.trim() !== '') {
+        const response = await axios.post(`${API_URL}/updateUserPassword`, 
+          {
+            current_password: formData.currentPassword,
+            new_password: formData.newPassword
+          },
+          {
+            headers: { Authorization: `Bearer ${user.access_token}` }
+          }
+        )
+
+        const data = response.data
+        if (!data.success) {
+          toast.error(data.message || 'Failed to update password')
+          return
+        }
+        toast.success('Password updated successfully!')
+        
+        // Reset password fields
+        setFormData((prev) => ({
+            ...prev,
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        }))
+      } else {
+        toast.error('No new password entered. Skipping password update.')
+      }
+    } catch (error: any) {
+      console.error('Security update error:', error)
+      const msg = error.response?.data?.message || 'An unexpected error occurred while updating security settings'
+      toast.error(msg)
     } finally {
-       setIsLoading(false)
+      setIsLoading(false)
     }
   }
 
-  const handleToggle2FA = async () => { /* ... existing logic ... */ }
-  const handleVerify2FA = async () => { /* ... existing logic ... */ }
-  const handleDeleteAccount = async () => { /* ... existing logic ... */ }
+  // 3. TOGGLE 2FA (Axios)
+  const handleToggle2FA = async () => {
+    setIsLoading(true)
+    if (is2FAEnabled) {
+      // Disable 2FA
+      try {
+        const response = await axios.post(`${API_URL}/update2FA`, 
+          { twofa: false },
+          {
+            headers: { Authorization: `Bearer ${user.access_token}` }
+          }
+        )
 
-  const getProfileImageUrl = () => {
-    if (previewImage) return previewImage
-    const currentImg = user.profile_img || process.env.NEXT_PUBLIC_DEFAULT_PROFILE_IMG
-    if (currentImg && currentImg.startsWith('/uploads/')) {
-      return `${process.env.NEXT_PUBLIC_BACK_API}${currentImg}`
+        const data = response.data
+        if (!data.success) {
+          toast.error(data.message || 'Failed to disable 2FA')
+        } else {
+          setIs2FAEnabled(false)
+          setUser({ ...user, twoFA_enabled: false, twoFA_secret: null })
+          toast.success('Two-Factor Authentication disabled.')
+        }
+      } catch (error: any) {
+        console.error('2FA disable error:', error)
+        const msg = error.response?.data?.message || 'An error occurred while disabling 2FA.'
+        toast.error(msg)
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      // Enable 2FA (Step 1: Generate)
+      try {
+        const response = await axios.post(`${API_URL}/2fa/generate`, 
+          {}, // Empty body
+          {
+            headers: { Authorization: `Bearer ${user.access_token}` }
+          }
+        )
+
+        const data = response.data
+        if (!data.success) {
+          toast.error(data.message || 'Failed to generate 2FA secret')
+        } else {
+          setOtpAuthUrl(data.otpauth)
+          setVerificationCode('')
+          setShow2FAModal(true)
+        }
+      } catch (error: any) {
+        console.error('2FA generate error:', error)
+        const msg = error.response?.data?.message || 'An error occurred while setting up 2FA.'
+        toast.error(msg)
+      } finally {
+        setIsLoading(false)
+      }
     }
-    return currentImg
   }
 
-  // --- Tabs Rendering ---
+  // 4. VERIFY 2FA (Axios)
+  const handleVerify2FA = async () => {
+    setIsLoading(true)
+    try {
+      const response = await axios.post(`${API_URL}/2fa/verify`, 
+        { token: verificationCode },
+        {
+          headers: { Authorization: `Bearer ${user.access_token}` }
+        }
+      )
+
+      const data = response.data
+      if (!data.success) {
+        toast.error(data.message || 'Invalid code. Please try again.')
+      } else {
+        toast.success('Two-Factor Authentication enabled successfully!')
+        setIs2FAEnabled(true)
+        setUser({ ...user, twoFA_enabled: true })
+        setShow2FAModal(false)
+        setVerificationCode('')
+        setOtpAuthUrl('')
+      }
+    } catch (error: any) {
+      console.error('2FA verification error:', error)
+      const msg = error.response?.data?.message || 'An error occurred during verification.'
+      toast.error(msg)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 5. DELETE ACCOUNT (Axios)
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true)
+    try {
+      const response = await axios.delete(`${API_URL}/DeleteUserById/${user.id_user}`, {
+        headers: { Authorization: `Bearer ${user.access_token}` }
+      })
+
+      // Check if success is implied by status 200 or if data contains success field
+      // Usually delete returns minimal data, so check status mainly
+      if (response.status !== 200) { 
+         // This block might not be hit because axios throws on non-2xx, 
+         // but good for explicit logic if API returns 200 with error message
+         throw new Error('Failed to delete account') 
+      }
+
+      toast.success('Account deleted successfully!')
+      setUser(null)
+      setIsDeleteDialogOpen(false)
+      router.push('/signIn')
+    } catch (error: any) {
+      console.error('Account deletion error:', error)
+      const msg = error.response?.data?.message || 'An unexpected error occurred while deleting the account'
+      toast.error(msg)
+    } finally {
+      setIsDeletingAccount(false)
+    }
+  }
+
+  // --- RENDER HELPERS ---
+  const activeTabInfo = tabItems.find(t => t.id === activeTab)
+
+  const getButtonStyle = (isActive: boolean) => {
+    return isActive
+      ? 'bg-white text-black' 
+      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+  }
+
   const tabs: Record<string, React.ReactNode> = {
     profile: (
       <ProfileTab
@@ -229,14 +411,13 @@ const ProfileSettingsPage = () => {
     help: <HelpTab />
   }
 
-  const activeTabInfo = tabItems.find(t => t.id === activeTab)
-
-  // Common styling for buttons (used in both dropdown and desktop list)
-  // This ensures the color and style are EXACTLY the same
-  const getButtonStyle = (isActive) => {
-    return isActive
-      ? 'bg-white text-black' // Active style
-      : 'text-gray-400 hover:text-white hover:bg-gray-800' // Inactive style
+  // Loading Screen if no user data
+  if (!user) {
+    return (
+      <div className="min-h-screen w-full bg-black text-white flex items-center justify-center">
+        <Loading />
+      </div>
+    )
   }
 
   return (
@@ -248,25 +429,23 @@ const ProfileSettingsPage = () => {
           <p className="text-gray-500 text-sm sm:text-base">Manage your profile and preferences</p>
         </div>
 
-        {/* --- 1. MOBILE MENU (Phone only) --- */}
-        {/* w-1/2 mx-auto centers it and makes it half width */}
+        {/* --- 1. MOBILE MENU (Phone only - Dropdown Design) --- */}
         <div className="block sm:hidden relative mb-6 z-20 w-1/2 mx-auto">
-          
           {/* Trigger Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="w-full flex items-center justify-between bg-black border border-gray-700 p-3 rounded-xl text-white hover:border-gray-500"
+            className="w-full flex items-center justify-between bg-black border border-gray-700 p-3 rounded-xl text-white hover:border-gray-500 transition-colors"
           >
             <div className="flex items-center gap-2">
               {activeTabInfo && <activeTabInfo.icon size={18} />}
               <span className="font-medium text-sm">{activeTabInfo?.label}</span>
             </div>
-            <ChevronDown size={18} />
+            <ChevronDown size={18} className={`transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Dropdown Options */}
           {isMobileMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-black border border-gray-700 rounded-xl overflow-hidden p-1">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-black border border-gray-700 rounded-xl overflow-hidden p-1 shadow-xl ">
               {tabItems.map((tab) => (
                 <button
                   key={tab.id}
@@ -274,8 +453,7 @@ const ProfileSettingsPage = () => {
                     setActiveTab(tab.id)
                     setIsMobileMenuOpen(false)
                   }}
-                  // Using same logic as Desktop to match colors perfectly
-                  className={`w-full flex items-center gap-3 p-3 text-sm rounded-lg mb-1 last:mb-0 transition-colors ${getButtonStyle(activeTab === tab.id)}`}
+                  className={`w-full flex items-center gap-3 p-3 text-sm rounded-lg mb-1 last:mb-0 transition-colors ${getButtonStyle(activeTab === tab.id)} hover:cursor-pointer`}
                 >
                   <tab.icon size={18} />
                   <span>{tab.label}</span>
@@ -291,7 +469,7 @@ const ProfileSettingsPage = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center justify-center gap-3 py-3 rounded-xl font-medium sm:w-1/4 transition-all ${getButtonStyle(activeTab === tab.id)}`}
+              className={`flex items-center justify-center gap-3 py-3 rounded-xl font-medium sm:w-1/4 transition-all ${getButtonStyle(activeTab === tab.id)} hover:cursor-pointer`}
             >
               <tab.icon size={20} />
               <span>{tab.label}</span>
@@ -300,12 +478,13 @@ const ProfileSettingsPage = () => {
         </div>
 
         {/* Content Area */}
-        <div className="border border-gray-700 rounded-2xl bg-black relative z-10">
+        <div className="border border-gray-700 rounded-2xl bg-black relative z-10 shadow-lg">
           {tabs[activeTab]}
         </div>
       </div>
 
-      {/* Modals */}
+      {/* --- MODALS --- */}
+      
       <DeleteConfirmationDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}

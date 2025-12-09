@@ -65,6 +65,10 @@ async function startServer() {
     app.register(cors, {
       origin: '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      credentials: true, // zmoumni for frontend middleware
+      allowedHeaders: ["Content-Type", "Authorization"], // zmoumni for frontend middleware
+      origin: "http://localhost:3000", // zmoumni for frontend middleware
+
     });
 
 

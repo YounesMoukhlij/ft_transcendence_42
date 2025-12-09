@@ -1,59 +1,45 @@
 import axios from 'axios';
-import { useUserStore } from '../store/userStore';
+import { useUserStore } from '../store/userStore'; // Adjust path to your store
 
-const API_URL = 'http://localhost:4444';
+const API_URL = 'http://localhost:4444'; // Your backend URL
 
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // Important for cookies
 });
 
-api.interceptors.request.use(
-  (config) => {
-    const token = useUserStore.getState().user?.access_token;
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+// Request Interceptor: Attach token if needed (optional if using cookies only)
+api.interceptors.request.use((config) => {
+  const user = useUserStore.getState().user;
+  if (user?.access_token) {
+     // If your backend expects a header, otherwise cookies handle it
+     config.headers.Authorization = `Bearer ${user.access_token}`; 
   }
-);
+  return config;
+});
 
+// Response Interceptor: Handle 401s
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response, // Return successful responses directly
   async (error) => {
     const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry) {
+
+    // Check if error is 401 (Unauthorized) and we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      try {
-        const refreshToken = useUserStore.getState().getRefreshToken();
 
-        // Add this console log to check if the token exists
-        console.log("Interceptor: Attempting to use refresh token:", refreshToken); 
+      // 1. Clear Zustand Store (LocalStorage)
+      // Assuming you have a logout action in your store
+      useUserStore.getState().logout();
 
-        if (!refreshToken) {
-          console.error("Interceptor: No refresh token found in store.");
-          useUserStore.getState().clearUser();
-          window.location.href = '/signIn';
-          return Promise.reject(error);
-        }
+      // 2. Clear Cookies manually (Client-side)
+      document.cookie = 'auth_token=; Max-Age=0; path=/;';
 
-        const { data } = await axios.post(`${API_URL}/refreshToken`, { refreshToken });
-        const { user, setUser } = useUserStore.getState();
-        const updatedUser = { ...user, access_token: data.accessToken };
-        setUser(updatedUser, refreshToken);
-        api.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
-        originalRequest.headers['Authorization'] = `Bearer ${data.accessToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        useUserStore.getState().clearUser();
-        window.location.href = '/signIn';
-        return Promise.reject(refreshError);
-      }
+      // 3. Force Redirect to SignIn
+      // We use window.location because we are outside a React Component
+      window.location.href = '/signIn';
     }
+
     return Promise.reject(error);
   }
 );

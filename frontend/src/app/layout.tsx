@@ -42,7 +42,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                3. w-full: Takes remaining width.
                4. h-full: Fills the flex container's available height.
             */}
-            <div className="w-full md:w-[90%] bg-transparent h-full overflow-y-auto overflow-x-hidden rounded-3xl relative z-0 border-amber-100 border">
+            <div className="w-full md:w-[90%] bg-transparent h-full overflow-y-auto overflow-x-hidden rounded-3xl relative z-0">
               {children}
             </div>
           </div>

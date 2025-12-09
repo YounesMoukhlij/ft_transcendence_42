@@ -70,7 +70,7 @@ const SecurityTab = ({
             <div>
               <label htmlFor="newPassword" className='flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2'>
                 <Lock size={16} />
-                New Password (optional)
+                New Password (minimum 8 characters)
               </label>
               <input
                 type="password"

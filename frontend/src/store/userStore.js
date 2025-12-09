@@ -12,6 +12,10 @@ export const useUserStore = create(
       setUser: (userObj, refreshToken) => set({ user: userObj, refreshToken: refreshToken }), // 
       getUser: () => get().user,
       clearUser: () => set({ user: null, refreshToken: null }), //
+      logout: () => {
+        set({ user: null }); // Clears state
+        // LocalStorage is handled automatically by 'persist' when state changes
+      },
       getRefreshToken: () => get().refreshToken, // 
 
       setHasHydrated: (state) => {

@@ -92,7 +92,7 @@ export function generateToken(username, email, id_user) {
     }
 
     const payload = { username, email, id_user };
-    const token = jwt.sign(payload, SECRET, { expiresIn: '2h' });
+    const token = jwt.sign(payload, SECRET, { expiresIn: '24h' }); // Token valid for 24 hours
     console.log(" >> Token generated successfully for user:", username, email, id_user);
     return token;
 }
