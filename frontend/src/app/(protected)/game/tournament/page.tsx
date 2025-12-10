@@ -281,10 +281,16 @@ export default function TournamentPage() {
         setTournamentType('remote'); // CRITICAL: Set to remote
         const isUserHost = tournament.host.id === user?.id_user?.toString() || tournament.host.id === user?.id_user;
         setIsHost(isUserHost);
-        // Always go to registration (waiting) screen for invited players
+        // CRITICAL: Invited players (non-host) should NEVER see setup screen
+        // Always go to registration (Tournament Lobby) screen for invited players
         // If they're the host, they'll be redirected to customization when tournament is full
-        // Use saved step if available, otherwise default to registration
-        setTournamentStep(savedTournamentStep === 'registration' ? 'registration' : 'registration');
+        if (isInvitedPlayer || !isUserHost) {
+          // This is an invited friend - force them to Tournament Lobby
+          setTournamentStep('registration');
+        } else {
+          // This is the host - use saved step or default to registration
+          setTournamentStep(savedTournamentStep === 'registration' ? 'registration' : 'registration');
+        }
 
         // Clear sessionStorage (only in browser)
         if (typeof window !== 'undefined') {
@@ -391,11 +397,27 @@ export default function TournamentPage() {
           case 'tournamentJoined':
             // User accepted an invitation and joined a tournament
             setRemoteTournament(message.data.tournament);
-            setIsHost(false);
+            // Check if user is the host
+            const isUserHost = message.data.tournament?.host?.id === user?.id_user?.toString() ||
+                              message.data.tournament?.host?.id === user?.id_user;
+            setIsHost(isUserHost);
             setTournamentId(message.data.tournamentId);
             setTournamentType('remote'); // CRITICAL: Set type to remote
-            // Always go to registration page to wait for tournament to start
-            setTournamentStep('registration');
+            // CRITICAL: Invited friends (non-host) should ALWAYS see Tournament Lobby, never Setup
+            // Only host can see setup/customization screens
+            if (!isUserHost) {
+              // This is an invited friend - force them to Tournament Lobby
+              setTournamentStep('registration');
+            } else {
+              // This is the host - they can see setup/customization
+              // But if tournament is full, go to customization
+              const currentPlayers = message.data.tournament?.registeredPlayers?.length || 0;
+              if (currentPlayers >= playerCount) {
+                setTournamentStep('customization');
+              } else {
+                setTournamentStep('registration');
+              }
+            }
             setIsFindingRandomOpponent(false);
             setShowFriendsListExpanded(false);
             setShowRandomOpponentExpanded(false);
@@ -1437,6 +1459,21 @@ export default function TournamentPage() {
     // ONLY show loading screen if pendingTournamentId exists (set when accepting invite)
     // Use state instead of direct sessionStorage access to avoid SSR issues
     const pendingTournamentId = pendingTournamentIdFromStorage;
+    const isInvitedPlayer = typeof window !== 'undefined' ? sessionStorage.getItem('isInvitedPlayer') === 'true' : false;
+
+    // CRITICAL: If this is an invited friend, they should NEVER see the setup screen
+    // Redirect them to registration (Tournament Lobby) immediately
+    if (isInvitedPlayer && tournamentType === 'remote') {
+      setTournamentStep('registration');
+      return null; // Prevent rendering setup screen
+    }
+
+    // Also check if user is in a remote tournament but not the host
+    // This handles cases where sessionStorage was cleared but user is still in tournament
+    if (tournamentType === 'remote' && remoteTournament && !isHost && tournamentStep === 'setup') {
+      setTournamentStep('registration');
+      return null; // Prevent rendering setup screen
+    }
 
     // If user just accepted an invite, show loading screen while waiting for tournament data
     if (pendingTournamentId && tournamentType === 'remote' && !remoteTournament) {

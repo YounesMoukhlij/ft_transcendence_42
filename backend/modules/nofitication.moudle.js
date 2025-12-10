@@ -61,7 +61,9 @@ export async function GetNotification(request, reply) {
           }
         }
 
-        const expiredDate = new Date(expiredStr.replace(' ', 'T'));
+        // Parse as UTC (expiration is stored in UTC from toISOString())
+        // Append 'Z' to indicate UTC timezone
+        const expiredDate = new Date(expiredStr.replace(' ', 'T') + 'Z');
         return expiredDate > now;
       } catch (e) {
         console.error('Error parsing expired date:', notif.expired, e);

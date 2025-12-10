@@ -52,36 +52,49 @@ export default function Navbar()
 function isTimeValid(item: any) {
 
 
-  const targetTimeString = item.expired;
-  const [datePart, timePart] = targetTimeString.split(' ');
-  const [yy, mm, dd] = datePart.split('-').map(Number);
-  const [hours, minutes, seconds] = timePart.split(':').map(Number);
-
-  const fullYear = 2000 + yy;
-
-  const targetTime = new Date(fullYear, mm - 1, dd, hours, minutes, seconds);
-  const now = new Date();
-
-  const diffSeconds = (now.getTime() - targetTime.getTime()) / 1000;
-
-
-  if (diffSeconds <= 15) {
-
-  setTimeout(() => {
-    const newExpired = ((d => (
-      d.setFullYear(d.getFullYear() - 1),
-      `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getFullYear()).slice(-2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`
-      ))(
-        new Date(item.expired.replace(/(\d+)-(\d+)-(\d+)/, "20$3-$2-$1"))
-      ));
-
-     setNotification(prev =>
-        prev.map(it => it.id === item.id ? { ...it, expired: newExpired } : it)
-      );
-     return false;
-    }, diffSeconds * 10000);
+  // Check if notification is still valid (not expired)
+  if (!item.expired) {
+    return true; // No expiration set, consider it valid
   }
-  return diffSeconds <= 15;
+
+  try {
+    const targetTimeString = item.expired;
+    const [datePart, timePart] = targetTimeString.split(' ');
+
+    // Handle both YY-MM-DD and YYYY-MM-DD formats
+    let fullYear: number;
+    let mm: number, dd: number;
+
+    if (datePart.match(/^\d{2}-\d{2}-\d{2}$/)) {
+      // Format: YY-MM-DD (2-digit year)
+      const [yy, month, day] = datePart.split('-').map(Number);
+      fullYear = 2000 + yy;
+      mm = month;
+      dd = day;
+    } else {
+      // Format: YYYY-MM-DD (4-digit year)
+      const [year, month, day] = datePart.split('-').map(Number);
+      fullYear = year;
+      mm = month;
+      dd = day;
+    }
+
+    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+
+    // Parse as UTC time (backend stores expiration in UTC via toISOString())
+    // Create date string in ISO format and parse as UTC
+    const dateString = `${fullYear}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}Z`;
+    const targetTime = new Date(dateString); // Parse as UTC (Z suffix)
+    const now = new Date();
+
+    // Notification is valid if expiration time is in the future
+    // Return true if targetTime > now (notification not expired)
+    return targetTime > now;
+  } catch (error) {
+    console.error('Error parsing expiration date:', error);
+    // If parsing fails, consider notification valid (don't hide it)
+    return true;
+  }
 }
 
 
