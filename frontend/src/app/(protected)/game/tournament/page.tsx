@@ -1462,8 +1462,13 @@ export default function TournamentPage() {
     const isInvitedPlayer = typeof window !== 'undefined' ? sessionStorage.getItem('isInvitedPlayer') === 'true' : false;
 
     // CRITICAL: If this is an invited friend, they should NEVER see the setup screen
-    // Redirect them to registration (Tournament Lobby) immediately
-    if (isInvitedPlayer && tournamentType === 'remote') {
+    // Automatically set tournamentType to 'remote' and redirect to Tournament Lobby
+    if (isInvitedPlayer) {
+      // Automatically set tournamentType to 'remote' for invited players
+      if (tournamentType !== 'remote') {
+        setTournamentType('remote');
+      }
+      // Redirect to registration (Tournament Lobby) immediately
       setTournamentStep('registration');
       return null; // Prevent rendering setup screen
     }
