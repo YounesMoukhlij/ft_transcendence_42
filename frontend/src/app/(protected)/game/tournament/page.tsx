@@ -1463,7 +1463,7 @@ export default function TournamentPage() {
 
     // CRITICAL: If this is an invited friend, they should NEVER see the setup screen
     // Automatically set tournamentType to 'remote' and redirect to Tournament Lobby
-    if (isInvitedPlayer) {
+    if (isInvitedPlayer && (pendingTournamentId || tournamentId)) {
       // Automatically set tournamentType to 'remote' for invited players
       if (tournamentType !== 'remote') {
         setTournamentType('remote');
@@ -1475,7 +1475,7 @@ export default function TournamentPage() {
 
     // Also check if user is in a remote tournament but not the host
     // This handles cases where sessionStorage was cleared but user is still in tournament
-    if (tournamentType === 'remote' && remoteTournament && !isHost && tournamentStep === 'setup') {
+    if (tournamentType === 'remote' && remoteTournament && tournamentId && !isHost && tournamentStep === 'setup') {
       setTournamentStep('registration');
       return null; // Prevent rendering setup screen
     }
@@ -2004,7 +2004,7 @@ export default function TournamentPage() {
 
   // Registration phase
   if (tournamentStep === 'registration') {
-    if (tournamentType === 'remote') {
+    if (tournamentType === 'remote' && (tournamentId || pendingTournamentIdFromStorage)) {
       // Remote tournament registration waiting screen
       const currentPlayerCount = remoteTournament?.registeredPlayers?.length || 0;
       const isFull = currentPlayerCount >= playerCount;
