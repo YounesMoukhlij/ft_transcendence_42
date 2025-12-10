@@ -438,16 +438,6 @@
     "tournamentFeature": "Fonctionnalité Tournoi",
     "tournamentSetupRegistrationOnly": "Configuration et inscription au tournoi uniquement",
     "tournamentChampion": "Champion du Tournoi !",
-    "tournamentWinner": "Vainqueur du Tournoi",
-    "tournamentStatistics": "Statistiques du Tournoi",
-    "totalMatches": "Matchs Totaux",
-    "completedMatches": "Matchs Terminés",
-    "totalPlayers": "Joueurs Totaux",
-    "matchResults": "Résultats des Matchs",
-    "viewChampion": "Voir le Champion",
-    "restartTournament": "Redémarrer le Tournoi",
-    "restartTournamentConfirm": "Êtes-vous sûr de vouloir redémarrer le tournoi ? Tous les progrès seront perdus.",
-    "tournamentNotComplete": "Le tournoi n'est pas encore terminé",
     "tournamentCancelled": "Tournoi Annulé",
     "tournamentWasCancelled": "Le tournoi a été annulé.",
     "tournamentFinished": "Tournoi Terminé",
@@ -463,9 +453,7 @@
     "allCustomizationOptionsRequired": "Toutes les options de personnalisation doivent être sélectionnées pour démarrer le jeu",
     "backToPlayerSetup": "Retour à la Configuration du Joueur",
     "connecting": "Connexion...",
-    "startGame": "Démarrer le Jeu",
-    "startingTournament": "Démarrage du Tournoi...",
-    "gettingReady": "Préparation du tournoi"
+    "startGame": "Démarrer le Jeu"
   }
 }
 

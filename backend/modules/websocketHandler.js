@@ -71,7 +71,9 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
                       expiredStr = datePart.join('-') + ' ' + (parts[1] || '00:00:00');
                     }
                   }
-                  expired = new Date(expiredStr.replace(' ', 'T'));
+                  // Parse as UTC (expiration is stored in UTC from toISOString())
+                  // Append 'Z' to indicate UTC timezone
+                  expired = new Date(expiredStr.replace(' ', 'T') + 'Z');
                 } catch (e) {
                   console.error(`[WebSocketHandler] Error parsing expired date for notification ${notif.notify_id}:`, notif.expired, e);
                   expired = null; // If parsing fails, treat as no expiration

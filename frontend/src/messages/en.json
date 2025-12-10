@@ -438,16 +438,6 @@
     "tournamentFeature": "Tournament Feature",
     "tournamentSetupRegistrationOnly": "Tournament setup and registration only",
     "tournamentChampion": "Tournament Champion!",
-    "tournamentWinner": "Tournament Winner",
-    "tournamentStatistics": "Tournament Statistics",
-    "totalMatches": "Total Matches",
-    "completedMatches": "Completed Matches",
-    "totalPlayers": "Total Players",
-    "matchResults": "Match Results",
-    "viewChampion": "View Champion",
-    "restartTournament": "Restart Tournament",
-    "restartTournamentConfirm": "Are you sure you want to restart the tournament? All progress will be lost.",
-    "tournamentNotComplete": "Tournament not complete yet",
     "tournamentCancelled": "Tournament Cancelled",
     "tournamentWasCancelled": "The tournament was cancelled.",
     "tournamentFinished": "Tournament Finished",
@@ -463,9 +453,7 @@
     "allCustomizationOptionsRequired": "All customization options must be selected to start the game",
     "backToPlayerSetup": "Back to Player Setup",
     "connecting": "Connecting...",
-    "startGame": "Start Game",
-    "startingTournament": "Starting Tournament...",
-    "gettingReady": "Getting ready for the tournament"
+    "startGame": "Start Game"
   }
 }
 

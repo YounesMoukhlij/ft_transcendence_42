@@ -1305,9 +1305,9 @@ class GameManager {
       const getHostStmt = this.db.prepare('SELECT profile_img, username FROM users WHERE id_user = ?');
       const hostUser = getHostStmt.get(hostId);
 
-      // Calculate expiration time (1 hour from now)
+      // Calculate expiration time (15 minutes from now)
       const now = new Date();
-      const expired = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour
+      const expired = new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes
       const expiredStr = expired.toISOString().slice(0, 19).replace('T', ' ');
 
       // Insert notification into database
@@ -1489,8 +1489,8 @@ class GameManager {
       return { error: 'Tournament is full' };
     }
 
-    // Try to find a random available player
-    const availablePlayer = this.findAvailablePlayerForTournament(tournamentId);
+    // Try to find a random available player (exclude host's friends)
+    const availablePlayer = this.findAvailablePlayerForTournament(tournamentId, hostId);
 
     if (availablePlayer) {
       // Found an available player, add them to tournament
@@ -1537,7 +1537,18 @@ class GameManager {
   }
 
   // Find an available player for tournament (not in any tournament or game)
-  findAvailablePlayerForTournament(excludeTournamentId) {
+  // Excludes host's friends - friends should only join via explicit invitation
+  findAvailablePlayerForTournament(excludeTournamentId, hostId) {
+    // Get all friends of the host to exclude them from random matching
+    // Friends table is bidirectional: user_id-friend_id and friend_id-user_id are both valid
+    const getFriendsStmt = this.db.prepare(`
+      SELECT friend_id as friendId FROM friends WHERE user_id = ?
+      UNION
+      SELECT user_id as friendId FROM friends WHERE friend_id = ?
+    `);
+    const hostFriends = getFriendsStmt.all(hostId, hostId);
+    const hostFriendIds = new Set(hostFriends.map(f => f.friendId));
+
     // Get all online users
     const onlineUserIds = Array.from(this.usersSocket.keys()).map(id => parseInt(id));
 
@@ -1545,7 +1556,13 @@ class GameManager {
     // 1. Already in a tournament
     // 2. In a game room
     // 3. In the matchmaking queue
+    // 4. Friends of the host (friends should only join via explicit invitation)
     for (const userId of onlineUserIds) {
+      // Skip if user is a friend of the host
+      if (hostFriendIds.has(userId)) {
+        continue;
+      }
+
       // Check if player is in any tournament
       let isInTournament = false;
       for (const [tournamentId, tournament] of this.tournaments.entries()) {
@@ -1564,7 +1581,7 @@ class GameManager {
       const inQueue = this.matchmakingQueue.some(p => p.id === userId);
       if (inQueue) continue;
 
-      // Found an available player
+      // Found an available player (not a friend, not in tournament, not in game, not in queue)
       const getUserStmt = this.db.prepare('SELECT id_user, username FROM users WHERE id_user = ?');
       const user = getUserStmt.get(userId);
       if (user) {
@@ -1587,8 +1604,8 @@ class GameManager {
         continue;
       }
 
-      // Try to find an available player
-      const availablePlayer = this.findAvailablePlayerForTournament(entry.tournamentId);
+      // Try to find an available player (exclude host's friends)
+      const availablePlayer = this.findAvailablePlayerForTournament(entry.tournamentId, tournament.host.id);
       if (availablePlayer) {
         // Add player to tournament
         tournament.registeredPlayers.push({
@@ -1678,109 +1695,6 @@ class GameManager {
     }
 
     return bracket;
-  }
-
-  // Report match result and advance bracket (for remote tournaments only)
-  reportMatchResult(tournamentId, matchId, winner) {
-    const tournament = this.tournaments.get(tournamentId);
-    if (!tournament) {
-      return { error: 'Tournament not found' };
-    }
-
-    if (!tournament.bracket || !Array.isArray(tournament.bracket)) {
-      return { error: 'Tournament bracket not found' };
-    }
-
-    // Find the match
-    const match = tournament.bracket.find(m => m.id === matchId);
-    if (!match) {
-      return { error: 'Match not found' };
-    }
-
-    // Verify match is not already finished
-    if (match.status === 'finished') {
-      return { error: 'Match already finished' };
-    }
-
-    // Verify winner is one of the match players
-    const winnerId = typeof winner === 'string' ? winner : winner.id;
-    if (match.player1?.id !== winnerId && match.player2?.id !== winnerId) {
-      return { error: 'Winner is not a participant in this match' };
-    }
-
-    // Update match result
-    match.winner = winner;
-    match.status = 'finished';
-
-    // Advance winner to next round
-    const maxRounds = Math.max(...tournament.bracket.map(m => m.round));
-    if (match.round < maxRounds) {
-      const nextRound = match.round + 1;
-      const roundMatches = tournament.bracket.filter(m => m.round === match.round);
-      const matchIndexInRound = roundMatches.findIndex(m => m.id === match.id);
-      const nextMatchIndex = Math.floor(matchIndexInRound / 2);
-      const nextRoundMatches = tournament.bracket.filter(m => m.round === nextRound);
-      const nextMatch = nextRoundMatches[nextMatchIndex];
-
-      if (nextMatch) {
-        const positionInNext = matchIndexInRound % 2;
-        if (positionInNext === 0 && !nextMatch.player1) {
-          nextMatch.player1 = winner;
-        } else if (positionInNext === 1 && !nextMatch.player2) {
-          nextMatch.player2 = winner;
-        }
-      }
-    }
-
-    // Check if tournament is complete (all matches finished)
-    const allMatchesFinished = tournament.bracket.every(m => m.status === 'finished');
-    if (allMatchesFinished) {
-      tournament.status = 'completed';
-      const champion = tournament.bracket[tournament.bracket.length - 1].winner;
-      tournament.champion = champion;
-
-      // Broadcast tournament completion
-      this.broadcastTournamentCompletion(tournament);
-    } else {
-      // Broadcast bracket update
-      this.broadcastTournamentUpdate(tournament);
-    }
-
-    return { success: true, bracket: tournament.bracket };
-  }
-
-  // Broadcast tournament completion to all players
-  broadcastTournamentCompletion(tournament) {
-    const tournamentData = this.getTournamentData(tournament);
-    tournamentData.champion = tournament.champion;
-
-    const sentTo = new Set();
-
-    for (const player of tournament.registeredPlayers) {
-      if (sentTo.has(player.id)) continue;
-
-      const socket = this.usersSocket.get(player.id.toString());
-      if (socket) {
-        const sent = this.sendToPlayer(socket, {
-          type: 'tournamentCompleted',
-          data: tournamentData
-        });
-        if (sent) {
-          sentTo.add(player.id);
-        }
-      }
-    }
-
-    // Also notify host if not in registeredPlayers
-    if (!sentTo.has(tournament.host.id)) {
-      const hostSocket = this.usersSocket.get(tournament.host.id.toString());
-      if (hostSocket) {
-        this.sendToPlayer(hostSocket, {
-          type: 'tournamentCompleted',
-          data: tournamentData
-        });
-      }
-    }
   }
 
   // Get tournament data (sanitized for client)
