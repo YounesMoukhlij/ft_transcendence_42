@@ -17,7 +17,6 @@ interface SignUpFormProps {
   onToggle: () => void
 }
 
-const API_URL = 'http://localhost:4444'
 
 export default function SignUpForm({ onToggle }: SignUpFormProps) {
   // State for form inputs
@@ -87,7 +86,7 @@ export default function SignUpForm({ onToggle }: SignUpFormProps) {
       const { confirmPassword, ...userData } = formData
       
       // --- AXIOS REFACTOR: POST Request ---
-      const response = await axios.post(`${API_URL}/AddUser`, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/AddUser`, {
         username: userData.username.trim(),
         email: userData.email.trim(),
         password: userData.password

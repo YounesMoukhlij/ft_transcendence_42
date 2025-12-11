@@ -5,12 +5,8 @@ import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { Lock } from 'lucide-react'
 
-// Define step constants for clarity
-const STEPS = {
-  ENTER_EMAIL: 'ENTER_EMAIL',
-  VERIFY_CODE: 'VERIFY_CODE',
-  RESET_PASSWORD: 'RESET_PASSWORD'
-};
+
+const STEPS = { ENTER_EMAIL: 'ENTER_EMAIL', VERIFY_CODE: 'VERIFY_CODE', RESET_PASSWORD: 'RESET_PASSWORD'};
 
 const ForgotPasswordPage = () => {
   const [currentStep, setCurrentStep] = useState(STEPS.ENTER_EMAIL);
@@ -19,7 +15,7 @@ const ForgotPasswordPage = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [resetToken, setResetToken] = useState('');
-  // router
+  // router for navigation
   const router = useRouter();
 
   // General UI state

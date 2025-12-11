@@ -10,7 +10,7 @@ export default function AuthLayout() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [isClient, setIsClient] = useState(false)
 
-  // Ensure hydration matches for Framer Motion and client logic
+  // Ensure hydration matches for Framer Motion and client logic to ensure client-side rendering and animations work correctly
   useEffect(() => {
     setIsClient(true)
   }, [])
@@ -50,7 +50,7 @@ export default function AuthLayout() {
           transition={{ type: "spring", stiffness: 150, damping: 20, duration: 1 }}
         >
           <div className="w-full h-full flex items-center justify-center">
-            {/* Visual elements like FlyingSaucer go here */}
+            {/*main animation */}
             <Loading/>
           </div>
         </motion.div>

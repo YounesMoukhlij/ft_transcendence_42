@@ -2,42 +2,48 @@
 import bcrypt from 'bcrypt';
 import fetch from 'node-fetch';
 import jwt from 'jsonwebtoken';
-// Install: npm install otplib
-import otplib from 'otplib'; // <-- Ensure this is imported
+import otplib from 'otplib'; 
 import qrcode from 'qrcode'; 
-
-
 import { createClient } from 'redis';
 import emailjs from '@emailjs/nodejs';
-import {SMTPClient} from 'emailjs';
-// import nodemailer
+import { SMTPClient } from 'emailjs';
 import nodemailer from 'nodemailer';
 import { text } from 'stream/consumers';
-
-
-// --- Imports for file system handling ---
 import fs from 'fs';
-import path from 'path'; // <-- ADD THIS LINE
+import path from 'path'; 
 import { promisify } from 'util';
 import stream from 'stream';
 import pump from 'pump';
 
 const pipeline = promisify(stream.pipeline);
 
-// Constants
-const DEFAULT_PROFILE_IMAGE = "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg";
-const GOOGLE_CLIENT_ID = "629752026404-2e0sltbkobghdg6mqov2p8gsjtbpu4la.apps.googleusercontent.com";
-const SECRET = '6fc9ce2928ed0bf049825c8b15086ec8b8f6bf990674452eecd462dba06243a467d974a9230cbb26d03314ea2fa6441eb387fb9442a32b7b3fd6ba69c00652bd';
-const GOOGLE_CLIENT_SECRET = "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";
-const GOOGLE_REDIRECT_URI = "http://localhost:4444/GoogleAuth";
-const FRONTEND_URL = "http://localhost:3000/";
-const OAUTH42_UID = 'u-s4t2ud-c185832544a20a39ad7b0803b90a5c595a1477d6bdecb423de4e9528bcffaafd';
-const OAUTH42_SECRET = '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';
-const OAUTH42_CALLBACK = 'http://localhost:4444/42Auth';
-const ISSUER_NAME = 'GalaxyPong 42'; // 2FA Issuer Name
+// --- Environment Variables & Constants ---
+// All sensitive data is now pulled from process.env
 
+const DEFAULT_PROFILE_IMAGE = process.env.DEFAULT_PROFILE_IMAGE;
+const FRONTEND_URL = process.env.FRONTEND_URL;
+const SECRET = process.env.JWT_SECRET; // Used for JWT signing
 
-export async function me (request, reply) {
+// Google OAuth Creds
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
+
+// 42 OAuth Creds
+const OAUTH42_UID = process.env.OAUTH42_UID;
+const OAUTH42_SECRET = process.env.OAUTH42_SECRET;
+const OAUTH42_CALLBACK = process.env.OAUTH42_CALLBACK_URL;
+
+// 2FA Configuration
+const ISSUER_NAME = process.env.TWOFA_ISSUER_NAME; 
+
+// Email Configuration
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+
+// --- Helper Functions ---
+
+export async function me(request, reply) {
     const token = request.headers.authorization?.split(' ')[1];
     if (!token) {
         return reply.code(401).send({ success: false, message: "No token provided" });
@@ -59,21 +65,13 @@ export async function me (request, reply) {
     }
 }
 
-
-//leaderboard
+// leaderboard
 export async function leaderboard(request, reply) {
     try {
-        // 1. Get and validate query parameters
-        // request.query parameters are usually strings, so we parse them.
         const page = parseInt(request.query.page) || 1;
         const limit = parseInt(request.query.limit) || 10;
-        
-        // 2. Calculate the OFFSET
-        // Page 1: offset 0, Page 2: offset 10, etc.
         const offset = (page - 1) * limit;
 
-        // 3. Update SQL query with LIMIT and OFFSET
-        // using '?' placeholders prevents SQL injection
         const leaderboardUsers = request.server.db
             .prepare("SELECT username, profile_img, xp FROM users ORDER BY xp DESC LIMIT ? OFFSET ?")
             .all(limit, offset);
@@ -84,7 +82,8 @@ export async function leaderboard(request, reply) {
         return reply.code(500).send({ success: false, message: "Error fetching leaderboard" });
     }
 }
-// token function generator (FIXED)
+
+// token function generator
 export function generateToken(username, email, id_user) {
     console.log("generateToken called with:", { username, email, id_user });
     if (!username || !email || !id_user) {
@@ -92,7 +91,7 @@ export function generateToken(username, email, id_user) {
     }
 
     const payload = { username, email, id_user };
-    const token = jwt.sign(payload, SECRET, { expiresIn: '24h' }); // Token valid for 24 hours
+    const token = jwt.sign(payload, SECRET, { expiresIn: '24h' }); 
     console.log(" >> Token generated successfully for user:", username, email, id_user);
     return token;
 }
@@ -103,14 +102,11 @@ export function generateRefreshToken(username, email, id_user) {
         throw new Error("Username, email, and user ID are required to generate refresh token");
     }
     const payload = { username, email, id_user };
-    const refreshToken = jwt.sign(payload, SECRET, { expiresIn: '7d' }); // Refresh token valid for 7 days
+    const refreshToken = jwt.sign(payload, SECRET, { expiresIn: '7d' }); 
     console.log(" >> Refresh token generated successfully for user:", { username, email, id_user });
     return refreshToken;
 }
 
-// ... (commented out 2FA helper functions)
-
-// Helper function to hash passwords
 async function hashPassword(password) {
     const salt = await bcrypt.genSalt(10);
     return await bcrypt.hash(password, salt);
@@ -119,7 +115,6 @@ async function hashPassword(password) {
 // ====== USER MANAGEMENT ======
 
 export async function AddUser(request, reply) {
-    // ... (This function is unchanged)
     const { username, email, password } = request.body;
 
     if (!username || !email || !password) {
@@ -146,7 +141,7 @@ export async function AddUser(request, reply) {
             .prepare("INSERT INTO users (username, fullname, email, password, profile_img) VALUES (?, ?, ?, ?, ?)");
         const result = query.run(username, username, email, hashedPassword, DEFAULT_PROFILE_IMAGE);
 
-        return reply.code(201).send({
+        return reply.code(200).send({
             success: true,
             message: "User created successfully",
             userId: result.lastInsertRowid
@@ -161,9 +156,7 @@ export async function AddUser(request, reply) {
     }
 }
 
-//  update user info
 export async function updateUserInfo(request, reply) {
-    // ... (This function is unchanged)
     const id_user = request.user.id_user;
     
     if (!id_user) {
@@ -275,7 +268,6 @@ export async function updateUserInfo(request, reply) {
 }
 
 export async function updateUserPassword(request, reply) {
-    // ... (This function is unchanged)
     const id_user = request.user.id_user;
     if (!id_user) {
         return reply.code(400).send({
@@ -285,7 +277,6 @@ export async function updateUserPassword(request, reply) {
     }
     console.log("updateUserPassword called with id_user:", id_user);
     const { current_password, new_password } = request.body;
-    console.log("updateUserPassword called with:", { id_user, current_password, new_password });
     
     if (!current_password || !new_password) {
         return reply.code(400).send({
@@ -346,7 +337,6 @@ export async function update2FA(request, reply) {
         });
     }
 
-    // This endpoint should only be used to DISABLE 2FA
     if (twofa) {
         return reply.code(400).send({
             success: false,
@@ -366,7 +356,6 @@ export async function update2FA(request, reply) {
             });
         }
 
-        // Set to 0 (false) and clear the secret
         request.server.db
             .prepare("UPDATE users SET twofa_enabled = 0, twoFA_secret = NULL WHERE id_user = ?")
             .run(id_user);
@@ -385,26 +374,20 @@ export async function update2FA(request, reply) {
     }
 }
 
-
 // ====== 2FA SETUP FLOW ======
 
-// --- NEW FUNCTION 1: Generate Secret & OTP URL ---
 export async function generate2FA(request, reply) {
-    const { id_user, email } = request.user; // Get from auth decorator
+    const { id_user, email } = request.user; 
 
     try {
-        // 1. Generate a new secret
         const secret = otplib.authenticator.generateSecret();
-        
-        // 2. Create the otpauth URL for the QR code
+        // Uses ISSUER_NAME from env
         const otpauth = otplib.authenticator.keyuri(email, ISSUER_NAME, secret);
 
-        // 3. Save this *unverified* secret to the database
         request.server.db
             .prepare("UPDATE users SET twoFA_secret = ? WHERE id_user = ?")
             .run(secret, id_user);
 
-        // 4. Send the URL to the frontend
         return reply.code(200).send({ success: true, otpauth });
 
     } catch (error) {
@@ -413,9 +396,8 @@ export async function generate2FA(request, reply) {
     }
 }
 
-// --- NEW FUNCTION 2: Verify Token & Enable 2FA ---
 export async function verifyAndEnable2FA(request, reply) {
-    const { token } = request.body; // The 6-digit code from the user
+    const { token } = request.body; 
     const { id_user } = request.user;
 
     if (!token) {
@@ -423,7 +405,6 @@ export async function verifyAndEnable2FA(request, reply) {
     }
 
     try {
-        // 1. Get the user's secret from the database
         const user = request.server.db
             .prepare("SELECT twoFA_secret FROM users WHERE id_user = ?")
             .get(id_user);
@@ -432,18 +413,15 @@ export async function verifyAndEnable2FA(request, reply) {
             return reply.code(400).send({ success: false, message: "No 2FA secret found. Please start over." });
         }
 
-        // 2. Verify the token against the secret
         const isValid = otplib.authenticator.check(token, user.twoFA_secret);
 
         if (isValid) {
-            // 3. Success! Mark 2FA as fully enabled
             request.server.db
                 .prepare("UPDATE users SET twoFA_enabled = 1 WHERE id_user = ?")
                 .run(id_user);
             
             return reply.code(200).send({ success: true, message: "2FA enabled successfully." });
         } else {
-            // 4. Failed verification
             return reply.code(400).send({ success: false, message: "Invalid verification code. Please try again." });
         }
 
@@ -456,7 +434,6 @@ export async function verifyAndEnable2FA(request, reply) {
 
 // ====== LOGIN / AUTH FLOWS ======
 
-// --- MODIFIED --- login function
 export async function login(request, reply) {
     const { username, password } = request.body;
     
@@ -492,17 +469,14 @@ export async function login(request, reply) {
             });
         }
 
-        // --- NEW 2FA Check Logic ---
         if (user.twoFA_enabled) {
             return reply.code(200).send({
                 success: true,
-                twoFA_required: true, // Tell frontend to ask for 2FA code
+                twoFA_required: true, 
                 userId: user.id_user 
             });
         }
-        // --- END 2FA Check ---
 
-        // Regular login success (2FA is OFF)
         const token = generateToken(user.username, user.email, user.id_user);
         const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         
@@ -513,7 +487,6 @@ export async function login(request, reply) {
         
         userWithoutPassword.access_token = token;
         userWithoutPassword.refresh_token = refreshToken;
-        console.log("user from login:", userWithoutPassword);
 
         return reply.code(200).send({ 
             success: true, 
@@ -532,16 +505,14 @@ export async function login(request, reply) {
     }
 }
 
-// --- NEW FUNCTION 3: Verify 2FA code during LOGIN ---
 export async function loginVerify2FA(request, reply) {
-    const { userId, token } = request.body; // 6-digit code
+    const { userId, token } = request.body;
 
     if (!userId || !token) {
         return reply.code(400).send({ success: false, message: "User ID and token are required." });
     }
 
     try {
-        // 1. Get user and their secret
         const user = request.server.db
             .prepare("SELECT * FROM users WHERE id_user = ?")
             .get(userId);
@@ -550,15 +521,12 @@ export async function loginVerify2FA(request, reply) {
             return reply.code(401).send({ success: false, message: "2FA not enabled or user not found." });
         }
 
-        // 2. Verify the code
         const isValid = otplib.authenticator.check(token, user.twoFA_secret);
 
         if (!isValid) {
             return reply.code(401).send({ success: false, message: "Invalid 2FA code." });
         }
 
-        // 3. SUCCESS! Grant login
-        // Generate tokens and send full user object
         const accessToken = generateToken(user.username, user.email, user.id_user);
         const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         
@@ -585,12 +553,10 @@ export async function loginVerify2FA(request, reply) {
 
 
 export async function refreshToken(request, reply) {
-    // ... (This function is unchanged)
     console.log("refreshToken function called");
     const { refreshToken } = request.body;
 
     if (!refreshToken) {
-        console.log("No refresh token provided in request body");
         return reply.code(401).send({ success: false, message: "Refresh token is required" });
     }
 
@@ -599,26 +565,19 @@ export async function refreshToken(request, reply) {
         const user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(decoded.id_user);
 
         if (!user) {
-            console.log(`No user found for id_user: ${decoded.id_user}`);
             return reply.code(401).send({ success: false, message: "Invalid refresh token" });
         }
-
-        console.log("Token from DB:      ", user.refresh_token);
-        console.log("Token from Request: ", refreshToken);
 
         if (user.refresh_token !== refreshToken) {
-            console.log("Tokens do NOT match!");
             return reply.code(401).send({ success: false, message: "Invalid refresh token" });
         }
 
-        console.log("Tokens match. Generating new access token for user:", user.username);
         const newAccessToken = generateToken(user.username, user.email, user.id_user);
 
         request.server.db
             .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
             .run(newAccessToken, user.id_user);
 
-        console.log("New access token generated and sent");
         return reply.code(200).send({ success: true, accessToken: newAccessToken });
 
     } catch (error) {
@@ -629,7 +588,6 @@ export async function refreshToken(request, reply) {
 
 
 // ====== UTILITY FUNCTIONS ======
-// ... (getAllUsers, getUserById, getUserByEmail, DeleteUserById are unchanged)
 export async function getAllUsers(request, reply) {
     try {
         const users = request.server.db
@@ -702,20 +660,16 @@ export async function DeleteUserById(request, reply) {
 }
 
 
-// ====== PASSWORD RESET (EMAILJS) ======
-// ... (forgotPassword, verifyCode, resetPasswordWithToken are unchanged, as is the email setup)
-// ... (transporter and sendVerificationCode function)
-const EMAIL_USER='mini.9liliwi@gmail.com'
-const EMAIL_PASS='aufg lsjj pxds bnqs'
+// ====== PASSWORD RESET (EMAILJS/NODEMAILER) ======
+
+// Initializing Nodemailer with ENV variables
 const transporter = nodemailer.createTransport({
   service: 'gmail', 
   auth: {
-    user: EMAIL_USER, 
-    pass: EMAIL_PASS, 
+    user: EMAIL_USER, // Pulled from env
+    pass: EMAIL_PASS, // Pulled from env
   },
 });
-
-
 
 async function sendVerificationCode(userEmail, code) {
   console.log(`Preparing to send verification code to ${userEmail}`);
@@ -819,7 +773,6 @@ async function sendVerificationCode(userEmail, code) {
 ` 
   };
 
-  // 4. Send the email
   try {
     let info = await transporter.sendMail(mailOptions);
     console.log('Message sent: %s', info.messageId);
@@ -830,8 +783,6 @@ async function sendVerificationCode(userEmail, code) {
   }
 }
 
-
-// ====== PASSWORD RESET (EMAILJS) ======
 export async function forgotPassword(request, reply) {
     const { email } = request.body;
     const redis = request.server.redis;
@@ -841,7 +792,6 @@ export async function forgotPassword(request, reply) {
     }
 
     try {
-        // check if auth_method is 0 (normal auth)
         const authMethod = request.server.db.prepare("SELECT auth_method FROM users WHERE email = ?").get(email);
         if (!authMethod || authMethod.auth_method !== 0) {
             return reply.code(400).send(
@@ -853,7 +803,6 @@ export async function forgotPassword(request, reply) {
         }
         const user = request.server.db.prepare("SELECT username FROM users WHERE email = ?").get(email);
         if (!user) {
-            // This is a good security practice to prevent email enumeration.
             console.log(`Password reset attempt for non-existent email: ${email}`);
             return reply.code(200).send(
                 {
@@ -863,14 +812,11 @@ export async function forgotPassword(request, reply) {
             );
         }
 
-        
         const code = Math.floor(100000 + Math.random() * 900000).toString();
-        console.log(`Generated code for ${email}: ${code}`);
         await redis.set(`reset:${email}`, code, { EX: 120 });
 
         sendVerificationCode(email, code);
         
-        console.log(`Verification code sent to ${email}`);
         return reply.code(200).send({ success: true, message: "A verification code has been sent to your email." });
 
     } catch (error) {
@@ -879,7 +825,6 @@ export async function forgotPassword(request, reply) {
     }
 }
 
-// --- STEP 2: Verify the Code and Create a Temporary Token ---
 export async function verifyCode(request, reply) {
     const { email, code } = request.body;
     const redis = request.server.redis;
@@ -897,12 +842,11 @@ export async function verifyCode(request, reply) {
         }
         await redis.del(redisKey);
 
-        // Generate a short-lived JWT token that gives the user permission to change their password.
         const user = request.server.db.prepare("SELECT id_user, username, email FROM users WHERE email = ?").get(email);
         const resetToken = jwt.sign(
             { id_user: user.id_user, email: user.email, purpose: 'password-reset' },
             SECRET,
-            { expiresIn: '5m' } // This token is only valid for 5 minutes
+            { expiresIn: '5m' } 
         );
 
         return reply.code(200).send({ success: true, message: "Code verified.", resetToken: resetToken });
@@ -913,7 +857,6 @@ export async function verifyCode(request, reply) {
     }
 }
 
-// --- STEP 3: Reset the Password Using the Temporary Token ---
 export async function resetPasswordWithToken(request, reply) {
     const { resetToken, newPassword } = request.body;
 
@@ -922,17 +865,14 @@ export async function resetPasswordWithToken(request, reply) {
     }
 
     try {
-        // Verify the temporary token.
         const decoded = jwt.verify(resetToken, SECRET);
 
-        // Extra check to ensure this token was for password reset.
         if (decoded.purpose !== 'password-reset') {
             return reply.code(401).send({ success: false, message: "Invalid token purpose." });
         }
 
         const hashedPassword = await hashPassword(newPassword);
 
-        // Update the password in the database.
         const result = request.server.db
             .prepare("UPDATE users SET password = ? WHERE id_user = ?")
             .run(hashedPassword, decoded.id_user);
@@ -960,7 +900,6 @@ export async function InitiateGoogleAuth(request, reply) {
     return reply.redirect(googleAuthUrl);
 }
 
-// --- MODIFIED --- GoogleAuth
 export async function GoogleAuth(request, reply) {
     const { code } = request.query;
    
@@ -969,7 +908,6 @@ export async function GoogleAuth(request, reply) {
     }
 
     try {
-        // ... (tokenResponse and userResponse logic unchanged)
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -990,7 +928,6 @@ export async function GoogleAuth(request, reply) {
         });
         const googleUser = await userResponse.json();
 
-        // Check if user already exists
         let user = request.server.db
             .prepare("SELECT * FROM users WHERE email = ?")
             .get(googleUser.email);
@@ -999,10 +936,8 @@ export async function GoogleAuth(request, reply) {
         let isNewUser = false;
 
         if (user) {
-            // User exists
             userId = user.id_user;
         } else {
-            // New user, create them
             console.log("New Google user, creating account");
             const insertQuery = request.server.db
                 .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method) VALUES (?, ?, ?, ?, ?)");
@@ -1010,26 +945,19 @@ export async function GoogleAuth(request, reply) {
                 googleUser.name.split(" ")[0] + Math.floor(Math.random() * 1000),
                 googleUser.name,
                 googleUser.email, 
-                // bigger profile image from google
                 googleUser.picture.replace('=s96-c', '=s600-c'),
                 1,
             );
             userId = result.lastInsertRowid;
             isNewUser = true;
 
-            // Fetch the newly created user to check their 2FA status (which will be false)
             user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(userId);
         }
     
-        // --- NEW 2FA Check ---
         if (user.twoFA_enabled) {
-            // 2FA is ON. Redirect to frontend to ask for code.
             return reply.redirect(`${FRONTEND_URL}/signIn?2fa_required=true&userId=${userId}`);
         }
-        // --- END 2FA Check ---
 
-        // 2FA is OFF. Proceed with normal login.
-        // We only generate tokens here if 2FA is off.
         const token = generateToken(user.username, user.email, user.id_user);
         const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         request.server.db
@@ -1043,6 +971,7 @@ export async function GoogleAuth(request, reply) {
         return reply.redirect(`${FRONTEND_URL}/signIn?error=auth_failed`);
     }
 }
+
 // ====== 42 OAUTH ======
 
 export async function Initiate42Auth(request, reply) {
@@ -1050,7 +979,6 @@ export async function Initiate42Auth(request, reply) {
     return reply.redirect(authUrl);
 }
 
-// --- MODIFIED --- FortyTwoAuth
 export async function FortyTwoAuth(request, reply) {
     const { code } = request.query;
     
@@ -1059,7 +987,6 @@ export async function FortyTwoAuth(request, reply) {
     }
 
     try {
-        // ... (tokenResponse and userResponse logic unchanged)
         console.log("42 Auth code:", code);
         const tokenResponse = await fetch('https://api.intra.42.fr/oauth/token', {
             method: 'POST',
@@ -1081,7 +1008,6 @@ export async function FortyTwoAuth(request, reply) {
         });
         const fortyTwoUser = await userResponse.json();
 
-        // Check if user already exists
         let user = request.server.db
             .prepare("SELECT * FROM users WHERE email = ?")
             .get(fortyTwoUser.email);
@@ -1090,10 +1016,8 @@ export async function FortyTwoAuth(request, reply) {
         let isNewUser = false;
 
         if (user) {
-            // User exists
             userId = user.id_user;
         } else {
-            // New user, create them
             const insertQuery = request.server.db
                 .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method) VALUES (?, ?, ?, ?, ?)");
             const result = insertQuery.run(
@@ -1106,18 +1030,13 @@ export async function FortyTwoAuth(request, reply) {
             userId = result.lastInsertRowid;
             isNewUser = true;
 
-            // Fetch the newly created user
             user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(userId);
         }
 
-        // --- NEW 2FA Check ---
         if (user.twoFA_enabled) {
-            // 2FA is ON. Redirect to frontend to ask for code.
             return reply.redirect(`${FRONTEND_URL}/signIn?2fa_required=true&userId=${userId}`);
         }
-        // --- END 2FA Check ---
 
-        // 2FA is OFF. Proceed with normal login.
         const token = generateToken(user.username, user.email, user.id_user);
         const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         request.server.db

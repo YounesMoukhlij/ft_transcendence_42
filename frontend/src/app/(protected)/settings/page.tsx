@@ -4,8 +4,8 @@ import { User, Shield, HelpCircle, ChevronDown } from 'lucide-react'
 import { useUserStore } from '../../../store/userStore'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
-import axios from 'axios' // Import Axios
-import api from '@/lib/api' // Custom API wrapper
+import axios from 'axios' 
+import api from '@/lib/api' 
 
 // Helper components
 import DeleteConfirmationDialog from './components/DeleteConfirmationDialog'
@@ -14,10 +14,6 @@ import ProfileTab from './components/profile/page'
 import SecurityTab from './components/security/page'
 import HelpTab from './components/help/page'
 import Loading from '@/components/loading/page'
-
-// Define API URL
-const API_URL = process.env.NEXT_PUBLIC_BACK_API || 'http://localhost:4444'
-const DEFAULT_PROFILE_IMG = process.env.NEXT_PUBLIC_DEFAULT_PROFILE_IMG || 'https://cdn.intra.42.fr/users/default.jpg'
 
 const ProfileSettingsPage = () => {
   const user = useUserStore((state) => state.user)
@@ -121,9 +117,9 @@ const ProfileSettingsPage = () => {
 
   const getProfileImageUrl = () => {
     if (previewImage) return previewImage
-    const currentImg = user.profile_img || DEFAULT_PROFILE_IMG
+    const currentImg = user.profile_img || ${process.env.NEXT_PUBLIC_DEFAULT_PROFILE_IMG}
     if (currentImg && currentImg.startsWith('/uploads/')) {
-      return `${API_URL}${currentImg}`
+      return `${process.env.NEXT_PUBLIC_BACK_API}${currentImg}`
     }
     return currentImg
   }
@@ -157,7 +153,7 @@ const ProfileSettingsPage = () => {
       }
 
       // Axios automatically sets the Content-Type to multipart/form-data when passed FormData
-      const response = await api.post(`${API_URL}/updateUserInfo`, dataToSave, {
+      const response = await api.post(`${process.env.NEXT_PUBLIC_BACK_API}/updateUserInfo`, dataToSave, {
         headers: { Authorization: `Bearer ${user.access_token}` },
       })
       console.log('Profile update response:', response)
@@ -218,7 +214,7 @@ const ProfileSettingsPage = () => {
 
     try {
       if (formData.newPassword.trim() !== '') {
-        const response = await axios.post(`${API_URL}/updateUserPassword`, 
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/updateUserPassword`, 
           {
             current_password: formData.currentPassword,
             new_password: formData.newPassword
@@ -260,7 +256,7 @@ const ProfileSettingsPage = () => {
     if (is2FAEnabled) {
       // Disable 2FA
       try {
-        const response = await axios.post(`${API_URL}/update2FA`, 
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/update2FA`, 
           { twofa: false },
           {
             headers: { Authorization: `Bearer ${user.access_token}` }
@@ -285,7 +281,7 @@ const ProfileSettingsPage = () => {
     } else {
       // Enable 2FA (Step 1: Generate)
       try {
-        const response = await axios.post(`${API_URL}/2fa/generate`, 
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/2fa/generate`, 
           {}, // Empty body
           {
             headers: { Authorization: `Bearer ${user.access_token}` }
@@ -314,7 +310,7 @@ const ProfileSettingsPage = () => {
   const handleVerify2FA = async () => {
     setIsLoading(true)
     try {
-      const response = await axios.post(`${API_URL}/2fa/verify`, 
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/2fa/verify`, 
         { token: verificationCode },
         {
           headers: { Authorization: `Bearer ${user.access_token}` }
@@ -345,18 +341,9 @@ const ProfileSettingsPage = () => {
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     try {
-      const response = await axios.delete(`${API_URL}/DeleteUserById/${user.id_user}`, {
+      const response = await axios.delete(`${process.env.NEXT_PUBLIC_BACK_API}/DeleteUserById/${user.id_user}`, {
         headers: { Authorization: `Bearer ${user.access_token}` }
       })
-
-      // Check if success is implied by status 200 or if data contains success field
-      // Usually delete returns minimal data, so check status mainly
-      if (response.status !== 200) { 
-         // This block might not be hit because axios throws on non-2xx, 
-         // but good for explicit logic if API returns 200 with error message
-         throw new Error('Failed to delete account') 
-      }
-
       toast.success('Account deleted successfully!')
       setUser(null)
       setIsDeleteDialogOpen(false)

@@ -6,7 +6,6 @@ import { toast } from 'react-toastify'
 import axios from 'axios'
 import { useUserStore } from "../../store/userStore"
 
-const API_URL = 'http://localhost:4444'
 
 interface SignInFormProps {
   onToggle: () => void
@@ -35,7 +34,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
   const fetchUserData = async (token: string, isNewUser: string | null) => {
     try {
       // --- AXIOS REFACTOR: GET Request with Bearer Token ---
-      const response = await axios.get(`${API_URL}/me`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACK_API}/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -141,11 +140,11 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
 
   // --- HANDLERS ---
   const handleGoogleAuth = () => {
-    window.location.href = `${API_URL}/auth/google`
+    window.location.href = `${process.env.NEXT_PUBLIC_BACK_API}/auth/google`
   }
 
   const handle42Auth = () => {
-    window.location.href = `${API_URL}/auth/42`
+    window.location.href = `${process.env.NEXT_PUBLIC_BACK_API}/auth/42`
   }
 
   const validateForm = () => {
@@ -168,7 +167,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
 
     try {
       // --- AXIOS REFACTOR: POST Login ---
-      const response = await axios.post(`${API_URL}/login`, { 
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/login`, { 
         username: username.trim(), 
         password: password 
       })
@@ -220,7 +219,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
 
     try {
       // --- AXIOS REFACTOR: POST 2FA Verify ---
-      const response = await axios.post(`${API_URL}/2fa/login-verify`, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/2fa/login-verify`, {
         userId: parseInt(tempUserId),
         token: twoFACode
       })
