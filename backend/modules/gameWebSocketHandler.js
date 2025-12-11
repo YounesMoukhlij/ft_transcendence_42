@@ -517,6 +517,34 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
         return;
       }
 
+      if (action === 'joinTournament') {
+        const tournamentId = payload.tournamentId;
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'tournamentJoinFailed',
+            data: { message: 'Tournament ID required' }
+          }));
+          return;
+        }
+
+        const playerInfo = {
+          playerName: payload.playerName || 'Player',
+          avatar: payload.avatar,
+          color: payload.color || '#10B981'
+        };
+
+        const result = gameManager.joinTournament(tournamentId, userId, playerInfo);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'tournamentJoinFailed',
+            data: { message: result.error, tournamentId }
+          }));
+        }
+        // Success is handled via tournamentJoined message in joinTournament method
+        return;
+      }
+
       if (action === 'requestJoinTournament') {
         const tournamentId = payload.tournamentId;
         if (!tournamentId) {

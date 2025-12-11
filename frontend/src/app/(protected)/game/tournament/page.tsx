@@ -648,10 +648,36 @@ export default function TournamentPage() {
             break;
 
           case 'tournamentJoinRequest':
-            // Host receives a join request
+            // Host receives a join request (for private tournaments)
             if (isHost && remoteTournament?.id === message.data.tournamentId) {
-              setJoinRequests(prev => [...prev, message.data.request]);
+              // Check for duplicate requests
+              setJoinRequests(prev => {
+                const exists = prev.some(req => req.id === message.data.request.id);
+                if (exists) {
+                  return prev;
+                }
+                // Add the new request
+                const updated = [...prev, message.data.request];
+                // Show toast notification to host
+                toast.info(t('game.newJoinRequest', { playerName: message.data.request.player.name }) ||
+                          `${message.data.request.player.name} wants to join your tournament`);
+                return updated;
+              });
             }
+            break;
+
+          case 'tournamentPlayerJoined':
+            // Host receives notification when a player directly joins (for public tournaments)
+            if (isHost && remoteTournament?.id === message.data.tournamentId) {
+              // Show toast notification to host
+              toast.success(t('game.playerJoinedTournament', { playerName: message.data.player.name }) ||
+                          `${message.data.player.name} joined your tournament`);
+            }
+            break;
+
+          case 'tournamentJoinFailed':
+            // Player failed to join tournament
+            toast.error(message.data.message || t('game.failedToJoinTournament') || 'Failed to join tournament');
             break;
 
           case 'tournamentJoinApproved':
@@ -1191,6 +1217,20 @@ export default function TournamentPage() {
       type: 'game',
       action: 'searchTournaments',
       payload: {}
+    }));
+  };
+
+  const joinTournament = (tournamentId: string) => {
+    if (!socket) return;
+    socket.send(JSON.stringify({
+      type: 'game',
+      action: 'joinTournament',
+      payload: {
+        tournamentId: tournamentId,
+        playerName: user?.username || 'Player',
+        avatar: user?.avatar || defaultAvatars[1],
+        color: '#10B981'
+      }
     }));
   };
 
@@ -3088,11 +3128,11 @@ export default function TournamentPage() {
                             </div>
                           ) : (
                             <button
-                              onClick={() => requestJoinTournament(tournament.id)}
+                              onClick={() => joinTournament(tournament.id)}
                               disabled={(tournament.registeredPlayers?.length || tournament.currentPlayers) >= (tournament.playerCount || tournament.maxPlayers)}
                               className="w-full xs:w-auto px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-xs xs:text-sm"
                             >
-                              {(tournament.registeredPlayers?.length || tournament.currentPlayers) >= (tournament.playerCount || tournament.maxPlayers) ? t('game.full') : t('game.requestToJoin')}
+                              {(tournament.registeredPlayers?.length || tournament.currentPlayers) >= (tournament.playerCount || tournament.maxPlayers) ? t('game.full') : t('game.joinTournament')}
                             </button>
                           )}
                         </div>

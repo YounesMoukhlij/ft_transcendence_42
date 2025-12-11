@@ -1092,7 +1092,77 @@ class GameManager {
     });
   }
 
-  // Request to join a tournament
+  // Directly join a tournament (for public tournaments)
+  joinTournament(tournamentId, playerId, playerInfo) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Check if tournament is full
+    if (tournament.currentPlayers >= tournament.maxPlayers) {
+      return { error: 'Tournament is full' };
+    }
+
+    // Check if player is already registered
+    if (tournament.registeredPlayers.some(p => p.id === playerId)) {
+      return { error: 'You are already registered in this tournament' };
+    }
+
+    // For private tournaments, require an invite
+    if (tournament.isPrivate) {
+      const invites = this.tournamentInvites.get(playerId.toString()) || [];
+      if (!invites.some(inv => inv.tournamentId === tournamentId)) {
+        return { error: 'You need an invitation to join this private tournament' };
+      }
+    }
+
+    // Add player directly to tournament
+    tournament.registeredPlayers.push({
+      id: playerId,
+      name: playerInfo.playerName,
+      avatar: playerInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
+      color: playerInfo.color || '#10B981'
+    });
+    tournament.currentPlayers++;
+
+    // Notify the player that they joined
+    const playerSocket = this.usersSocket.get(playerId.toString());
+    if (playerSocket) {
+      this.sendToPlayer(playerSocket, {
+        type: 'tournamentJoined',
+        data: {
+          tournamentId: tournamentId,
+          tournament: this.getTournamentData(tournament)
+        }
+      });
+    }
+
+    // Notify host that a player joined
+    const hostSocket = this.usersSocket.get(tournament.host.id.toString());
+    if (hostSocket) {
+      this.sendToPlayer(hostSocket, {
+        type: 'tournamentPlayerJoined',
+        data: {
+          tournamentId: tournamentId,
+          player: {
+            id: playerId,
+            name: playerInfo.playerName,
+            avatar: playerInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png'
+          },
+          currentPlayers: tournament.currentPlayers,
+          maxPlayers: tournament.maxPlayers
+        }
+      });
+    }
+
+    // Broadcast tournament update to all players (including host and newly joined player)
+    this.broadcastTournamentUpdate(tournament);
+
+    return { success: true, tournament: this.getTournamentData(tournament) };
+  }
+
+  // Request to join a tournament (for private tournaments that require approval)
   requestJoinTournament(tournamentId, playerId, playerInfo) {
     const tournament = this.tournaments.get(tournamentId);
     if (!tournament) {
