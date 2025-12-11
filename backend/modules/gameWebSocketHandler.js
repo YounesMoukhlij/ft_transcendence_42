@@ -478,7 +478,10 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
       // Tournament actions
       if (action === 'createTournament') {
         const playerCount = payload.playerCount || 4;
-        const isPrivate = payload.isPrivate !== undefined ? payload.isPrivate : true;
+        // Tournaments are PUBLIC by default so other players can see and request to join them
+        // Private tournaments should only be used when host wants invite-only access
+        const isPrivate = payload.isPrivate !== undefined ? payload.isPrivate : false;
+        const tournamentName = payload.tournamentName;
 
         const playerInfo = {
           playerName: payload.playerName || 'Host Player',
@@ -486,7 +489,7 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
           color: payload.color || '#3B82F6'
         };
 
-        const result = gameManager.createTournament(userId, playerInfo, playerCount, isPrivate);
+        const result = gameManager.createTournament(userId, playerInfo, playerCount, isPrivate, tournamentName);
 
         if (result.error) {
           socket.send(JSON.stringify({
@@ -781,6 +784,29 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
             }
           }));
         }
+        return;
+      }
+
+      if (action === 'leaveTournament') {
+        const tournamentId = payload.tournamentId;
+
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        const result = gameManager.leaveTournament(tournamentId, userId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        }
+        // Note: success response is already sent via tournamentLeft message in leaveTournament method
         return;
       }
 

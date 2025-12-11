@@ -1004,12 +1004,12 @@ class GameManager {
   }
 
   // Create a new tournament
-  createTournament(hostId, hostInfo, playerCount, isPrivate) {
+  createTournament(hostId, hostInfo, playerCount, isPrivate, tournamentName) {
     const tournamentId = this.generateTournamentId();
 
     const tournament = {
       id: tournamentId,
-      name: `${hostInfo.playerName}'s Tournament`,
+      name: tournamentName || `${hostInfo.playerName}'s Tournament`,
       host: {
         id: hostId,
         name: hostInfo.playerName,
@@ -1489,51 +1489,28 @@ class GameManager {
       return { error: 'Tournament is full' };
     }
 
-    // Try to find a random available player (exclude host's friends)
-    const availablePlayer = this.findAvailablePlayerForTournament(tournamentId, hostId);
+    // IMPORTANT: Do NOT automatically add players without their consent
+    // Only add tournament to queue to match with players who are ALSO actively searching
+    // This ensures players must explicitly opt-in to be matched with tournaments
+    const queueKey = `tournament-${tournamentId}`;
 
-    if (availablePlayer) {
-      // Found an available player, add them to tournament
-      tournament.registeredPlayers.push({
-        id: availablePlayer.id,
-        name: availablePlayer.username,
-        avatar: playerInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
-        color: playerInfo.color || '#10B981'
-      });
-      tournament.currentPlayers++;
-
-      // Notify the newly added player
-      const playerSocket = this.usersSocket.get(availablePlayer.id.toString());
-      if (playerSocket) {
-        this.sendToPlayer(playerSocket, {
-          type: 'tournamentJoined',
-          data: {
-            tournamentId: tournament.id,
-            tournament: this.getTournamentData(tournament)
-          }
-        });
-      }
-
-      // Broadcast update to all tournament players (including host and newly added player)
-      // This ensures everyone sees the new player immediately
-      this.broadcastTournamentUpdate(tournament);
-
-      // Don't auto-start tournament - wait for host to customize and start
-      // The tournament will be started when host sends startTournament action after customization
-
-      return { success: true, message: 'Random opponent found and added to tournament' };
-    } else {
-      // No available player found, add to queue for later matching
-      const queueKey = `tournament-${tournamentId}`;
-      this.randomOpponentQueue.set(queueKey, {
-        tournamentId: tournamentId,
-        playerInfo: playerInfo,
-        timestamp: Date.now(),
-        isTournamentSearch: true
-      });
-
-      return { success: true, message: 'Searching for random opponent...' };
+    // Check if already in queue
+    if (this.randomOpponentQueue.has(queueKey)) {
+      return { success: true, message: 'Already searching for random opponent...' };
     }
+
+    // Add to queue for matching with players who are also searching
+    this.randomOpponentQueue.set(queueKey, {
+      tournamentId: tournamentId,
+      playerInfo: playerInfo,
+      timestamp: Date.now(),
+      isTournamentSearch: true
+    });
+
+    // Try immediate match (only with players also in queue searching)
+    this.tryMatchRandomOpponents();
+
+    return { success: true, message: 'Searching for random opponent...' };
   }
 
   // Find an available player for tournament (not in any tournament or game)
@@ -1593,54 +1570,32 @@ class GameManager {
   }
 
   // Try to match random opponents (called periodically or when new players join queue)
+  // IMPORTANT: This method is currently disabled to prevent automatic player addition without consent.
+  // Players can only join tournaments via:
+  // 1. Explicit invitation (acceptTournamentInvite)
+  // 2. Request to join + host approval (requestJoinTournament + approveJoinRequest)
   tryMatchRandomOpponents() {
+    // DISABLED: Automatic matching removed to prevent players from being added without consent
+    // The queue remains for potential future implementation where players can opt-in to random matching
+    // For now, tournaments work on invite-only or request-to-join basis
+
+    // Clean up stale queue entries (older than 5 minutes)
+    const now = Date.now();
     const queueEntries = Array.from(this.randomOpponentQueue.entries());
-    const tournamentSearches = queueEntries.filter(([key, entry]) => entry.isTournamentSearch);
-
-    for (const [key, entry] of tournamentSearches) {
-      const tournament = this.tournaments.get(entry.tournamentId);
-      if (!tournament || tournament.currentPlayers >= tournament.maxPlayers) {
-        this.randomOpponentQueue.delete(key);
-        continue;
-      }
-
-      // Try to find an available player (exclude host's friends)
-      const availablePlayer = this.findAvailablePlayerForTournament(entry.tournamentId, tournament.host.id);
-      if (availablePlayer) {
-        // Add player to tournament
-        tournament.registeredPlayers.push({
-          id: availablePlayer.id,
-          name: availablePlayer.username,
-          avatar: entry.playerInfo.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
-          color: entry.playerInfo.color || '#10B981'
-        });
-        tournament.currentPlayers++;
-
-        // Remove from queue
-        this.randomOpponentQueue.delete(key);
-
-        // Notify the newly matched player
-        const playerSocket = this.usersSocket.get(availablePlayer.id.toString());
-        if (playerSocket) {
-          this.sendToPlayer(playerSocket, {
-            type: 'tournamentJoined',
-            data: {
-              tournamentId: tournament.id,
-              tournament: this.getTournamentData(tournament)
-            }
-          });
+    for (const [key, entry] of queueEntries) {
+      if (entry.isTournamentSearch) {
+        const tournament = this.tournaments.get(entry.tournamentId);
+        // Remove if tournament doesn't exist, is full, or queue entry is stale
+        if (!tournament ||
+            tournament.currentPlayers >= tournament.maxPlayers ||
+            (now - entry.timestamp) > 5 * 60 * 1000) {
+          this.randomOpponentQueue.delete(key);
         }
-
-        // Broadcast update to all tournament players
-        // This ensures real-time synchronization across all clients
-        this.broadcastTournamentUpdate(tournament);
-
-        // Don't auto-start tournament - wait for host to customize and start
-        // The tournament will be started when host sends startTournament action after customization
-
-        return; // Matched one
       }
     }
+
+    // No automatic matching - players must be invited or request to join
+    return;
   }
 
   // Start tournament (create bracket)
@@ -1799,6 +1754,80 @@ class GameManager {
       } else {
         this.tournamentInvites.set(playerId, filteredInvites);
       }
+    }
+
+    return { success: true };
+  }
+
+  // Leave tournament (non-host players only)
+  leaveTournament(tournamentId, playerId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    // Prevent host from using this method
+    if (tournament.host.id === playerId) {
+      return { error: 'Host cannot leave tournament. Use cancelTournament instead.' };
+    }
+
+    // Check if player is registered
+    const playerIndex = tournament.registeredPlayers.findIndex(p => p.id === playerId);
+    if (playerIndex === -1) {
+      return { error: 'You are not registered in this tournament' };
+    }
+
+    // Check if tournament has already started
+    if (tournament.status === 'playing' || tournament.status === 'finished') {
+      return { error: 'Cannot leave tournament that has already started' };
+    }
+
+    // Remove player from registeredPlayers
+    tournament.registeredPlayers.splice(playerIndex, 1);
+    tournament.currentPlayers--;
+
+    // Remove player's tournament invites for this tournament
+    const invites = this.tournamentInvites.get(playerId.toString()) || [];
+    const filteredInvites = invites.filter(inv => inv.tournamentId !== tournamentId);
+    if (filteredInvites.length === 0) {
+      this.tournamentInvites.delete(playerId.toString());
+    } else {
+      this.tournamentInvites.set(playerId.toString(), filteredInvites);
+    }
+
+    // Notify the player that they've left
+    const playerSocket = this.usersSocket.get(playerId.toString());
+    if (playerSocket) {
+      this.sendToPlayer(playerSocket, {
+        type: 'tournamentLeft',
+        data: {
+          tournamentId: tournamentId,
+          message: 'You have left the tournament'
+        }
+      });
+    }
+
+    // Broadcast tournament update to remaining players (including host)
+    this.broadcastTournamentUpdate(tournament);
+
+    // Get player info for host notification
+    const getPlayerStmt = this.db.prepare('SELECT username FROM users WHERE id_user = ?');
+    const player = getPlayerStmt.get(playerId);
+
+    // Notify host that a player left
+    const hostSocket = this.usersSocket.get(tournament.host.id.toString());
+    if (hostSocket && player) {
+      this.sendToPlayer(hostSocket, {
+        type: 'tournamentPlayerLeft',
+        data: {
+          tournamentId: tournamentId,
+          playerId: playerId,
+          playerName: player.username,
+          message: `${player.username} left the tournament`,
+          currentPlayers: tournament.currentPlayers,
+          maxPlayers: tournament.maxPlayers
+        }
+      });
     }
 
     return { success: true };

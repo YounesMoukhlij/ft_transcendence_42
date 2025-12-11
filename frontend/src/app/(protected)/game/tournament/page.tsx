@@ -162,6 +162,7 @@ export default function TournamentPage() {
   const [friends, setFriends] = useState<Player[]>([]);
   const [tournamentInvites, setTournamentInvites] = useState<any[]>([]);
   const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
+  const [tournamentName, setTournamentName] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [showFriendsListModal, setShowFriendsListModal] = useState(false);
   const [isFindingRandomOpponent, setIsFindingRandomOpponent] = useState(false);
@@ -562,6 +563,30 @@ export default function TournamentPage() {
             }, 3000);
             break;
 
+          case 'tournamentLeft':
+            // Player successfully left the tournament
+            toast.success(message.data.message || t('game.leftTournament'));
+            // Reset tournament state
+            setRemoteTournament(null);
+            setTournamentId('');
+            setIsHost(false);
+            setTournamentStep('setup');
+            setShowFriendsListExpanded(false);
+            setShowRandomOpponentExpanded(false);
+            setIsFindingRandomOpponent(false);
+            setShouldAutoFindRandomOpponent(false);
+            // Redirect to game page
+            router.push('/game');
+            break;
+
+          case 'tournamentPlayerLeft':
+            // A player left the tournament (host receives this)
+            if (message.data && message.data.playerName) {
+              toast.info(message.data.message || `${message.data.playerName} left the tournament`);
+            }
+            // The tournamentUpdated message will also be sent to update the player list
+            break;
+
           case 'randomOpponentSearchStarted':
             setIsFindingRandomOpponent(true);
             setShowRandomOpponentExpanded(true);
@@ -857,8 +882,8 @@ export default function TournamentPage() {
       setTournamentStep('playing');
       setCurrentMatchIndex(0);
     } else {
-      // Remote tournament logic
-      createRemoteTournament(true);
+      // Remote tournament logic - create as PUBLIC so players can see and join
+      createRemoteTournament(false);
     }
   }, [tournamentType, registeredPlayers, playerCount, setTournament, setPlayers, createTournamentBracket]);
 
@@ -1090,7 +1115,7 @@ export default function TournamentPage() {
   //   return [currentMatch.player1, currentMatch.player2];
   // }, [tournamentStep, currentMatchIndex, gameState.tournament?.bracket?.length]); // Use bracket length instead of bracket object
 
-  const createRemoteTournament = (isPrivate: boolean) => {
+  const createRemoteTournament = (isPrivate: boolean, name?: string) => {
     // Check if tournament is already created - if so, don't try to create again
     if (remoteTournament && tournamentId) {
       console.log('Tournament already exists:', tournamentId);
@@ -1121,6 +1146,7 @@ export default function TournamentPage() {
         avatar: user?.avatar || defaultAvatars[0],
         color: '#3B82F6',
         isPrivate,
+        tournamentName: name || tournamentName || `${user?.username || 'Host Player'}'s Tournament`,
       }
     }));
         } catch (error) {
@@ -1144,6 +1170,7 @@ export default function TournamentPage() {
             avatar: user?.avatar || defaultAvatars[0],
             color: '#3B82F6',
             isPrivate,
+            tournamentName: name || tournamentName || `${user?.username || 'Host Player'}'s Tournament`,
           }
         }));
       } catch (error) {
@@ -1267,6 +1294,20 @@ export default function TournamentPage() {
       }
     }));
     setShowCancelConfirmation(false);
+  };
+
+  const leaveTournament = () => {
+    if (!socket || !tournamentId || isHost) return;
+
+    if (window.confirm(t('game.confirmLeaveTournament') || 'Are you sure you want to leave this tournament?')) {
+      socket.send(JSON.stringify({
+        type: 'game',
+        action: 'leaveTournament',
+        payload: {
+          tournamentId: tournamentId
+        }
+      }));
+    }
   };
 
   const TournamentBracket: React.FC = React.memo(() => {
@@ -1553,14 +1594,37 @@ export default function TournamentPage() {
             {/* Remote tournament options */}
             {tournamentType === 'remote' && (
               <div className="space-y-3 sm:space-y-4">
+                <div className="mb-3 sm:mb-4">
+                  <label className="block text-white font-semibold text-xs xs:text-sm sm:text-base mb-2">
+                    {t('game.tournamentName')}
+                  </label>
+                  <input
+                    type="text"
+                    value={tournamentName}
+                    onChange={(e) => setTournamentName(e.target.value)}
+                    placeholder={t('game.enterTournamentName') || 'Enter tournament name'}
+                    maxLength={50}
+                    className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-600"
+                  />
+                  {tournamentName.trim().length === 0 && (
+                    <p className="text-yellow-400 text-xs mt-1">{t('game.tournamentNameRequired') || 'Tournament name is required'}</p>
+                  )}
+                </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
                 <button
                   onClick={() => {
-                      // Create tournament immediately, then navigate to options
-                      createRemoteTournament(true);
+                      // Validate tournament name
+                      if (!tournamentName.trim()) {
+                        alert(t('game.pleaseEnterTournamentName') || 'Please enter a tournament name');
+                        return;
+                      }
+                      // Create tournament as PUBLIC (false) so other players can see and request to join
+                      // Tournaments are public by default - players can see them and request to join
+                      createRemoteTournament(false, tournamentName.trim());
                       setTournamentStep('createOptions');
                     }}
-                    className="w-full sm:w-auto px-4 py-2 xs:px-6 xs:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base flex items-center justify-center gap-2"
+                    disabled={!tournamentName.trim()}
+                    className="w-full sm:w-auto px-4 py-2 xs:px-6 xs:py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base flex items-center justify-center gap-2"
                   >
                     <FaUser className="text-sm" />
                     <span>{t('game.createTournament')}</span>
@@ -1717,11 +1781,11 @@ export default function TournamentPage() {
                     onClick={() => {
                       // Always expand immediately when clicked
                       setShowFriendsListExpanded(true);
-                      // If tournament doesn't exist, create it in the background
+                      // If tournament doesn't exist, create it in the background (PUBLIC so players can see it)
                       if (!remoteTournament || !tournamentId) {
                         setShouldAutoFindRandomOpponent(false);
                         setShouldShowFriendsModalAfterCreation(false);
-                        createRemoteTournament(true);
+                        createRemoteTournament(false);
                       }
                     }}
                     className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center gap-3"
@@ -1793,7 +1857,8 @@ export default function TournamentPage() {
                       setShowRandomOpponentExpanded(true);
                       setShouldAutoFindRandomOpponent(true);
                       if (!remoteTournament || !tournamentId) {
-                        createRemoteTournament(true);
+                        // Create as PUBLIC so players can see and request to join
+                        createRemoteTournament(false);
                       } else {
                         findRandomOpponent();
                       }
@@ -1854,11 +1919,11 @@ export default function TournamentPage() {
                     onClick={() => {
                       // Always expand immediately when clicked
                       setShowFriendsListExpanded(true);
-                      // If tournament doesn't exist, create it in the background
+                      // If tournament doesn't exist, create it in the background (PUBLIC so players can see it)
                       if (!remoteTournament || !tournamentId) {
                         setShouldAutoFindRandomOpponent(false);
                         setShouldShowFriendsModalAfterCreation(false);
-                        createRemoteTournament(true);
+                        createRemoteTournament(false);
                       }
                     }}
                     className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center gap-3"
@@ -2226,12 +2291,14 @@ export default function TournamentPage() {
                   {t('game.cancelTournament')}
                 </button>
               )}
-              <button
-                onClick={() => setTournamentStep('setup')}
-                className="w-full xs:w-auto px-3 py-2 xs:px-4 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base order-2 xs:order-1"
-              >
-                {t('game.backToSetup')}
-              </button>
+              {!isHost && (
+                <button
+                  onClick={leaveTournament}
+                  className="w-full xs:w-auto px-3 py-2 xs:px-4 sm:px-6 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base"
+                >
+                  {t('game.cancelJoinTournament')}
+                </button>
+              )}
               {remoteTournament?.status === 'playing' && (
                 <button
                   onClick={() => setTournamentStep('bracket')}
