@@ -1,0 +1,28 @@
+
+
+
+
+
+
+
+
+FROM debian:bullseye
+
+RUN apt update -y && \
+    apt upgrade -y && \
+    apt install -y nginx openssl
+
+
+
+RUN mkdir -p /etc/nginx/ssl /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/frontend.key -out /etc/nginx/ssl/frontend.crt -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=e1r9p7/UID=frontend"
+
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/backend.key -out /etc/nginx/ssl/backend.crt -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=api.e1r9p7/UID=backend"
+
+
+COPY ./default.conf /etc/nginx/sites-available/default
+
+
+
+CMD ["nginx", "-g", "daemon off;"]

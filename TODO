@@ -1,0 +1,21 @@
+- image and username problem in chat
+- Emoji table should be hidden when clicked anywhere and friend list in small 
+- implement game challenge from notification 
+- remove friend request from notify if handeled in profile 
+
+
+
+must get friend in home 
+add message array fo zoostand 
+update room in db
+update add friend api
+add socket at layout
+Get freinds
+global css
+
+zoostand (updatelastmessage function ) 
+sql room
+
+
+
+chnage lib/api.js to ts

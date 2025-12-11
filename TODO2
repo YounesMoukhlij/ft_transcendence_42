@@ -1,0 +1,52 @@
+- image and username problem in chat
+- Emoji table should be hidden when clicked anywhere and friend list in small 
+- implement game challenge from notification 
+- remove friend request from notify if handeled in profile 
+
+Dta for graphs charts etc 
+vertical jumps issue
+fix the issues on console
+potenitally loading page
+check ssr
+
+// Ask Zakaria for what to edit in profile: scroll + colors
+// tournament logo + backend api for it
+// What abd mought asked for in backend removing auth
+
+
+
+
+// blockchain -- 
+npm install --save-dev hardhat@2.27.1 @nomicfoundation/hardhat-toolbox@3.0.0 typescript@5.4.5 ts-node@10.9.2 @types/node@20.11.19
+npm install dotenv
+
+
+npm install ethers
+
+
+change the api getUserStats from username to id
+
+
+
+receipt:  ContractTransactionReceipt {
+  provider: JsonRpcProvider {},
+  to: '0xfaA0F7950218186597766CE2b6e7c6b43B5F55AE',
+  from: '0x9d074b708fb92BEe9040Ccf586c3901f8dC4B05D',
+  contractAddress: null,
+  hash: '0x4f97f2102624942c3a6a9d4d78b94a0b8a7bad86158e96730cc247bcc9193c6c',
+  index: 0,
+  blockHash: '0x756df527bc6197a6a725270607764212553b52dce9be8d01a99cf760ab8e7888',
+  blockNumber: 48708048,
+  logsBloom: '0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010100000000000000000000000000000000000000000000000000000000000000200000000000000000000020000000000004000000000000000000000000000000000000000000000004000000000000000000000000000008000000000000000000000000000000000000000000000000001000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+  gasUsed: 219285n,
+  blobGasUsed: null,
+  cumulativeGasUsed: 219285n,
+  gasPrice: 2n,
+  blobGasPrice: null,
+  type: 2,
+  status: 1,
+  root: undefined
+}
+
+redirect chat?friend=1 for chat
+
