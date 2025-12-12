@@ -5,6 +5,7 @@ import { useGameContext } from '../components/GameContext';
 import { useUserStore } from '../store/userStore';
 import { useRouter } from 'next/navigation';
 import { ServerGameState, Player } from '../types/game';
+import { useTranslation } from '../contexts/LanguageContext';
 
 const PADDLE_HEIGHT = 100;
 const GAME_HEIGHT = 600;
@@ -922,8 +923,8 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   if (winner && !tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local') {
     return (
       <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
-        <h2 className="text-4xl font-bold mb-4">Game Over</h2>
-        <p className="text-2xl mt-4 mb-6">{winner} is the winner!</p>
+        <h2 className="text-4xl font-bold mb-4">{t('game.gameOver')}</h2>
+        <p className="text-2xl mt-4 mb-6">{t('game.isTheWinner', { winner })}</p>
 
         {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage}</p>}
 

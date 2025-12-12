@@ -13,6 +13,7 @@ import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTranslation } from '@/contexts/LanguageContext';
+import { ServerGameState } from '@/types/game';
 
 // Move PlayerRegistration outside to prevent re-creation
 interface PlayerRegistrationProps {
@@ -173,6 +174,10 @@ export default function TournamentPage() {
   const [tournamentCancelledMessage, setTournamentCancelledMessage] = useState<string | null>(null);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [pendingTournamentIdFromStorage, setPendingTournamentIdFromStorage] = useState<string | null>(null);
+
+  // Remote tournament game state
+  const [serverGameState, setServerGameState] = useState<any>(null);
+  const [opponentLeft, setOpponentLeft] = useState(false);
 
 
 
@@ -496,6 +501,31 @@ export default function TournamentPage() {
                 setMatchWinner(currentMatch.winner);
                 setShowTournamentWinnerMessage(true);
               }
+            }
+
+            // Handle match room assignment for remote tournaments
+            if (tournamentType === 'remote' && message.data.roomCode && message.data.matchId) {
+              // Store roomCode for the current match
+              const bracket = gameState.tournament?.bracket || [];
+              const matchIndex = bracket.findIndex(m => m.id === message.data.matchId);
+              if (matchIndex !== -1 && matchIndex === currentMatchIndex) {
+                // This is the current match - we're ready to play
+                // The gameState messages will come through WebSocket
+              }
+            }
+            break;
+
+          case 'gameState':
+            // Handle game state updates for remote tournament matches
+            if (tournamentType === 'remote' && tournamentStep === 'playing') {
+              setServerGameState(message.payload);
+            }
+            break;
+
+          case 'opponentLeft':
+            // Handle opponent leaving in remote tournament match
+            if (tournamentType === 'remote' && tournamentStep === 'playing') {
+              setOpponentLeft(true);
             }
             break;
 
@@ -1110,6 +1140,22 @@ export default function TournamentPage() {
       window.removeEventListener('keydown', handleKeyPress);
     };
   }, [tournamentStep, toggleFullscreen]);
+
+  // Handle winner detection for remote tournament matches
+  useEffect(() => {
+    if (tournamentType === 'remote' && tournamentStep === 'playing' && serverGameState && currentMatch) {
+      const WINNING_SCORE = 10;
+      if (serverGameState.player1.score >= WINNING_SCORE && !matchWinner) {
+        // Player 1 won
+        const winner = currentMatch.player1;
+        handleGameComplete(winner);
+      } else if (serverGameState.player2.score >= WINNING_SCORE && !matchWinner) {
+        // Player 2 won
+        const winner = currentMatch.player2;
+        handleGameComplete(winner);
+      }
+    }
+  }, [serverGameState, tournamentType, tournamentStep, currentMatch, matchWinner, handleGameComplete]);
 
   // Auto-fullscreen for local tournament matches
   const autoFullscreenAttemptedRef = React.useRef(false);
@@ -2598,11 +2644,22 @@ export default function TournamentPage() {
               height: 'auto'
             } : {}}
           >
-            <PingPongGame
-              tournamentMode={true}
-              tournamentPlayers={currentPlayers}
-              onTournamentMatchEnd={handleGameComplete}
-            />
+            {tournamentType === 'remote' ? (
+              // Remote tournament - use WebSocket mode
+              <PingPongGame
+                tournamentMode={false}
+                serverGameState={serverGameState}
+                setServerGameState={setServerGameState}
+                opponentLeft={opponentLeft}
+              />
+            ) : (
+              // Local tournament - use local mode
+              <PingPongGame
+                tournamentMode={true}
+                tournamentPlayers={currentPlayers}
+                onTournamentMatchEnd={handleGameComplete}
+              />
+            )}
           </div>
 
           {/* Winner Announcement Modal */}

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import axios from "axios"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -68,5 +69,74 @@ export function getBackendURL(): string {
     console.error('Invalid backend URL configuration:', { host: finalHost, port: finalPort });
     // Still return a valid URL even if validation fails
     return `http://${finalHost}:${finalPort}`;
+  }
+}
+
+/**
+ * Refresh the access token using the refresh token
+ * @param refreshToken - The refresh token to use
+ * @returns The new access token or null if refresh fails
+ */
+export async function refreshAccessToken(refreshToken: string): Promise<string | null> {
+  try {
+    const response = await axios.post(`${getBackendURL()}/refreshToken`, {
+      refreshToken: refreshToken
+    });
+
+    if (response.data?.success && response.data?.accessToken) {
+      return response.data.accessToken;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+    return null;
+  }
+}
+
+/**
+ * Make an authenticated axios request with automatic token refresh on 401
+ * @param requestFn - Function that makes the axios request
+ * @param user - User object with access_token and refresh_token
+ * @param setUser - Function to update user state
+ * @returns The axios response
+ */
+export async function makeAuthenticatedRequest<T>(
+  requestFn: (token: string) => Promise<T>,
+  user: { access_token?: string; refresh_token?: string } | null,
+  setUser: (user: any) => void
+): Promise<T> {
+  if (!user?.access_token) {
+    throw new Error('No access token available');
+  }
+
+  try {
+    // Try the request with current token
+    return await requestFn(user.access_token);
+  } catch (error: any) {
+    // If 401 and we have a refresh token, try to refresh
+    if (error.response?.status === 401 && user?.refresh_token) {
+      console.log('Token expired, attempting to refresh...');
+
+      const newAccessToken = await refreshAccessToken(user.refresh_token);
+
+      if (newAccessToken) {
+        // Update user state with new token
+        const updatedUser = { ...user, access_token: newAccessToken };
+        setUser(updatedUser);
+
+        // Update auth cookie if in browser environment
+        if (typeof document !== 'undefined') {
+          document.cookie = `auth_token=${newAccessToken}; path=/`;
+        }
+
+        // Retry the request with new token
+        return await requestFn(newAccessToken);
+      } else {
+        // Refresh failed, throw original error
+        throw error;
+      }
+    }
+    // Re-throw if not a 401 or no refresh token
+    throw error;
   }
 }

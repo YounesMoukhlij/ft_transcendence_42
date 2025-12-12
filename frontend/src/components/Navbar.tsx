@@ -10,7 +10,7 @@ import axios from 'axios';
 import { Toaster, toast } from 'sonner';
 import  {useUserStore}  from '../store/userStore';
 import { useGameContext } from './GameContext';
-import { getBackendURL } from '../lib/utils';
+import { getBackendURL, makeAuthenticatedRequest } from '../lib/utils';
 import { getWebSocket } from './globalSocket';
 
 import '../app/(protected)/chat/page.css'
@@ -37,7 +37,7 @@ export default function Navbar()
   const searchRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const deletedNotificationIdsRef = useRef<Set<number>>(new Set()); // Track locally deleted notification IDs
-  const {connect  , init, clearUser } = useUserStore();
+  const {connect  , init, clearUser, setUser } = useUserStore();
 
   const setUsername = useUserStore.setState;
   const socket = useUserStore((state) => state.socket);
@@ -922,15 +922,21 @@ useEffect(() => {
         return;
       }
 
-      // Delete the notification
-      await axios.delete(
-        `${getBackendURL()}/DeleteNotification`,
-        {
-          params: { notifyId: item.notify_id },
-          headers: {
-            Authorization: `Bearer ${user.access_token}`
-          }
-        }
+      // Delete the notification with automatic token refresh
+      await makeAuthenticatedRequest(
+        async (token: string) => {
+          return await axios.delete(
+            `${getBackendURL()}/DeleteNotification`,
+            {
+              params: { notifyId: item.notify_id },
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+        },
+        user,
+        setUser
       );
 
       // Remove from local state immediately
@@ -1031,15 +1037,21 @@ useEffect(() => {
         return;
       }
 
-      // Delete the notification
-      await axios.delete(
-        `${getBackendURL()}/DeleteNotification`,
-        {
-          params: { notifyId: item.notify_id },
-          headers: {
-            Authorization: `Bearer ${user.access_token}`
-          }
-        }
+      // Delete the notification with automatic token refresh
+      await makeAuthenticatedRequest(
+        async (token: string) => {
+          return await axios.delete(
+            `${getBackendURL()}/DeleteNotification`,
+            {
+              params: { notifyId: item.notify_id },
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+        },
+        user,
+        setUser
       );
 
       // Remove from local state immediately
@@ -1048,7 +1060,21 @@ useEffect(() => {
       toast.info('Tournament invitation declined');
     } catch (error: any) {
       console.error('Error declining tournament invite:', error);
-      toast.error('Failed to decline tournament invitation');
+
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        // Token refresh failed or no refresh token available
+        toast.error('Session expired. Please log in again.');
+        clearUser();
+        router.push('/signIn');
+      } else if (error.response?.status === 404) {
+        // Notification already deleted or not found
+        // Remove from local state anyway
+        setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
+        toast.info('Tournament invitation declined');
+      } else {
+        toast.error('Failed to decline tournament invitation');
+      }
     }
   }
 
