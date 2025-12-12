@@ -1097,12 +1097,11 @@ useEffect(() => {
       <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[4vh] bg-transparent">
         <div className="flex justify-between items-center">
           <div className="flex flex-row items-center gap-1 md:gap-2">
-            {/* <GiPingPongBat
-              className="text-white w-15 h-15  cursor-pointer animate-spin"
-              style={{
-                animation: 'spin 6s linear infinite'
-              }}
-            /> */}
+            <Link href="/">
+              <GiPingPongBat
+                className="text-white w-8 h-8 md:w-10 md:h-10 cursor-pointer hover:scale-110 transition-all duration-300"
+              />
+            </Link>
           </div>
 
           {/* Desktop Right Section */}
