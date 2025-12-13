@@ -195,14 +195,21 @@ class GameManager {
   // Handle paddle movement
   handlePaddleMove(playerId, direction) {
     const found = this.findRoomByPlayer(playerId);
-    if (!found) return;
+    if (!found) {
+      console.warn(`[handlePaddleMove] Player ${playerId} not found in any room`);
+      return;
+    }
 
     const { room } = found;
 
     if (room.player1.id === playerId) {
       room.paddleDirections.player1 = direction;
+      console.log(`[handlePaddleMove] Player1 (${playerId}) direction set to: ${direction}`);
     } else if (room.player2.id === playerId) {
       room.paddleDirections.player2 = direction;
+      console.log(`[handlePaddleMove] Player2 (${playerId}) direction set to: ${direction}`);
+    } else {
+      console.warn(`[handlePaddleMove] Player ${playerId} not found in room ${found.roomCode}`);
     }
   }
 
@@ -557,9 +564,22 @@ class GameManager {
       roomCode: roomCode // Include roomCode for frontend verification
     };
 
+    // Verify sockets are valid before sending
+    const p1SocketValid = room.player1.socket && room.player1.socket.readyState === 1;
+    const p2SocketValid = room.player2.socket && room.player2.socket.readyState === 1;
+
+    if (!p1SocketValid || !p2SocketValid) {
+      console.warn(`[broadcastGameState] Invalid sockets in room ${roomCode}:`, {
+        player1Valid: p1SocketValid,
+        player2Valid: p2SocketValid,
+        player1ReadyState: room.player1.socket?.readyState,
+        player2ReadyState: room.player2.socket?.readyState
+      });
+    }
+
     // Send to both players, but don't fail if one fails
-    const p1Sent = this.sendToPlayer(room.player1.socket, gameStateMessage);
-    const p2Sent = this.sendToPlayer(room.player2.socket, gameStateMessage);
+    const p1Sent = p1SocketValid ? this.sendToPlayer(room.player1.socket, gameStateMessage) : false;
+    const p2Sent = p2SocketValid ? this.sendToPlayer(room.player2.socket, gameStateMessage) : false;
 
     // If both failed, the game loop will detect disconnected sockets on next iteration
     if (!p1Sent && !p2Sent) {
@@ -568,6 +588,11 @@ class GameManager {
       console.warn(`[broadcastGameState] Failed to send game state to player1 (${room.player1.id}) in room ${roomCode}`);
     } else if (!p2Sent) {
       console.warn(`[broadcastGameState] Failed to send game state to player2 (${room.player2.id}) in room ${roomCode}`);
+    } else {
+      // Log successful broadcast periodically (every 60 frames = ~1 second) to verify it's working
+      if (Math.random() < 0.016) { // ~1% chance = roughly once per second at 60 FPS
+        console.log(`[broadcastGameState] Successfully broadcasting game state for room ${roomCode}`);
+      }
     }
   }
 

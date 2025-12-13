@@ -383,17 +383,27 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (winner) return;
-      if (tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local') {
+
+      // Determine if this is a remote game (has serverGameState) or local game
+      const isRemoteGame = !!serverGameState && !tournamentMode;
+      const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
+
+      if (isLocalGame) {
         // Local tournament, AI mode, or local mode - use keyboard controls
         keysPressed.current[e.key] = true;
-      } else { // Remote mode
+      } else if (isRemoteGame) {
+        // Remote mode - send paddle moves to backend
         if (e.key === 'w' || e.key === 'ArrowUp') {
           if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'up' } }));
+          } else {
+            console.warn('[PingPongGame] Cannot send paddle move - socket not connected');
           }
         } else if (e.key === 's' || e.key === 'ArrowDown') {
           if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'down' } }));
+          } else {
+            console.warn('[PingPongGame] Cannot send paddle move - socket not connected');
           }
         }
       }
@@ -401,10 +411,16 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
     const handleKeyUp = (e: KeyboardEvent) => {
         if (winner) return;
-        if (tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local') {
+
+        // Determine if this is a remote game (has serverGameState) or local game
+        const isRemoteGame = !!serverGameState && !tournamentMode;
+        const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
+
+        if (isLocalGame) {
             // Local tournament, AI mode, or local mode - use keyboard controls
             keysPressed.current[e.key] = false;
-        } else { // Remote mode
+        } else if (isRemoteGame) {
+            // Remote mode - send stop command to backend
             if (
                 e.key === 'w' ||
                 e.key === 'ArrowUp' ||
@@ -412,7 +428,9 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
                 e.key === 'ArrowDown'
             ) {
                 if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'stop' } }));
+                  socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'stop' } }));
+                } else {
+                  console.warn('[PingPongGame] Cannot send paddle stop - socket not connected');
                 }
             }
         }
@@ -425,7 +443,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [socket, user, winner, tournamentMode, gameState.mode]);
+  }, [socket, user, winner, tournamentMode, gameState.mode, serverGameState]);
 
   // Game loop for local tournament, AI mode, and local mode - improved with delta time
   const gameModeRef = useRef(gameState.mode);
@@ -543,7 +561,8 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   useEffect(() => {
     // For remote tournaments, tournamentMode is false, so we need to check if we have serverGameState
     // The condition should allow remote mode (which includes remote tournaments)
-    const isRemoteMode = !tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local';
+    // IMPORTANT: Check for serverGameState first - if it exists, we're in remote mode
+    const isRemoteMode = !!serverGameState && !tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local';
     const shouldProcess = isRemoteMode && serverGameState;
 
     if (shouldProcess) {
@@ -700,10 +719,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
     } else if (serverGameState) {
       // Remote Game Draw with improved interpolation for smooth movement
+      // Always use the latest serverGameState as base, even if interpolation isn't ready
       let displayState = serverGameState;
 
       // Apply advanced interpolation if we have previous state for smoother movement
-      if (previousGameStateRef.current && interpolatedStateRef.current && !winner) {
+      // CRITICAL: Only interpolate if we have BOTH previous and current states
+      // Otherwise, just use the raw serverGameState to prevent freezing
+      if (previousGameStateRef.current && interpolatedStateRef.current && !winner && serverGameState) {
         const now = Date.now();
         const timeSinceUpdate = now - lastUpdateTimeRef.current;
 
@@ -815,7 +837,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             x: serverGameState.ball.x,
             y: serverGameState.ball.y
           };
+          // Use raw serverGameState when interpolation window expires
+          displayState = serverGameState;
         }
+      } else {
+        // No interpolation available yet - use raw serverGameState to prevent freezing
+        // This ensures the game is always visible, even before interpolation is set up
+        displayState = serverGameState;
       }
 
       const { player1, player2, ball: remoteBall } = displayState;
