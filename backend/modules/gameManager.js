@@ -1693,6 +1693,17 @@ class GameManager {
     return null; // No available player found
   }
 
+
+
+
+
+
+
+
+
+
+
+  
   // Try to match random opponents (called periodically or when new players join queue)
   // IMPORTANT: This method is currently disabled to prevent automatic player addition without consent.
   // Players can only join tournaments via:
