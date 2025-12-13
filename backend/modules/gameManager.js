@@ -38,6 +38,7 @@ class GameManager {
       player1: {
         id: player1.id,
         username: player1.username,
+        avatar: player1.avatar || null,  // Include avatar in gameState for frontend syncing
         y: GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2,
         score: 0,
         customization: player1.customization || {}
@@ -45,6 +46,7 @@ class GameManager {
       player2: {
         id: player2.id,
         username: player2.username,
+        avatar: player2.avatar || null,  // Include avatar in gameState for frontend syncing
         y: GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2,
         score: 0,
         customization: player2.customization || {}
@@ -114,12 +116,14 @@ class GameManager {
       player1: {
         id: player1.id,
         username: player1.username,
+        avatar: player1.avatar || null,  // Store avatar in room for reference
         socket: player1.socket,
         customization: player1.customization || {}
       },
       player2: {
         id: player2.id,
         username: player2.username,
+        avatar: player2.avatar || null,  // Store avatar in room for reference
         socket: player2.socket,
         customization: player2.customization || {}
       },
@@ -212,21 +216,24 @@ class GameManager {
     }
 
     const { room, roomCode } = found;
-    const isMatch1 = room.tournamentContext && room.tournamentContext.matchId === 1;
+    const matchId = room.tournamentContext?.matchId;
+    const isMatch1 = matchId === 1;
+    const isMatch2 = matchId === 2;
+    const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
 
     // CRITICAL: Update paddle direction atomically to prevent race conditions
     // This ensures paddle direction is set before the next game loop iteration
     if (room.player1.id === playerId) {
       room.paddleDirections.player1 = direction;
-      if (isMatch1) {
-        console.log(`[handlePaddleMove] MATCH 1: Player1 (${playerId}) direction: ${direction}`);
+      if (matchLabel) {
+        console.log(`[handlePaddleMove] ${matchLabel}: Player1 (${playerId}) direction: ${direction}`);
       } else {
         console.log(`[handlePaddleMove] Player1 (${playerId}) direction set to: ${direction}`);
       }
     } else if (room.player2.id === playerId) {
       room.paddleDirections.player2 = direction;
-      if (isMatch1) {
-        console.log(`[handlePaddleMove] MATCH 1: Player2 (${playerId}) direction: ${direction}`);
+      if (matchLabel) {
+        console.log(`[handlePaddleMove] ${matchLabel}: Player2 (${playerId}) direction: ${direction}`);
       } else {
         console.log(`[handlePaddleMove] Player2 (${playerId}) direction set to: ${direction}`);
       }
@@ -613,8 +620,11 @@ class GameManager {
       return;
     }
 
-    // Check if this is Match 1
-    const isMatch1 = room.tournamentContext && room.tournamentContext.matchId === 1;
+    // Check if this is Match 1 or Match 2
+    const matchId = room.tournamentContext?.matchId;
+    const isMatch1 = matchId === 1;
+    const isMatch2 = matchId === 2;
+    const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
 
     // CRITICAL: Get fresh socket references right before sending to avoid race conditions
     // This ensures we always use the latest socket, even if player reconnected
@@ -630,8 +640,8 @@ class GameManager {
       if (player1Socket !== freshP1Socket) {
         room.player1.socket = freshP1Socket;
         player1Socket = freshP1Socket;
-        if (isMatch1) {
-          console.log(`[broadcastGameState] MATCH 1: Updated socket for player1 (${room.player1.id})`);
+        if (matchLabel) {
+          console.log(`[broadcastGameState] ${matchLabel}: Updated socket for player1 (${room.player1.id})`);
         }
       }
     }
@@ -640,8 +650,8 @@ class GameManager {
       if (player2Socket !== freshP2Socket) {
         room.player2.socket = freshP2Socket;
         player2Socket = freshP2Socket;
-        if (isMatch1) {
-          console.log(`[broadcastGameState] MATCH 1: Updated socket for player2 (${room.player2.id})`);
+        if (matchLabel) {
+          console.log(`[broadcastGameState] ${matchLabel}: Updated socket for player2 (${room.player2.id})`);
         }
       }
     }
@@ -667,8 +677,8 @@ class GameManager {
     const p2SocketValid = player2Socket && player2Socket.readyState === 1;
 
     if (!p1SocketValid || !p2SocketValid) {
-      if (isMatch1) {
-        console.error(`[broadcastGameState] MATCH 1 ERROR: Invalid sockets:`, {
+      if (matchLabel) {
+        console.error(`[broadcastGameState] ${matchLabel} ERROR: Invalid sockets:`, {
           player1Valid: p1SocketValid,
           player2Valid: p2SocketValid,
           player1ReadyState: player1Socket?.readyState,
@@ -691,11 +701,11 @@ class GameManager {
     const p1Sent = p1SocketValid ? this.sendToPlayer(player1Socket, gameStateMessage) : false;
     const p2Sent = p2SocketValid ? this.sendToPlayer(player2Socket, gameStateMessage) : false;
 
-    // For Match 1: Log synchronization verification periodically
-    if (isMatch1 && p1Sent && p2Sent) {
+    // For Match 1 and Match 2: Log synchronization verification periodically
+    if ((isMatch1 || isMatch2) && p1Sent && p2Sent) {
       // Log every 60th broadcast (approximately once per second) to verify continuous sync
       if (Math.random() < 0.016) {
-        console.log(`[broadcastGameState] MATCH 1 SYNC VERIFIED:`, {
+        console.log(`[broadcastGameState] ${matchLabel} SYNC VERIFIED:`, {
           timestamp: gameStateMessage.timestamp,
           player1Score: gameState.player1?.score,
           player2Score: gameState.player2?.score,
@@ -711,43 +721,41 @@ class GameManager {
 
     // If both failed, the game loop will detect disconnected sockets on next iteration
     if (!p1Sent && !p2Sent) {
-      if (isMatch1) {
-        console.error(`[broadcastGameState] MATCH 1 ERROR: Failed to send game state to BOTH players`);
+      if (matchLabel) {
+        console.error(`[broadcastGameState] ${matchLabel} ERROR: Failed to send game state to BOTH players`);
       } else {
         console.warn(`[broadcastGameState] Failed to send game state to both players in room ${roomCode}`);
       }
     } else if (!p1Sent) {
-      if (isMatch1) {
-        console.error(`[broadcastGameState] MATCH 1 ERROR: Failed to send to player1 (${room.player1.id})`);
+      if (matchLabel) {
+        console.error(`[broadcastGameState] ${matchLabel} ERROR: Failed to send to player1 (${room.player1.id})`);
       } else {
         console.warn(`[broadcastGameState] Failed to send game state to player1 (${room.player1.id}) in room ${roomCode}`);
       }
     } else if (!p2Sent) {
-      if (isMatch1) {
-        console.error(`[broadcastGameState] MATCH 1 ERROR: Failed to send to player2 (${room.player2.id})`);
+      if (matchLabel) {
+        console.error(`[broadcastGameState] ${matchLabel} ERROR: Failed to send to player2 (${room.player2.id})`);
       } else {
         console.warn(`[broadcastGameState] Failed to send game state to player2 (${room.player2.id}) in room ${roomCode}`);
       }
     } else {
-      // Log successful broadcast for Match 1 more frequently with sync verification
-      if (isMatch1) {
-        if (Math.random() < 0.1) { // 10% chance = roughly 6 times per second at 60 FPS
-          console.log(`[broadcastGameState] MATCH 1 SYNC: ✓ Both players received gameState`, {
-            timestamp: gameStateMessage.timestamp,
-            player1Id: room.player1.id,
-            player2Id: room.player2.id,
-            player1Score: gameState.player1?.score,
-            player2Score: gameState.player2?.score,
-            ballX: gameState.ball?.x?.toFixed(2),
-            ballY: gameState.ball?.y?.toFixed(2),
-            player1Y: gameState.player1?.y?.toFixed(2),
-            player2Y: gameState.player2?.y?.toFixed(2),
-            matchId: gameStateMessage.matchId,
-            round: gameStateMessage.round,
-            roomCode: roomCode
-          });
-        }
-      } else {
+      // Log successful broadcast for Match 1 and Match 2 more frequently with sync verification
+      if ((isMatch1 || isMatch2) && Math.random() < 0.1) { // 10% chance = roughly 6 times per second at 60 FPS
+        console.log(`[broadcastGameState] ${matchLabel} SYNC: ✓ Both players received gameState`, {
+          timestamp: gameStateMessage.timestamp,
+          player1Id: room.player1.id,
+          player2Id: room.player2.id,
+          player1Score: gameState.player1?.score,
+          player2Score: gameState.player2?.score,
+          ballX: gameState.ball?.x?.toFixed(2),
+          ballY: gameState.ball?.y?.toFixed(2),
+          player1Y: gameState.player1?.y?.toFixed(2),
+          player2Y: gameState.player2?.y?.toFixed(2),
+          matchId: gameStateMessage.matchId,
+          round: gameStateMessage.round,
+          roomCode: roomCode
+        });
+      } else if (!isMatch1 && !isMatch2) {
         // Log successful broadcast periodically (every 60 frames = ~1 second) to verify it's working
         if (Math.random() < 0.016) { // ~1% chance = roughly once per second at 60 FPS
           console.log(`[broadcastGameState] Successfully broadcasting game state for room ${roomCode}`);
@@ -1161,9 +1169,16 @@ class GameManager {
         null // blockchain_hash (optional, NULL for now)
       );
 
-      console.log(`Game history saved: Winner ${winnerId} (${winScore}-${loseScore}) vs Loser ${loserId}`);
+      // Log player names for verification
+      const winnerName = winnerId === room.player1.id ? room.player1.username : room.player2.username;
+      const loserName = winnerId === room.player1.id ? room.player2.username : room.player1.username;
+      const winnerAvatar = winnerId === room.player1.id ? room.player1.avatar : room.player2.avatar;
+      const loserAvatar = winnerId === room.player1.id ? room.player2.avatar : room.player1.avatar;
+
+      console.log(`Game history saved: Winner ${winnerId} (${winnerName}) (${winScore}-${loseScore}) vs Loser ${loserId} (${loserName})`);
       if (isTournamentMatch) {
         console.log(`Tournament Match: Tournament ID ${tournamentId}, Round ${tournamentRound}`);
+        console.log(`Player Names: Winner=${winnerName} (Avatar: ${winnerAvatar || 'N/A'}), Loser=${loserName} (Avatar: ${loserAvatar || 'N/A'})`);
       }
       console.log(`Stats: Duration: ${duration}s, Longest Rally: ${stats.longestRally}, Avg Rally: ${averageRally.toFixed(2)}, Max Speed: ${ballMaxSpeedMetersPerSecond?.toFixed(2) || 0}m/s`);
       console.log(`Touches - Winner: ${touchesWin}, Loser: ${touchesLose}`);
@@ -1934,11 +1949,15 @@ class GameManager {
     console.log(`[startTournament] Available sockets: ${Array.from(this.usersSocket.keys()).join(', ')}`);
 
     for (const match of bracket) {
-      // FOCUS: Only process Match 1 (Round 1, Match ID 1)
-      if (match.round === 1 && match.id === 1 && match.player1 && match.player2) {
-        console.log(`[startTournament] ===== PROCESSING MATCH 1 =====`);
-        console.log(`[startTournament] Match 1 - Player1 ID=${match.player1.id}, Player2 ID=${match.player2.id}`);
-        console.log(`[startTournament] Match 1 - Player1 Name=${match.player1.name}, Player2 Name=${match.player2.name}`);
+      // Process Round 1 matches (Match 1 and Match 2)
+      if (match.round === 1 && (match.id === 1 || match.id === 2) && match.player1 && match.player2) {
+        const isMatch1 = match.id === 1;
+        const isMatch2 = match.id === 2;
+        const matchLabel = isMatch1 ? 'MATCH 1' : 'MATCH 2';
+
+        console.log(`[startTournament] ===== PROCESSING ${matchLabel} =====`);
+        console.log(`[startTournament] ${matchLabel} - Player1 ID=${match.player1.id}, Player2 ID=${match.player2.id}`);
+        console.log(`[startTournament] ${matchLabel} - Player1 Name=${match.player1.name}, Player2 Name=${match.player2.name}`);
 
         // Get player sockets from usersSocket map (try both string and number keys)
         const player1IdStr = match.player1.id.toString();
@@ -1948,50 +1967,58 @@ class GameManager {
 
         // Check if both players are online (have active sockets)
         if (!player1Socket || !player2Socket) {
-          console.error(`[startTournament] MATCH 1 ERROR: Missing socket. Player1: ${!!player1Socket}, Player2: ${!!player2Socket}`);
+          console.error(`[startTournament] ${matchLabel} ERROR: Missing socket. Player1: ${!!player1Socket}, Player2: ${!!player2Socket}`);
           console.error(`[startTournament] Available socket keys: ${Array.from(this.usersSocket.keys()).join(', ')}`);
           continue; // Skip this match if players aren't online
         }
 
         // Verify sockets are open
         if (player1Socket.readyState !== 1 || player2Socket.readyState !== 1) {
-          console.error(`[startTournament] MATCH 1 ERROR: Socket not open. Player1 readyState=${player1Socket.readyState}, Player2 readyState=${player2Socket.readyState}`);
+          console.error(`[startTournament] ${matchLabel} ERROR: Socket not open. Player1 readyState=${player1Socket.readyState}, Player2 readyState=${player2Socket.readyState}`);
           continue;
         }
 
-        console.log(`[startTournament] MATCH 1: Both sockets valid and open`);
+        console.log(`[startTournament] ${matchLabel}: Both sockets valid and open`);
 
         // Create player objects with required structure for createGameRoom
+        // IMPORTANT: Include avatar and name for proper syncing
         const player1 = {
           id: match.player1.id,
-          username: match.player1.name,  // Bracket uses 'name', createGameRoom expects 'username'
+          username: match.player1.name || match.player1.username,  // Bracket uses 'name', createGameRoom expects 'username'
+          avatar: match.player1.avatar || null,  // Include avatar for syncing
           socket: player1Socket,
           customization: tournament.customization || {}
         };
 
         const player2 = {
           id: match.player2.id,
-          username: match.player2.name,
+          username: match.player2.name || match.player2.username,
+          avatar: match.player2.avatar || null,  // Include avatar for syncing
           socket: player2Socket,
           customization: tournament.customization || {}
         };
 
+        console.log(`[startTournament] ${matchLabel}: Player data:`, {
+          player1: { id: player1.id, username: player1.username, hasAvatar: !!player1.avatar },
+          player2: { id: player2.id, username: player2.username, hasAvatar: !!player2.avatar }
+        });
+
         try {
-          // Create tournament context for Match 1
+          // Create tournament context for Match 1 or Match 2
           const tournamentContext = {
             tournamentId: tournamentId,
-            matchId: 1, // Match 1
+            matchId: match.id, // Match 1 or Match 2
             round: 1,   // Round 1
-            matchNumber: 1
+            matchNumber: match.id
           };
 
-          console.log(`[startTournament] MATCH 1: Creating game room with context:`, tournamentContext);
+          console.log(`[startTournament] ${matchLabel}: Creating game room with context:`, tournamentContext);
 
           // Create the game room with tournament context (this also starts the game loop and sends matchFound messages)
           const roomResult = this.createGameRoom(player1, player2, tournamentContext);
 
           if (!roomResult || !roomResult.roomCode) {
-            console.error(`[startTournament] MATCH 1 ERROR: Failed to create game room`);
+            console.error(`[startTournament] ${matchLabel} ERROR: Failed to create game room`);
             continue;
           }
 
@@ -1999,40 +2026,47 @@ class GameManager {
           match.roomCode = roomResult.roomCode;
           match.status = 'playing';
 
-          console.log(`[startTournament] MATCH 1: Room created successfully - RoomCode: ${roomResult.roomCode}`);
-          console.log(`[startTournament] MATCH 1: Room stored in gameRooms: ${this.gameRooms.has(roomResult.roomCode)}`);
-          console.log(`[startTournament] MATCH 1: Game loop started: ${this.gameLoops.has(roomResult.roomCode)}`);
+          console.log(`[startTournament] ${matchLabel}: Room created successfully - RoomCode: ${roomResult.roomCode}`);
+          console.log(`[startTournament] ${matchLabel}: Room stored in gameRooms: ${this.gameRooms.has(roomResult.roomCode)}`);
+          console.log(`[startTournament] ${matchLabel}: Game loop started: ${this.gameLoops.has(roomResult.roomCode)}`);
 
-          // Verify room structure for Match 1
+          // Verify room structure for Match 1 or Match 2
           const createdRoom = this.gameRooms.get(roomResult.roomCode);
           if (createdRoom) {
-            console.log(`[startTournament] MATCH 1 VERIFICATION:`, {
+            console.log(`[startTournament] ${matchLabel} VERIFICATION:`, {
               hasTournamentContext: !!createdRoom.tournamentContext,
               matchId: createdRoom.tournamentContext?.matchId,
               round: createdRoom.tournamentContext?.round,
               player1Id: createdRoom.player1.id,
               player2Id: createdRoom.player2.id,
+              player1Username: createdRoom.player1.username,
+              player2Username: createdRoom.player2.username,
+              player1Avatar: createdRoom.player1.avatar || 'NOT SET',
+              player2Avatar: createdRoom.player2.avatar || 'NOT SET',
+              gameStatePlayer1Username: createdRoom.gameState.player1.username,
+              gameStatePlayer2Username: createdRoom.gameState.player2.username,
+              gameStatePlayer1Avatar: createdRoom.gameState.player1.avatar || 'NOT SET',
+              gameStatePlayer2Avatar: createdRoom.gameState.player2.avatar || 'NOT SET',
               player1SocketValid: createdRoom.player1.socket?.readyState === 1,
               player2SocketValid: createdRoom.player2.socket?.readyState === 1,
-              gameStateHasContext: !!(createdRoom.gameState.tournamentId && createdRoom.gameState.matchId)
+              gameStateHasContext: !!(createdRoom.gameState.tournamentId && createdRoom.gameState.matchId),
+              gameStateMatchId: createdRoom.gameState.matchId,
+              gameStateRound: createdRoom.gameState.round
             });
           }
 
           // Send initial gameState to both players to ensure they're synced
           // The game loop will continue sending updates every frame
-          console.log(`[startTournament] MATCH 1: Broadcasting initial gameState to both players`);
+          console.log(`[startTournament] ${matchLabel}: Broadcasting initial gameState to both players`);
           this.broadcastGameState(roomResult.roomCode, roomResult.gameState);
 
           // Verify broadcast was successful
-          console.log(`[startTournament] MATCH 1: Initial gameState broadcast completed`);
+          console.log(`[startTournament] ${matchLabel}: Initial gameState broadcast completed`);
 
-          console.log(`[startTournament] ✓✓✓ MATCH 1 SUCCESS: Room ${roomResult.roomCode} - ${player1.username} vs ${player2.username} ✓✓✓`);
+          console.log(`[startTournament] ✓✓✓ ${matchLabel} SUCCESS: Room ${roomResult.roomCode} - ${player1.username} vs ${player2.username} ✓✓✓`);
         } catch (error) {
-          console.error(`[startTournament] MATCH 1 ERROR:`, error);
+          console.error(`[startTournament] ${matchLabel} ERROR:`, error);
         }
-      } else if (match.round === 1 && match.id === 2) {
-        // Skip Match 2 - user requested to leave it
-        console.log(`[startTournament] Skipping Match 2 as requested`);
       }
     }
 
@@ -2435,22 +2469,25 @@ class GameManager {
 
     const found = this.findRoomByPlayer(playerId);
     if (found && found.room) {
-      const isMatch1 = found.room.tournamentContext && found.room.tournamentContext.matchId === 1;
+      const matchId = found.room.tournamentContext?.matchId;
+      const isMatch1 = matchId === 1;
+      const isMatch2 = matchId === 2;
+      const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
       const oldSocket = found.room.player1.id === playerId ? found.room.player1.socket : found.room.player2.socket;
       const socketWasStale = !oldSocket || oldSocket.readyState !== 1;
 
       // CRITICAL: Atomically update socket to prevent race conditions
       if (found.room.player1.id === playerId) {
         found.room.player1.socket = newSocket;
-        if (isMatch1) {
-          console.log(`[handlePlayerReconnect] MATCH 1: Updated socket for player1 (${playerId}) in room ${found.roomCode}${socketWasStale ? ' (was stale)' : ''}`);
+        if (matchLabel) {
+          console.log(`[handlePlayerReconnect] ${matchLabel}: Updated socket for player1 (${playerId}) in room ${found.roomCode}${socketWasStale ? ' (was stale)' : ''}`);
         } else {
           console.log(`[GameManager] Updated socket for player1 (${playerId}) in room ${found.roomCode}${socketWasStale ? ' (was stale)' : ''}`);
         }
       } else if (found.room.player2.id === playerId) {
         found.room.player2.socket = newSocket;
-        if (isMatch1) {
-          console.log(`[handlePlayerReconnect] MATCH 1: Updated socket for player2 (${playerId}) in room ${found.roomCode}${socketWasStale ? ' (was stale)' : ''}`);
+        if (matchLabel) {
+          console.log(`[handlePlayerReconnect] ${matchLabel}: Updated socket for player2 (${playerId}) in room ${found.roomCode}${socketWasStale ? ' (was stale)' : ''}`);
         } else {
           console.log(`[GameManager] Updated socket for player2 (${playerId}) in room ${found.roomCode}${socketWasStale ? ' (was stale)' : ''}`);
         }
@@ -2460,8 +2497,10 @@ class GameManager {
       // This ensures they get the latest state immediately after reconnecting
       if (socketWasStale) {
         this.broadcastGameState(found.roomCode, found.room.gameState);
-        if (isMatch1) {
-          console.log(`[handlePlayerReconnect] MATCH 1: Sent current game state to reconnected player ${playerId}`);
+        if (matchLabel) {
+          if (matchLabel) {
+            console.log(`[handlePlayerReconnect] ${matchLabel}: Sent current game state to reconnected player ${playerId}`);
+          }
         } else {
           console.log(`[GameManager] Sent current game state to reconnected player ${playerId} in room ${found.roomCode}`);
         }

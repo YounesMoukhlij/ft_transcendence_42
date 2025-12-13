@@ -56,7 +56,7 @@ CREATE TABLE game_history (
     -- Match type
     type TEXT DEFAULT 'casual',          -- 'casual' or 'tournament'
     tournament_id INTEGER,                -- FK if it's a tournament match
-    tournament_round TEXT,                -- optional, e.g., 'Quarter-Final'
+
 
     -- General data
     game_date DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -128,12 +128,7 @@ CREATE TABLE message (
 
 CREATE TABLE tournaments (
     id_tournament INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    start_date DATETIME,
-    end_date DATETIME,
-    status TEXT DEFAULT 'upcoming',  -- upcoming, ongoing, finished
-    description TEXT,
-    blockchain_hash TEXT             -- optional, store hash of results on-chain
+    name TEXT NOT NULL,            -- optional, store hash of results on-chain
 );
 
 -- Game settings (customization preferences)

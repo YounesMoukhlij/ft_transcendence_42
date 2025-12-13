@@ -538,7 +538,37 @@ export default function TournamentPage() {
                   bracket: message.data.bracket
                 });
                 setPlayers(message.data.registeredPlayers);
-                setCurrentMatchIndex(0);
+
+                // CRITICAL: Find the user's actual match instead of defaulting to Match 1
+                // This prevents Match 2 players from starting with Match 1's index
+                const userId = user?.id_user?.toString();
+                if (userId && message.data.bracket) {
+                  const userMatch = message.data.bracket.find((m: any) =>
+                    m.player1 && m.player2 &&
+                    (m.player1.id?.toString() === userId || m.player1.id === parseInt(userId) ||
+                     m.player2.id?.toString() === userId || m.player2.id === parseInt(userId)) &&
+                    m.round === 1
+                  );
+                  if (userMatch) {
+                    const matchIndex = message.data.bracket.findIndex((m: any) => m.id === userMatch.id);
+                    if (matchIndex !== -1) {
+                      console.log('[Frontend] Setting currentMatchIndex to user\'s actual match:', {
+                        matchIndex,
+                        matchId: userMatch.id,
+                        userId
+                      });
+                      setCurrentMatchIndex(matchIndex);
+                    } else {
+                      console.warn('[Frontend] Could not find match index for user match, defaulting to 0');
+                      setCurrentMatchIndex(0);
+                    }
+                  } else {
+                    console.warn('[Frontend] User not found in any Round 1 match, defaulting to 0');
+                    setCurrentMatchIndex(0);
+                  }
+                } else {
+                  setCurrentMatchIndex(0);
+                }
               }
 
               // Only show animation and transition if not already in a match
@@ -653,9 +683,11 @@ export default function TournamentPage() {
             // Handle game state updates for remote tournament matches
             const roomCode = message.roomCode; // Get roomCode from message if available
             const isMatch1 = message.matchId === 1;
+            const isMatch2 = message.matchId === 2;
+            const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
 
-            if (isMatch1) {
-              console.log('[Frontend] MATCH 1: Received gameState message:', {
+            if (isMatch1 || isMatch2) {
+              console.log(`[Frontend] ${matchLabel}: Received gameState message:`, {
                 tournamentType,
                 tournamentStep,
                 hasPayload: !!message.payload,
@@ -734,14 +766,20 @@ export default function TournamentPage() {
                 if (userId) {
                   let userMatch = null;
 
-                  // Priority 1: If this is Match 1, find Match 1 specifically
-                  if (message.matchId === 1) {
-                    userMatch = bracket.find(m => m.id === 1 && m.round === 1);
+                  // Define matchLabel at the start for use throughout this block
+                  const isMatch1 = message.matchId === 1;
+                  const isMatch2 = message.matchId === 2;
+                  const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
+
+                  // Priority 1: If this is Match 1 or Match 2, find the specific match
+                  if (message.matchId === 1 || message.matchId === 2) {
+                    const targetMatchId = message.matchId;
+                    userMatch = bracket.find(m => m.id === targetMatchId && m.round === 1);
                     if (userMatch && userMatch.player1 && userMatch.player2 && userId) {
                       const isPlayer1 = userMatch.player1.id?.toString() === userId || userMatch.player1.id === parseInt(userId);
                       const isPlayer2 = userMatch.player2.id?.toString() === userId || userMatch.player2.id === parseInt(userId);
                       if (isPlayer1 || isPlayer2) {
-                        console.log('[Frontend] MATCH 1: Found user in Match 1:', {
+                        console.log(`[Frontend] ${matchLabel}: Found user in ${matchLabel}:`, {
                           userId,
                           isPlayer1,
                           isPlayer2,
@@ -750,10 +788,10 @@ export default function TournamentPage() {
                           roomCode: userMatch.roomCode
                         });
                       } else {
-                        console.warn('[Frontend] MATCH 1: User not in Match 1:', {
+                        console.warn(`[Frontend] ${matchLabel}: User not in ${matchLabel}:`, {
                           userId,
-                          match1Player1Id: userMatch.player1.id,
-                          match1Player2Id: userMatch.player2.id
+                          matchPlayer1Id: userMatch.player1.id,
+                          matchPlayer2Id: userMatch.player2.id
                         });
                         userMatch = null;
                       }
@@ -769,8 +807,8 @@ export default function TournamentPage() {
                        m.player2.id?.toString() === userId || m.player2.id === parseInt(userId)) &&
                       (m.status === 'pending' || m.status === 'playing')
                     );
-                    if (message.matchId === 1) {
-                      console.log('[Frontend] MATCH 1: Looking for match by roomCode:', {
+                    if (matchLabel) {
+                      console.log(`[Frontend] ${matchLabel}: Looking for match by roomCode:`, {
                         receivedRoomCode,
                         foundMatch: userMatch?.id,
                         matchRoomCode: userMatch?.roomCode
@@ -792,8 +830,8 @@ export default function TournamentPage() {
                        m.player2.id?.toString() === userId || m.player2.id === parseInt(userId)) &&
                       (m.status === 'pending' || m.status === 'playing')
                     );
-                    if (message.matchId === 1) {
-                      console.log('[Frontend] MATCH 1: Looking for match by user ID (fallback):', {
+                    if (matchLabel) {
+                      console.log(`[Frontend] ${matchLabel}: Looking for match by user ID (fallback):`, {
                         userId,
                         foundMatch: userMatch?.id,
                         matchRoomCode: userMatch?.roomCode
@@ -840,47 +878,117 @@ export default function TournamentPage() {
 
               // Only set serverGameState if we're on the correct match or transitioning to it
               if (tournamentStep === 'playing' || (tournamentStep === 'bracket' && !isMatchActive)) {
-                // CRITICAL: Check message timestamp to prevent processing out-of-order messages
-                // This helps prevent race conditions where old messages arrive after new ones
-                const messageTimestamp = message.timestamp || 0;
-                const isMatch1 = message.matchId === 1;
+                // CRITICAL: Verify this gameState is for the user's actual match BEFORE accepting it
+                // This prevents Match 1 and Match 2 from mixing states
+                const userId = user?.id_user?.toString();
+                let shouldAcceptGameState = false;
 
-                // Always update serverGameState to keep the game moving
-                // The gameState is authoritative from the server, so we always accept it
-                if (isMatch1) {
-                  console.log('[Frontend] MATCH 1: Setting serverGameState', {
-                    player1Score: message.payload?.player1?.score,
-                    player2Score: message.payload?.player2?.score,
-                    ballX: message.payload?.ball?.x,
-                    ballY: message.payload?.ball?.y,
-                    player1Y: message.payload?.player1?.y,
-                    player2Y: message.payload?.player2?.y,
-                    roomCode: receivedRoomCode,
-                    messageTimestamp,
-                    localTimestamp: Date.now()
-                  });
-                } else {
-                  console.log('[Frontend] Setting serverGameState');
-                  console.log('[Frontend] GameState payload:', {
-                    player1Score: message.payload?.player1?.score,
-                    player2Score: message.payload?.player2?.score,
-                    ballX: message.payload?.ball?.x,
-                    ballY: message.payload?.ball?.y,
-                    ballDx: message.payload?.ball?.dx,
-                    ballDy: message.payload?.ball?.dy,
-                    player1Y: message.payload?.player1?.y,
-                    player2Y: message.payload?.player2?.y,
-                    roomCode: receivedRoomCode,
-                    messageTimestamp,
-                    localTimestamp: Date.now()
+                // Find the match this gameState belongs to
+                let targetMatch = null;
+                if (receivedRoomCode) {
+                  // Priority 1: Find by roomCode (most reliable)
+                  targetMatch = bracket.find((m: any) => m.roomCode === receivedRoomCode);
+                }
+                if (!targetMatch && message.matchId) {
+                  // Priority 2: Find by matchId
+                  targetMatch = bracket.find((m: any) => m.id === message.matchId && m.round === 1);
+                }
+
+                // Verify the user is actually in this match
+                if (targetMatch && userId) {
+                  const isUserInMatch =
+                    (targetMatch.player1?.id?.toString() === userId || targetMatch.player1?.id === parseInt(userId)) ||
+                    (targetMatch.player2?.id?.toString() === userId || targetMatch.player2?.id === parseInt(userId));
+
+                  if (isUserInMatch) {
+                    shouldAcceptGameState = true;
+                    // Update currentMatchIndex if it's wrong
+                    const correctMatchIndex = bracket.findIndex((m: any) => m.id === targetMatch.id);
+                    if (correctMatchIndex !== -1 && correctMatchIndex !== currentMatchIndex) {
+                      console.log('[Frontend] Correcting currentMatchIndex:', {
+                        oldIndex: currentMatchIndex,
+                        newIndex: correctMatchIndex,
+                        matchId: targetMatch.id
+                      });
+                      setCurrentMatchIndex(correctMatchIndex);
+                    }
+                  } else {
+                    console.warn('[Frontend] Rejecting gameState - user not in this match:', {
+                      receivedMatchId: message.matchId,
+                      receivedRoomCode,
+                      targetMatchId: targetMatch.id,
+                      userId,
+                      matchPlayer1Id: targetMatch.player1?.id,
+                      matchPlayer2Id: targetMatch.player2?.id
+                    });
+                  }
+                } else if (!targetMatch) {
+                  // If we can't find the match, log but don't accept (safer)
+                  console.warn('[Frontend] Cannot verify match for gameState, rejecting:', {
+                    receivedMatchId: message.matchId,
+                    receivedRoomCode,
+                    bracketMatches: bracket.map((m: any) => ({
+                      id: m.id,
+                      round: m.round,
+                      roomCode: m.roomCode
+                    }))
                   });
                 }
-                // Always update serverGameState to keep the game moving
-                // Server is authoritative, so we always accept the latest state
-                setServerGameState(message.payload);
+
+                // Only set serverGameState if verified
+                if (shouldAcceptGameState) {
+                  // CRITICAL: Check message timestamp to prevent processing out-of-order messages
+                  // This helps prevent race conditions where old messages arrive after new ones
+                  const messageTimestamp = message.timestamp || 0;
+                  const isMatch1 = message.matchId === 1;
+                  const isMatch2 = message.matchId === 2;
+                  const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
+
+                  if (isMatch1 || isMatch2) {
+                    console.log(`[Frontend] ${matchLabel}: Setting serverGameState (VERIFIED)`, {
+                      player1Score: message.payload?.player1?.score,
+                      player2Score: message.payload?.player2?.score,
+                      ballX: message.payload?.ball?.x,
+                      ballY: message.payload?.ball?.y,
+                      player1Y: message.payload?.player1?.y,
+                      player2Y: message.payload?.player2?.y,
+                      roomCode: receivedRoomCode,
+                      matchId: message.matchId,
+                      messageTimestamp,
+                      localTimestamp: Date.now()
+                    });
+                  } else {
+                    console.log('[Frontend] Setting serverGameState (VERIFIED)');
+                    console.log('[Frontend] GameState payload:', {
+                      player1Score: message.payload?.player1?.score,
+                      player2Score: message.payload?.player2?.score,
+                      ballX: message.payload?.ball?.x,
+                      ballY: message.payload?.ball?.y,
+                      ballDx: message.payload?.ball?.dx,
+                      ballDy: message.payload?.ball?.dy,
+                      player1Y: message.payload?.player1?.y,
+                      player2Y: message.payload?.player2?.y,
+                      roomCode: receivedRoomCode,
+                      messageTimestamp,
+                      localTimestamp: Date.now()
+                    });
+                  }
+                  // Only update serverGameState if verified to be for user's match
+                  setServerGameState(message.payload);
+                } else {
+                  const isMatch1 = message.matchId === 1;
+                  const isMatch2 = message.matchId === 2;
+                  const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
+                  if (matchLabel) {
+                    console.warn(`[Frontend] ${matchLabel}: Rejected gameState - not for user's match`);
+                  }
+                }
               } else {
-                if (message.matchId === 1) {
-                  console.warn('[Frontend] MATCH 1: Not setting serverGameState - wrong step:', {
+                const isMatch1 = message.matchId === 1;
+                const isMatch2 = message.matchId === 2;
+                const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
+                if (matchLabel) {
+                  console.warn(`[Frontend] ${matchLabel}: Not setting serverGameState - wrong step:`, {
                     tournamentStep,
                     isMatchActive,
                     expectedStep: 'playing'
@@ -1723,13 +1831,72 @@ export default function TournamentPage() {
     }
   }, [serverGameState, tournamentType, tournamentStep, currentMatch, matchWinner, handleGameComplete]);
 
-  // Auto-fullscreen for tournament matches - FORCE fullscreen for remote tournaments
-  const autoFullscreenAttemptedRef = React.useRef(false);
+  // Auto-fullscreen for tournament matches - FORCE fullscreen for ALL remote tournament matches
+  // Use a Map to track fullscreen attempts per match to ensure each match gets fullscreen
+  const autoFullscreenAttemptedRef = React.useRef<Map<number, boolean>>(new Map());
+  const fullscreenRetryTimersRef = React.useRef<NodeJS.Timeout[]>([]);
+  const isMountedRef = React.useRef(true);
+  const fullscreenEnabledRef = React.useRef<Map<number, boolean>>(new Map()); // Track per-match success
+
   useEffect(() => {
-    // Only force fullscreen for remote tournaments
-    if (tournamentType === 'remote' && tournamentStep === 'playing' && !isFullscreen) {
+    // Track component mount state
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      // Clear all retry timers on unmount
+      fullscreenRetryTimersRef.current.forEach(timer => clearTimeout(timer));
+      fullscreenRetryTimersRef.current = [];
+    };
+  }, []);
+
+  useEffect(() => {
+    // Force fullscreen for ALL players in remote tournaments when playing (not just host)
+    // This ensures every player gets fullscreen automatically when their match starts
+    // Works independently for each player on their own session/computer
+    if (tournamentType === 'remote' && tournamentStep === 'playing' && currentMatch) {
       const container = gameContainerRef.current;
-      if (!container) return;
+      if (!container || !isMountedRef.current) {
+        // Retry if container not ready yet (important for non-host players)
+        console.log(`[Tournament] Container not ready, retrying in 100ms...`);
+        const retryTimer = setTimeout(() => {
+          if (gameContainerRef.current && isMountedRef.current && tournamentStep === 'playing') {
+            // Re-trigger the effect
+            setIsFullscreen(prev => prev);
+          }
+        }, 100);
+        return () => clearTimeout(retryTimer);
+      }
+
+      const matchId = currentMatch.id;
+      const matchRound = currentMatch.round;
+      const isMatch1Round1 = matchId === 1 && matchRound === 1;
+      const isMatch2Round1 = matchId === 2 && matchRound === 1;
+      const isRound1Match = isMatch1Round1 || isMatch2Round1;
+      const matchLabel = isMatch1Round1 ? 'MATCH 1 ROUND 1' : (isMatch2Round1 ? 'MATCH 2 ROUND 1' : null);
+
+      // Use match ID if available, otherwise use index + round to ensure uniqueness
+      const matchKey = matchId !== undefined && matchId !== null ? matchId : (currentMatchIndex * 100 + (currentMatch.round || 1));
+
+      // Special logging for Match 1 Round 1 and Match 2 Round 1
+      if (isRound1Match) {
+        console.log(`[Tournament] ${matchLabel}: Auto-fullscreen check for this player (independent session)`, {
+          matchId,
+          round: matchRound,
+          matchKey,
+          hasContainer: !!container,
+          isMounted: isMountedRef.current,
+          alreadyAttempted: autoFullscreenAttemptedRef.current.get(matchKey),
+          userId: user?.id_user
+        });
+      }
+
+      // Check if already attempted for this specific match
+      if (autoFullscreenAttemptedRef.current.get(matchKey)) {
+        if (isRound1Match) {
+          console.log(`[Tournament] ${matchLabel}: Fullscreen already attempted for this match`);
+        }
+        return;
+      }
 
       // Check if already in fullscreen
       const isAlreadyFullscreen = !!(
@@ -1740,75 +1907,132 @@ export default function TournamentPage() {
       );
 
       if (isAlreadyFullscreen) {
-        autoFullscreenAttemptedRef.current = true;
+        autoFullscreenAttemptedRef.current.set(matchKey, true);
+        setIsFullscreen(true);
         return;
       }
 
-      // Force fullscreen with multiple retry attempts
+      // Clear any existing retry timers
+      fullscreenRetryTimersRef.current.forEach(timer => clearTimeout(timer));
+      fullscreenRetryTimersRef.current = [];
+
+      // Force fullscreen with multiple retry attempts for EACH match
+      // This works independently for each player on their own session/computer
       const attemptFullscreen = async (attemptNumber: number = 1) => {
+        // Check if already succeeded for this match or component unmounted
+        if (fullscreenEnabledRef.current.get(matchKey) || !isMountedRef.current) {
+          if (isRound1Match && attemptNumber === 1) {
+            console.log(`[Tournament] ${matchLabel}: Skipping - already enabled or unmounted`);
+          }
+          return;
+        }
+
+        // Get fresh container reference
+        const currentContainer = gameContainerRef.current;
+        if (!currentContainer) {
+          if (isRound1Match) {
+            console.warn(`[Tournament] ${matchLabel}: Container not available, will retry`);
+          }
+          return;
+        }
+
+        // Special logging for Match 1 Round 1 and Match 2 Round 1
+        if (isRound1Match && attemptNumber === 1) {
+          console.log(`[Tournament] ${matchLabel}: Starting fullscreen attempt ${attemptNumber} for this player (works independently)`);
+        }
+
+        // Check if already in fullscreen before attempting
+        const alreadyFullscreen = !!(
+          document.fullscreenElement ||
+          (document as any).webkitFullscreenElement ||
+          (document as any).mozFullScreenElement ||
+          (document as any).msFullscreenElement
+        );
+
+        if (alreadyFullscreen) {
+          fullscreenEnabledRef.current.set(matchKey, true);
+          autoFullscreenAttemptedRef.current.set(matchKey, true);
+          setIsFullscreen(true);
+          return;
+        }
+
         try {
-          if (container.requestFullscreen) {
-            await container.requestFullscreen();
-            container.focus();
-            autoFullscreenAttemptedRef.current = true;
-          } else if ((container as any).webkitRequestFullscreen) {
-            await (container as any).webkitRequestFullscreen();
-            container.focus();
-            autoFullscreenAttemptedRef.current = true;
-          } else if ((container as any).mozRequestFullScreen) {
-            await (container as any).mozRequestFullScreen();
-            container.focus();
-            autoFullscreenAttemptedRef.current = true;
-          } else if ((container as any).msRequestFullscreen) {
-            await (container as any).msRequestFullscreen();
-            container.focus();
-            autoFullscreenAttemptedRef.current = true;
+          let success = false;
+          if (currentContainer.requestFullscreen) {
+            await currentContainer.requestFullscreen();
+            success = true;
+          } else if ((currentContainer as any).webkitRequestFullscreen) {
+            await (currentContainer as any).webkitRequestFullscreen();
+            success = true;
+          } else if ((currentContainer as any).mozRequestFullScreen) {
+            await (currentContainer as any).mozRequestFullScreen();
+            success = true;
+          } else if ((currentContainer as any).msRequestFullscreen) {
+            await (currentContainer as any).msRequestFullscreen();
+            success = true;
+          }
+
+          if (success && isMountedRef.current) {
+            currentContainer.focus();
+            fullscreenEnabledRef.current.set(matchKey, true);
+            autoFullscreenAttemptedRef.current.set(matchKey, true);
+            setIsFullscreen(true);
+            // Clear all pending retry timers since we succeeded
+            fullscreenRetryTimersRef.current.forEach(timer => clearTimeout(timer));
+            fullscreenRetryTimersRef.current = [];
+            if (isRound1Match) {
+              console.log(`[Tournament] ✓✓✓ ${matchLabel}: Auto-fullscreen SUCCESS for this player (independent session/computer)`);
+            } else {
+              console.log(`[Tournament] Auto-fullscreen enabled for Match ${matchId || currentMatchIndex} - ALL players (host and non-host)`);
+            }
           }
         } catch (error: any) {
-          // Retry up to 5 times with increasing delays for remote tournaments
-          if (attemptNumber < 5 && tournamentType === 'remote') {
+          // Only retry if we haven't succeeded and haven't exceeded max attempts
+          if (!fullscreenEnabledRef.current.get(matchKey) && attemptNumber < 5 && tournamentType === 'remote' && isMountedRef.current) {
             const delay = attemptNumber * 200; // 200ms, 400ms, 600ms, 800ms
-            if (process.env.NODE_ENV === 'development') {
-              console.log(`[Tournament] Auto-fullscreen attempt ${attemptNumber} failed, retrying in ${delay}ms...`);
-            }
-            setTimeout(() => {
-              attemptFullscreen(attemptNumber + 1);
+            console.log(`[Tournament] Auto-fullscreen attempt ${attemptNumber} failed for Match ${matchId || currentMatchIndex}, retrying in ${delay}ms...`);
+
+            const retryTimer = setTimeout(() => {
+              if (isMountedRef.current && !fullscreenEnabledRef.current.get(matchKey)) {
+                attemptFullscreen(attemptNumber + 1);
+              }
             }, delay);
-          } else {
-            // After 5 attempts, silently fail (no prompt shown)
-            if (process.env.NODE_ENV === 'development') {
-              console.warn('[Tournament] Auto-fullscreen failed after 5 attempts:', error.message);
+
+            fullscreenRetryTimersRef.current.push(retryTimer);
+          } else if (!fullscreenEnabledRef.current.get(matchKey)) {
+            // After 5 attempts or if component unmounted, silently fail
+            if (isMountedRef.current) {
+              console.warn(`[Tournament] Auto-fullscreen failed after ${attemptNumber} attempts for Match ${matchId || currentMatchIndex}:`, error.message);
             }
-            autoFullscreenAttemptedRef.current = true; // Mark as attempted to prevent infinite retries
+            autoFullscreenAttemptedRef.current.set(matchKey, true); // Mark as attempted to prevent infinite retries
           }
         }
       };
 
-      // Start attempting fullscreen with multiple retries
-      if (!autoFullscreenAttemptedRef.current) {
-        // First attempt immediately
-        requestAnimationFrame(() => {
+      // Start attempting fullscreen - only one attempt at a time with sequential retries
+      // First attempt immediately - this works for ALL players independently
+      // Each player on their own session/computer will trigger this automatically
+      // For Match 1 Round 1 and Match 2 Round 1: Both players get fullscreen automatically
+      // No isHost check - fullscreen should work for everyone
+      requestAnimationFrame(() => {
+        if (isMountedRef.current && !fullscreenEnabledRef.current.get(matchKey)) {
+          if (isRound1Match) {
+            console.log(`[Tournament] ${matchLabel}: Initiating auto-fullscreen for this player (independent session)`);
+          } else {
+            console.log(`[Tournament] Attempting auto-fullscreen for Match ${matchId || currentMatchIndex} - ALL players (not just host)`);
+          }
           attemptFullscreen(1);
-        });
-
-        // Additional attempts with delays
-        const retryTimers = [
-          setTimeout(() => requestAnimationFrame(() => attemptFullscreen(2)), 100),
-          setTimeout(() => requestAnimationFrame(() => attemptFullscreen(3)), 500),
-          setTimeout(() => requestAnimationFrame(() => attemptFullscreen(4)), 1000),
-        ];
-
-        return () => {
-          retryTimers.forEach(timer => clearTimeout(timer));
-        };
-      }
+        }
+      });
     }
 
-    // Reset the flag when leaving playing step or when match changes
-    if (tournamentStep !== 'playing' || tournamentType !== 'remote') {
-      autoFullscreenAttemptedRef.current = false;
-    }
-  }, [tournamentStep, isFullscreen, currentMatchIndex, tournamentType]);
+    // Cleanup function
+    return () => {
+      // Clear all retry timers when effect dependencies change
+      fullscreenRetryTimersRef.current.forEach(timer => clearTimeout(timer));
+      fullscreenRetryTimersRef.current = [];
+    };
+  }, [tournamentStep, currentMatchIndex, tournamentType, currentMatch]);
 
   // Auto-start match for remote tournaments when shouldAutoStartMatch is true
   useEffect(() => {
