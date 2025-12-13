@@ -1684,72 +1684,7 @@ class GameManager {
     tournament.bracket = bracket;
     tournament.status = 'playing';
 
-    // Create game rooms for each semi-final match (Round 1 matches)
-    const semiFinalMatches = bracket.filter(m => m.round === 1 && m.player1 && m.player2);
-
-    for (const match of semiFinalMatches) {
-      // Get player sockets
-      const player1Socket = this.usersSocket.get(match.player1.id.toString());
-      const player2Socket = this.usersSocket.get(match.player2.id.toString());
-
-      if (!player1Socket || !player2Socket) {
-        console.warn(`[startTournament] Cannot create game room for match ${match.id}: one or both players offline`);
-        continue;
-      }
-
-      // Prepare player objects for game room creation
-      const player1 = {
-        id: match.player1.id,
-        username: match.player1.name,
-        socket: player1Socket,
-        customization: tournament.customization || {}
-      };
-
-      const player2 = {
-        id: match.player2.id,
-        username: match.player2.name,
-        socket: player2Socket,
-        customization: tournament.customization || {}
-      };
-
-      // Create game room
-      const result = this.createGameRoom(player1, player2);
-
-      // Store roomCode in match object
-      match.roomCode = result.roomCode;
-      match.status = 'playing';
-
-      // Send tournamentMatchFound message to both players
-      this.sendToPlayer(player1Socket, {
-        type: 'tournamentMatchFound',
-        data: {
-          tournamentId: tournamentId,
-          matchId: match.id,
-          roomCode: result.roomCode,
-          opponent: {
-            id: player2.id,
-            name: player2.username,
-            avatar: match.player2.avatar
-          }
-        }
-      });
-
-      this.sendToPlayer(player2Socket, {
-        type: 'tournamentMatchFound',
-        data: {
-          tournamentId: tournamentId,
-          matchId: match.id,
-          roomCode: result.roomCode,
-          opponent: {
-            id: player1.id,
-            name: player1.username,
-            avatar: match.player1.avatar
-          }
-        }
-      });
-    }
-
-    // Broadcast tournament update (includes bracket with roomCodes)
+    // Broadcast tournament update
     this.broadcastTournamentUpdate(tournament);
 
     return { success: true, bracket };

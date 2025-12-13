@@ -516,29 +516,14 @@ export default function TournamentPage() {
               }
             }
 
-            break;
-
-          case 'tournamentMatchFound':
-            // Handle tournament match room assignment
+            // Handle match room assignment for remote tournaments
             if (tournamentType === 'remote' && message.data.roomCode && message.data.matchId) {
-              // Update bracket with roomCode
+              // Store roomCode for the current match
               const bracket = gameState.tournament?.bracket || [];
               const matchIndex = bracket.findIndex(m => m.id === message.data.matchId);
-              if (matchIndex !== -1) {
-                // Update match with roomCode
-                const updatedBracket = [...bracket];
-                updatedBracket[matchIndex] = {
-                  ...updatedBracket[matchIndex],
-                  roomCode: message.data.roomCode,
-                  status: 'playing'
-                };
-                setTournament({
-                  ...gameState.tournament,
-                  bracket: updatedBracket
-                });
-
-                // If this is the current match, we can start playing
-                // The gameState messages will come through WebSocket from the game room
+              if (matchIndex !== -1 && matchIndex === currentMatchIndex) {
+                // This is the current match - we're ready to play
+                // The gameState messages will come through WebSocket
               }
             }
             break;
