@@ -16,7 +16,8 @@ import HelpTab from './components/help/page'
 import Loading from '@/components/Loading/page'
 
 const ProfileSettingsPage = () => {
-  const user = useUserStore((state) => state.user)
+  const {user} = useUserStore();
+  console.log("=====>", user);
   const setUser = useUserStore((state) => state.setUser)
   const hasHydrated = useUserStore((state) => state._hasHydrated)
   
@@ -115,14 +116,14 @@ const ProfileSettingsPage = () => {
     reader.readAsDataURL(file)
   }
 
-  const getProfileImageUrl = () => {
-    if (previewImage) return previewImage
-    const currentImg = user.profile_img ;
-    if (currentImg && currentImg.startsWith('/uploads/')) {
-      return `${process.env.NEXT_PUBLIC_BACK_API}${currentImg}`
-    }
-    return currentImg
-  }
+  // const getProfileImageUrl = () => {
+  //   if (previewImage) return previewImage
+  //   const currentImg = user.profile_img ;
+  //   if (currentImg && currentImg.startsWith('/uploads/')) {
+  //     return `${process.env.NEXT_PUBLIC_BACK_API}${currentImg}`
+  //   }
+  //   return currentImg
+  // }
 
   // 1. SAVE PROFILE (Axios)
   const handleSaveProfile = async () => {
@@ -375,7 +376,6 @@ const ProfileSettingsPage = () => {
         languages={languages}
         isPasswordAuth={isPasswordAuth}
         handleImageClick={handleImageClick}
-        getProfileImageUrl={getProfileImageUrl}
         fileInputRef={fileInputRef}
         handleImageChange={handleImageChange}
         handleSaveProfile={handleSaveProfile}

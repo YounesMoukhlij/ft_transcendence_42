@@ -135,7 +135,9 @@ export default function Navbar() {
           
           {/* Left: Logo */}
           <div className="flex items-center gap-2 ml-5">
-            <Logo size={40} />
+            <div className='fixed'>
+              <Logo />   {/* kan kayakhoud size={40}*/}
+            </div>
             {/* <GiPingPongBat 
               className="text-white w-8 h-8 md:w-10 md:h-10 cursor-pointer animate-spin"
               style={{ animation: 'spin 6s linear infinite' }}
