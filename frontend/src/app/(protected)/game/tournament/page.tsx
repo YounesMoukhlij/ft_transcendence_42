@@ -554,6 +554,7 @@ export default function TournamentPage() {
             }
 
             // Update bracket when matches finish (for remote tournaments)
+            // ALWAYS update bracket state, even if match is active, so players can see other match status
             if (tournamentType === 'remote' && message.data.bracket) {
               const updatedBracket = message.data.bracket;
               const currentBracket = gameState.tournament?.bracket || [];
@@ -567,35 +568,67 @@ export default function TournamentPage() {
               });
 
               if (hasChanges) {
-                console.log('[Frontend] Bracket updated - matches finished or final match started');
-                // Update tournament bracket
-                setTournament({
-                  ...gameState.tournament!,
-                  bracket: updatedBracket
+                console.log('[Frontend] Bracket updated - matches finished or final match started', {
+                  isMatchActive,
+                  updatedBracket: updatedBracket.map((m: any) => ({
+                    id: m.id,
+                    round: m.round,
+                    status: m.status,
+                    hasWinner: !!m.winner
+                  }))
                 });
-              }
-            }
 
-            // For remote tournaments, sync bracket updates during gameplay
-            // Update bracket when matches finish (for remote tournaments)
-            // Don't auto-switch to bracket if match is active
-            if (tournamentType === 'remote' && message.data.bracket && !isMatchActive) {
-              // Update bracket state from backend
-              const updatedBracket = message.data.bracket;
-              const currentTournament = gameState.tournament;
-              if (currentTournament) {
-                setTournament({
-                  ...currentTournament,
-                  bracket: updatedBracket
-                });
-              }
+                // ALWAYS update tournament bracket state (even if match is active)
+                // This ensures all players see bracket updates regardless of their match status
+                const currentTournament = gameState.tournament;
+                if (currentTournament) {
+                  setTournament({
+                    ...currentTournament,
+                    bracket: updatedBracket
+                  });
+                  console.log('[Frontend] Tournament bracket state updated (isMatchActive:', isMatchActive, ')');
+                }
 
-              // Update game context bracket
-              const currentMatch = updatedBracket[currentMatchIndex];
-              if (currentMatch && currentMatch.status === 'finished' && currentMatch.winner) {
-                // Match is finished - update local state
-                setMatchWinner(currentMatch.winner);
-                setShowTournamentWinnerMessage(true);
+                // Check if current user's match has finished
+                const userId = user?.id_user?.toString();
+                if (userId) {
+                  const userMatch = updatedBracket.find((m: any) =>
+                    m.player1 && m.player2 &&
+                    (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
+                    m.status === 'finished' && m.winner
+                  );
+
+                  if (userMatch && userMatch.winner) {
+                    // Current user's match finished - show completion modal
+                    console.log('[Frontend] Current user match finished, showing completion modal');
+                    setMatchWinner(userMatch.winner);
+                    setShowTournamentWinnerMessage(true);
+                  } else {
+                    // Check if OTHER matches (not current user's) have finished
+                    // This allows players to see when other matches finish even while playing
+                    const round1Matches = updatedBracket.filter((m: any) => m.round === 1);
+                    const otherFinishedMatches = round1Matches.filter((m: any) =>
+                      m.status === 'finished' &&
+                      m.winner &&
+                      !(m.player1?.id?.toString() === userId || m.player2?.id?.toString() === userId)
+                    );
+
+                    if (otherFinishedMatches.length > 0 && isMatchActive) {
+                      // User is actively playing and another match finished
+                      // Show a brief notification that other match finished
+                      console.log('[Frontend] Other match(es) finished while user is playing:', otherFinishedMatches.map((m: any) => m.id));
+
+                      // Find the other match that finished
+                      const otherMatch = otherFinishedMatches[0];
+                      if (otherMatch && otherMatch.winner) {
+                        // Store notification to show in UI
+                        // The bracket state is already updated, so when user's match finishes,
+                        // the completion modal will show the correct status
+                        console.log(`[Frontend] Match ${otherMatch.id} finished: ${otherMatch.winner.name} won`);
+                      }
+                    }
+                  }
+                }
               }
             }
 
@@ -765,6 +798,43 @@ export default function TournamentPage() {
             // Backend confirmed match result was recorded
             console.log('[Frontend] Match result recorded:', message.data);
             // The bracket will be updated via tournamentUpdated message
+            break;
+
+          case 'gameOver':
+            // Handle game over message from backend (match finished)
+            console.log('[Frontend] Received gameOver message:', message.payload);
+            if (tournamentType === 'remote' && tournamentStep === 'playing' && message.payload) {
+              const { winner, finalGameState, finalScore } = message.payload;
+
+              // Update serverGameState with final state to prevent freezing
+              if (finalGameState) {
+                console.log('[Frontend] Setting final gameState from gameOver message');
+                setServerGameState(finalGameState);
+              }
+
+              // Find winner player object from current match
+              const bracket = gameState.tournament?.bracket || [];
+              const currentMatch = bracket[currentMatchIndex];
+
+              if (currentMatch && winner) {
+                // Determine which player won
+                const winnerPlayer = currentMatch.player1?.name === winner || currentMatch.player1?.username === winner
+                  ? currentMatch.player1
+                  : currentMatch.player2?.name === winner || currentMatch.player2?.username === winner
+                  ? currentMatch.player2
+                  : null;
+
+                if (winnerPlayer) {
+                  console.log('[Frontend] Match finished, winner:', winnerPlayer.name);
+                  // Call handleGameComplete to show completion modal and report result
+                  handleGameComplete(winnerPlayer);
+                } else {
+                  console.warn('[Frontend] Could not find winner player object for:', winner);
+                }
+              } else {
+                console.warn('[Frontend] No current match or winner in gameOver message');
+              }
+            }
             break;
 
           case 'opponentLeft':
@@ -1461,25 +1531,38 @@ export default function TournamentPage() {
   }, [tournamentStep, toggleFullscreen]);
 
   // Handle winner detection for remote tournament matches
+  // This is a fallback in case gameOver message is missed
   useEffect(() => {
-    if (tournamentType === 'remote' && tournamentStep === 'playing' && serverGameState && currentMatch) {
+    if (tournamentType === 'remote' && tournamentStep === 'playing' && serverGameState && currentMatch && !matchWinner) {
       const WINNING_SCORE = 10;
+      const p1Score = serverGameState.player1?.score || 0;
+      const p2Score = serverGameState.player2?.score || 0;
+
       console.log('[Frontend] Checking for winner:', {
-        player1Score: serverGameState.player1?.score,
-        player2Score: serverGameState.player2?.score,
+        player1Score: p1Score,
+        player2Score: p2Score,
         matchWinner,
-        hasCurrentMatch: !!currentMatch
+        hasCurrentMatch: !!currentMatch,
+        matchStatus: currentMatch.status
       });
-      if (serverGameState.player1.score >= WINNING_SCORE && !matchWinner) {
-        // Player 1 won
-        console.log('[Frontend] Player 1 won!');
-        const winner = currentMatch.player1;
-        handleGameComplete(winner);
-      } else if (serverGameState.player2.score >= WINNING_SCORE && !matchWinner) {
-        // Player 2 won
-        console.log('[Frontend] Player 2 won!');
-        const winner = currentMatch.player2;
-        handleGameComplete(winner);
+
+      // Only check if match is not already finished
+      if (currentMatch.status !== 'finished') {
+        if (p1Score >= WINNING_SCORE) {
+          // Player 1 won
+          console.log('[Frontend] Player 1 won! (detected from gameState)');
+          const winner = currentMatch.player1;
+          if (winner) {
+            handleGameComplete(winner);
+          }
+        } else if (p2Score >= WINNING_SCORE) {
+          // Player 2 won
+          console.log('[Frontend] Player 2 won! (detected from gameState)');
+          const winner = currentMatch.player2;
+          if (winner) {
+            handleGameComplete(winner);
+          }
+        }
       }
     }
   }, [serverGameState, tournamentType, tournamentStep, currentMatch, matchWinner, handleGameComplete]);

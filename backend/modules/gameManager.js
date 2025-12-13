@@ -495,15 +495,56 @@ class GameManager {
             finalGameState: room.gameState // Include final state so client can display it
           };
 
-          this.sendToPlayer(room.player1.socket, {
+          // Verify sockets are still valid before sending gameOver
+          const p1SocketValid = room.player1.socket && room.player1.socket.readyState === 1;
+          const p2SocketValid = room.player2.socket && room.player2.socket.readyState === 1;
+
+          // Try to update stale sockets before sending
+          if (!p1SocketValid) {
+            const updatedSocket = this.usersSocket.get(room.player1.id.toString());
+            if (updatedSocket && updatedSocket.readyState === 1) {
+              room.player1.socket = updatedSocket;
+              console.log(`[startGameLoop] Updated stale socket for player1 (${room.player1.id}) before gameOver`);
+            }
+          }
+
+          if (!p2SocketValid) {
+            const updatedSocket = this.usersSocket.get(room.player2.id.toString());
+            if (updatedSocket && updatedSocket.readyState === 1) {
+              room.player2.socket = updatedSocket;
+              console.log(`[startGameLoop] Updated stale socket for player2 (${room.player2.id}) before gameOver`);
+            }
+          }
+
+          // Send gameOver message to both players
+          const p1Sent = this.sendToPlayer(room.player1.socket, {
             type: 'gameOver',
             payload: gameOverPayload
           });
 
-          this.sendToPlayer(room.player2.socket, {
+          const p2Sent = this.sendToPlayer(room.player2.socket, {
             type: 'gameOver',
             payload: gameOverPayload
           });
+
+          // Log if sending failed
+          if (!p1Sent) {
+            console.warn(`[startGameLoop] Failed to send gameOver to player1 (${room.player1.id}) in room ${roomCode}`);
+          }
+          if (!p2Sent) {
+            console.warn(`[startGameLoop] Failed to send gameOver to player2 (${room.player2.id}) in room ${roomCode}`);
+          }
+
+          // Send one final gameState update AFTER gameOver to ensure clients have the final state
+          // This helps if gameOver message is missed or delayed over network
+          // Use a small delay to ensure gameOver is sent first
+          setTimeout(() => {
+            const finalRoom = this.gameRooms.get(roomCode);
+            if (finalRoom) {
+              console.log(`[startGameLoop] Sending final gameState after gameOver for room ${roomCode}`);
+              this.broadcastGameState(roomCode, finalRoom.gameState);
+            }
+          }, 100); // 100ms delay to ensure gameOver is sent first
 
           // Save game history
           this.saveGameHistory(room, false);
@@ -598,7 +639,10 @@ class GameManager {
 
   // Send message to player
   sendToPlayer(socket, message) {
-    if (!socket) return false;
+    if (!socket) {
+      console.warn('[sendToPlayer] Socket is null or undefined');
+      return false;
+    }
 
     if (socket.readyState === 1) { // WebSocket.OPEN
       try {
@@ -606,12 +650,19 @@ class GameManager {
         socket.send(messageStr);
         return true;
       } catch (error) {
-        console.error('Error sending message to player:', error);
+        console.error('[sendToPlayer] Error sending message:', error);
         return false;
       }
     } else {
-      // Socket not open - log for debugging
-      console.warn('Attempted to send message to closed socket. State:', socket.readyState);
+      // Socket not open - log for debugging with more details
+      console.warn('[sendToPlayer] Attempted to send message to closed socket:', {
+        readyState: socket.readyState,
+        readyStateText: socket.readyState === 0 ? 'CONNECTING' :
+                       socket.readyState === 1 ? 'OPEN' :
+                       socket.readyState === 2 ? 'CLOSING' :
+                       socket.readyState === 3 ? 'CLOSED' : 'UNKNOWN',
+        messageType: message.type
+      });
       return false;
     }
   }
@@ -1703,7 +1754,7 @@ class GameManager {
 
 
 
-  
+
   // Try to match random opponents (called periodically or when new players join queue)
   // IMPORTANT: This method is currently disabled to prevent automatic player addition without consent.
   // Players can only join tournaments via:
