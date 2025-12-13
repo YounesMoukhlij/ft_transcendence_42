@@ -1684,6 +1684,74 @@ class GameManager {
     tournament.bracket = bracket;
     tournament.status = 'playing';
 
+    // Create game rooms for Round 1 matches and sync between players
+    console.log(`[startTournament] Starting room creation for tournament ${tournamentId}`);
+    console.log(`[startTournament] Bracket has ${bracket.length} matches`);
+    console.log(`[startTournament] Available sockets: ${Array.from(this.usersSocket.keys()).join(', ')}`);
+
+    for (const match of bracket) {
+      // Only create rooms for Round 1 matches that have both players
+      if (match.round === 1 && match.player1 && match.player2) {
+        console.log(`[startTournament] Processing match ${match.id}: Player1 ID=${match.player1.id}, Player2 ID=${match.player2.id}`);
+
+        // Get player sockets from usersSocket map (try both string and number keys)
+        const player1IdStr = match.player1.id.toString();
+        const player2IdStr = match.player2.id.toString();
+        const player1Socket = this.usersSocket.get(player1IdStr) || this.usersSocket.get(match.player1.id);
+        const player2Socket = this.usersSocket.get(player2IdStr) || this.usersSocket.get(match.player2.id);
+
+        // Check if both players are online (have active sockets)
+        if (!player1Socket || !player2Socket) {
+          console.warn(`[startTournament] Missing socket for match ${match.id}. Player1 ID=${match.player1.id} (${player1IdStr}): ${!!player1Socket}, Player2 ID=${match.player2.id} (${player2IdStr}): ${!!player2Socket}`);
+          console.warn(`[startTournament] Available socket keys: ${Array.from(this.usersSocket.keys()).join(', ')}`);
+          continue; // Skip this match if players aren't online
+        }
+
+        // Verify sockets are open
+        if (player1Socket.readyState !== 1 || player2Socket.readyState !== 1) {
+          console.warn(`[startTournament] Socket not open for match ${match.id}. Player1 readyState=${player1Socket.readyState}, Player2 readyState=${player2Socket.readyState}`);
+          continue;
+        }
+
+        // Create player objects with required structure for createGameRoom
+        const player1 = {
+          id: match.player1.id,
+          username: match.player1.name,  // Bracket uses 'name', createGameRoom expects 'username'
+          socket: player1Socket,
+          customization: tournament.customization || {}
+        };
+
+        const player2 = {
+          id: match.player2.id,
+          username: match.player2.name,
+          socket: player2Socket,
+          customization: tournament.customization || {}
+        };
+
+        try {
+          // Create the game room (this also starts the game loop and sends matchFound messages)
+          const roomResult = this.createGameRoom(player1, player2);
+
+          if (!roomResult || !roomResult.roomCode) {
+            console.error(`[startTournament] Failed to create game room for match ${match.id}`);
+            continue;
+          }
+
+          // Store roomCode in the match object for reference
+          match.roomCode = roomResult.roomCode;
+          match.status = 'playing';
+
+          // Send initial gameState to both players to ensure they're synced
+          // The game loop will continue sending updates every frame
+          this.broadcastGameState(roomResult.roomCode, roomResult.gameState);
+
+          console.log(`[startTournament] ✓ Created game room ${roomResult.roomCode} for match ${match.id} (Round ${match.round}) - ${player1.username} vs ${player2.username}`);
+        } catch (error) {
+          console.error(`[startTournament] Error creating game room for match ${match.id}:`, error);
+        }
+      }
+    }
+
     // Broadcast tournament update
     this.broadcastTournamentUpdate(tournament);
 

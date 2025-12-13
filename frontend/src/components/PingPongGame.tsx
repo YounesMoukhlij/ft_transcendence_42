@@ -336,6 +336,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const { gameState } = useGameContext();
   const { user, socket } = useUserStore();
   const router = useRouter();
+  const { t } = useTranslation();
 
   // Unified state
   const [winner, setWinner] = useState<string | null>(null);
