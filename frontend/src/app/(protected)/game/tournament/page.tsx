@@ -647,15 +647,45 @@ export default function TournamentPage() {
           case 'gameState':
             // Handle game state updates for remote tournament matches
             const roomCode = message.roomCode; // Get roomCode from message if available
-            console.log('[Frontend] Received gameState message:', {
-              tournamentType,
-              tournamentStep,
-              hasPayload: !!message.payload,
-              roomCode: roomCode,
-              player1Id: message.payload?.player1?.id,
-              player2Id: message.payload?.player2?.id,
-              currentUserId: user?.id_user
-            });
+            const isMatch1 = message.matchId === 1;
+
+            if (isMatch1) {
+              console.log('[Frontend] MATCH 1: Received gameState message:', {
+                tournamentType,
+                tournamentStep,
+                hasPayload: !!message.payload,
+                roomCode: roomCode,
+                player1Id: message.payload?.player1?.id,
+                player2Id: message.payload?.player2?.id,
+                player1Username: message.payload?.player1?.username,
+                player2Username: message.payload?.player2?.username,
+                player1Score: message.payload?.player1?.score,
+                player2Score: message.payload?.player2?.score,
+                ballX: message.payload?.ball?.x,
+                ballY: message.payload?.ball?.y,
+                tournamentId: message.tournamentId,
+                matchId: message.matchId,
+                round: message.round,
+                matchNumber: message.matchNumber,
+                currentUserId: user?.id_user
+              });
+            } else {
+              console.log('[Frontend] Received gameState message:', {
+                tournamentType,
+                tournamentStep,
+                hasPayload: !!message.payload,
+                roomCode: roomCode,
+                player1Id: message.payload?.player1?.id,
+                player2Id: message.payload?.player2?.id,
+                player1Username: message.payload?.player1?.username,
+                player2Username: message.payload?.player2?.username,
+                tournamentId: message.tournamentId,
+                matchId: message.matchId,
+                round: message.round,
+                matchNumber: message.matchNumber,
+                currentUserId: user?.id_user
+              });
+            }
 
             // Verify roomCode matches current match if available
             if (roomCode && tournamentType === 'remote') {
@@ -699,33 +729,75 @@ export default function TournamentPage() {
                 if (userId) {
                   let userMatch = null;
 
-                  // Priority 1: Find match by roomCode if provided (most accurate)
-                  if (receivedRoomCode) {
+                  // Priority 1: If this is Match 1, find Match 1 specifically
+                  if (message.matchId === 1) {
+                    userMatch = bracket.find(m => m.id === 1 && m.round === 1);
+                    if (userMatch && userMatch.player1 && userMatch.player2) {
+                      const isPlayer1 = userMatch.player1.id?.toString() === userId;
+                      const isPlayer2 = userMatch.player2.id?.toString() === userId;
+                      if (isPlayer1 || isPlayer2) {
+                        console.log('[Frontend] MATCH 1: Found user in Match 1:', {
+                          userId,
+                          isPlayer1,
+                          isPlayer2,
+                          player1Id: userMatch.player1.id,
+                          player2Id: userMatch.player2.id,
+                          roomCode: userMatch.roomCode
+                        });
+                      } else {
+                        console.warn('[Frontend] MATCH 1: User not in Match 1:', {
+                          userId,
+                          match1Player1Id: userMatch.player1.id,
+                          match1Player2Id: userMatch.player2.id
+                        });
+                        userMatch = null;
+                      }
+                    }
+                  }
+
+                  // Priority 2: Find match by roomCode if provided (most accurate)
+                  if (!userMatch && receivedRoomCode) {
                     userMatch = bracket.find(m =>
                       m.roomCode === receivedRoomCode &&
                       m.player1 && m.player2 &&
                       (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
                       (m.status === 'pending' || m.status === 'playing')
                     );
-                    console.log('[Frontend] Looking for match by roomCode:', {
-                      receivedRoomCode,
-                      foundMatch: userMatch?.id,
-                      matchRoomCode: userMatch?.roomCode
-                    });
+                    if (message.matchId === 1) {
+                      console.log('[Frontend] MATCH 1: Looking for match by roomCode:', {
+                        receivedRoomCode,
+                        foundMatch: userMatch?.id,
+                        matchRoomCode: userMatch?.roomCode
+                      });
+                    } else {
+                      console.log('[Frontend] Looking for match by roomCode:', {
+                        receivedRoomCode,
+                        foundMatch: userMatch?.id,
+                        matchRoomCode: userMatch?.roomCode
+                      });
+                    }
                   }
 
-                  // Priority 2: If no roomCode match found, find by user ID (fallback)
+                  // Priority 3: If no roomCode match found, find by user ID (fallback)
                   if (!userMatch) {
                     userMatch = bracket.find(m =>
                       m.player1 && m.player2 &&
                       (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
                       (m.status === 'pending' || m.status === 'playing')
                     );
-                    console.log('[Frontend] Looking for match by user ID (fallback):', {
-                      userId,
-                      foundMatch: userMatch?.id,
-                      matchRoomCode: userMatch?.roomCode
-                    });
+                    if (message.matchId === 1) {
+                      console.log('[Frontend] MATCH 1: Looking for match by user ID (fallback):', {
+                        userId,
+                        foundMatch: userMatch?.id,
+                        matchRoomCode: userMatch?.roomCode
+                      });
+                    } else {
+                      console.log('[Frontend] Looking for match by user ID (fallback):', {
+                        userId,
+                        foundMatch: userMatch?.id,
+                        matchRoomCode: userMatch?.roomCode
+                      });
+                    }
                   }
 
                   if (userMatch) {
@@ -761,27 +833,58 @@ export default function TournamentPage() {
 
               // Only set serverGameState if we're on the correct match or transitioning to it
               if (tournamentStep === 'playing' || (tournamentStep === 'bracket' && !isMatchActive)) {
-                console.log('[Frontend] Setting serverGameState');
-                console.log('[Frontend] GameState payload:', {
-                  player1Score: message.payload?.player1?.score,
-                  player2Score: message.payload?.player2?.score,
-                  ballX: message.payload?.ball?.x,
-                  ballY: message.payload?.ball?.y,
-                  ballDx: message.payload?.ball?.dx,
-                  ballDy: message.payload?.ball?.dy,
-                  player1Y: message.payload?.player1?.y,
-                  player2Y: message.payload?.player2?.y,
-                  roomCode: receivedRoomCode,
-                  timestamp: Date.now()
-                });
+                // CRITICAL: Check message timestamp to prevent processing out-of-order messages
+                // This helps prevent race conditions where old messages arrive after new ones
+                const messageTimestamp = message.timestamp || 0;
+                const isMatch1 = message.matchId === 1;
+
                 // Always update serverGameState to keep the game moving
+                // The gameState is authoritative from the server, so we always accept it
+                if (isMatch1) {
+                  console.log('[Frontend] MATCH 1: Setting serverGameState', {
+                    player1Score: message.payload?.player1?.score,
+                    player2Score: message.payload?.player2?.score,
+                    ballX: message.payload?.ball?.x,
+                    ballY: message.payload?.ball?.y,
+                    player1Y: message.payload?.player1?.y,
+                    player2Y: message.payload?.player2?.y,
+                    roomCode: receivedRoomCode,
+                    messageTimestamp,
+                    localTimestamp: Date.now()
+                  });
+                } else {
+                  console.log('[Frontend] Setting serverGameState');
+                  console.log('[Frontend] GameState payload:', {
+                    player1Score: message.payload?.player1?.score,
+                    player2Score: message.payload?.player2?.score,
+                    ballX: message.payload?.ball?.x,
+                    ballY: message.payload?.ball?.y,
+                    ballDx: message.payload?.ball?.dx,
+                    ballDy: message.payload?.ball?.dy,
+                    player1Y: message.payload?.player1?.y,
+                    player2Y: message.payload?.player2?.y,
+                    roomCode: receivedRoomCode,
+                    messageTimestamp,
+                    localTimestamp: Date.now()
+                  });
+                }
+                // Always update serverGameState to keep the game moving
+                // Server is authoritative, so we always accept the latest state
                 setServerGameState(message.payload);
               } else {
-                console.warn('[Frontend] Not setting serverGameState - wrong step:', {
-                  tournamentStep,
-                  isMatchActive,
-                  expectedStep: 'playing'
-                });
+                if (message.matchId === 1) {
+                  console.warn('[Frontend] MATCH 1: Not setting serverGameState - wrong step:', {
+                    tournamentStep,
+                    isMatchActive,
+                    expectedStep: 'playing'
+                  });
+                } else {
+                  console.warn('[Frontend] Not setting serverGameState - wrong step:', {
+                    tournamentStep,
+                    isMatchActive,
+                    expectedStep: 'playing'
+                  });
+                }
               }
             } else {
               console.warn('[Frontend] Ignoring gameState - conditions not met:', {
