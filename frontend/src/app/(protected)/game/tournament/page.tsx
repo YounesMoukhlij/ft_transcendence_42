@@ -158,6 +158,11 @@ export default function TournamentPage() {
   const [showTournamentWinnerMessage, setShowTournamentWinnerMessage] = useState(false);
   const [showMatchCompletionModal, setShowMatchCompletionModal] = useState(false);
   const [isMatchActive, setIsMatchActive] = useState(false); // Prevent auto-switching during active match
+  const [showLoserOptionsModal, setShowLoserOptionsModal] = useState(false);
+  const [isSpectator, setIsSpectator] = useState(false); // Track if user is spectating
+  const [spectatingMatchId, setSpectatingMatchId] = useState<number | null>(null);
+  const [tournamentStats, setTournamentStats] = useState<any>(null);
+  const [showTournamentStats, setShowTournamentStats] = useState(false);
   const gameContainerRef = React.useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isStartingTournament, setIsStartingTournament] = useState(false);
@@ -732,9 +737,9 @@ export default function TournamentPage() {
                   // Priority 1: If this is Match 1, find Match 1 specifically
                   if (message.matchId === 1) {
                     userMatch = bracket.find(m => m.id === 1 && m.round === 1);
-                    if (userMatch && userMatch.player1 && userMatch.player2) {
-                      const isPlayer1 = userMatch.player1.id?.toString() === userId;
-                      const isPlayer2 = userMatch.player2.id?.toString() === userId;
+                    if (userMatch && userMatch.player1 && userMatch.player2 && userId) {
+                      const isPlayer1 = userMatch.player1.id?.toString() === userId || userMatch.player1.id === parseInt(userId);
+                      const isPlayer2 = userMatch.player2.id?.toString() === userId || userMatch.player2.id === parseInt(userId);
                       if (isPlayer1 || isPlayer2) {
                         console.log('[Frontend] MATCH 1: Found user in Match 1:', {
                           userId,
@@ -756,11 +761,12 @@ export default function TournamentPage() {
                   }
 
                   // Priority 2: Find match by roomCode if provided (most accurate)
-                  if (!userMatch && receivedRoomCode) {
+                  if (!userMatch && receivedRoomCode && userId) {
                     userMatch = bracket.find(m =>
                       m.roomCode === receivedRoomCode &&
                       m.player1 && m.player2 &&
-                      (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
+                      (m.player1.id?.toString() === userId || m.player1.id === parseInt(userId) ||
+                       m.player2.id?.toString() === userId || m.player2.id === parseInt(userId)) &&
                       (m.status === 'pending' || m.status === 'playing')
                     );
                     if (message.matchId === 1) {
@@ -779,10 +785,11 @@ export default function TournamentPage() {
                   }
 
                   // Priority 3: If no roomCode match found, find by user ID (fallback)
-                  if (!userMatch) {
+                  if (!userMatch && userId) {
                     userMatch = bracket.find(m =>
                       m.player1 && m.player2 &&
-                      (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
+                      (m.player1.id?.toString() === userId || m.player1.id === parseInt(userId) ||
+                       m.player2.id?.toString() === userId || m.player2.id === parseInt(userId)) &&
                       (m.status === 'pending' || m.status === 'playing')
                     );
                     if (message.matchId === 1) {
@@ -1405,6 +1412,12 @@ export default function TournamentPage() {
       return;
     }
 
+    // Check if current user is the loser
+    const userId = user?.id_user?.toString();
+    const isLoser = userId && currentMatch.player1 && currentMatch.player2 &&
+                    (currentMatch.player1.id?.toString() === userId || currentMatch.player2.id?.toString() === userId) &&
+                    winner.id?.toString() !== userId;
+
     // Set match as inactive (finished)
     setIsMatchActive(false);
 
@@ -1437,6 +1450,14 @@ export default function TournamentPage() {
     setMatchWinner(winner);
     setShowMatchCompletionModal(true);
     setShowTournamentWinnerMessage(true);
+
+    // If user is the loser and this is Round 1, show loser options modal after a delay
+    if (isLoser && currentMatch.round === 1 && tournamentType === 'remote') {
+      console.log('[Frontend] User lost Round 1 match, will show loser options');
+      setTimeout(() => {
+        setShowLoserOptionsModal(true);
+      }, 2000); // Show after match completion modal
+    }
 
     // Check if tournament is complete (all matches finished) - for local tournaments
     if (tournamentType === 'local') {
@@ -1501,6 +1522,27 @@ export default function TournamentPage() {
         }
     }
   }, [gameState.tournament?.bracket, updateTournamentMatch, currentMatchIndex, matchWinner, tournamentType]);
+
+  // Effect: Auto-switch spectators to final match when it starts
+  useEffect(() => {
+    if (tournamentType !== 'remote' || !isSpectator) return;
+
+    const bracket = gameState.tournament?.bracket;
+    if (!bracket) return;
+
+    // Find final match (Round 2)
+    const finalMatch = bracket.find(m => m.round === 2 && m.status === 'playing');
+    if (finalMatch && finalMatch.roomCode) {
+      // Switch to spectating the final match
+      const finalMatchIndex = bracket.findIndex(m => m.id === finalMatch.id);
+      if (finalMatchIndex !== -1 && spectatingMatchId !== finalMatch.id) {
+        console.log('[Frontend] Spectator: Switching to final match');
+        setSpectatingMatchId(finalMatch.id);
+        setCurrentMatchIndex(finalMatchIndex);
+        setTournamentStep('playing');
+      }
+    }
+  }, [gameState.tournament?.bracket, isSpectator, tournamentType, spectatingMatchId]);
 
   // Effect to auto-advance to final match when both Round 1 matches finish (for remote tournaments)
   useEffect(() => {
@@ -1635,8 +1677,17 @@ export default function TournamentPage() {
 
   // Handle winner detection for remote tournament matches
   // This is a fallback in case gameOver message is missed
+  // Use ref to prevent multiple triggers
+  const winnerDetectionRef = React.useRef(false);
+
   useEffect(() => {
-    if (tournamentType === 'remote' && tournamentStep === 'playing' && serverGameState && currentMatch && !matchWinner) {
+    // Reset ref when match changes or winner is cleared
+    if (!currentMatch || matchWinner) {
+      winnerDetectionRef.current = false;
+      return;
+    }
+
+    if (tournamentType === 'remote' && tournamentStep === 'playing' && serverGameState && currentMatch && !matchWinner && !winnerDetectionRef.current) {
       const WINNING_SCORE = 10;
       const p1Score = serverGameState.player1?.score || 0;
       const p2Score = serverGameState.player2?.score || 0;
@@ -1650,10 +1701,11 @@ export default function TournamentPage() {
       });
 
       // Only check if match is not already finished
-      if (currentMatch.status !== 'finished') {
+      if (currentMatch.status !== 'finished' && !winnerDetectionRef.current) {
         if (p1Score >= WINNING_SCORE) {
           // Player 1 won
           console.log('[Frontend] Player 1 won! (detected from gameState)');
+          winnerDetectionRef.current = true; // Prevent multiple triggers
           const winner = currentMatch.player1;
           if (winner) {
             handleGameComplete(winner);
@@ -1661,6 +1713,7 @@ export default function TournamentPage() {
         } else if (p2Score >= WINNING_SCORE) {
           // Player 2 won
           console.log('[Frontend] Player 2 won! (detected from gameState)');
+          winnerDetectionRef.current = true; // Prevent multiple triggers
           const winner = currentMatch.player2;
           if (winner) {
             handleGameComplete(winner);
@@ -2208,6 +2261,112 @@ export default function TournamentPage() {
   });
 
   TournamentBracket.displayName = 'TournamentBracket';
+
+  // Tournament Statistics Component
+  const TournamentStats: React.FC = React.memo(() => {
+    const bracket = gameState.tournament?.bracket || [];
+    const registeredPlayers = remoteTournament?.registeredPlayers || gameState.tournament?.bracket?.[0] ?
+      Array.from(new Set([
+        ...bracket.flatMap(m => [m.player1, m.player2]).filter(Boolean),
+        ...bracket.flatMap(m => [m.winner]).filter(Boolean)
+      ])) : [];
+
+    // Calculate statistics for each player
+    const playerStats = registeredPlayers.map((player: any) => {
+      if (!player || !player.id) return null;
+
+      const matchesPlayed = bracket.filter(m =>
+        (m.player1?.id?.toString() === player.id?.toString() || m.player2?.id?.toString() === player.id?.toString()) && m.status === 'finished'
+      ).length;
+
+      const matchesWon = bracket.filter(m =>
+        m.winner?.id?.toString() === player.id?.toString()
+      ).length;
+
+      const matchesLost = matchesPlayed - matchesWon;
+
+      return {
+        player,
+        matchesPlayed,
+        matchesWon,
+        matchesLost,
+        winRate: matchesPlayed > 0 ? ((matchesWon / matchesPlayed) * 100).toFixed(1) : '0.0'
+      };
+    }).filter(Boolean);
+
+    return (
+      <div className="absolute inset-0 bg-black bg-opacity-95 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 sm:p-8 max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold text-purple-300">{t('game.tournamentStatistics')}</h3>
+            <button
+              onClick={() => setShowTournamentStats(false)}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold"
+            >
+              {t('game.closeStats')}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {playerStats.map((stat: any) => (
+              <div key={stat.player.id} className="bg-gray-700 rounded-lg p-4 border border-purple-500">
+                <div className="flex items-center gap-3 mb-3">
+                  <img
+                    src={stat.player.avatar}
+                    alt={stat.player.name}
+                    className="w-12 h-12 rounded-full border-2 border-purple-400"
+                  />
+                  <div>
+                    <h4 className="text-lg font-semibold text-white">{stat.player.name}</h4>
+                    <p className="text-sm text-gray-300">{t('game.playerStatistics')}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="bg-gray-600 rounded p-2">
+                    <p className="text-gray-300">{t('game.matchesPlayed')}</p>
+                    <p className="text-white font-bold text-lg">{stat.matchesPlayed}</p>
+                  </div>
+                  <div className="bg-green-600 rounded p-2">
+                    <p className="text-green-200">{t('game.matchesWon')}</p>
+                    <p className="text-white font-bold text-lg">{stat.matchesWon}</p>
+                  </div>
+                  <div className="bg-red-600 rounded p-2">
+                    <p className="text-red-200">{t('game.matchesLost')}</p>
+                    <p className="text-white font-bold text-lg">{stat.matchesLost}</p>
+                  </div>
+                  <div className="bg-blue-600 rounded p-2">
+                    <p className="text-blue-200">{t('game.victoryRate')}</p>
+                    <p className="text-white font-bold text-lg">{stat.winRate}%</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Overall Tournament Stats */}
+          <div className="mt-6 bg-gray-700 rounded-lg p-4 border border-purple-500">
+            <h4 className="text-lg font-semibold text-purple-300 mb-3">{t('game.matchStatistics')}</h4>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-gray-300 text-sm">{t('game.totalMatches')}</p>
+                <p className="text-white font-bold text-2xl">{bracket.length}</p>
+              </div>
+              <div>
+                <p className="text-gray-300 text-sm">{t('game.matchesPlayed')}</p>
+                <p className="text-white font-bold text-2xl">{bracket.filter(m => m.status === 'finished').length}</p>
+              </div>
+              <div>
+                <p className="text-gray-300 text-sm">{t('game.matchesStillPlaying')}</p>
+                <p className="text-white font-bold text-2xl">{bracket.filter(m => m.status === 'playing').length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  });
+
+  TournamentStats.displayName = 'TournamentStats';
 
   // Cancel Confirmation Modal - Show before any other content
   if (showCancelConfirmation) {
@@ -3287,6 +3446,12 @@ export default function TournamentPage() {
       );
     }
 
+    // If user is spectating, show spectator badge
+    const userId = user?.id_user?.toString();
+    const isUserInMatch = currentMatch.player1?.id?.toString() === userId ||
+                         currentMatch.player2?.id?.toString() === userId;
+    const isSpectatingThisMatch = isSpectator && !isUserInMatch;
+
     return (
       <div
         ref={gameContainerRef}
@@ -3301,10 +3466,20 @@ export default function TournamentPage() {
           <div className="bg-gray-900 border-b border-purple-500 p-2 sm:p-4 ">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="text-center sm:text-left">
-              <h2 className="text-lg sm:text-xl font-bold text-purple-300">{t('game.tournamentMatch')}</h2>
+              <div className="flex items-center gap-2 justify-center sm:justify-start">
+                <h2 className="text-lg sm:text-xl font-bold text-purple-300">{t('game.tournamentMatch')}</h2>
+                {isSpectatingThisMatch && (
+                  <span className="px-2 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full">
+                    {t('game.spectating')}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-gray-300">
                 {t('game.round')} {currentMatch.round} - {t('game.match')} {currentMatchIndex + 1}
               </p>
+              {isSpectatingThisMatch && (
+                <p className="text-xs text-blue-300 mt-1">{t('game.youAreSpectating')}</p>
+              )}
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-2 sm:px-3 py-1 sm:py-2">
@@ -3534,6 +3709,57 @@ export default function TournamentPage() {
                     className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                   >
                     {t('game.backToGameModes')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loser Options Modal - Shown when user loses Round 1 */}
+          {showLoserOptionsModal && tournamentType === 'remote' && (
+            <div className="absolute inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-gradient-to-br from-red-800 to-orange-800 rounded-xl p-6 sm:p-8 md:p-10 text-center max-w-md mx-4">
+                <FaTrophy className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400 mx-auto mb-4 animate-pulse" />
+                <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2">{t('game.youLost')}</h3>
+                <p className="text-gray-200 text-base sm:text-lg mb-6">{t('game.loserOptionsMessage')}</p>
+
+                <div className="flex flex-col gap-4">
+                  {/* Option 1: Leave Tournament */}
+                  <button
+                    onClick={() => {
+                      setShowLoserOptionsModal(false);
+                      // Leave tournament but keep data
+                      if (socket && tournamentId) {
+                        socket.send(JSON.stringify({
+                          type: 'game',
+                          action: 'leaveTournament',
+                          payload: { tournamentId }
+                        }));
+                      }
+                      router.push('/game');
+                    }}
+                    className="px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <span>{t('game.leaveTournament')}</span>
+                      <span className="text-sm text-red-200">{t('game.leaveTournamentDescription')}</span>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Watch Final Match */}
+                  <button
+                    onClick={() => {
+                      setShowLoserOptionsModal(false);
+                      setIsSpectator(true);
+                      setTournamentStep('bracket');
+                      // Will automatically switch to final match when it starts
+                    }}
+                    className="px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <span>{t('game.watchFinalMatch')}</span>
+                      <span className="text-sm text-purple-200">{t('game.watchFinalMatchDescription')}</span>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -3858,6 +4084,11 @@ export default function TournamentPage() {
 
   // Bracket phase - show tournament results and allow navigation
   if (tournamentStep === 'bracket') {
+    // Show tournament statistics modal if open
+    if (showTournamentStats) {
+      return <TournamentStats />;
+    }
+
     return (
       <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 md:p-8">
         <div className="w-full max-w-xs sm:max-w-md md:max-w-4xl lg:max-w-6xl mx-auto">
@@ -3871,6 +4102,30 @@ export default function TournamentPage() {
           </div>
 
           <TournamentBracket />
+
+          {/* Tournament Statistics Button in Bracket View */}
+          {tournamentType === 'remote' && gameState.tournament?.bracket && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => setShowTournamentStats(true)}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-base flex items-center gap-2"
+              >
+                <FaTrophy className="w-5 h-5" />
+                <span>{t('game.tournamentStatistics')}</span>
+              </button>
+            </div>
+          )}
+
+          {/* Spectator Mode Info */}
+          {isSpectator && (
+            <div className="bg-blue-600 bg-opacity-20 border-2 border-blue-400 rounded-lg p-4 text-center mt-4 max-w-md mx-auto">
+              <p className="text-blue-300 font-semibold mb-2">{t('game.spectatorMode')}</p>
+              <p className="text-gray-300 text-sm">{t('game.youAreSpectating')}</p>
+              <p className="text-gray-400 text-xs mt-2">
+                {t('game.waitingForFinalMatch')}
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mt-4 sm:mt-6">
             {/* Back button for local tournaments - return to match winner modal */}

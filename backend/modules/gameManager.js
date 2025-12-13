@@ -691,6 +691,24 @@ class GameManager {
     const p1Sent = p1SocketValid ? this.sendToPlayer(player1Socket, gameStateMessage) : false;
     const p2Sent = p2SocketValid ? this.sendToPlayer(player2Socket, gameStateMessage) : false;
 
+    // For Match 1: Log synchronization verification periodically
+    if (isMatch1 && p1Sent && p2Sent) {
+      // Log every 60th broadcast (approximately once per second) to verify continuous sync
+      if (Math.random() < 0.016) {
+        console.log(`[broadcastGameState] MATCH 1 SYNC VERIFIED:`, {
+          timestamp: gameStateMessage.timestamp,
+          player1Score: gameState.player1?.score,
+          player2Score: gameState.player2?.score,
+          ballX: gameState.ball?.x?.toFixed(2),
+          ballY: gameState.ball?.y?.toFixed(2),
+          player1Y: gameState.player1?.y?.toFixed(2),
+          player2Y: gameState.player2?.y?.toFixed(2),
+          bothPlayersReceived: true,
+          roomCode: roomCode
+        });
+      }
+    }
+
     // If both failed, the game loop will detect disconnected sockets on next iteration
     if (!p1Sent && !p2Sent) {
       if (isMatch1) {
@@ -711,14 +729,22 @@ class GameManager {
         console.warn(`[broadcastGameState] Failed to send game state to player2 (${room.player2.id}) in room ${roomCode}`);
       }
     } else {
-      // Log successful broadcast for Match 1 more frequently
+      // Log successful broadcast for Match 1 more frequently with sync verification
       if (isMatch1) {
         if (Math.random() < 0.1) { // 10% chance = roughly 6 times per second at 60 FPS
-          console.log(`[broadcastGameState] MATCH 1: ✓ Broadcasting to both players - P1:${room.player1.id} P2:${room.player2.id}`, {
+          console.log(`[broadcastGameState] MATCH 1 SYNC: ✓ Both players received gameState`, {
+            timestamp: gameStateMessage.timestamp,
+            player1Id: room.player1.id,
+            player2Id: room.player2.id,
             player1Score: gameState.player1?.score,
             player2Score: gameState.player2?.score,
-            ballX: gameState.ball?.x,
-            ballY: gameState.ball?.y
+            ballX: gameState.ball?.x?.toFixed(2),
+            ballY: gameState.ball?.y?.toFixed(2),
+            player1Y: gameState.player1?.y?.toFixed(2),
+            player2Y: gameState.player2?.y?.toFixed(2),
+            matchId: gameStateMessage.matchId,
+            round: gameStateMessage.round,
+            roomCode: roomCode
           });
         }
       } else {
@@ -1977,10 +2003,28 @@ class GameManager {
           console.log(`[startTournament] MATCH 1: Room stored in gameRooms: ${this.gameRooms.has(roomResult.roomCode)}`);
           console.log(`[startTournament] MATCH 1: Game loop started: ${this.gameLoops.has(roomResult.roomCode)}`);
 
+          // Verify room structure for Match 1
+          const createdRoom = this.gameRooms.get(roomResult.roomCode);
+          if (createdRoom) {
+            console.log(`[startTournament] MATCH 1 VERIFICATION:`, {
+              hasTournamentContext: !!createdRoom.tournamentContext,
+              matchId: createdRoom.tournamentContext?.matchId,
+              round: createdRoom.tournamentContext?.round,
+              player1Id: createdRoom.player1.id,
+              player2Id: createdRoom.player2.id,
+              player1SocketValid: createdRoom.player1.socket?.readyState === 1,
+              player2SocketValid: createdRoom.player2.socket?.readyState === 1,
+              gameStateHasContext: !!(createdRoom.gameState.tournamentId && createdRoom.gameState.matchId)
+            });
+          }
+
           // Send initial gameState to both players to ensure they're synced
           // The game loop will continue sending updates every frame
           console.log(`[startTournament] MATCH 1: Broadcasting initial gameState to both players`);
           this.broadcastGameState(roomResult.roomCode, roomResult.gameState);
+
+          // Verify broadcast was successful
+          console.log(`[startTournament] MATCH 1: Initial gameState broadcast completed`);
 
           console.log(`[startTournament] ✓✓✓ MATCH 1 SUCCESS: Room ${roomResult.roomCode} - ${player1.username} vs ${player2.username} ✓✓✓`);
         } catch (error) {
@@ -2426,6 +2470,89 @@ class GameManager {
       return true;
     }
     return false;
+  }
+
+  // Verify Match 1 synchronization (for testing)
+  verifyMatch1Sync(tournamentId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament || !tournament.bracket) {
+      return { error: 'Tournament or bracket not found' };
+    }
+
+    const match1 = tournament.bracket.find(m => m.id === 1 && m.round === 1);
+    if (!match1 || !match1.roomCode) {
+      return { error: 'Match 1 room not found' };
+    }
+
+    const room = this.gameRooms.get(match1.roomCode);
+    if (!room) {
+      return { error: 'Match 1 room not in gameRooms' };
+    }
+
+    const isMatch1 = room.tournamentContext && room.tournamentContext.matchId === 1;
+    if (!isMatch1) {
+      return { error: 'Room is not Match 1' };
+    }
+
+    // Get fresh socket references
+    const p1Socket = this.usersSocket.get(room.player1.id.toString());
+    const p2Socket = this.usersSocket.get(room.player2.id.toString());
+
+    const verification = {
+      roomCode: match1.roomCode,
+      tournamentContext: {
+        tournamentId: room.tournamentContext.tournamentId,
+        matchId: room.tournamentContext.matchId,
+        round: room.tournamentContext.round
+      },
+      players: {
+        player1: {
+          id: room.player1.id,
+          username: room.player1.username,
+          socketInRoom: !!room.player1.socket,
+          socketInMap: !!p1Socket,
+          socketValid: p1Socket?.readyState === 1,
+          socketReadyState: room.player1.socket?.readyState
+        },
+        player2: {
+          id: room.player2.id,
+          username: room.player2.username,
+          socketInRoom: !!room.player2.socket,
+          socketInMap: !!p2Socket,
+          socketValid: p2Socket?.readyState === 1,
+          socketReadyState: room.player2.socket?.readyState
+        }
+      },
+      gameState: {
+        hasTournamentContext: !!(room.gameState.tournamentId && room.gameState.matchId),
+        tournamentId: room.gameState.tournamentId,
+        matchId: room.gameState.matchId,
+        round: room.gameState.round,
+        player1Score: room.gameState.player1.score,
+        player2Score: room.gameState.player2.score,
+        ballX: room.gameState.ball.x,
+        ballY: room.gameState.ball.y
+      },
+      gameLoop: {
+        isRunning: this.gameLoops.has(match1.roomCode)
+      },
+      synchronization: {
+        bothSocketsValid: (p1Socket?.readyState === 1) && (p2Socket?.readyState === 1),
+        roomSocketsMatchMap: (room.player1.socket === p1Socket) && (room.player2.socket === p2Socket),
+        gameStateHasContext: !!(room.gameState.tournamentId && room.gameState.matchId),
+        allChecksPassed: false
+      }
+    };
+
+    // Calculate overall sync status
+    verification.synchronization.allChecksPassed =
+      verification.synchronization.bothSocketsValid &&
+      verification.synchronization.gameStateHasContext &&
+      verification.gameLoop.isRunning;
+
+    console.log(`[verifyMatch1Sync] Match 1 Synchronization Status:`, JSON.stringify(verification, null, 2));
+
+    return { success: true, verification };
   }
 
   // Handle game challenge decline message forwarding
