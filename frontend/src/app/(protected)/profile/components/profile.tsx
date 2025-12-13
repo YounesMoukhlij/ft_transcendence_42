@@ -70,7 +70,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
 
 
   return (
-    <div className="min-h-screen ">
+    <div className="">
       <div className="container mx-auto ">
         <div className="mb-8">
           <PlayerBanner userStats={userStats} />

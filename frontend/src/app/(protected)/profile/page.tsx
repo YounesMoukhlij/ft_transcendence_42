@@ -6,6 +6,7 @@ import { Profile } from "@/app/(protected)/profile/components/profile";
 import { User } from "@/types/user";
 import "@/app/(protected)/profile/style.css";
 import { useUserStore } from "@/store/userStore";
+import Loading from "@/components/Loading/page";
 
 export default function UserProfile() {
   const { user: currentUser} = useUserStore();
@@ -35,7 +36,7 @@ export default function UserProfile() {
 
 
   // Not logged in
-  if (!currentUser) return <div>Please log in</div>;
+  if (!currentUser) return <Loading/>;
 
   // Waiting for API data
   if (!profile) return null; 

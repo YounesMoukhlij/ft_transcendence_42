@@ -374,7 +374,7 @@ updatePinStatus: (attribute, friendId, value) => {
     {
       name: "user-storage",
       storage: createJSONStorage(() => localStorage),
-
+      getStorage: () => localStorage,
       // what to persist
       partialize: (state) => ({
         user: state.user,
@@ -383,7 +383,7 @@ updatePinStatus: (attribute, friendId, value) => {
       }),
 
       onRehydrateStorage: (state) => {
-        return (rehydrated, error) => {
+        return (state, error) => {
           state.setHasHydrated(true);
           if (!error) state.initConnection();
         };

@@ -23,7 +23,7 @@ export function middleware(request: NextRequest) {
 
   // 2. Redirect logged-in users away from Public routes (Optional but recommended)
   if (isPublicPath && isAuthenticated) {
-     return NextResponse.redirect(new URL('/', request.url))
+     return NextResponse.redirect(new URL('/profile', request.url))
   }
   
   return NextResponse.next()

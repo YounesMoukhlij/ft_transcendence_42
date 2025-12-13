@@ -2,10 +2,10 @@
 'use client'
 import React from 'react'
 import { Camera, Globe, ChevronDown } from 'lucide-react'
-import { User } from '@/store/userStore'
+// import { User } from '@/store/userStore'
 
 interface ProfileTabProps {
-  user: User
+  user: any
   formData: any 
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
   languages: { id: string; label: string; flag: string }[]
