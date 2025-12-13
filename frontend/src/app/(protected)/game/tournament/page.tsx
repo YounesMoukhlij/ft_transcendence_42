@@ -156,6 +156,8 @@ export default function TournamentPage() {
   const [tempPlayers, setTempPlayers] = useState<Player[]>([]);
   const [matchWinner, setMatchWinner] = useState<Player | null>(null);
   const [showTournamentWinnerMessage, setShowTournamentWinnerMessage] = useState(false);
+  const [showMatchCompletionModal, setShowMatchCompletionModal] = useState(false);
+  const [isMatchActive, setIsMatchActive] = useState(false); // Prevent auto-switching during active match
   const gameContainerRef = React.useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isStartingTournament, setIsStartingTournament] = useState(false);
@@ -384,11 +386,19 @@ export default function TournamentPage() {
     if (tournamentStep === 'playing') {
       const currentMatch = gameState.tournament?.bracket[currentMatchIndex];
       if (!currentMatch || !currentMatch.player1 || !currentMatch.player2) {
-        // If no valid match, go back to bracket view
-        setTournamentStep('bracket');
+        // If no valid match and match is not active, go back to bracket view
+        if (!isMatchActive) {
+          setTournamentStep('bracket');
+        }
+      } else if (currentMatch.status !== 'finished') {
+        // Match is valid and not finished - mark as active
+        setIsMatchActive(true);
       }
+    } else if (tournamentStep !== 'playing') {
+      // Reset match active state when not playing
+      setIsMatchActive(false);
     }
-  }, [tournamentStep, currentMatchIndex, gameState.tournament?.bracket?.length]);
+  }, [tournamentStep, currentMatchIndex, gameState.tournament?.bracket?.length, isMatchActive]);
 
   // Effect to auto-find random opponent when tournament is created
   useEffect(() => {
@@ -526,22 +536,51 @@ export default function TournamentPage() {
                 setPlayers(message.data.registeredPlayers);
                 setCurrentMatchIndex(0);
               }
-              // Show "Game started" animation first, then go to bracket
-              console.log('[Frontend] Showing game started animation, will transition to bracket in 3s');
-              setShowGameStartedAnimation(true);
-              // After animation, go to bracket
-              setTimeout(() => {
-                console.log('[Frontend] Animation complete, transitioning to bracket step');
-                setShowGameStartedAnimation(false);
-                setTournamentStep('bracket');
-                // Auto-start match if player is in the first match
-                console.log('[Frontend] Setting shouldAutoStartMatch to true');
-                setShouldAutoStartMatch(true);
-              }, 3000); // 3 second animation
+
+              // Only show animation and transition if not already in a match
+              if (!isMatchActive && tournamentStep !== 'playing') {
+                // Show "Game started" animation first, then go to bracket
+                console.log('[Frontend] Showing game started animation, will transition to bracket in 3s');
+                setShowGameStartedAnimation(true);
+                // After animation, go to bracket
+                setTimeout(() => {
+                  console.log('[Frontend] Animation complete, transitioning to bracket step');
+                  setShowGameStartedAnimation(false);
+                  setTournamentStep('bracket');
+                  // Auto-start match if player is in the first match
+                  console.log('[Frontend] Setting shouldAutoStartMatch to true');
+                  setShouldAutoStartMatch(true);
+                }, 3000); // 3 second animation
+              }
+            }
+
+            // Update bracket when matches finish (for remote tournaments)
+            if (tournamentType === 'remote' && message.data.bracket) {
+              const updatedBracket = message.data.bracket;
+              const currentBracket = gameState.tournament?.bracket || [];
+
+              // Check if any match status changed to 'finished' or 'playing'
+              const hasChanges = updatedBracket.some((updatedMatch: any, index: number) => {
+                const currentMatch = currentBracket[index];
+                return !currentMatch ||
+                       currentMatch.status !== updatedMatch.status ||
+                       (updatedMatch.winner && currentMatch.winner?.id !== updatedMatch.winner.id);
+              });
+
+              if (hasChanges) {
+                console.log('[Frontend] Bracket updated - matches finished or final match started');
+                // Update tournament bracket
+                setTournament({
+                  ...gameState.tournament!,
+                  bracket: updatedBracket
+                });
+              }
             }
 
             // For remote tournaments, sync bracket updates during gameplay
-            if (tournamentType === 'remote' && tournamentStep === 'playing' && message.data.bracket) {
+            // Update bracket when matches finish (for remote tournaments)
+            // Don't auto-switch to bracket if match is active
+            if (tournamentType === 'remote' && message.data.bracket && !isMatchActive) {
               // Update bracket state from backend
               const updatedBracket = message.data.bracket;
               const currentTournament = gameState.tournament;
@@ -575,26 +614,62 @@ export default function TournamentPage() {
 
           case 'gameState':
             // Handle game state updates for remote tournament matches
+            const roomCode = message.roomCode; // Get roomCode from message if available
             console.log('[Frontend] Received gameState message:', {
               tournamentType,
               tournamentStep,
               hasPayload: !!message.payload,
-              payload: message.payload
+              roomCode: roomCode,
+              player1Id: message.payload?.player1?.id,
+              player2Id: message.payload?.player2?.id,
+              currentUserId: user?.id_user
             });
+
+            // Verify roomCode matches current match if available
+            if (roomCode && tournamentType === 'remote') {
+              const bracket = gameState.tournament?.bracket || [];
+              const currentMatch = bracket[currentMatchIndex];
+              if (currentMatch && currentMatch.roomCode && currentMatch.roomCode !== roomCode) {
+                console.warn('[Frontend] Received gameState for different room:', {
+                  receivedRoomCode: roomCode,
+                  expectedRoomCode: currentMatch.roomCode,
+                  currentMatchIndex
+                });
+                // Still process it, but log the mismatch
+              }
+            }
+
             // Accept gameState if we're in remote tournament and either playing or bracket step
             // If we're on bracket step but receiving gameState, it means the game has started - transition to playing
-            if (tournamentType === 'remote' && (tournamentStep === 'playing' || tournamentStep === 'bracket')) {
+            if (tournamentType === 'remote' && (tournamentStep === 'playing' || (tournamentStep === 'bracket' && !isMatchActive))) {
+              // Verify roomCode matches current match if available
+              const receivedRoomCode = message.roomCode;
+              const bracket = gameState.tournament?.bracket || [];
+              const currentMatch = bracket[currentMatchIndex];
+
+              // If we have roomCode, verify it matches the current match
+              if (receivedRoomCode && currentMatch && currentMatch.roomCode && currentMatch.roomCode !== receivedRoomCode) {
+                console.warn('[Frontend] Received gameState for different room:', {
+                  receivedRoomCode,
+                  expectedRoomCode: currentMatch.roomCode,
+                  currentMatchIndex,
+                  currentMatchId: currentMatch.id
+                });
+                // Don't process if it's for a different match
+                break;
+              }
+
               // If we're still on bracket step but receiving gameState, transition to playing
-              if (tournamentStep === 'bracket') {
+              if (tournamentStep === 'bracket' && !isMatchActive) {
                 console.log('[Frontend] Received gameState while on bracket step - auto-transitioning to playing');
                 // Find the match the user is in and transition
-                const bracket = gameState.tournament?.bracket || [];
                 const userId = user?.id_user?.toString();
                 if (userId) {
                   const userMatch = bracket.find(m =>
                     m.player1 && m.player2 &&
                     (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
-                    (m.status === 'pending' || m.status === 'playing')
+                    (m.status === 'pending' || m.status === 'playing') &&
+                    (!receivedRoomCode || m.roomCode === receivedRoomCode) // Match roomCode if provided
                   );
                   if (userMatch) {
                     const matchIndex = bracket.findIndex(m => m.id === userMatch.id);
@@ -603,28 +678,41 @@ export default function TournamentPage() {
                       setCurrentMatchIndex(matchIndex);
                       setTournamentStep('playing');
                       setShouldAutoStartMatch(false);
+                      setIsMatchActive(true);
                     }
                   } else {
                     console.warn('[Frontend] Received gameState but could not find user match in bracket');
                   }
                 }
               }
-              console.log('[Frontend] Setting serverGameState');
-              console.log('[Frontend] GameState payload:', {
-                player1Score: message.payload?.player1?.score,
-                player2Score: message.payload?.player2?.score,
-                ballX: message.payload?.ball?.x,
-                ballY: message.payload?.ball?.y
-              });
-              setServerGameState(message.payload);
+
+              // Only set serverGameState if we're on the correct match or transitioning to it
+              if (tournamentStep === 'playing' || (tournamentStep === 'bracket' && !isMatchActive)) {
+                console.log('[Frontend] Setting serverGameState');
+                console.log('[Frontend] GameState payload:', {
+                  player1Score: message.payload?.player1?.score,
+                  player2Score: message.payload?.player2?.score,
+                  ballX: message.payload?.ball?.x,
+                  ballY: message.payload?.ball?.y,
+                  roomCode: receivedRoomCode
+                });
+                setServerGameState(message.payload);
+              }
             } else {
               console.warn('[Frontend] Ignoring gameState - conditions not met:', {
                 tournamentType,
                 tournamentStep,
+                isMatchActive,
                 expectedType: 'remote',
-                expectedStep: 'playing or bracket'
+                expectedStep: 'playing or bracket (when match not active)'
               });
             }
+            break;
+
+          case 'matchResultRecorded':
+            // Backend confirmed match result was recorded
+            console.log('[Frontend] Match result recorded:', message.data);
+            // The bracket will be updated via tournamentUpdated message
             break;
 
           case 'opponentLeft':
@@ -1092,8 +1180,16 @@ export default function TournamentPage() {
       return;
     }
 
+    // Set match as inactive (finished)
+    setIsMatchActive(false);
+
     // For REMOTE tournaments, send match result to backend
     if (tournamentType === 'remote' && socket && tournamentId) {
+      console.log('[Frontend] Sending match result to backend:', {
+        tournamentId,
+        matchId: currentMatch.id,
+        winner: winner.name
+      });
       socket.send(JSON.stringify({
         type: 'game',
         action: 'reportMatchResult',
@@ -1114,6 +1210,7 @@ export default function TournamentPage() {
     }
 
     setMatchWinner(winner);
+    setShowMatchCompletionModal(true);
     setShowTournamentWinnerMessage(true);
 
     // Check if tournament is complete (all matches finished) - for local tournaments
@@ -1133,8 +1230,10 @@ export default function TournamentPage() {
     }
   }, [currentMatchIndex, updateTournamentMatch, gameState.tournament?.bracket, tournamentType, isLastMatch, socket, tournamentId]);
 
-  // Effect to advance winner to the next round
+  // Effect to advance winner to the next round (for local tournaments)
   useEffect(() => {
+    if (tournamentType !== 'local') return; // Only for local tournaments
+
     const bracket = gameState.tournament?.bracket;
     if (!bracket) return;
 
@@ -1167,18 +1266,56 @@ export default function TournamentPage() {
             }
         } else {
           // Final match finished - check if tournament is complete (for local tournaments)
-          if (tournamentType === 'local') {
-            const isComplete = bracket.every(m => m.status === 'finished');
-            if (isComplete) {
-              // Automatically transition to finished screen after showing match winner modal
-              setTimeout(() => {
-                setTournamentStep('finished');
-              }, 2500); // 2.5 second delay to allow match winner modal to be seen
-            }
+          const isComplete = bracket.every(m => m.status === 'finished');
+          if (isComplete) {
+            // Automatically transition to finished screen after showing match winner modal
+            setTimeout(() => {
+              setTournamentStep('finished');
+            }, 2500); // 2.5 second delay to allow match winner modal to be seen
           }
         }
     }
   }, [gameState.tournament?.bracket, updateTournamentMatch, currentMatchIndex, matchWinner, tournamentType]);
+
+  // Effect to auto-advance to final match when both Round 1 matches finish (for remote tournaments)
+  useEffect(() => {
+    if (tournamentType !== 'remote') return;
+
+    const bracket = gameState.tournament?.bracket;
+    if (!bracket) return;
+
+    // Check if both Round 1 matches are finished
+    const round1Matches = bracket.filter(m => m.round === 1);
+    const bothRound1Finished = round1Matches.length === 2 &&
+                               round1Matches.every(m => m.status === 'finished' && m.winner);
+
+    if (bothRound1Finished) {
+      // Find final match (Round 2)
+      const finalMatch = bracket.find(m => m.round === 2);
+
+      // Check if final match has players (status can be 'pending' or 'playing')
+      if (finalMatch && finalMatch.player1 && finalMatch.player2 &&
+          (finalMatch.status === 'playing' || finalMatch.status === 'pending')) {
+        // Final match is ready - check if user is in it
+        const userId = user?.id_user?.toString();
+        const userInFinal = userId && (
+          finalMatch.player1.id?.toString() === userId ||
+          finalMatch.player2.id?.toString() === userId
+        );
+
+        if (userInFinal && tournamentStep !== 'playing' && finalMatch.status === 'playing') {
+          console.log('[Frontend] Both Round 1 matches finished. Auto-advancing to final match');
+          const finalMatchIndex = bracket.findIndex(m => m.id === finalMatch.id);
+          if (finalMatchIndex !== -1) {
+            setCurrentMatchIndex(finalMatchIndex);
+            setTournamentStep('playing');
+            setShowMatchCompletionModal(false);
+            setIsMatchActive(true);
+          }
+        }
+      }
+    }
+  }, [gameState.tournament?.bracket, tournamentType, tournamentStep, user?.id_user, currentMatchIndex]);
 
   // Toggle fullscreen - MUST be defined before any conditional returns
   const toggleFullscreen = useCallback(async () => {
@@ -1410,13 +1547,19 @@ export default function TournamentPage() {
         });
         // Small delay to show bracket briefly before auto-starting
         const timer = setTimeout(() => {
-          const matchIndex = bracket.findIndex(m => m.id === userMatch.id);
-          console.log('[Frontend] Auto-starting match after delay:', { matchIndex, matchId: userMatch.id });
-          if (matchIndex !== -1) {
-            setCurrentMatchIndex(matchIndex);
-            setTournamentStep('playing');
-            setShouldAutoStartMatch(false);
-            console.log('[Frontend] Transitioned to playing step, matchIndex:', matchIndex);
+          // Only auto-start if match is not already active
+          if (!isMatchActive) {
+            const matchIndex = bracket.findIndex(m => m.id === userMatch.id);
+            console.log('[Frontend] Auto-starting match after delay:', { matchIndex, matchId: userMatch.id });
+            if (matchIndex !== -1) {
+              setCurrentMatchIndex(matchIndex);
+              setTournamentStep('playing');
+              setShouldAutoStartMatch(false);
+              setIsMatchActive(true);
+              console.log('[Frontend] Transitioned to playing step, matchIndex:', matchIndex);
+            }
+          } else {
+            console.log('[Frontend] Match already active, skipping auto-start');
           }
         }, 2000); // 2 second delay to show bracket and "Your next match is..." message
 
@@ -1432,7 +1575,7 @@ export default function TournamentPage() {
         setShouldAutoStartMatch(false);
       }
     }
-  }, [shouldAutoStartMatch, tournamentType, tournamentStep, user?.id_user, gameState.tournament?.bracket]);
+  }, [shouldAutoStartMatch, tournamentType, tournamentStep, user?.id_user, gameState.tournament?.bracket, isMatchActive]);
 
   // Calculate match players for the current tournament match - stable version
   // const matchPlayers = useMemo(() => {
@@ -2973,8 +3116,133 @@ export default function TournamentPage() {
             )}
           </div>
 
-          {/* Winner Announcement Modal */}
-          {showTournamentWinnerMessage && matchWinner && (
+          {/* Match Completion Modal - Shows match status and other match progress */}
+          {showMatchCompletionModal && matchWinner && currentMatch && (
+            <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-gradient-to-br from-purple-800 to-blue-800 rounded-xl p-4 sm:p-6 md:p-8 text-center max-w-xs sm:max-w-sm md:max-w-md mx-4">
+                <FaTrophy className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400 mx-auto mb-3 sm:mb-4 animate-bounce" />
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">{t('game.matchWinner')}</h3>
+                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <img
+                    src={matchWinner.avatar}
+                    alt={matchWinner.name}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-yellow-400"
+                  />
+                  <span className="text-lg sm:text-xl font-semibold text-white">{matchWinner.name}</span>
+                </div>
+
+                {/* Show status of other matches */}
+                {tournamentType === 'remote' && currentMatch.round === 1 && (
+                  <div className="mb-4 p-3 bg-gray-900 bg-opacity-50 rounded-lg">
+                    {(() => {
+                      const bracket = gameState.tournament?.bracket || [];
+                      const round1Matches = bracket.filter(m => m.round === 1);
+                      const otherMatch = round1Matches.find(m => m.id !== currentMatch.id);
+                      const bothFinished = round1Matches.every(m => m.status === 'finished');
+
+                      if (bothFinished) {
+                        const finalMatch = bracket.find(m => m.round === 2);
+                        if (finalMatch && finalMatch.player1 && finalMatch.player2) {
+                          return (
+                            <div>
+                              <p className="text-green-300 font-semibold text-sm sm:text-base mb-2">
+                                {t('game.finalMatchReady') || 'Final Match Ready!'}
+                              </p>
+                              <p className="text-gray-300 text-xs sm:text-sm">
+                                {finalMatch.player1.name} {t('game.vs')} {finalMatch.player2.name}
+                              </p>
+                              <p className="text-yellow-300 text-xs sm:text-sm mt-2 animate-pulse">
+                                {t('game.startingSoon') || 'Starting soon...'}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return (
+                          <p className="text-yellow-300 text-xs sm:text-sm animate-pulse">
+                            {t('game.waitingForFinalMatch') || 'Waiting for final match to start...'}
+                          </p>
+                        );
+                      } else if (otherMatch) {
+                        return (
+                          <div>
+                            <p className="text-gray-300 text-xs sm:text-sm mb-1">
+                              {t('game.otherMatchStatus') || 'Other Match Status:'}
+                            </p>
+                            <p className="text-yellow-300 text-sm sm:text-base font-semibold">
+                              {otherMatch.status === 'finished'
+                                ? t('game.matchFinished') || 'Match Finished'
+                                : t('game.matchStillPlaying') || 'Match Still Playing'}
+                            </p>
+                            {otherMatch.status === 'playing' && (
+                              <p className="text-gray-400 text-xs mt-1">
+                                {otherMatch.player1.name} {t('game.vs')} {otherMatch.player2.name}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                )}
+
+                <p className="text-gray-300 text-sm sm:text-base mb-4">
+                  {isLastMatch
+                    ? t('game.tournamentComplete')
+                    : currentMatch.round === 1 && tournamentType === 'remote'
+                    ? t('game.waitingForOtherMatch') || 'Waiting for other match to finish...'
+                    : t('game.advancingToNextRound')}
+                </p>
+
+                {/* Manual controls */}
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  {!isLastMatch && tournamentType === 'local' && (
+                    <button
+                      onClick={proceedToNextMatch}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                    >
+                      {t('game.continueToNextMatch')}
+                    </button>
+                  )}
+                  {isLastMatch && tournamentType === 'local' && (
+                    <button
+                      onClick={() => {
+                        setShowMatchCompletionModal(false);
+                        setShowTournamentWinnerMessage(false);
+                        setTournamentStep('finished');
+                      }}
+                      className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                    >
+                      {t('game.viewChampion')}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowMatchCompletionModal(false);
+                      setTournamentStep('bracket');
+                    }}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                  >
+                    {t('game.viewTournamentBracket')}
+                  </button>
+                  {tournamentType === 'remote' && currentMatch.round === 1 && (
+                    <button
+                      onClick={() => {
+                        setShowMatchCompletionModal(false);
+                        // Keep showing winner message but hide completion modal
+                      }}
+                      className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
+                    >
+                      {t('common.close') || 'Close'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Legacy Winner Announcement Modal (for local tournaments or final match) */}
+          {showTournamentWinnerMessage && matchWinner && !showMatchCompletionModal && (
             <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
               <div className="bg-gradient-to-br from-purple-800 to-blue-800 rounded-xl p-4 sm:p-6 md:p-8 text-center max-w-xs sm:max-w-sm md:max-w-md mx-4">
                 <FaTrophy className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400 mx-auto mb-3 sm:mb-4" />
@@ -3060,9 +3328,13 @@ export default function TournamentPage() {
                   )}
                 </button>
               {/* View Bracket button - only show for remote tournaments or after match finishes (local) */}
-              {(tournamentType === 'remote' || showTournamentWinnerMessage) && (
+              {/* View Bracket button - only show when match is not active */}
+              {!isMatchActive && (tournamentType === 'remote' || showTournamentWinnerMessage) && (
                 <button
-                  onClick={() => setTournamentStep('bracket')}
+                  onClick={() => {
+                    setTournamentStep('bracket');
+                    setShowMatchCompletionModal(false);
+                  }}
                   className="px-3 py-2 sm:px-4 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                 >
                   {t('game.viewBracket')}

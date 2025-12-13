@@ -541,7 +541,12 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
   // Update interpolation state when server state changes (only for remote mode)
   useEffect(() => {
-    if (!tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local' && serverGameState) {
+    // For remote tournaments, tournamentMode is false, so we need to check if we have serverGameState
+    // The condition should allow remote mode (which includes remote tournaments)
+    const isRemoteMode = !tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local';
+    const shouldProcess = isRemoteMode && serverGameState;
+
+    if (shouldProcess) {
       const now = Date.now();
       const timeSinceUpdate = now - lastUpdateTimeRef.current;
 
@@ -573,13 +578,28 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       if (updateHistoryRef.current.length > 5) {
         updateHistoryRef.current.shift();
       }
-    } else if (!serverGameState || gameState.mode === 'ai' || gameState.mode === 'local') {
-      // Reset interpolation state when game state is cleared or in AI/local mode
-      previousGameStateRef.current = null;
-      interpolatedStateRef.current = null;
-      updateHistoryRef.current = [];
-      smoothedBallPositionRef.current = null;
-      networkLatencyRef.current = 16.67;
+    } else {
+      // Log why interpolation is not running (for debugging)
+      if (serverGameState && !shouldProcess) {
+        console.log('[PingPongGame] Interpolation skipped:', {
+          tournamentMode,
+          gameStateMode: gameState.mode,
+          hasServerGameState: !!serverGameState,
+          reason: tournamentMode ? 'tournamentMode is true' :
+                  gameState.mode === 'ai' ? 'AI mode' :
+                  gameState.mode === 'local' ? 'local mode' :
+                  'unknown'
+        });
+      }
+
+      if (!serverGameState || gameState.mode === 'ai' || gameState.mode === 'local') {
+        // Reset interpolation state when game state is cleared or in AI/local mode
+        previousGameStateRef.current = null;
+        interpolatedStateRef.current = null;
+        updateHistoryRef.current = [];
+        smoothedBallPositionRef.current = null;
+        networkLatencyRef.current = 16.67;
+      }
     }
   }, [serverGameState, tournamentMode, gameState.mode]);
 
@@ -802,8 +822,25 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
       // Determine which player is the current user
       const currentUserId = user?.id_user;
-      const isPlayer1 = currentUserId && player1.id === currentUserId;
-      const isPlayer2 = currentUserId && player2.id === currentUserId;
+      // Convert IDs to strings for comparison (backend may send numbers or strings)
+      const player1Id = player1.id?.toString();
+      const player2Id = player2.id?.toString();
+      const currentUserIdStr = currentUserId?.toString();
+
+      const isPlayer1 = currentUserIdStr && player1Id === currentUserIdStr;
+      const isPlayer2 = currentUserIdStr && player2Id === currentUserIdStr;
+
+      // Log player ID matching for debugging
+      if (!isPlayer1 && !isPlayer2 && currentUserId) {
+        console.warn('[PingPongGame] Player ID mismatch:', {
+          currentUserId: currentUserIdStr,
+          player1Id,
+          player2Id,
+          player1Username: player1.username,
+          player2Username: player2.username,
+          userUsername: user?.username
+        });
+      }
 
       // Use current player's customization for table, ball, and own paddle
       // Use opponent's customization only for their paddle

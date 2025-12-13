@@ -471,7 +471,14 @@
     "allCustomizationOptionsRequired": "All customization options must be selected to start the game",
     "backToPlayerSetup": "Back to Player Setup",
     "connecting": "Connecting...",
-    "startGame": "Start Game"
+    "startGame": "Start Game",
+    "finalMatchReady": "Final Match Ready!",
+    "waitingForFinalMatch": "Waiting for final match to start...",
+    "otherMatchStatus": "Other Match Status:",
+    "matchFinished": "Match Finished",
+    "matchStillPlaying": "Match Still Playing",
+    "waitingForOtherMatch": "Waiting for other match to finish...",
+    "startingSoon": "Starting soon..."
   }
 }
 

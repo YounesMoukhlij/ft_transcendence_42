@@ -525,11 +525,36 @@ class GameManager {
   // Broadcast game state to both players
   broadcastGameState(roomCode, gameState) {
     const room = this.gameRooms.get(roomCode);
-    if (!room) return;
+    if (!room) {
+      console.warn(`[broadcastGameState] Room ${roomCode} not found`);
+      return;
+    }
+
+    // Verify sockets are still valid and update if needed
+    const player1Socket = room.player1.socket;
+    const player2Socket = room.player2.socket;
+
+    // Check if sockets are stale and update from usersSocket map if needed
+    if (!player1Socket || player1Socket.readyState !== 1) {
+      const updatedSocket = this.usersSocket.get(room.player1.id.toString());
+      if (updatedSocket && updatedSocket.readyState === 1) {
+        room.player1.socket = updatedSocket;
+        console.log(`[broadcastGameState] Updated stale socket for player1 (${room.player1.id}) in room ${roomCode}`);
+      }
+    }
+
+    if (!player2Socket || player2Socket.readyState !== 1) {
+      const updatedSocket = this.usersSocket.get(room.player2.id.toString());
+      if (updatedSocket && updatedSocket.readyState === 1) {
+        room.player2.socket = updatedSocket;
+        console.log(`[broadcastGameState] Updated stale socket for player2 (${room.player2.id}) in room ${roomCode}`);
+      }
+    }
 
     const gameStateMessage = {
       type: 'gameState',
-      payload: gameState
+      payload: gameState,
+      roomCode: roomCode // Include roomCode for frontend verification
     };
 
     // Send to both players, but don't fail if one fails
@@ -538,7 +563,11 @@ class GameManager {
 
     // If both failed, the game loop will detect disconnected sockets on next iteration
     if (!p1Sent && !p2Sent) {
-      console.warn('Failed to send game state to both players in room', roomCode);
+      console.warn(`[broadcastGameState] Failed to send game state to both players in room ${roomCode}`);
+    } else if (!p1Sent) {
+      console.warn(`[broadcastGameState] Failed to send game state to player1 (${room.player1.id}) in room ${roomCode}`);
+    } else if (!p2Sent) {
+      console.warn(`[broadcastGameState] Failed to send game state to player2 (${room.player2.id}) in room ${roomCode}`);
     }
   }
 
@@ -1790,6 +1819,169 @@ class GameManager {
     return bracket;
   }
 
+  // Handle match result and advance tournament
+  handleMatchResult(tournamentId, matchId, winner, reportedByUserId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    const bracket = tournament.bracket;
+    if (!bracket) {
+      return { error: 'Tournament bracket not found' };
+    }
+
+    // Find the match
+    const match = bracket.find(m => m.id === matchId);
+    if (!match) {
+      return { error: 'Match not found' };
+    }
+
+    // Verify the match is in progress
+    if (match.status === 'finished') {
+      return { error: 'Match already finished' };
+    }
+
+    // Verify winner is one of the players in the match
+    const winnerId = (winner.id || winner.id_user).toString();
+    const player1Id = match.player1.id.toString();
+    const player2Id = match.player2.id.toString();
+    if (player1Id !== winnerId && player2Id !== winnerId) {
+      return { error: 'Winner must be one of the match players' };
+    }
+
+    // Update match with winner
+    match.winner = winner;
+    match.status = 'finished';
+
+    console.log(`[handleMatchResult] Match ${matchId} finished. Winner: ${winner.name || winner.username}`);
+
+    // Check if this is a Round 1 match
+    if (match.round === 1) {
+      // Check if both Round 1 matches are finished
+      const round1Matches = bracket.filter(m => m.round === 1);
+      const allRound1Finished = round1Matches.every(m => m.status === 'finished');
+
+      if (allRound1Finished) {
+        console.log(`[handleMatchResult] All Round 1 matches finished. Creating final match...`);
+        // Create final match room
+        const finalMatchResult = this.createFinalMatchRoom(tournamentId);
+        if (finalMatchResult.error) {
+          console.error(`[handleMatchResult] Failed to create final match: ${finalMatchResult.error}`);
+          // Still broadcast the update even if final match creation fails
+        }
+      }
+    }
+
+    // Broadcast updated bracket to all players
+    this.broadcastTournamentUpdate(tournament);
+
+    return { success: true, bracket };
+  }
+
+  // Create game room for final match when both Round 1 matches are finished
+  createFinalMatchRoom(tournamentId) {
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      return { error: 'Tournament not found' };
+    }
+
+    const bracket = tournament.bracket;
+    if (!bracket) {
+      return { error: 'Tournament bracket not found' };
+    }
+
+    // Find Round 1 matches
+    const round1Matches = bracket.filter(m => m.round === 1);
+    if (round1Matches.length !== 2) {
+      return { error: 'Invalid Round 1 matches' };
+    }
+
+    // Check if both Round 1 matches are finished
+    const allFinished = round1Matches.every(m => m.status === 'finished' && m.winner);
+    if (!allFinished) {
+      return { error: 'Not all Round 1 matches are finished' };
+    }
+
+    // Get winners
+    const winner1 = round1Matches[0].winner;
+    const winner2 = round1Matches[1].winner;
+
+    if (!winner1 || !winner2) {
+      return { error: 'Winners not found' };
+    }
+
+    // Find final match (Round 2)
+    const finalMatch = bracket.find(m => m.round === 2);
+    if (!finalMatch) {
+      return { error: 'Final match not found in bracket' };
+    }
+
+    // Set players for final match
+    finalMatch.player1 = winner1;
+    finalMatch.player2 = winner2;
+    finalMatch.status = 'pending'; // Will be set to 'playing' after room creation
+
+    console.log(`[createFinalMatchRoom] Creating final match: ${winner1.name} vs ${winner2.name}`);
+
+    // Get player sockets
+    const player1IdStr = winner1.id.toString();
+    const player2IdStr = winner2.id.toString();
+    const player1Socket = this.usersSocket.get(player1IdStr) || this.usersSocket.get(winner1.id);
+    const player2Socket = this.usersSocket.get(player2IdStr) || this.usersSocket.get(winner2.id);
+
+    // Check if both players are online
+    if (!player1Socket || !player2Socket) {
+      console.warn(`[createFinalMatchRoom] Missing socket. Player1: ${!!player1Socket}, Player2: ${!!player2Socket}`);
+      return { error: 'One or both players are not online' };
+    }
+
+    // Verify sockets are open
+    if (player1Socket.readyState !== 1 || player2Socket.readyState !== 1) {
+      console.warn(`[createFinalMatchRoom] Socket not open. Player1 readyState=${player1Socket.readyState}, Player2 readyState=${player2Socket.readyState}`);
+      return { error: 'One or both player sockets are not open' };
+    }
+
+    // Create player objects
+    const player1 = {
+      id: winner1.id,
+      username: winner1.name || winner1.username,
+      socket: player1Socket,
+      customization: tournament.customization || {}
+    };
+
+    const player2 = {
+      id: winner2.id,
+      username: winner2.name || winner2.username,
+      socket: player2Socket,
+      customization: tournament.customization || {}
+    };
+
+    try {
+      // Create the game room
+      const roomResult = this.createGameRoom(player1, player2);
+
+      if (!roomResult || !roomResult.roomCode) {
+        console.error(`[createFinalMatchRoom] Failed to create game room for final match`);
+        return { error: 'Failed to create game room' };
+      }
+
+      // Store roomCode in the final match
+      finalMatch.roomCode = roomResult.roomCode;
+      finalMatch.status = 'playing';
+
+      // Send initial gameState to both players
+      this.broadcastGameState(roomResult.roomCode, roomResult.gameState);
+
+      console.log(`[createFinalMatchRoom] ✓ Created game room ${roomResult.roomCode} for final match - ${player1.username} vs ${player2.username}`);
+
+      return { success: true, roomCode: roomResult.roomCode };
+    } catch (error) {
+      console.error(`[createFinalMatchRoom] Error creating final match room:`, error);
+      return { error: error.message || 'Failed to create final match room' };
+    }
+  }
+
   // Get tournament data (sanitized for client)
   getTournamentData(tournament) {
     return {
@@ -1973,15 +2165,30 @@ class GameManager {
 
   // Handle player socket reconnection (update socket reference in active game rooms)
   handlePlayerReconnect(playerId, newSocket) {
+    if (!newSocket || newSocket.readyState !== 1) {
+      console.warn(`[handlePlayerReconnect] New socket for player ${playerId} is not open (readyState: ${newSocket?.readyState})`);
+      return false;
+    }
+
     const found = this.findRoomByPlayer(playerId);
     if (found && found.room) {
+      const oldSocket = found.room.player1.id === playerId ? found.room.player1.socket : found.room.player2.socket;
+      const socketWasStale = !oldSocket || oldSocket.readyState !== 1;
+
       if (found.room.player1.id === playerId) {
         found.room.player1.socket = newSocket;
-        console.log(`[GameManager] Updated socket for player1 (${playerId}) in room ${found.roomCode}`);
+        console.log(`[GameManager] Updated socket for player1 (${playerId}) in room ${found.roomCode}${socketWasStale ? ' (was stale)' : ''}`);
       } else if (found.room.player2.id === playerId) {
         found.room.player2.socket = newSocket;
-        console.log(`[GameManager] Updated socket for player2 (${playerId}) in room ${found.roomCode}`);
+        console.log(`[GameManager] Updated socket for player2 (${playerId}) in room ${found.roomCode}${socketWasStale ? ' (was stale)' : ''}`);
       }
+
+      // Immediately send current game state to reconnected player to sync them
+      if (socketWasStale) {
+        this.broadcastGameState(found.roomCode, found.room.gameState);
+        console.log(`[GameManager] Sent current game state to reconnected player ${playerId} in room ${found.roomCode}`);
+      }
+
       return true;
     }
     return false;

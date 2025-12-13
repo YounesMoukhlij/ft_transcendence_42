@@ -894,6 +894,41 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
         return;
       }
 
+      if (action === 'reportMatchResult') {
+        const tournamentId = payload.tournamentId;
+        const matchId = payload.matchId;
+        const winner = payload.winner;
+
+        if (!tournamentId || !matchId || !winner) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID, match ID, and winner are required'
+          }));
+          return;
+        }
+
+        // Handle match result
+        const result = gameManager.handleMatchResult(tournamentId, matchId, winner, userId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          // Success - bracket update will be broadcast via broadcastTournamentUpdate
+          socket.send(JSON.stringify({
+            type: 'matchResultRecorded',
+            data: {
+              tournamentId,
+              matchId,
+              winner
+            }
+          }));
+        }
+        return;
+      }
+
       // Legacy game actions (friend invitations, etc.)
       switch (action) {
         case 'inviteFriend': {
