@@ -179,6 +179,11 @@ export default function TournamentPage() {
   const [serverGameState, setServerGameState] = useState<any>(null);
   const [opponentLeft, setOpponentLeft] = useState(false);
 
+  // Game started animation
+  const [showGameStartedAnimation, setShowGameStartedAnimation] = useState(false);
+  const [shouldAutoStartMatch, setShouldAutoStartMatch] = useState(false);
+  const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
+
 
 
   // Default avatars - moved outside to prevent recreation
@@ -479,7 +484,15 @@ export default function TournamentPage() {
                 setPlayers(message.data.registeredPlayers);
                 setCurrentMatchIndex(0);
               }
-              setTournamentStep('bracket');
+              // Show "Game started" animation first, then go to bracket
+              setShowGameStartedAnimation(true);
+              // After animation, go to bracket
+              setTimeout(() => {
+                setShowGameStartedAnimation(false);
+                setTournamentStep('bracket');
+                // Auto-start match if player is in the first match
+                setShouldAutoStartMatch(true);
+              }, 3000); // 3 second animation
             }
 
             // For remote tournaments, sync bracket updates during gameplay
@@ -503,14 +516,29 @@ export default function TournamentPage() {
               }
             }
 
-            // Handle match room assignment for remote tournaments
+            break;
+
+          case 'tournamentMatchFound':
+            // Handle tournament match room assignment
             if (tournamentType === 'remote' && message.data.roomCode && message.data.matchId) {
-              // Store roomCode for the current match
+              // Update bracket with roomCode
               const bracket = gameState.tournament?.bracket || [];
               const matchIndex = bracket.findIndex(m => m.id === message.data.matchId);
-              if (matchIndex !== -1 && matchIndex === currentMatchIndex) {
-                // This is the current match - we're ready to play
-                // The gameState messages will come through WebSocket
+              if (matchIndex !== -1) {
+                // Update match with roomCode
+                const updatedBracket = [...bracket];
+                updatedBracket[matchIndex] = {
+                  ...updatedBracket[matchIndex],
+                  roomCode: message.data.roomCode,
+                  status: 'playing'
+                };
+                setTournament({
+                  ...gameState.tournament,
+                  bracket: updatedBracket
+                });
+
+                // If this is the current match, we can start playing
+                // The gameState messages will come through WebSocket from the game room
               }
             }
             break;
@@ -1093,8 +1121,16 @@ export default function TournamentPage() {
           await (container as any).msRequestFullscreen();
         }
       }
-    } catch (error) {
-      console.error('Error toggling fullscreen:', error);
+    } catch (error: any) {
+      // Handle permission errors gracefully
+      if (error.name === 'NotAllowedError' || error.message?.includes('permission')) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Tournament] Fullscreen permission denied:', error.message);
+        }
+        // Don't show error to user - they can try again or use F key
+      } else {
+        console.error('Error toggling fullscreen:', error);
+      }
     }
   }, []);
 
@@ -1103,12 +1139,17 @@ export default function TournamentPage() {
     if (tournamentStep !== 'playing') return;
 
     const handleFullscreenChange = () => {
-      setIsFullscreen(
-        !!(document.fullscreenElement ||
-          (document as any).webkitFullscreenElement ||
-          (document as any).mozFullScreenElement ||
-          (document as any).msFullscreenElement)
+      const isNowFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
       );
+      setIsFullscreen(isNowFullscreen);
+      // Hide fullscreen prompt if we successfully entered fullscreen
+      if (isNowFullscreen) {
+        setShowFullscreenPrompt(false);
+      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -1157,17 +1198,64 @@ export default function TournamentPage() {
     }
   }, [serverGameState, tournamentType, tournamentStep, currentMatch, matchWinner, handleGameComplete]);
 
-  // Auto-fullscreen for local tournament matches
+  // Auto-fullscreen for tournament matches (both local and remote)
   const autoFullscreenAttemptedRef = React.useRef(false);
   useEffect(() => {
-    if (tournamentStep === 'playing' && tournamentType === 'local' && !isFullscreen && !autoFullscreenAttemptedRef.current) {
-      // Delay to ensure container is ready
-      const timer = setTimeout(() => {
-        if (gameContainerRef.current) {
-          toggleFullscreen();
-          autoFullscreenAttemptedRef.current = true;
+    if (tournamentStep === 'playing' && !isFullscreen && !autoFullscreenAttemptedRef.current) {
+      const container = gameContainerRef.current;
+      if (!container) return;
+
+      // Check if already in fullscreen
+      const isAlreadyFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+
+      if (isAlreadyFullscreen) {
+        autoFullscreenAttemptedRef.current = true;
+        return;
+      }
+
+      // Mark as attempted immediately
+      autoFullscreenAttemptedRef.current = true;
+
+      // Use requestAnimationFrame to ensure we're in interaction context
+      // This helps with permission checks, but may still fail if no user interaction occurred
+      const attemptFullscreen = async () => {
+        try {
+          if (container.requestFullscreen) {
+            await container.requestFullscreen();
+            container.focus();
+          } else if ((container as any).webkitRequestFullscreen) {
+            await (container as any).webkitRequestFullscreen();
+            container.focus();
+          } else if ((container as any).mozRequestFullScreen) {
+            await (container as any).mozRequestFullScreen();
+            container.focus();
+          } else if ((container as any).msRequestFullscreen) {
+            await (container as any).msRequestFullscreen();
+            container.focus();
+          }
+        } catch (error: any) {
+          // Permission error is expected if no user interaction occurred
+          // Show a prompt for user to click to enter fullscreen
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Tournament] Auto-fullscreen blocked (permission check failed):', error.message);
+          }
+          // Show fullscreen prompt button
+          setShowFullscreenPrompt(true);
+          // Reset flag so user can try again manually
+          autoFullscreenAttemptedRef.current = false;
         }
+      };
+
+      // Small delay to ensure container is ready, then use requestAnimationFrame
+      const timer = setTimeout(() => {
+        requestAnimationFrame(attemptFullscreen);
       }, 300);
+
       return () => clearTimeout(timer);
     }
 
@@ -1175,7 +1263,38 @@ export default function TournamentPage() {
     if (tournamentStep !== 'playing') {
       autoFullscreenAttemptedRef.current = false;
     }
-  }, [tournamentStep, tournamentType, isFullscreen, toggleFullscreen, currentMatchIndex]);
+  }, [tournamentStep, isFullscreen, currentMatchIndex]);
+
+  // Auto-start match for remote tournaments when shouldAutoStartMatch is true
+  useEffect(() => {
+    if (shouldAutoStartMatch && tournamentType === 'remote' && tournamentStep === 'bracket' && user?.id_user) {
+      const bracket = gameState.tournament?.bracket || [];
+      const userId = user.id_user.toString();
+
+      // Find the match the user is in
+      const userMatch = bracket.find(m =>
+        m.player1 && m.player2 &&
+        (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
+        m.status === 'pending'
+      );
+
+      if (userMatch) {
+        // Small delay to show bracket briefly before auto-starting
+        const timer = setTimeout(() => {
+          const matchIndex = bracket.findIndex(m => m.id === userMatch.id);
+          if (matchIndex !== -1) {
+            setCurrentMatchIndex(matchIndex);
+            setTournamentStep('playing');
+            setShouldAutoStartMatch(false);
+          }
+        }, 2000); // 2 second delay to show bracket and "Your next match is..." message
+
+        return () => clearTimeout(timer);
+      } else {
+        setShouldAutoStartMatch(false);
+      }
+    }
+  }, [shouldAutoStartMatch, tournamentType, tournamentStep, user?.id_user, gameState.tournament?.bracket]);
 
   // Calculate match players for the current tournament match - stable version
   // const matchPlayers = useMemo(() => {
@@ -1421,6 +1540,18 @@ export default function TournamentPage() {
       }
     };
 
+    // Find the match that the current user is in
+    const getUserMatch = () => {
+      if (!user?.id_user) return null;
+      const userId = user.id_user.toString();
+      return bracket.find(m =>
+        m.player1 && m.player2 &&
+        (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
+        m.status === 'pending'
+      );
+    };
+
+    const userMatch = getUserMatch();
     const isComplete = bracket.every(m => m.status === 'finished');
     const champion = isComplete ? bracket[bracket.length - 1]?.winner : null;
 
@@ -1429,6 +1560,20 @@ export default function TournamentPage() {
         <h3 className="text-lg sm:text-xl font-bold text-purple-300 mb-3 sm:mb-4 text-center">
           {t('game.tournamentBracket')}
         </h3>
+
+        {/* Show "Your next match is..." message for remote tournaments */}
+        {tournamentType === 'remote' && userMatch && userMatch.player1 && userMatch.player2 && (
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg border-2 border-purple-400 animate-pulse">
+            <div className="flex items-center justify-center gap-2 sm:gap-3">
+              <FaGamepad className="text-yellow-300 text-lg sm:text-xl" />
+              <p className="text-white font-semibold text-sm sm:text-base lg:text-lg text-center">
+                {t('game.yourNextMatchIs') || 'Your next match is:'} <span className="text-yellow-300">
+                  {userMatch.player1.name} {t('game.vs')} {userMatch.player2.name}
+                </span>
+              </p>
+            </div>
+          </div>
+        )}
 
         {champion && (
           <div className="text-center mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 rounded-lg shadow-xl border-2 border-yellow-300 animate-pulse">
@@ -2634,6 +2779,34 @@ export default function TournamentPage() {
 
         {/* Game Area */}
         <div className={`relative ${isFullscreen ? 'flex-1 flex items-center justify-center' : 'flex-1'}`}>
+          {/* Fullscreen prompt - shown if auto-fullscreen fails */}
+          {showFullscreenPrompt && !isFullscreen && (
+            <div className="absolute inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-gradient-to-br from-purple-800 to-blue-800 rounded-xl p-6 sm:p-8 text-center max-w-md mx-4">
+                <IoExpand className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400 mx-auto mb-4" />
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-3">{t('game.enterFullscreen') || 'Enter Fullscreen'}</h3>
+                <p className="text-gray-300 text-sm sm:text-base mb-6">
+                  {t('game.clickToEnterFullscreen') || 'Click the button below to enter fullscreen mode for the best gaming experience.'}
+                </p>
+                <button
+                  onClick={async () => {
+                    await toggleFullscreen();
+                    setShowFullscreenPrompt(false);
+                  }}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-base sm:text-lg"
+                >
+                  {t('game.enterFullscreen') || 'Enter Fullscreen'}
+                </button>
+                <button
+                  onClick={() => setShowFullscreenPrompt(false)}
+                  className="mt-3 px-4 py-2 text-gray-300 hover:text-white text-sm"
+                >
+                  {t('game.skip') || 'Skip'}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div
             className={isFullscreen ? 'w-full h-full flex items-center justify-center' : 'w-full h-full'}
             style={isFullscreen ? {
@@ -3003,6 +3176,27 @@ export default function TournamentPage() {
             >
               {t('game.backToGameModes')}
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Game started animation phase
+  if (showGameStartedAnimation) {
+    return (
+      <div className="flex items-center justify-center h-full bg-black">
+        <div className="text-center">
+          <div className="mb-8">
+            <FaTrophy className="w-24 h-24 sm:w-32 sm:h-32 text-yellow-400 mx-auto mb-6 animate-bounce" />
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 mb-4 animate-pulse">
+              {t('game.gameStarted') || 'GAME STARTED!'}
+            </h1>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-3 h-3 bg-purple-400 rounded-full animate-ping"></div>
+              <div className="w-3 h-3 bg-pink-400 rounded-full animate-ping" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-3 h-3 bg-blue-400 rounded-full animate-ping" style={{ animationDelay: '0.4s' }}></div>
+            </div>
           </div>
         </div>
       </div>
