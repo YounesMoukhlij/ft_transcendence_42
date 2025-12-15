@@ -65,6 +65,7 @@ interface PingPongGameProps {
   tournamentMode?: boolean;
   tournamentPlayers?: Player[];
   onTournamentMatchEnd?: (winner: Player) => void;
+  isTournamentFinalMatch?: boolean; // Hide rematch button and game over screen for final match
 
   // Local/AI game props
   onGameOver?: (winner: string | null) => void;
@@ -329,6 +330,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   tournamentMode = false,
   tournamentPlayers = [],
   onTournamentMatchEnd,
+  isTournamentFinalMatch = false,
   onGameOver
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -985,8 +987,8 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     );
   }
 
-  // Winner screen for remote game
-  if (winner && !tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local') {
+  // Winner screen for remote game (but not for tournament final match)
+  if (winner && !tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local' && !isTournamentFinalMatch) {
     return (
       <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
         <h2 className="text-4xl font-bold mb-4">{t('game.gameOver')}</h2>

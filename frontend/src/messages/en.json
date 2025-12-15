@@ -17,7 +17,8 @@
     "game": "Game",
     "chat": "Chat",
     "leaderboard": "Leaderboard",
-    "leagues": "Leagues"
+    "leagues": "Leagues",
+    "close": "Close"
   },
   "settings": {
     "title": "Account Settings",
@@ -474,6 +475,8 @@
     "startGame": "Start Game",
     "finalMatchReady": "Final Match Ready!",
     "waitingForFinalMatch": "Waiting for final match to start...",
+    "proceedToFinalMatch": "Proceed to Final Match",
+    "waitingForOtherWinner": "Waiting for the other winner...",
     "otherMatchStatus": "Other Match Status:",
     "matchFinished": "Match Finished",
     "matchStillPlaying": "Match Still Playing",

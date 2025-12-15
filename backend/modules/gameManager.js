@@ -25,6 +25,7 @@ class GameManager {
     this.tournamentJoinRequests = new Map(); // tournamentId -> Map<requestId, JoinRequest>
     this.tournamentInvites = new Map(); // userId -> Array<TournamentInvite>
     this.randomOpponentQueue = new Map(); // userId -> { tournamentId, playerInfo }
+    this.creatingFinalMatch = new Set(); // tournamentId -> Set of tournamentIds currently creating final match (prevents race conditions)
   }
 
   // Generate unique room code
@@ -595,6 +596,48 @@ class GameManager {
           const winnerId = winner === room.player1.username ? room.player1.id : room.player2.id;
           const loserId = winner === room.player1.username ? room.player2.id : room.player1.id;
           this.awardXP(winnerId, loserId, 500, 200, 'casual');
+
+          // CRITICAL: For tournament matches, automatically report match result
+          // This ensures Round 2 is created immediately when both Round 1 matches finish
+          if (room.tournamentContext) {
+            const tournamentId = room.tournamentContext.tournamentId;
+            const matchId = room.tournamentContext.matchId;
+
+            // Get winner player object (with all required fields: id, name, avatar, username)
+            const winnerPlayer = winner === room.player1.username
+              ? {
+                  id: room.player1.id,
+                  name: room.player1.username,
+                  username: room.player1.username,
+                  avatar: room.player1.avatar || null
+                }
+              : {
+                  id: room.player2.id,
+                  name: room.player2.username,
+                  username: room.player2.username,
+                  avatar: room.player2.avatar || null
+                };
+
+            console.log(`[startGameLoop] Tournament match finished - automatically reporting result:`, {
+              tournamentId,
+              matchId,
+              winner: winnerPlayer.name,
+              round: room.tournamentContext.round
+            });
+
+            // Automatically report match result to tournament system
+            // This ensures Round 2 is created immediately when both Round 1 matches finish
+            try {
+              const matchResult = this.handleMatchResult(tournamentId, matchId, winnerPlayer, winnerId);
+              if (matchResult.error) {
+                console.error(`[startGameLoop] Failed to report tournament match result:`, matchResult.error);
+              } else {
+                console.log(`[startGameLoop] Successfully reported tournament match result for match ${matchId}`);
+              }
+            } catch (error) {
+              console.error(`[startGameLoop] Error reporting tournament match result:`, error);
+            }
+          }
 
           // Keep room for rematch option, but stop game loop
           return;
@@ -2144,26 +2187,51 @@ class GameManager {
     match.status = 'finished';
 
     console.log(`[handleMatchResult] Match ${matchId} finished. Winner: ${winner.name || winner.username}`);
+    console.log(`[handleMatchResult] Match details:`, {
+      matchId,
+      round: match.round,
+      status: match.status,
+      hasWinner: !!match.winner,
+      player1Id: match.player1?.id,
+      player2Id: match.player2?.id
+    });
 
     // Check if this is a Round 1 match
+    let finalMatchCreated = false;
     if (match.round === 1) {
       // Check if both Round 1 matches are finished
       const round1Matches = bracket.filter(m => m.round === 1);
-      const allRound1Finished = round1Matches.every(m => m.status === 'finished');
+      console.log(`[handleMatchResult] Round 1 matches status:`, round1Matches.map(m => ({
+        id: m.id,
+        status: m.status,
+        hasWinner: !!m.winner,
+        winnerName: m.winner?.name || m.winner?.username
+      })));
+
+      const allRound1Finished = round1Matches.every(m => m.status === 'finished' && m.winner);
+      console.log(`[handleMatchResult] All Round 1 matches finished? ${allRound1Finished}`);
 
       if (allRound1Finished) {
-        console.log(`[handleMatchResult] All Round 1 matches finished. Creating final match...`);
+        console.log(`[handleMatchResult] ✓✓✓ All Round 1 matches finished. Creating final match... ✓✓✓`);
         // Create final match room
         const finalMatchResult = this.createFinalMatchRoom(tournamentId);
         if (finalMatchResult.error) {
-          console.error(`[handleMatchResult] Failed to create final match: ${finalMatchResult.error}`);
+          console.error(`[handleMatchResult] ✗ Failed to create final match: ${finalMatchResult.error}`);
           // Still broadcast the update even if final match creation fails
+        } else {
+          console.log(`[handleMatchResult] ✓✓✓ Final match created successfully! Room: ${finalMatchResult.roomCode} ✓✓✓`);
+          finalMatchCreated = true;
+          // createFinalMatchRoom already broadcasts the update, so skip broadcasting here
         }
+      } else {
+        console.log(`[handleMatchResult] Waiting for other Round 1 match to finish...`);
       }
     }
 
-    // Broadcast updated bracket to all players
-    this.broadcastTournamentUpdate(tournament);
+    // Broadcast updated bracket to all players (unless final match was just created, which already broadcasted)
+    if (!finalMatchCreated) {
+      this.broadcastTournamentUpdate(tournament);
+    }
 
     return { success: true, bracket };
   }
@@ -2206,14 +2274,32 @@ class GameManager {
       return { error: 'Final match not found in bracket' };
     }
 
-    // Set players for final match
-    finalMatch.player1 = winner1;
-    finalMatch.player2 = winner2;
-    finalMatch.status = 'pending'; // Will be set to 'playing' after room creation
+    // RACE CONDITION PROTECTION: Check if final match is already being created
+    if (this.creatingFinalMatch.has(tournamentId)) {
+      console.log(`[createFinalMatchRoom] Final match creation already in progress for tournament ${tournamentId}, skipping duplicate call`);
+      // Check if room was already created by the other call
+      if (finalMatch.roomCode && finalMatch.status === 'playing') {
+        console.log(`[createFinalMatchRoom] Final match room ${finalMatch.roomCode} was created by concurrent call`);
+        return { success: true, roomCode: finalMatch.roomCode };
+      }
+      // If still being created, return error so caller can retry
+      return { error: 'Final match creation in progress, please retry' };
+    }
+
+    // If final match already has an active room, do not recreate it
+    if (finalMatch.roomCode && finalMatch.status === 'playing') {
+      console.log(`[createFinalMatchRoom] Final match already has room ${finalMatch.roomCode}, skipping recreation`);
+      return { success: true, roomCode: finalMatch.roomCode };
+    }
+
+    // Set lock to prevent concurrent creation
+    this.creatingFinalMatch.add(tournamentId);
+    console.log(`[createFinalMatchRoom] Acquired lock for tournament ${tournamentId}`);
 
     console.log(`[createFinalMatchRoom] Creating final match: ${winner1.name} vs ${winner2.name}`);
 
-    // Get player sockets
+    // Get player sockets FIRST before setting players in bracket
+    // This ensures we don't set players if room creation will fail
     const player1IdStr = winner1.id.toString();
     const player2IdStr = winner2.id.toString();
     const player1Socket = this.usersSocket.get(player1IdStr) || this.usersSocket.get(winner1.id);
@@ -2231,10 +2317,17 @@ class GameManager {
       return { error: 'One or both player sockets are not open' };
     }
 
-    // Create player objects
+    // Only set players in bracket AFTER confirming sockets are available
+    // This prevents bracket from showing final match players if room creation fails
+    finalMatch.player1 = winner1;
+    finalMatch.player2 = winner2;
+    finalMatch.status = 'pending'; // Will be set to 'playing' after room creation
+
+    // Create player objects with all required fields (id, username, avatar)
     const player1 = {
       id: winner1.id,
       username: winner1.name || winner1.username,
+      avatar: winner1.avatar || null,  // Include avatar for syncing
       socket: player1Socket,
       customization: tournament.customization || {}
     };
@@ -2242,9 +2335,15 @@ class GameManager {
     const player2 = {
       id: winner2.id,
       username: winner2.name || winner2.username,
+      avatar: winner2.avatar || null,  // Include avatar for syncing
       socket: player2Socket,
       customization: tournament.customization || {}
     };
+
+    console.log(`[createFinalMatchRoom] Player objects created:`, {
+      player1: { id: player1.id, username: player1.username, hasAvatar: !!player1.avatar },
+      player2: { id: player2.id, username: player2.username, hasAvatar: !!player2.avatar }
+    });
 
     try {
       // Create tournament context for final match
@@ -2260,21 +2359,70 @@ class GameManager {
 
       if (!roomResult || !roomResult.roomCode) {
         console.error(`[createFinalMatchRoom] Failed to create game room for final match`);
+        // Reset players since room creation failed - don't leave bracket in inconsistent state
+        finalMatch.player1 = undefined;
+        finalMatch.player2 = undefined;
+        finalMatch.status = 'pending';
         return { error: 'Failed to create game room' };
       }
 
-      // Store roomCode in the final match
+      // Store roomCode in the final match (players already set above after socket verification)
       finalMatch.roomCode = roomResult.roomCode;
       finalMatch.status = 'playing';
 
-      // Send initial gameState to both players
-      this.broadcastGameState(roomResult.roomCode, roomResult.gameState);
+      // Verify game loop is running for final match
+      const isGameLoopRunning = this.gameLoops.has(roomResult.roomCode);
+      console.log(`[createFinalMatchRoom] Game loop running for final match? ${isGameLoopRunning}`);
+      console.log(`[createFinalMatchRoom] Room stored in gameRooms? ${this.gameRooms.has(roomResult.roomCode)}`);
+      console.log(`[createFinalMatchRoom] Final match details:`, {
+        matchId: finalMatch.id,
+        round: finalMatch.round,
+        status: finalMatch.status,
+        roomCode: finalMatch.roomCode,
+        player1Id: finalMatch.player1.id,
+        player2Id: finalMatch.player2.id,
+        player1Name: finalMatch.player1.name || finalMatch.player1.username,
+        player2Name: finalMatch.player2.name || finalMatch.player2.username
+      });
+
+      // Broadcast tournament update FIRST to notify all players that final match is ready
+      this.broadcastTournamentUpdate(tournament);
 
       console.log(`[createFinalMatchRoom] ✓ Created game room ${roomResult.roomCode} for final match - ${player1.username} vs ${player2.username}`);
+      console.log(`[createFinalMatchRoom] Broadcasting tournament update to notify players of final match`);
+
+      // Send initial gameState to both players AFTER a small delay to ensure they've received the tournament update
+      setTimeout(() => {
+        console.log(`[createFinalMatchRoom] Broadcasting initial gameState for final match room ${roomResult.roomCode}`);
+        const room = this.gameRooms.get(roomResult.roomCode);
+        if (room) {
+          console.log(`[createFinalMatchRoom] Room found, broadcasting gameState with tournament context:`, {
+            tournamentId: room.tournamentContext?.tournamentId,
+            matchId: room.tournamentContext?.matchId,
+            round: room.tournamentContext?.round
+          });
+          this.broadcastGameState(roomResult.roomCode, room.gameState);
+        } else {
+          console.error(`[createFinalMatchRoom] Room ${roomResult.roomCode} not found in gameRooms!`);
+        }
+      }, 200); // 200ms delay to ensure tournament update is processed first
+
+      // Release lock after successful creation
+      this.creatingFinalMatch.delete(tournamentId);
+      console.log(`[createFinalMatchRoom] Released lock for tournament ${tournamentId} after successful creation`);
 
       return { success: true, roomCode: roomResult.roomCode };
     } catch (error) {
       console.error(`[createFinalMatchRoom] Error creating final match room:`, error);
+      // Reset players since room creation failed - don't leave bracket in inconsistent state
+      finalMatch.player1 = undefined;
+      finalMatch.player2 = undefined;
+      finalMatch.status = 'pending';
+
+      // Release lock on error
+      this.creatingFinalMatch.delete(tournamentId);
+      console.log(`[createFinalMatchRoom] Released lock for tournament ${tournamentId} after error`);
+
       return { error: error.message || 'Failed to create final match room' };
     }
   }

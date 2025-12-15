@@ -929,6 +929,37 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
         return;
       }
 
+      // Ensure final match room exists (can be triggered by Round 1 winners)
+      if (action === 'ensureFinalMatchRoom') {
+        const tournamentId = payload.tournamentId;
+
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        const result = gameManager.createFinalMatchRoom(tournamentId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          socket.send(JSON.stringify({
+            type: 'finalMatchRoomEnsured',
+            data: {
+              tournamentId,
+              roomCode: result.roomCode
+            }
+          }));
+        }
+        return;
+      }
+
       // Legacy game actions (friend invitations, etc.)
       switch (action) {
         case 'inviteFriend': {

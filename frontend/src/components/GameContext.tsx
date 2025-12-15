@@ -16,6 +16,8 @@ export interface TournamentMatch {
   player2?: Player;
   winner?: Player;
   status: 'pending' | 'playing' | 'finished';
+  // Optional roomCode for remote tournaments (set by backend when room is created)
+  roomCode?: string;
 }
 
 export interface Tournament {
