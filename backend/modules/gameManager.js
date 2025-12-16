@@ -26,6 +26,7 @@ class GameManager {
     this.tournamentInvites = new Map(); // userId -> Array<TournamentInvite>
     this.randomOpponentQueue = new Map(); // userId -> { tournamentId, playerInfo }
     this.creatingFinalMatch = new Set(); // tournamentId -> Set of tournamentIds currently creating final match (prevents race conditions)
+    this.finalMatchReady = new Map(); // tournamentId -> Set<playerId> - tracks which players are ready for final match
   }
 
   // Generate unique room code
@@ -2298,6 +2299,68 @@ class GameManager {
       } else {
         console.log(`[handleMatchResult] Waiting for other Round 1 match to finish...`);
       }
+    }
+
+    // Check if this is the final match (Round 2) - tournament is complete
+    if (match.round === 2) {
+      console.log(`[handleMatchResult] ✓✓✓ FINAL MATCH finished! Tournament complete! ✓✓✓`);
+
+      // Mark tournament as finished and set champion
+      tournament.status = 'finished';
+      tournament.champion = winner;
+
+      // Delete all tournament rooms (Round 1 and Round 2)
+      console.log(`[handleMatchResult] Cleaning up all tournament rooms for tournament ${tournamentId}`);
+      let roomsDeleted = 0;
+      const roomsToDelete = [];
+
+      // Find all rooms belonging to this tournament
+      for (const [roomCode, room] of this.gameRooms.entries()) {
+        if (room.tournamentContext && room.tournamentContext.tournamentId === tournamentId) {
+          roomsToDelete.push(roomCode);
+        }
+      }
+
+      // Delete all tournament rooms
+      for (const roomCode of roomsToDelete) {
+        const room = this.gameRooms.get(roomCode);
+        if (room) {
+          // Stop game loop if running
+          const gameLoop = this.gameLoops.get(roomCode);
+          if (gameLoop) {
+            clearInterval(gameLoop);
+            this.gameLoops.delete(roomCode);
+            console.log(`[handleMatchResult] Stopped game loop for tournament room ${roomCode}`);
+          }
+
+          // Delete the room
+          this.gameRooms.delete(roomCode);
+          roomsDeleted++;
+          console.log(`[handleMatchResult] Deleted tournament room ${roomCode} (Match ${room.tournamentContext?.matchId}, Round ${room.tournamentContext?.round})`);
+        }
+      }
+
+      console.log(`[handleMatchResult] ✓ Deleted ${roomsDeleted} tournament room(s) for tournament ${tournamentId}`);
+
+      // Broadcast tournament completion to all players
+      this.broadcastTournamentUpdate(tournament);
+
+      // Send tournament completion message to all registered players
+      for (const player of tournament.registeredPlayers) {
+        const socket = this.usersSocket.get(player.id.toString());
+        if (socket) {
+          this.sendToPlayer(socket, {
+            type: 'tournamentCompleted',
+            data: {
+              tournamentId: tournamentId,
+              champion: winner,
+              bracket: bracket
+            }
+          });
+        }
+      }
+
+      console.log(`[handleMatchResult] ✓✓✓ Tournament ${tournamentId} completed! Champion: ${winner.name || winner.username} ✓✓✓`);
     }
 
     // Broadcast updated bracket to all players (unless final match was just created, which already broadcasted)

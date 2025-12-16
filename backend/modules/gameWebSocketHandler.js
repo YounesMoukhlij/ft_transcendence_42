@@ -943,31 +943,146 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
 
         // GUARD: Verify tournament exists and final match is not finished
         const tournament = gameManager.tournaments.get(tournamentId);
-        if (tournament && tournament.bracket) {
-          const finalMatch = tournament.bracket.find(m => m.round === 2);
-          if (finalMatch && finalMatch.status === 'finished') {
-            socket.send(JSON.stringify({
-              type: 'error',
-              message: 'Final match is already finished'
-            }));
-            return;
-          }
-        }
-
-        const result = gameManager.createFinalMatchRoom(tournamentId);
-
-        if (result.error) {
+        if (!tournament) {
           socket.send(JSON.stringify({
             type: 'error',
-            message: result.error
+            message: 'Tournament not found'
           }));
-        } else {
+          return;
+        }
+
+        const bracket = tournament.bracket;
+        if (!bracket) {
           socket.send(JSON.stringify({
-            type: 'finalMatchRoomEnsured',
-            data: {
-              tournamentId,
-              roomCode: result.roomCode
+            type: 'error',
+            message: 'Tournament bracket not found'
+          }));
+          return;
+        }
+
+        const finalMatch = bracket.find(m => m.round === 2);
+        if (finalMatch && finalMatch.status === 'finished') {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Final match is already finished'
+          }));
+          return;
+        }
+
+        // Check if both Round 1 matches are finished
+        const round1Matches = bracket.filter(m => m.round === 1);
+        const bothRound1Finished = round1Matches.length === 2 &&
+                                   round1Matches.every(m => m.status === 'finished' && m.winner);
+
+        if (!bothRound1Finished) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Round 1 matches are not finished yet'
+          }));
+          return;
+        }
+
+        // Get the two winners
+        const winner1 = round1Matches[0].winner;
+        const winner2 = round1Matches[1].winner;
+        const winner1Id = (winner1.id || winner1.id_user).toString();
+        const winner2Id = (winner2.id || winner2.id_user).toString();
+
+        // Verify user is one of the winners
+        const userIdStr = userId.toString();
+        if (userIdStr !== winner1Id && userIdStr !== winner2Id) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Only Round 1 winners can proceed to final match'
+          }));
+          return;
+        }
+
+        // Initialize readiness tracking for this tournament if not exists
+        if (!gameManager.finalMatchReady.has(tournamentId)) {
+          gameManager.finalMatchReady.set(tournamentId, new Set());
+        }
+
+        const readySet = gameManager.finalMatchReady.get(tournamentId);
+
+        // Mark this player as ready
+        readySet.add(userIdStr);
+        console.log(`[ensureFinalMatchRoom] Player ${userIdStr} is ready for final match. Ready players:`, Array.from(readySet));
+
+        // Get both player sockets for broadcasting
+        const player1Socket = gameManager.usersSocket.get(winner1Id);
+        const player2Socket = gameManager.usersSocket.get(winner2Id);
+
+        // Broadcast readiness status to both players
+        const readinessStatus = {
+          tournamentId,
+          readyPlayers: Array.from(readySet),
+          bothReady: readySet.size === 2
+        };
+
+        if (player1Socket && player1Socket.readyState === 1) {
+          player1Socket.send(JSON.stringify({
+            type: 'finalMatchReadiness',
+            data: readinessStatus
+          }));
+        }
+
+        if (player2Socket && player2Socket.readyState === 1) {
+          player2Socket.send(JSON.stringify({
+            type: 'finalMatchReadiness',
+            data: readinessStatus
+          }));
+        }
+
+        // If both players are ready, create the final match room
+        if (readySet.size === 2) {
+          console.log(`[ensureFinalMatchRoom] Both players ready! Creating final match room...`);
+          const result = gameManager.createFinalMatchRoom(tournamentId);
+
+          if (result.error) {
+            // Clear readiness on error
+            gameManager.finalMatchReady.delete(tournamentId);
+            if (player1Socket && player1Socket.readyState === 1) {
+              player1Socket.send(JSON.stringify({
+                type: 'error',
+                message: result.error
+              }));
             }
+            if (player2Socket && player2Socket.readyState === 1) {
+              player2Socket.send(JSON.stringify({
+                type: 'error',
+                message: result.error
+              }));
+            }
+          } else {
+            // Clear readiness tracking after successful creation
+            gameManager.finalMatchReady.delete(tournamentId);
+
+            // Send success to both players
+            if (player1Socket && player1Socket.readyState === 1) {
+              player1Socket.send(JSON.stringify({
+                type: 'finalMatchRoomEnsured',
+                data: {
+                  tournamentId,
+                  roomCode: result.roomCode
+                }
+              }));
+            }
+            if (player2Socket && player2Socket.readyState === 1) {
+              player2Socket.send(JSON.stringify({
+                type: 'finalMatchRoomEnsured',
+                data: {
+                  tournamentId,
+                  roomCode: result.roomCode
+                }
+              }));
+            }
+          }
+        } else {
+          // Not both ready yet - just acknowledge the readiness
+          socket.send(JSON.stringify({
+            type: 'finalMatchReadiness',
+            data: readinessStatus
           }));
         }
         return;
