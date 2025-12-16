@@ -991,23 +991,12 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   if (winner && !tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local' && !isTournamentFinalMatch) {
     return (
       <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
-        <h2 className="text-4xl font-bold mb-4">{t('game.gameOver')}</h2>
+        <h2 className="text-4xl font-bold mb-4">{t('game.TournamentDone')}</h2>
         <p className="text-2xl mt-4 mb-6">{t('game.isTheWinner', { winner })}</p>
 
-        {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage}</p>}
+        {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage} asdasdasd </p>}
 
-        {rematchOffer ? (
-            handleAcceptRematch &&
-          <button onClick={handleAcceptRematch} className="mt-4 px-6 py-3 bg-yellow-500 rounded-lg text-lg hover:bg-yellow-600 transition-colors">
-            Accept Rematch
-          </button>
-        ) : rematchRequested ? (
-          <p className="text-yellow-400">Waiting for opponent to accept...</p>
-        ) : (
-          <button onClick={handleRematchRequest} className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors">
-            Request Rematch
-          </button>
-        )}
+
 
         <button onClick={handleExit} className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors">
           Back to Game Lobby

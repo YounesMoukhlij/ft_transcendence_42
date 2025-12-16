@@ -108,7 +108,19 @@ class GameManager {
   }
 
   // Create game room
+  // GUARD: This function should not be called for finished tournament matches
   createGameRoom(player1, player2, tournamentContext = null) {
+    // If this is a tournament match, verify it's not already finished
+    if (tournamentContext) {
+      const tournament = this.tournaments.get(tournamentContext.tournamentId);
+      if (tournament && tournament.bracket) {
+        const match = tournament.bracket.find(m => m.id === tournamentContext.matchId);
+        if (match && match.status === 'finished') {
+          console.error(`[createGameRoom] ERROR: Attempted to create room for finished match ${tournamentContext.matchId}`);
+          throw new Error(`Cannot create room for finished match ${tournamentContext.matchId}`);
+        }
+      }
+    }
     const roomCode = this.generateRoomCode();
     const gameState = this.initializeGameState(player1, player2, tournamentContext);
 
@@ -663,11 +675,13 @@ class GameManager {
       return;
     }
 
-    // Check if this is Match 1 or Match 2
+    // Check if this is Match 1, Match 2, or Final Match (Round 2)
     const matchId = room.tournamentContext?.matchId;
+    const round = room.tournamentContext?.round;
     const isMatch1 = matchId === 1;
     const isMatch2 = matchId === 2;
-    const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
+    const isFinalMatch = round === 2;
+    const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : (isFinalMatch ? 'FINAL MATCH (Round 2)' : null));
 
     // CRITICAL: Get fresh socket references right before sending to avoid race conditions
     // This ensures we always use the latest socket, even if player reconnected
@@ -744,8 +758,8 @@ class GameManager {
     const p1Sent = p1SocketValid ? this.sendToPlayer(player1Socket, gameStateMessage) : false;
     const p2Sent = p2SocketValid ? this.sendToPlayer(player2Socket, gameStateMessage) : false;
 
-    // For Match 1 and Match 2: Log synchronization verification periodically
-    if ((isMatch1 || isMatch2) && p1Sent && p2Sent) {
+    // For Match 1, Match 2, and Final Match: Log synchronization verification periodically
+    if ((isMatch1 || isMatch2 || isFinalMatch) && p1Sent && p2Sent) {
       // Log every 60th broadcast (approximately once per second) to verify continuous sync
       if (Math.random() < 0.016) {
         console.log(`[broadcastGameState] ${matchLabel} SYNC VERIFIED:`, {
@@ -782,8 +796,8 @@ class GameManager {
         console.warn(`[broadcastGameState] Failed to send game state to player2 (${room.player2.id}) in room ${roomCode}`);
       }
     } else {
-      // Log successful broadcast for Match 1 and Match 2 more frequently with sync verification
-      if ((isMatch1 || isMatch2) && Math.random() < 0.1) { // 10% chance = roughly 6 times per second at 60 FPS
+      // Log successful broadcast for Match 1, Match 2, and Final Match more frequently with sync verification
+      if ((isMatch1 || isMatch2 || isFinalMatch) && Math.random() < 0.1) { // 10% chance = roughly 6 times per second at 60 FPS
         console.log(`[broadcastGameState] ${matchLabel} SYNC: ✓ Both players received gameState`, {
           timestamp: gameStateMessage.timestamp,
           player1Id: room.player1.id,
@@ -1993,7 +2007,17 @@ class GameManager {
 
     for (const match of bracket) {
       // Process Round 1 matches (Match 1 and Match 2)
+      // GUARD: Only create room if match is not already finished or playing
       if (match.round === 1 && (match.id === 1 || match.id === 2) && match.player1 && match.player2) {
+        // Prevent creating room for already finished or playing matches
+        if (match.status === 'finished') {
+          console.log(`[startTournament] Skipping ${match.id === 1 ? 'MATCH 1' : 'MATCH 2'} - already finished`);
+          continue;
+        }
+        if (match.status === 'playing' && match.roomCode) {
+          console.log(`[startTournament] Skipping ${match.id === 1 ? 'MATCH 1' : 'MATCH 2'} - already playing with room ${match.roomCode}`);
+          continue;
+        }
         const isMatch1 = match.id === 1;
         const isMatch2 = match.id === 2;
         const matchLabel = isMatch1 ? 'MATCH 1' : 'MATCH 2';
@@ -2066,8 +2090,14 @@ class GameManager {
           }
 
           // Store roomCode in the match object for reference
-          match.roomCode = roomResult.roomCode;
-          match.status = 'playing';
+          // GUARD: Only set status to 'playing' if match is not already finished
+          if (match.status !== 'finished') {
+            match.roomCode = roomResult.roomCode;
+            match.status = 'playing';
+          } else {
+            console.error(`[startTournament] ERROR: Attempted to set match ${match.id} to playing, but it's already finished`);
+            continue;
+          }
 
           console.log(`[startTournament] ${matchLabel}: Room created successfully - RoomCode: ${roomResult.roomCode}`);
           console.log(`[startTournament] ${matchLabel}: Room stored in gameRooms: ${this.gameRooms.has(roomResult.roomCode)}`);
@@ -2120,34 +2150,69 @@ class GameManager {
   }
 
   // Create tournament bracket
+  // STRICT: Remote tournaments must have exactly 3 matches (2 Round 1, 1 Round 2)
   createTournamentBracket(players) {
     const bracket = [];
     let matchId = 1;
 
     if (players.length === 4) {
-      // Semi-finals (Round 1)
+      // Semi-finals (Round 1) - Match 1 and Match 2 run simultaneously
       bracket.push({
-        id: matchId++,
+        id: matchId++, // Match 1
         round: 1,
         player1: players[0],
         player2: players[1],
         status: 'pending'
       });
       bracket.push({
-        id: matchId++,
+        id: matchId++, // Match 2
         round: 1,
         player1: players[2],
         player2: players[3],
         status: 'pending'
       });
-      // Final (Round 2)
+      // Final (Round 2) - Match 3 (only starts after both Round 1 matches finish)
       bracket.push({
-        id: matchId++,
+        id: matchId++, // Match 3
         round: 2,
         status: 'pending'
       });
     }
 
+    // VALIDATION: Ensure exactly 3 matches were created
+    if (bracket.length !== 3) {
+      console.error(`[createTournamentBracket] ERROR: Expected 3 matches, got ${bracket.length}`);
+      throw new Error(`Invalid bracket: expected 3 matches, got ${bracket.length}`);
+    }
+
+    // VALIDATION: Verify match IDs are 1, 2, 3
+    const matchIds = bracket.map(m => m.id).sort();
+    if (matchIds[0] !== 1 || matchIds[1] !== 2 || matchIds[2] !== 3) {
+      console.error(`[createTournamentBracket] ERROR: Invalid match IDs: ${matchIds.join(', ')}`);
+      throw new Error(`Invalid bracket: match IDs must be 1, 2, 3`);
+    }
+
+    // VALIDATION: Verify Round 1 matches have players, Round 2 does not
+    const round1Matches = bracket.filter(m => m.round === 1);
+    const round2Matches = bracket.filter(m => m.round === 2);
+    if (round1Matches.length !== 2 || round2Matches.length !== 1) {
+      console.error(`[createTournamentBracket] ERROR: Invalid round distribution - Round 1: ${round1Matches.length}, Round 2: ${round2Matches.length}`);
+      throw new Error(`Invalid bracket: must have 2 Round 1 matches and 1 Round 2 match`);
+    }
+
+    for (const match of round1Matches) {
+      if (!match.player1 || !match.player2) {
+        console.error(`[createTournamentBracket] ERROR: Round 1 match ${match.id} missing players`);
+        throw new Error(`Invalid bracket: Round 1 match ${match.id} must have both players`);
+      }
+    }
+
+    if (round2Matches[0].player1 || round2Matches[0].player2) {
+      console.error(`[createTournamentBracket] ERROR: Round 2 match should not have players initially`);
+      throw new Error(`Invalid bracket: Round 2 match should not have players initially`);
+    }
+
+    console.log(`[createTournamentBracket] ✓ Created bracket with exactly 3 matches: Match 1 (Round 1), Match 2 (Round 1), Match 3 (Round 2)`);
     return bracket;
   }
 
@@ -2169,9 +2234,16 @@ class GameManager {
       return { error: 'Match not found' };
     }
 
-    // Verify the match is in progress
+    // GUARD: Verify the match is in progress - prevent replaying finished matches
     if (match.status === 'finished') {
+      console.log(`[handleMatchResult] Match ${matchId} already finished, rejecting result report`);
       return { error: 'Match already finished' };
+    }
+
+    // GUARD: Prevent reporting result for matches that haven't started
+    if (match.status === 'pending' && !match.roomCode) {
+      console.log(`[handleMatchResult] Match ${matchId} has not started yet (no room), rejecting result report`);
+      return { error: 'Match has not started yet' };
     }
 
     // Verify winner is one of the players in the match
@@ -2274,6 +2346,12 @@ class GameManager {
       return { error: 'Final match not found in bracket' };
     }
 
+    // GUARD: Prevent creating room for already finished match
+    if (finalMatch.status === 'finished') {
+      console.log(`[createFinalMatchRoom] Final match already finished, cannot create room`);
+      return { error: 'Final match is already finished' };
+    }
+
     // RACE CONDITION PROTECTION: Check if final match is already being created
     if (this.creatingFinalMatch.has(tournamentId)) {
       console.log(`[createFinalMatchRoom] Final match creation already in progress for tournament ${tournamentId}, skipping duplicate call`);
@@ -2367,8 +2445,17 @@ class GameManager {
       }
 
       // Store roomCode in the final match (players already set above after socket verification)
-      finalMatch.roomCode = roomResult.roomCode;
-      finalMatch.status = 'playing';
+      // GUARD: Only set status to 'playing' if match is not already finished
+      if (finalMatch.status !== 'finished') {
+        finalMatch.roomCode = roomResult.roomCode;
+        finalMatch.status = 'playing';
+      } else {
+        console.error(`[createFinalMatchRoom] ERROR: Attempted to set final match to playing, but it's already finished`);
+        // Reset players since we can't create room for finished match
+        finalMatch.player1 = undefined;
+        finalMatch.player2 = undefined;
+        return { error: 'Final match is already finished' };
+      }
 
       // Verify game loop is running for final match
       const isGameLoopRunning = this.gameLoops.has(roomResult.roomCode);

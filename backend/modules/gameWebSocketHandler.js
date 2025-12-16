@@ -941,6 +941,19 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
           return;
         }
 
+        // GUARD: Verify tournament exists and final match is not finished
+        const tournament = gameManager.tournaments.get(tournamentId);
+        if (tournament && tournament.bracket) {
+          const finalMatch = tournament.bracket.find(m => m.round === 2);
+          if (finalMatch && finalMatch.status === 'finished') {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'Final match is already finished'
+            }));
+            return;
+          }
+        }
+
         const result = gameManager.createFinalMatchRoom(tournamentId);
 
         if (result.error) {
