@@ -2285,17 +2285,21 @@ class GameManager {
       console.log(`[handleMatchResult] All Round 1 matches finished? ${allRound1Finished}`);
 
       if (allRound1Finished) {
-        console.log(`[handleMatchResult] ✓✓✓ All Round 1 matches finished. Creating final match... ✓✓✓`);
-        // Create final match room
-        const finalMatchResult = this.createFinalMatchRoom(tournamentId);
-        if (finalMatchResult.error) {
-          console.error(`[handleMatchResult] ✗ Failed to create final match: ${finalMatchResult.error}`);
-          // Still broadcast the update even if final match creation fails
-        } else {
-          console.log(`[handleMatchResult] ✓✓✓ Final match created successfully! Room: ${finalMatchResult.roomCode} ✓✓✓`);
-          finalMatchCreated = true;
-          // createFinalMatchRoom already broadcasts the update, so skip broadcasting here
+        console.log(`[handleMatchResult] ✓✓✓ All Round 1 matches finished. Setting up final match players... ✓✓✓`);
+        // Find final match (Round 2)
+        const finalMatch = bracket.find(m => m.round === 2);
+        if (finalMatch && !finalMatch.player1 && !finalMatch.player2) {
+          // Set players in final match bracket (but DON'T create room yet - wait for both players to click button)
+          finalMatch.player1 = round1Matches[0].winner;
+          finalMatch.player2 = round1Matches[1].winner;
+          finalMatch.status = 'pending'; // Keep as pending until both players click button
+          console.log(`[handleMatchResult] Final match players set: ${finalMatch.player1.name || finalMatch.player1.username} vs ${finalMatch.player2.name || finalMatch.player2.username}`);
+          console.log(`[handleMatchResult] Final match room will be created when both winners click "Proceed to Final Match" button`);
+        } else if (finalMatch && (finalMatch.player1 || finalMatch.player2)) {
+          console.log(`[handleMatchResult] Final match players already set`);
         }
+        // Don't create room automatically - wait for both players to click button
+        // Room will be created via ensureFinalMatchRoom action when both players are ready
       } else {
         console.log(`[handleMatchResult] Waiting for other Round 1 match to finish...`);
       }
@@ -2460,9 +2464,16 @@ class GameManager {
 
     // Only set players in bracket AFTER confirming sockets are available
     // This prevents bracket from showing final match players if room creation fails
-    finalMatch.player1 = winner1;
-    finalMatch.player2 = winner2;
-    finalMatch.status = 'pending'; // Will be set to 'playing' after room creation
+    // NOTE: Players may already be set from handleMatchResult, but we ensure they're set here
+    // in case this is called directly (shouldn't happen, but safety check)
+    if (!finalMatch.player1 || !finalMatch.player2) {
+      finalMatch.player1 = winner1;
+      finalMatch.player2 = winner2;
+    }
+    // Ensure status is pending (will be set to 'playing' after room creation)
+    if (finalMatch.status !== 'playing' && finalMatch.status !== 'finished') {
+      finalMatch.status = 'pending';
+    }
 
     // Create player objects with all required fields (id, username, avatar)
     const player1 = {
@@ -3043,6 +3054,20 @@ class GameManager {
         tournament.registeredPlayers.splice(playerIndex, 1);
         tournament.currentPlayers--;
 
+        // Clean up final match readiness tracking if player was waiting for final match
+        if (this.finalMatchReady.has(tournamentId)) {
+          const readySet = this.finalMatchReady.get(tournamentId);
+          const playerIdStr = playerId.toString();
+          if (readySet.has(playerIdStr)) {
+            readySet.delete(playerIdStr);
+            console.log(`[handleTournamentDisconnect] Removed player ${playerIdStr} from final match readiness for tournament ${tournamentId}`);
+            // If Set is now empty, remove it
+            if (readySet.size === 0) {
+              this.finalMatchReady.delete(tournamentId);
+            }
+          }
+        }
+
         // If host disconnected, disband tournament
         if (tournament.host.id === playerId) {
           // Notify all players
@@ -3059,6 +3084,8 @@ class GameManager {
           // Remove tournament
           this.tournaments.delete(tournamentId);
           this.tournamentJoinRequests.delete(tournamentId);
+          // Clean up final match readiness for this tournament
+          this.finalMatchReady.delete(tournamentId);
         } else {
           // Broadcast update
           this.broadcastTournamentUpdate(tournament);

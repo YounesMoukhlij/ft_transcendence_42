@@ -1005,9 +1005,10 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
 
         const readySet = gameManager.finalMatchReady.get(tournamentId);
 
-        // Mark this player as ready
+        // Mark this player as ready (Set prevents duplicates, so multiple clicks are safe)
+        const wasAlreadyReady = readySet.has(userIdStr);
         readySet.add(userIdStr);
-        console.log(`[ensureFinalMatchRoom] Player ${userIdStr} is ready for final match. Ready players:`, Array.from(readySet));
+        console.log(`[ensureFinalMatchRoom] Player ${userIdStr} is ready for final match. Ready players:`, Array.from(readySet), `(was already ready: ${wasAlreadyReady})`);
 
         // Get both player sockets for broadcasting
         const player1Socket = gameManager.usersSocket.get(winner1Id);

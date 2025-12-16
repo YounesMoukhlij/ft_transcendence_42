@@ -707,23 +707,20 @@ export default function TournamentPage() {
                         // Don't set showRound1WinnerBadge for losers
                     }
                   } else {
-                    // Check if final match (Round 2) is ready and user is in it
-                      // Also check for 'pending' status - if players are set but no room, try to create it
+                      // Check if final match (Round 2) is ready and user is in it
+                      // NOTE: Do NOT auto-request room creation - players must click "Proceed to Final Match" button
                       const finalMatch = updatedBracket.find((m: any) => m.round === 2 && (m.status === 'playing' || m.status === 'pending'));
 
-                      // If final match has players but no roomCode and is pending, request room creation
-                      if (finalMatch && finalMatch.player1 && finalMatch.player2 && !finalMatch.roomCode && finalMatch.status === 'pending' && socket && tournamentId) {
+                      // If final match has players but no roomCode, the button will appear for Round 1 winners
+                      // They must manually click "Proceed to Final Match" to create the room
+                      if (finalMatch && finalMatch.player1 && finalMatch.player2 && !finalMatch.roomCode && finalMatch.status === 'pending') {
                         const isUserInFinal = userId && (
                           finalMatch.player1.id?.toString() === userId ||
                           finalMatch.player2.id?.toString() === userId
                         );
                         if (isUserInFinal) {
-                          console.log('[Frontend] Final match has players but no room - requesting room creation');
-                          socket.send(JSON.stringify({
-                            type: 'game',
-                            action: 'ensureFinalMatchRoom',
-                            payload: { tournamentId }
-                          }));
+                          console.log('[Frontend] Final match has players but no room - waiting for both players to click "Proceed to Final Match" button');
+                          // DO NOT auto-request - players must click button
                         }
                       }
                     console.log('[Frontend] Checking for final match:', {
@@ -1150,61 +1147,55 @@ export default function TournamentPage() {
                     (targetMatch.player2?.id?.toString() === userId || targetMatch.player2?.id === parseInt(userId));
 
                   if (isUserInMatch) {
-                    shouldAcceptGameState = true;
                     // Update currentMatchIndex if it's wrong
                     const correctMatchIndex = bracket.findIndex((m: any) => m.id === targetMatch.id);
-                    if (correctMatchIndex !== -1 && correctMatchIndex !== currentMatchIndex) {
-                      console.log('[Frontend] Correcting currentMatchIndex:', {
-                        oldIndex: currentMatchIndex,
-                        newIndex: correctMatchIndex,
-                        matchId: targetMatch.id,
-                        round: targetMatch.round,
-                        isFinalMatch: targetMatch.round === 2
-                      });
-                      setCurrentMatchIndex(correctMatchIndex);
-                      // Final match (Round 2) - ONLY transition when user manually clicks
-                      if (targetMatch.round === 2) {
-                        if (tournamentStep === 'playing' && (isMatchActive || correctMatchIndex === currentMatchIndex)) {
-                          // User is already playing final match - allow gameState updates
-                          console.log('[Frontend] Final match gameState - user already in final match, updating gameState');
-                          // Ensure match is marked as active
-                          setIsMatchActive(true);
-                        } else {
-                          // User not yet in final match - ONLY transition if manually initiated
-                          if (startFinalMatchManually) {
-                            // User manually clicked "Proceed to Final Match" - transition and process gameState
-                            console.log('[Frontend] Final match gameState received - user manually clicked button, transitioning and processing gameState');
+
+                    // CRITICAL: For final match (Round 2), check manual click BEFORE setting index or transitioning
+                    if (targetMatch.round === 2) {
+                      if (tournamentStep === 'playing' && (isMatchActive || correctMatchIndex === currentMatchIndex)) {
+                        // User is already playing final match - allow gameState updates
+                        console.log('[Frontend] Final match gameState - user already in final match, updating gameState');
+                        // Ensure match is marked as active
+                        setIsMatchActive(true);
+                        shouldAcceptGameState = true;
+                        // Update index if needed (user already in match)
+                        if (correctMatchIndex !== -1 && correctMatchIndex !== currentMatchIndex) {
+                          setCurrentMatchIndex(correctMatchIndex);
+                        }
+                      } else {
+                        // User not yet in final match - ONLY transition if manually initiated
+                        if (startFinalMatchManually) {
+                          // User manually clicked "Proceed to Final Match" - transition and process gameState
+                          console.log('[Frontend] Final match gameState received - user manually clicked button, transitioning and processing gameState');
+                          if (correctMatchIndex !== -1) {
                             setCurrentMatchIndex(correctMatchIndex);
-                            setTournamentStep('playing');
-                            setIsMatchActive(true);
-                            setWaitingForOtherWinner(false);
-                            setIsReadyForFinalMatch(false);
-                            setShowMatchCompletionModal(false);
-                            setShowTournamentWinnerMessage(false);
-                            // Allow gameState to be processed
-                            shouldAcceptGameState = true;
-                          } else {
-                            console.log('[Frontend] Final match gameState received but user has not manually clicked button - rejecting gameState');
-                            // Don't process gameState until user manually clicks button
-                            shouldAcceptGameState = false;
                           }
+                          setTournamentStep('playing');
+                          setIsMatchActive(true);
+                          setWaitingForOtherWinner(false);
+                          setIsReadyForFinalMatch(false);
+                          setShowMatchCompletionModal(false);
+                          setShowTournamentWinnerMessage(false);
+                          // Allow gameState to be processed
+                          shouldAcceptGameState = true;
+                        } else {
+                          console.log('[Frontend] Final match gameState received but user has not manually clicked button - rejecting gameState');
+                          // Don't process gameState or update index until user manually clicks button
+                          shouldAcceptGameState = false;
+                          // Don't update currentMatchIndex for final match if user hasn't clicked
                         }
                       }
-                    } else if (targetMatch.round === 2 && tournamentStep !== 'playing') {
-                      // ONLY transition to playing step if manually initiated (user clicked button)
-                      if (startFinalMatchManually) {
-                        console.log('[Frontend] Final match gameState - user manually clicked button, ensuring playing step');
-                        setTournamentStep('playing');
-                        setIsMatchActive(true);
-                        setShowMatchCompletionModal(false);
-                        setShowTournamentWinnerMessage(false);
-                        setWaitingForOtherWinner(false);
-                        setIsReadyForFinalMatch(false);
-                        shouldAcceptGameState = true;
-                      } else {
-                        console.log('[Frontend] Final match gameState received but user has not manually clicked button - not transitioning');
-                        // Reject gameState until user manually clicks button
-                        shouldAcceptGameState = false;
+                    } else {
+                      // Round 1 match - allow normal index correction and gameState acceptance
+                      shouldAcceptGameState = true;
+                      if (correctMatchIndex !== -1 && correctMatchIndex !== currentMatchIndex) {
+                        console.log('[Frontend] Correcting currentMatchIndex for Round 1 match:', {
+                          oldIndex: currentMatchIndex,
+                          newIndex: correctMatchIndex,
+                          matchId: targetMatch.id,
+                          round: targetMatch.round
+                        });
+                        setCurrentMatchIndex(correctMatchIndex);
                       }
                     }
                   } else {
@@ -1461,14 +1452,21 @@ export default function TournamentPage() {
               const userIsReady = readyPlayers.includes(userId);
 
               if (userIsReady) {
+                // Restore waiting state (important for page refresh scenarios)
                 setWaitingForOtherWinner(!bothReady);
                 setIsReadyForFinalMatch(true);
+                // Mark as manually initiated since user was already ready
+                setStartFinalMatchManually(true);
 
                 if (bothReady) {
                   console.log('[Frontend] Both players ready! Final match will start soon...');
                 } else {
-                  console.log('[Frontend] Waiting for other player to click...');
+                  console.log('[Frontend] Waiting for other player to click... (state restored)');
                 }
+              } else {
+                // User is not ready yet - this message is just informational
+                // Don't update state, but log for debugging
+                console.log('[Frontend] Received finalMatchReadiness but user has not clicked yet');
               }
             }
             break;
@@ -1857,8 +1855,8 @@ export default function TournamentPage() {
         setWaitingForOtherWinner(true);
         setStartFinalMatchManually(true); // Mark that user manually initiated final match
 
-        // Check if final match is already ready with room created
-        const finalMatch = bracket.find((m: any) => m.round === 2 && m.status === 'playing');
+        // Check if final match exists and has players (room may or may not be created yet)
+        const finalMatch = bracket.find((m: any) => m.round === 2);
 
         // Validate final match has all required properties including valid roomCode
         const hasValidRoom = finalMatch?.roomCode &&
@@ -1870,7 +1868,7 @@ export default function TournamentPage() {
                                  hasValidRoom;
 
         if (isFinalMatchReady) {
-          // Final match is ready with room created, transition immediately
+          // Final match is ready with room created (both players clicked), transition immediately
           console.log('[Frontend] Final match is ready with room, transitioning to final match');
           setWaitingForOtherWinner(false);
           setIsReadyForFinalMatch(false);
@@ -1883,7 +1881,8 @@ export default function TournamentPage() {
             setShowTournamentWinnerMessage(false);
           }
         } else {
-          // Final match not ready yet, request creation
+          // Final match not ready yet (no room or players not set), send readiness request
+          // This will mark the player as ready and create room when both are ready
           if (socket && tournamentId) {
             socket.send(JSON.stringify({
               type: 'game',
@@ -2125,7 +2124,8 @@ export default function TournamentPage() {
   }, [gameState.tournament?.bracket, updateTournamentMatch, currentMatchIndex, matchWinner, tournamentType]);
 
 
-  // Effect to auto-advance to final match when both Round 1 matches finish (for remote tournaments)
+  // Effect to check when both Round 1 matches finish (for remote tournaments)
+  // NOTE: We do NOT auto-create the final match room - players must click button
   useEffect(() => {
     if (tournamentType !== 'remote') return;
 
@@ -2141,41 +2141,14 @@ export default function TournamentPage() {
       // Find final match (Round 2)
       const finalMatch = bracket.find(m => m.round === 2);
 
-      // Check if final match has players (status can be 'pending' or 'playing')
+      // Check if final match has players set (both Round 1 matches finished)
       if (finalMatch && finalMatch.player1 && finalMatch.player2) {
-        // Final match is ready - check if user is in it
-        const userId = user?.id_user?.toString();
-        const userInFinal = userId && (
-          finalMatch.player1.id?.toString() === userId ||
-          finalMatch.player2.id?.toString() === userId
-        );
-
-        // If final match has players but no roomCode and is pending, request room creation
-        if (userInFinal && finalMatch.status === 'pending' && !finalMatch.roomCode && socket && tournamentId) {
-          console.log('[Frontend] Final match has players but no room - requesting room creation from auto-advance effect');
-          socket.send(JSON.stringify({
-            type: 'game',
-            action: 'ensureFinalMatchRoom',
-            payload: { tournamentId }
-          }));
-        }
-
-        // DISABLED: Auto-advance to final match
-        // Final match should only start when both winners manually click "Proceed to Final Match"
-        // This gives players control over when to start the final match
-        // if (userInFinal && tournamentStep !== 'playing' && finalMatch.status === 'playing' && finalMatch.roomCode) {
-        //   console.log('[Frontend] Both Round 1 matches finished. Auto-advancing to final match');
-        //   const finalMatchIndex = bracket.findIndex(m => m.id === finalMatch.id);
-        //   if (finalMatchIndex !== -1) {
-        //     setCurrentMatchIndex(finalMatchIndex);
-        //     setTournamentStep('playing');
-        //     setShowMatchCompletionModal(false);
-        //     setIsMatchActive(true);
-        //   }
-        // }
+        console.log('[Frontend] Both Round 1 matches finished - final match players set. Waiting for both players to click "Proceed to Final Match" button.');
+        // DO NOT auto-request room creation - players must manually click button
+        // The button will appear for both Round 1 winners
       }
     }
-  }, [gameState.tournament?.bracket, tournamentType, tournamentStep, user?.id_user, currentMatchIndex]);
+  }, [gameState.tournament?.bracket, tournamentType]);
 
   // Effect: Auto-redirect Round 1 losers to game lobby after 5 seconds of seeing losing badge
   useEffect(() => {
@@ -4241,13 +4214,22 @@ export default function TournamentPage() {
               userRound1Match.winner.username === user?.username
             );
 
-            // Check if final match exists and is not finished
+            // Check if final match exists, has players set, but no room created yet
             const finalMatch = bracket.find((m: any) => m.round === 2);
+            const finalMatchReadyForButton = finalMatch &&
+                                           finalMatch.player1 &&
+                                           finalMatch.player2 &&
+                                           !finalMatch.roomCode &&
+                                           finalMatch.status === 'pending';
             const finalMatchNotFinished = !finalMatch || (finalMatch.status !== 'finished' && finalMatch.status !== 'completed');
 
-            // Show button if user is Round 1 winner and final match not finished
-            // Button should be visible even when waiting (to show waiting message)
+            // Show button if:
+            // 1. User is Round 1 winner
+            // 2. Final match has players set (both Round 1 matches finished)
+            // 3. Final match doesn't have room yet (waiting for both players to click)
+            // 4. Final match is not finished
             const shouldShowButton = isRound1Winner &&
+                                    finalMatchReadyForButton &&
                                     finalMatchNotFinished;
 
             if (!shouldShowButton) return null;
@@ -4449,9 +4431,9 @@ export default function TournamentPage() {
                           setIsReadyForFinalMatch(true);
                           setWaitingForOtherWinner(true);
                           setStartFinalMatchManually(true); // Mark that user manually initiated final match
-                          // Check if final match is already ready with room created
+                          // Check if final match exists and has players (room may or may not be created yet)
                           const bracket = gameState.tournament?.bracket || [];
-                          const finalMatch = bracket.find((m: any) => m.round === 2 && m.status === 'playing');
+                          const finalMatch = bracket.find((m: any) => m.round === 2);
 
                           // Validate final match has all required properties including valid roomCode
                           const hasValidRoom = finalMatch?.roomCode &&
@@ -4629,15 +4611,24 @@ export default function TournamentPage() {
                       userRound1Match.winner.username === user?.username
                     );
 
-                    // Check if final match exists and is not finished
+                    // Check if final match exists, has players set, but no room created yet
                     const finalMatch = bracket.find((m: any) => m.round === 2);
+                    const finalMatchReadyForButton = finalMatch &&
+                                                   finalMatch.player1 &&
+                                                   finalMatch.player2 &&
+                                                   !finalMatch.roomCode &&
+                                                   finalMatch.status === 'pending';
                     const finalMatchNotFinished = !finalMatch || (finalMatch.status !== 'finished' && finalMatch.status !== 'completed');
 
-                    // Show button if user is Round 1 winner and final match not finished
-                    // Button should be visible even when waiting (to show waiting message)
+                    // Show button if:
+                    // 1. User is Round 1 winner
+                    // 2. Final match has players set (both Round 1 matches finished)
+                    // 3. Final match doesn't have room yet (waiting for both players to click)
+                    // 4. Final match is not finished
                     const shouldShowButton = !isLastMatch &&
                                             tournamentType === 'remote' &&
                                             isRound1Winner &&
+                                            finalMatchReadyForButton &&
                                             finalMatchNotFinished;
 
                     if (tournamentType === 'remote' && isRound1Winner) {
