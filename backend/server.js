@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import { WebSocketServer } from 'ws';
 import fastify from "fastify";
 import routes from './routes/routes.js';
@@ -8,12 +10,9 @@ import { fileURLToPath } from 'url';
 import cors from '@fastify/cors';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
-import dotenv from 'dotenv';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import fastifyJwt from '@fastify/jwt';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,22 +52,21 @@ async function startServer() {
       app.log.info('Uploads directory created at:', uploadsDir);
     }
 
-
-    console.log('Connecting to Redis...');
-    const redisClient = createClient({
-      url: process.env.REDIS_URL
-    });
+    // console.log('Connecting to Redis...');
+    // const redisClient = createClient({
+    //   url: process.env.REDIS_URL
+    // });
 
     // 2. Add an error listener to catch connection issues
-    redisClient.on('error', err => app.log.error('Redis Client Error', err));
+    // redisClient.on('error', err => app.log.error('Redis Client Error', err));
 
     // 3. Connect to the Redis server
-    await redisClient.connect();
-    app.log.info('Successfully connected to Redis.');
+    // await redisClient.connect();
+    // app.log.info('Successfully connected to Redis.');
 
     // 4. Decorate the Fastify instance with the Redis client
     // This makes it available in all routes via `request.server.redis`
-    app.decorate('redis', redisClient);
+    // app.decorate('redis', redisClient);
 
 
 

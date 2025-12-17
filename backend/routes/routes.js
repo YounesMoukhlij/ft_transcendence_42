@@ -2,14 +2,10 @@ import {getConversationId  ,changeusersettings, getMsgs , IsOnline , blockFuncti
 import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests , DeleteNotification } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
-    getAllUsers,
-    getUserById,
-    getUserByEmail,
     DeleteUserById,
     forgotPassword,
     verifyCode,
     resetPasswordWithToken,
-    refreshToken,
     login,
     InitiateGoogleAuth,
     GoogleAuth,

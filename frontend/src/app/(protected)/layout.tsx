@@ -113,17 +113,29 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
+ return (
     <ProtectedClient>
-      <div className="h-screen flex flex-col">
+      {/* Outer wrapper: Full screen height */}
+      <div className="min-h-screen flex flex-col bg-transparent text-white">
+        
+        {/* 1. Navbar: Fixed at top */}
         <Navbar />
 
-        <div className="flex flex-1 pt-24 md:pt-28 gap-4 p-4">
+        {/* 2. Content Wrapper
+          flex-row: Aligns Sidebar and Main side-by-side
+          pt-28: Clears space for the fixed Navbar (24 + padding)
+          gap-6: Space between sidebar and main content
+        */}
+        <div className="flex flex-1 pt-28 px-4 pb-4 gap-6 max-w-[98%] mx-auto w-full">
+          
+          {/* Left: Sidebar (Auto width, Sticky behavior handled inside component) */}
           <Sidebar />
 
-          <main className="flex-1 overflow-y-auto">
+          {/* Right: Main Content (Takes remaining space) */}
+          <main className="flex-1 w-full overflow-y-auto rounded-3xl bg-transparent">
             {children}
           </main>
+
         </div>
       </div>
     </ProtectedClient>
