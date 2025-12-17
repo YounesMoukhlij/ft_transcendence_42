@@ -335,6 +335,7 @@
     "inviteAFriend": "Invite a Friend",
     "searchRandomOpponentButton": "Search Random Opponent",
     "gameOver": "Game Over",
+    "opponentLeft": "Opponent Left",
     "isTheWinner": "{winner} is the winner!",
     "wins": "{winner} wins!",
     "won": "{winner} won!",

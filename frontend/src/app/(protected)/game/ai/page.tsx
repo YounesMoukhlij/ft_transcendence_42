@@ -228,10 +228,10 @@ export default function AIGamePage() {
     <div
       ref={gameContainerRef}
       tabIndex={-1}
-      className={`flex flex-col items-center justify-center w-full transition-all duration-300 focus:outline-none ${
+      className={`flex m-1 flex-col items-center justify-center w-full  transition-all duration-300 focus:outline-none ${
         isFullscreen
           ? 'h-screen bg-black p-4'
-          : 'min-h-full p-4'
+          : 'min-h-full p-2'
       }`}
     >
       <div className={`w-full flex flex-col items-center ${isFullscreen ? 'h-full justify-center' : 'max-w-4xl'}`}>

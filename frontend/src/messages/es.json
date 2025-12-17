@@ -334,6 +334,7 @@
     "inviteAFriend": "Invitar a un Amigo",
     "searchRandomOpponentButton": "Buscar Oponente Aleatorio",
     "gameOver": "Juego Terminado",
+    "opponentLeft": "El oponente se fue",
     "isTheWinner": "¡{winner} es el ganador!",
     "wins": "¡{winner} gana!",
     "won": "¡{winner} ganó!",

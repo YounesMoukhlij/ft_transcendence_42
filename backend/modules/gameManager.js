@@ -7,7 +7,7 @@ const PADDLE_HEIGHT = 100;
 const BALL_RADIUS = 10;
 const PADDLE_SPEED = 12; // Increased from 8 for faster gameplay
 const BALL_SPEED = 4.5; // Reduced for slower, softer ball movement in remote game (was 6)
-const WINNING_SCORE = 5;
+const WINNING_SCORE = 10;
 
 class GameManager {
   constructor(db, usersSocket) {

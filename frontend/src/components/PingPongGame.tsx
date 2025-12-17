@@ -107,8 +107,16 @@ const useLocalGameState = (players: Player[]) => {
     setGameState(prev => {
       // Paddles - smooth movement based on delta time
       const newPaddles = [...prev.paddles];
-      if (keysPressed['w']) newPaddles[0] -= PADDLE_SPEED * deltaTime;
-      if (keysPressed['s']) newPaddles[0] += PADDLE_SPEED * deltaTime;
+      // Player 1 (left paddle) - W/S only in local/tournament mode, W/S or ArrowUp/ArrowDown in AI mode
+      if (isAIMode) {
+        // AI mode: Player 1 can use both W/S and Arrow keys
+        if (keysPressed['w'] || keysPressed['ArrowUp']) newPaddles[0] -= PADDLE_SPEED * deltaTime;
+        if (keysPressed['s'] || keysPressed['ArrowDown']) newPaddles[0] += PADDLE_SPEED * deltaTime;
+      } else {
+        // Local/Tournament mode: Player 1 uses only W/S
+        if (keysPressed['w']) newPaddles[0] -= PADDLE_SPEED * deltaTime;
+        if (keysPressed['s']) newPaddles[0] += PADDLE_SPEED * deltaTime;
+      }
 
       // AI controls player 2 paddle (right side)
       if (isAIMode) {
@@ -361,6 +369,14 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const localPlayers = tournamentMode ? tournamentPlayers : (gameState.mode === 'local' ? gameState.players : []);
   const { scores, paddles, ball, updateGameState, resetGameState } = useLocalGameState(localPlayers);
 
+  // Refs for draw function to avoid re-creating it every frame
+  const scoresRef = useRef(scores);
+  const paddlesRef = useRef(paddles);
+  const ballRef = useRef(ball);
+  useEffect(() => { scoresRef.current = scores; }, [scores]);
+  useEffect(() => { paddlesRef.current = paddles; }, [paddles]);
+  useEffect(() => { ballRef.current = ball; }, [ball]);
+
   // Track if we've initialized the game to prevent infinite loops
   const gameInitializedRef = useRef<string | null>(null);
 
@@ -386,13 +402,30 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     }
   }, [tournamentPlayers, tournamentMode, gameState.mode, resetGameState, localPlayers]);
 
+  // Refs for keyboard handler to avoid re-bindings on every serverGameState change
+  const serverGameStateRef = useRef(serverGameState);
+  const activeRoomCodeRef = useRef(activeRoomCode);
+  const activeMatchIdRef = useRef(activeMatchId);
+  const winnerRef2 = useRef(winner);
+  const socketRef = useRef(socket);
+  useEffect(() => { serverGameStateRef.current = serverGameState; }, [serverGameState]);
+  useEffect(() => { activeRoomCodeRef.current = activeRoomCode; }, [activeRoomCode]);
+  useEffect(() => { activeMatchIdRef.current = activeMatchId; }, [activeMatchId]);
+  useEffect(() => { winnerRef2.current = winner; }, [winner]);
+  useEffect(() => { socketRef.current = socket; }, [socket]);
+
+  // Track last sent direction to avoid spamming the same command
+  const lastSentDirectionRef = useRef<string | null>(null);
+
   // Keyboard controls for local, remote, and AI modes
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (winner) return;
+      // Ignore key repeat events
+      if (e.repeat) return;
+      if (winnerRef2.current) return;
 
       // Determine if this is a remote game (has serverGameState) or local game
-      const isRemoteGame = !!serverGameState && !tournamentMode;
+      const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
       const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
 
       if (isLocalGame) {
@@ -400,43 +433,36 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         keysPressed.current[e.key] = true;
       } else if (isRemoteGame) {
         // Remote mode - send paddle moves to backend
-        if (!activeRoomCode) {
-          console.warn('[PingPongGame] Cannot send paddle move - missing roomCode from serverGameState');
-          return;
-        }
+        const roomCode = activeRoomCodeRef.current;
+        const matchId = activeMatchIdRef.current;
+        const ws = socketRef.current;
+        if (!roomCode) return;
+
+        let direction: string | null = null;
         if (e.key === 'w' || e.key === 'ArrowUp') {
-          if (socket && socket.readyState === WebSocket.OPEN) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'F1',location:'frontend/PingPongGame.tsx:handleKeyDown',message:'Sending paddleMove up',data:{roomCode: activeRoomCode, matchId: activeMatchId},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
-            socket.send(JSON.stringify({
-              type: 'paddleMove',
-              payload: { direction: 'up', roomCode: activeRoomCode, matchId: activeMatchId }
-            }));
-          } else {
-            console.warn('[PingPongGame] Cannot send paddle move - socket not connected');
-          }
+          direction = 'up';
         } else if (e.key === 's' || e.key === 'ArrowDown') {
-          if (socket && socket.readyState === WebSocket.OPEN) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'F1',location:'frontend/PingPongGame.tsx:handleKeyDown',message:'Sending paddleMove down',data:{roomCode: activeRoomCode, matchId: activeMatchId},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
-            socket.send(JSON.stringify({
+          direction = 'down';
+        }
+
+        // Only send if direction changed
+        if (direction && direction !== lastSentDirectionRef.current) {
+          lastSentDirectionRef.current = direction;
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
               type: 'paddleMove',
-              payload: { direction: 'down', roomCode: activeRoomCode, matchId: activeMatchId }
+              payload: { direction, roomCode, matchId }
             }));
-          } else {
-            console.warn('[PingPongGame] Cannot send paddle move - socket not connected');
           }
         }
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-        if (winner) return;
+        if (winnerRef2.current) return;
 
         // Determine if this is a remote game (has serverGameState) or local game
-        const isRemoteGame = !!serverGameState && !tournamentMode;
+        const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
         const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
 
         if (isLocalGame) {
@@ -444,26 +470,25 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             keysPressed.current[e.key] = false;
         } else if (isRemoteGame) {
             // Remote mode - send stop command to backend
-            if (!activeRoomCode) {
-              console.warn('[PingPongGame] Cannot send paddle stop - missing roomCode from serverGameState');
-              return;
-            }
+            const roomCode = activeRoomCodeRef.current;
+            const matchId = activeMatchIdRef.current;
+            const ws = socketRef.current;
+            if (!roomCode) return;
             if (
                 e.key === 'w' ||
                 e.key === 'ArrowUp' ||
                 e.key === 's' ||
                 e.key === 'ArrowDown'
             ) {
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                  // #region agent log
-                  fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'F1',location:'frontend/PingPongGame.tsx:handleKeyUp',message:'Sending paddleMove stop',data:{roomCode: activeRoomCode, matchId: activeMatchId},timestamp:Date.now()})}).catch(()=>{});
-                  // #endregion
-                  socket.send(JSON.stringify({
-                    type: 'paddleMove',
-                    payload: { direction: 'stop', roomCode: activeRoomCode, matchId: activeMatchId }
-                  }));
-                } else {
-                  console.warn('[PingPongGame] Cannot send paddle stop - socket not connected');
+                // Only send stop if we were moving
+                if (lastSentDirectionRef.current !== 'stop') {
+                  lastSentDirectionRef.current = 'stop';
+                  if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                      type: 'paddleMove',
+                      payload: { direction: 'stop', roomCode, matchId }
+                    }));
+                  }
                 }
             }
         }
@@ -476,7 +501,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [socket, user, winner, tournamentMode, gameState.mode, serverGameState]);
+  }, [tournamentMode, gameState.mode]);
 
   // Game loop for local tournament, AI mode, and local mode - improved with delta time
   const gameModeRef = useRef(gameState.mode);
@@ -718,12 +743,17 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       ctx.stroke();
       ctx.setLineDash([]);
 
+      // Use refs for smooth rendering without re-creating draw callback
+      const currentPaddles = paddlesRef.current;
+      const currentBall = ballRef.current;
+      const currentScores = scoresRef.current;
+
       // Player 1 paddle (left side - human player) - with shadow
       ctx.save();
       ctx.shadowBlur = 10;
       ctx.shadowColor = customisation?.paddleColor || '#ff0000';
       ctx.fillStyle = customisation?.paddleColor || '#ff0000';
-      ctx.fillRect(10, paddles[0], PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.fillRect(10, currentPaddles[0], PADDLE_WIDTH, PADDLE_HEIGHT);
       ctx.restore();
 
       // Player 2 paddle (right side - AI in AI mode, human in tournament mode) - with shadow
@@ -732,13 +762,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       ctx.shadowBlur = 10;
       ctx.shadowColor = paddle2Color;
       ctx.fillStyle = paddle2Color;
-      ctx.fillRect(GAME_WIDTH - PADDLE_WIDTH - 10, paddles[1], PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.fillRect(GAME_WIDTH - PADDLE_WIDTH - 10, currentPaddles[1], PADDLE_WIDTH, PADDLE_HEIGHT);
       ctx.restore();
 
       // Ball with glow effect for better visibility
       ctx.save();
       ctx.beginPath();
-      ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.arc(currentBall.x, currentBall.y, BALL_RADIUS, 0, Math.PI * 2);
       ctx.shadowBlur = 15;
       ctx.shadowColor = customisation?.ballColor || '#fff';
       ctx.fillStyle = customisation?.ballColor || '#fff';
@@ -747,137 +777,16 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
       ctx.fillStyle = '#fff';
       ctx.font = '45px Arial';
-      ctx.fillText(scores.player1.toString(), GAME_WIDTH / 2 - 100, 50);
-      ctx.fillText(scores.player2.toString(), GAME_WIDTH / 2 + 60, 50);
+      ctx.fillText(currentScores.player1.toString(), GAME_WIDTH / 2 - 100, 80);
+      ctx.fillText(currentScores.player2.toString(), GAME_WIDTH / 2 + 60, 80);
 
-    } else if (serverGameState) {
-      // Remote Game Draw with improved interpolation for smooth movement
-      // Always use the latest serverGameState as base, even if interpolation isn't ready
-      let displayState = serverGameState;
+    } else if (serverGameStateDrawRef.current) {
+      // Remote Game Draw - use server state directly for accurate sync
+      const currentServerState = serverGameStateDrawRef.current;
 
-      // Apply advanced interpolation if we have previous state for smoother movement
-      // CRITICAL: Only interpolate if we have BOTH previous and current states
-      // Otherwise, just use the raw serverGameState to prevent freezing
-      if (previousGameStateRef.current && interpolatedStateRef.current && !winner && serverGameState) {
-        const now = Date.now();
-        const timeSinceUpdate = now - lastUpdateTimeRef.current;
-
-        // Calculate expected time between updates (60 FPS = ~16.67ms)
-        const expectedUpdateInterval = 16.67;
-
-        // Adaptive interpolation window based on network latency
-        // Use longer window (up to 150ms) to handle network jitter better
-        const adaptiveWindow = Math.max(100, networkLatencyRef.current * 3); // At least 100ms, scale with latency
-        const maxInterpolationTime = Math.min(150, adaptiveWindow); // Cap at 150ms
-
-        // Only interpolate if update is recent enough
-        if (timeSinceUpdate < maxInterpolationTime) {
-          const prev = previousGameStateRef.current;
-          const curr = interpolatedStateRef.current;
-
-          // Calculate interpolation factor
-          const interpolationDuration = expectedUpdateInterval;
-          let interpolationFactor = timeSinceUpdate / interpolationDuration;
-
-          // Linear interpolation for paddles (smooth movement)
-          const lerp = (start: number, end: number, factor: number) => {
-            if (factor <= 1) {
-              return start + (end - start) * factor;
-            } else {
-              // Extrapolation with less damping for better responsiveness
-              const velocity = end - start;
-              return end + velocity * (factor - 1) * 0.7; // Reduced damping from 0.5 to 0.7
-            }
-          };
-
-          // Smooth interpolation for paddles (slight easing for natural feel)
-          const smoothStep = (t: number) => t * t * (3 - 2 * t);
-          const smoothedPaddleFactor = smoothStep(Math.min(interpolationFactor, 1));
-
-          // Velocity-based prediction for ball (smooth and linear movement)
-          const getBallPosition = () => {
-            if (!smoothedBallPositionRef.current) {
-              smoothedBallPositionRef.current = { x: curr.ball.x, y: curr.ball.y };
-            }
-
-            const prevBall = prev.ball;
-            const currBall = curr.ball;
-
-            // Calculate velocity from server state
-            // dx/dy are in pixels per frame (where frame = 16.67ms at 60 FPS)
-            // Convert to pixels per millisecond for prediction
-            let ballVx: number;
-            let ballVy: number;
-
-            if (currBall.dx !== undefined && currBall.dy !== undefined) {
-              // Use velocity from server (pixels per frame), convert to pixels per ms
-              // Since updates come every 16.67ms (60 FPS), divide by 16.67
-              ballVx = currBall.dx / expectedUpdateInterval;
-              ballVy = currBall.dy / expectedUpdateInterval;
-            } else {
-              // Fallback: calculate velocity from position difference
-              ballVx = (currBall.x - prevBall.x) / interpolationDuration;
-              ballVy = (currBall.y - prevBall.y) / interpolationDuration;
-            }
-
-            // Calculate predicted position using velocity (timeSinceUpdate is in ms)
-            const predictedX = currBall.x + ballVx * timeSinceUpdate;
-            const predictedY = currBall.y + ballVy * timeSinceUpdate;
-
-            // Exponential smoothing for ultra-smooth ball movement
-            // Higher alpha (0.15-0.25) = more responsive, lower = smoother
-            const alpha = 0.2; // Balance between responsiveness and smoothness
-            const smoothedX = smoothedBallPositionRef.current.x * (1 - alpha) + predictedX * alpha;
-            const smoothedY = smoothedBallPositionRef.current.y * (1 - alpha) + predictedY * alpha;
-
-            // Update smoothed position reference
-            smoothedBallPositionRef.current = { x: smoothedX, y: smoothedY };
-
-            // For interpolation (when behind), use linear interpolation for accuracy
-            if (interpolationFactor <= 1) {
-              // Linear interpolation when behind - more accurate
-              return {
-                x: prevBall.x + (currBall.x - prevBall.x) * interpolationFactor,
-                y: prevBall.y + (currBall.y - prevBall.y) * interpolationFactor
-              };
-            } else {
-              // Use smoothed prediction when ahead
-              return { x: smoothedX, y: smoothedY };
-            }
-          };
-
-          const ballPos = getBallPosition();
-
-          displayState = {
-            ...curr,
-            player1: {
-              ...curr.player1,
-              y: lerp(prev.player1.y, curr.player1.y, smoothedPaddleFactor)
-            },
-            player2: {
-              ...curr.player2,
-              y: lerp(prev.player2.y, curr.player2.y, smoothedPaddleFactor)
-            },
-            ball: {
-              ...curr.ball,
-              x: ballPos.x,
-              y: ballPos.y
-            }
-          };
-        } else {
-          // If update is too old, reset smoothed position to current state
-          smoothedBallPositionRef.current = {
-            x: serverGameState.ball.x,
-            y: serverGameState.ball.y
-          };
-          // Use raw serverGameState when interpolation window expires
-          displayState = serverGameState;
-        }
-      } else {
-        // No interpolation available yet - use raw serverGameState to prevent freezing
-        // This ensures the game is always visible, even before interpolation is set up
-        displayState = serverGameState;
-      }
+      // Use server state directly - server sends at 60 FPS which is smooth enough
+      // Complex interpolation was causing lag issues
+      const displayState = currentServerState;
 
       const { player1, player2, ball: remoteBall } = displayState;
 
@@ -976,19 +885,24 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
       ctx.fillStyle = '#fff';
       ctx.font = '45px Arial';
-      ctx.fillText(player1.score.toString(), GAME_WIDTH / 2 - 100, 50);
-      ctx.fillText(player2.score.toString(), GAME_WIDTH / 2 + 60, 50);
+      ctx.fillText(player1.score.toString(), GAME_WIDTH / 2 - 100, 80);
+      ctx.fillText(player2.score.toString(), GAME_WIDTH / 2 + 60, 80);
     }
 
-  }, [serverGameState, tournamentMode, gameState, paddles, ball, scores, user]);
+  }, [tournamentMode, gameState, user]); // Removed serverGameState - use ref instead
 
-  // Render loop
+  // Ref for serverGameState to avoid draw callback recreation
+  const serverGameStateDrawRef = useRef(serverGameState);
+  useEffect(() => { serverGameStateDrawRef.current = serverGameState; }, [serverGameState]);
+
+  // Render loop - stable, doesn't depend on changing state
   useEffect(() => {
+    let animationFrameId: number;
     const render = () => {
       draw();
-      requestAnimationFrame(render);
+      animationFrameId = requestAnimationFrame(render);
     };
-    const animationFrameId = requestAnimationFrame(render);
+    animationFrameId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animationFrameId);
   }, [draw]);
 
@@ -1043,61 +957,154 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
   // Winner screen for AI mode
   if (winner && gameState.mode === 'ai') {
+    const isPlayerWinner = winner === 'You';
     return (
-      <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
-        <h2 className="text-4xl font-bold mb-4">Game Over</h2>
-        <p className="text-2xl mt-4 mb-6">{winner} won!</p>
-        <p className="text-lg mb-4">Final Score: {scores.player1} - {scores.player2}</p>
-        <button
-          onClick={() => {
-            setWinner(null);
-            resetGameState();
-            keysPressed.current = {};
-          }}
-          className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors"
-        >
-          Play Again
-        </button>
-        <button
-          onClick={handleExit}
-          className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors"
-        >
-          Back to Game Modes
-        </button>
+      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl">
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
+          {/* Trophy/Skull Icon */}
+          <div className="mb-4 sm:mb-6">
+            <span className="text-5xl sm:text-6xl drop-shadow-lg">
+              {isPlayerWinner ? '🏆' : '💀'}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h2 className="text-2xl sm:text-4xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
+            {isPlayerWinner ? 'Victory!' : 'Game Over'}
+          </h2>
+
+          {/* Winner Text */}
+          <p className="text-lg sm:text-2xl text-gray-200 font-semibold mb-4 sm:mb-6">
+            {isPlayerWinner ? 'You defeated the AI!' : 'The AI wins this round'}
+          </p>
+
+          {/* Score Card */}
+          <div className="flex items-center justify-center gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div className="flex flex-col items-center">
+              <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">You</span>
+              <span className={`text-3xl sm:text-5xl font-black ${isPlayerWinner ? 'text-green-400' : 'text-gray-300'}`}>
+                {scores.player1}
+              </span>
+            </div>
+            <span className="text-xl sm:text-2xl text-gray-500 font-light">—</span>
+            <div className="flex flex-col items-center">
+              <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">AI</span>
+              <span className={`text-3xl sm:text-5xl font-black ${!isPlayerWinner ? 'text-red-400' : 'text-gray-300'}`}>
+                {scores.player2}
+              </span>
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <button
+              onClick={() => {
+                setWinner(null);
+                resetGameState();
+                keysPressed.current = {};
+              }}
+              className="group relative px-6 py-3 rounded-xl font-bold text-base sm:text-lg overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 active:scale-95 transition-all duration-200"
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Play Again
+              </span>
+            </button>
+            <button
+              onClick={handleExit}
+              className="group px-6 py-3 rounded-xl font-bold text-base sm:text-lg bg-gray-700/80 text-gray-200 border border-gray-600 hover:bg-gray-600 hover:border-gray-500 hover:scale-105 active:scale-95 transition-all duration-200"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+                Exit
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   // Winner screen for local mode
   if (winner && gameState.mode === 'local' && !tournamentMode) {
+    const player1Name = localPlayers[0]?.name || 'Player 1';
+    const player2Name = localPlayers[1]?.name || 'Player 2';
+    const isPlayer1Winner = winner === player1Name;
     return (
-      <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
-        <h2 className="text-4xl font-bold mb-4">Game Over</h2>
-        <p className="text-2xl mt-4 mb-6">{winner} wins! 🎉</p>
-        <p className="text-lg mb-4">Final Score: {scores.player1} - {scores.player2}</p>
-        <button
-          onClick={() => {
-            keysPressed.current = {}; // Clear any pressed keys first
-            setWinner(null);
-            resetGameState();
-            // Small delay to ensure state is reset before game loop restarts
-            setTimeout(() => {
-              if (onGameOver) onGameOver(null); // Notify parent that game is reset
-            }, 50);
-          }}
-          className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors"
-        >
-          Play Again
-        </button>
-        <button
-          onClick={() => {
-            if (onGameOver) onGameOver(null); // Notify parent before exit
-            handleExit();
-          }}
-          className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors"
-        >
-          Back to Game Modes
-        </button>
+      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl">
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
+          {/* Trophy Icon */}
+          <div className="mb-4 sm:mb-6">
+            <span className="text-5xl sm:text-6xl drop-shadow-lg">🏆</span>
+          </div>
+
+          {/* Title */}
+          <h2 className="text-2xl sm:text-4xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
+            Victory!
+          </h2>
+
+          {/* Winner Text */}
+          <p className="text-lg sm:text-2xl text-gray-200 font-semibold mb-4 sm:mb-6">
+            {winner} wins!
+          </p>
+
+          {/* Score Card */}
+          <div className="flex items-center justify-center gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div className="flex flex-col items-center">
+              <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">{player1Name}</span>
+              <span className={`text-3xl sm:text-5xl font-black ${isPlayer1Winner ? 'text-green-400' : 'text-gray-300'}`}>
+                {scores.player1}
+              </span>
+            </div>
+            <span className="text-xl sm:text-2xl text-gray-500 font-light">—</span>
+            <div className="flex flex-col items-center">
+              <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">{player2Name}</span>
+              <span className={`text-3xl sm:text-5xl font-black ${!isPlayer1Winner ? 'text-green-400' : 'text-gray-300'}`}>
+                {scores.player2}
+              </span>
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <button
+              onClick={() => {
+                keysPressed.current = {};
+                setWinner(null);
+                resetGameState();
+                setTimeout(() => {
+                  if (onGameOver) onGameOver(null);
+                }, 50);
+              }}
+              className="group relative px-6 py-3 rounded-xl font-bold text-base sm:text-lg overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 active:scale-95 transition-all duration-200"
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Play Again
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                if (onGameOver) onGameOver(null);
+                handleExit();
+              }}
+              className="group px-6 py-3 rounded-xl font-bold text-base sm:text-lg bg-gray-700/80 text-gray-200 border border-gray-600 hover:bg-gray-600 hover:border-gray-500 hover:scale-105 active:scale-95 transition-all duration-200"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+                Exit
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1107,42 +1114,58 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const winningScore = gameState.mode === 'ai' ? AI_WINNING_SCORE : WINNING_SCORE;
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <div className="relative w-full flex justify-center items-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
-      <canvas
-        ref={canvasRef}
-        width={GAME_WIDTH}
-        height={GAME_HEIGHT}
-        className="bg-gray-800 rounded-lg shadow-lg"
+    <div className="flex flex-col items-center justify-center w-full h-full min-h-0 p-2 sm:p-4 overflow-hidden">
+      <div
+        className="relative flex justify-center items-center flex-shrink"
+        style={{
+          width: '100%',
+
+          maxWidth: 'min(100%, 90vw, 800px)',
+          maxHeight: 'min(calc(100vh - 200px), calc(90vw * 0.75), 600px)',
+          aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}`
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          width={GAME_WIDTH}
+          height={GAME_HEIGHT}
+          className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg sm:shadow-2xl border border-gray-700 block"
           style={{
             width: '100%',
             height: '100%',
-            maxWidth: '100%',
-            maxHeight: '100%',
             objectFit: 'contain',
           }}
         />
       </div>
-      <div className="mt-4 text-center text-white">
+      <div className="mt-2 sm:mt-4 text-center text-white px-2">
         {gameState.mode === 'ai' ? (
           <>
-            <p>Use W/S keys to move your paddle.</p>
-            <p>First to {AI_WINNING_SCORE} points wins!</p>
+            <p className="text-xs sm:text-sm md:text-base">
+              <span className="font-semibold text-purple-400">Controls:</span>{' '}
+              <span className="bg-gray-700 px-1.5 sm:px-2 py-0.5 rounded text-xs font-mono">W</span>
+              <span className="mx-0.5 sm:mx-1">/</span>
+              <span className="bg-gray-700 px-1.5 sm:px-2 py-0.5 rounded text-xs font-mono">S</span>
+              <span className="mx-1 sm:mx-2 text-gray-400">or</span>
+              <span className="bg-gray-700 px-1.5 sm:px-2 py-0.5 rounded text-xs font-mono">↑</span>
+              <span className="mx-0.5 sm:mx-1">/</span>
+              <span className="bg-gray-700 px-1.5 sm:px-2 py-0.5 rounded text-xs font-mono">↓</span>
+            </p>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1">Score to win: {AI_WINNING_SCORE}</p>
           </>
         ) : tournamentMode ? (
           <>
-            <p>Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
-            <p>First to {WINNING_SCORE} points wins!</p>
+            <p className="text-xs sm:text-sm">Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
+            <p className="text-xs sm:text-sm text-gray-400">Score to win: {WINNING_SCORE}</p>
           </>
         ) : gameState.mode === 'local' ? (
           <>
-            <p>Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
-            <p>First to {WINNING_SCORE} points wins!</p>
+            <p className="text-xs sm:text-sm">Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
+            <p className="text-xs sm:text-sm text-gray-400">Score to win: {WINNING_SCORE}</p>
           </>
         ) : (
           <>
-            <p>Use W/S or Arrow Up/Down keys to move your paddle.</p>
-            <p>First to {WINNING_SCORE} points wins!</p>
+            <p className="text-xs sm:text-sm">Use W/S or Arrow Up/Down keys to move your paddle.</p>
+            <p className="text-xs sm:text-sm text-gray-400">Score to win: {WINNING_SCORE}</p>
           </>
         )}
       </div>
