@@ -6,7 +6,9 @@ export interface Player {
   name: string;
   avatar: string;
   color: string;
-  id?: string;
+  id?: string | number;
+  id_user?: string | number;
+  username?: string;
 }
 
 export interface TournamentMatch {
@@ -15,7 +17,7 @@ export interface TournamentMatch {
   player1?: Player;
   player2?: Player;
   winner?: Player;
-  status: 'pending' | 'playing' | 'finished';
+  status: 'pending' | 'playing' | 'finished' | 'completed';
   // Optional roomCode for remote tournaments (set by backend when room is created)
   roomCode?: string;
 }
@@ -23,9 +25,10 @@ export interface TournamentMatch {
 export interface Tournament {
   type: 'local' | 'remote';
   playerCount: 4;
-  status: 'setup' | 'playing' | 'finished';
+  status: 'setup' | 'playing' | 'finished' | 'completed';
   currentMatch: number;
   bracket: TournamentMatch[];
+  champion?: Player;
 }
 
 export interface GameCustomisation {

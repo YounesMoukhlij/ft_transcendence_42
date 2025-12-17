@@ -56,6 +56,7 @@ interface PingPongGameProps {
   serverGameState?: ServerGameState | null;
   opponentLeft?: boolean;
   setServerGameState?: (state: ServerGameState) => void;
+  socket?: WebSocket | null;
   rematchDeclinedMessage?: string;
   setRematchDeclinedMessage?: (message: string) => void;
   rematchOffer?: boolean;
@@ -323,6 +324,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   serverGameState,
   opponentLeft,
   setServerGameState,
+  socket: socketProp,
   rematchDeclinedMessage,
   setRematchDeclinedMessage,
   rematchOffer,
@@ -336,9 +338,12 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const { gameState } = useGameContext();
-  const { user, socket } = useUserStore();
+  const { user, socket: storeSocket } = useUserStore();
+  const socket = socketProp ?? storeSocket;
   const router = useRouter();
   const { t } = useTranslation();
+  const activeRoomCode = serverGameState?.roomCode;
+  const activeMatchId = (serverGameState as any)?.matchId;
 
   // Unified state
   const [winner, setWinner] = useState<string | null>(null);
@@ -395,15 +400,31 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         keysPressed.current[e.key] = true;
       } else if (isRemoteGame) {
         // Remote mode - send paddle moves to backend
+        if (!activeRoomCode) {
+          console.warn('[PingPongGame] Cannot send paddle move - missing roomCode from serverGameState');
+          return;
+        }
         if (e.key === 'w' || e.key === 'ArrowUp') {
           if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'up' } }));
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'F1',location:'frontend/PingPongGame.tsx:handleKeyDown',message:'Sending paddleMove up',data:{roomCode: activeRoomCode, matchId: activeMatchId},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
+            socket.send(JSON.stringify({
+              type: 'paddleMove',
+              payload: { direction: 'up', roomCode: activeRoomCode, matchId: activeMatchId }
+            }));
           } else {
             console.warn('[PingPongGame] Cannot send paddle move - socket not connected');
           }
         } else if (e.key === 's' || e.key === 'ArrowDown') {
           if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'down' } }));
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'F1',location:'frontend/PingPongGame.tsx:handleKeyDown',message:'Sending paddleMove down',data:{roomCode: activeRoomCode, matchId: activeMatchId},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
+            socket.send(JSON.stringify({
+              type: 'paddleMove',
+              payload: { direction: 'down', roomCode: activeRoomCode, matchId: activeMatchId }
+            }));
           } else {
             console.warn('[PingPongGame] Cannot send paddle move - socket not connected');
           }
@@ -423,6 +444,10 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             keysPressed.current[e.key] = false;
         } else if (isRemoteGame) {
             // Remote mode - send stop command to backend
+            if (!activeRoomCode) {
+              console.warn('[PingPongGame] Cannot send paddle stop - missing roomCode from serverGameState');
+              return;
+            }
             if (
                 e.key === 'w' ||
                 e.key === 'ArrowUp' ||
@@ -430,7 +455,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
                 e.key === 'ArrowDown'
             ) {
                 if (socket && socket.readyState === WebSocket.OPEN) {
-                  socket.send(JSON.stringify({ type: 'paddleMove', payload: { direction: 'stop' } }));
+                  // #region agent log
+                  fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'F1',location:'frontend/PingPongGame.tsx:handleKeyUp',message:'Sending paddleMove stop',data:{roomCode: activeRoomCode, matchId: activeMatchId},timestamp:Date.now()})}).catch(()=>{});
+                  // #endregion
+                  socket.send(JSON.stringify({
+                    type: 'paddleMove',
+                    payload: { direction: 'stop', roomCode: activeRoomCode, matchId: activeMatchId }
+                  }));
                 } else {
                   console.warn('[PingPongGame] Cannot send paddle stop - socket not connected');
                 }

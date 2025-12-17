@@ -233,6 +233,9 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
 
     case 'paddleMove': {
       const direction = message.payload?.direction;
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'B1',location:'backend/modules/gameWebSocketHandler.js:paddleMove',message:'Received paddleMove',data:{userId, direction, roomCode: message.payload?.roomCode, matchId: message.payload?.matchId},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       if (direction && ['up', 'down', 'stop'].includes(direction)) {
         gameManager.handlePaddleMove(userId, direction);
       }

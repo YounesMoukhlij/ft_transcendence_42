@@ -148,7 +148,8 @@ export default function TournamentPage() {
   useEffect(() => {
     console.log('[Frontend] Tournament step changed to:', tournamentStep);
   }, [tournamentStep]);
-  const [tournamentType, setTournamentType] = useState<'local' | 'remote'>('local');
+  // Default to remote tournaments
+  const [tournamentType, setTournamentType] = useState<'local' | 'remote'>('remote');
   const [playerCount, setPlayerCount] = useState<4>(4);
   const [registeredPlayers, setRegisteredPlayers] = useState<Player[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
@@ -189,6 +190,11 @@ export default function TournamentPage() {
   const [tournamentCancelledMessage, setTournamentCancelledMessage] = useState<string | null>(null);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [pendingTournamentIdFromStorage, setPendingTournamentIdFromStorage] = useState<string | null>(null);
+
+  // Bias initial selection toward remote tournaments (most used)
+  useEffect(() => {
+    setTournamentType('remote');
+  }, []);
 
   // Remote tournament game state
   const [serverGameState, setServerGameState] = useState<any>(null);
@@ -404,7 +410,7 @@ export default function TournamentPage() {
         // Match is valid and not finished - mark as active
         setIsMatchActive(true);
       }
-    } else if (tournamentStep !== 'playing') {
+    } else {
       // Reset match active state when not playing
       setIsMatchActive(false);
     }
@@ -835,6 +841,7 @@ export default function TournamentPage() {
             const isMatch1 = message.matchId === 1;
             const isMatch2 = message.matchId === 2;
             const matchLabel = isMatch1 ? 'MATCH 1' : (isMatch2 ? 'MATCH 2' : null);
+            const bracket = gameState.tournament?.bracket || [];
 
             if (isMatch1 || isMatch2) {
               console.log(`[Frontend] ${matchLabel}: Received gameState message:`, {
@@ -874,52 +881,104 @@ export default function TournamentPage() {
               });
             }
 
-            // Verify roomCode matches current match if available
+              // Auto-switch to final match on round 2 payloads
+              if (message.round === 2) {
+                const finalIdx = bracket.findIndex(m => m.round === 2);
+                if (finalIdx !== -1 && finalIdx !== currentMatchIndex) {
+                  console.log('[Frontend] AUTO-SWITCH to final match on round 2 payload', {
+                    fromIndex: currentMatchIndex,
+                    toIndex: finalIdx,
+                    incomingRoomCode: message.roomCode
+                  });
+                  setCurrentMatchIndex(finalIdx);
+                  setTournamentStep('playing');
+                  setIsMatchActive(true);
+                  setWaitingForOtherWinner(false);
+                  setIsReadyForFinalMatch(false);
+                  setStartFinalMatchManually(true);
+                  // If final match lacks roomCode, set it from incoming payload
+                  const finalMatch = bracket[finalIdx];
+                  if (message.roomCode && finalMatch && !finalMatch.roomCode) {
+                    finalMatch.roomCode = message.roomCode;
+                  }
+                } else if (finalIdx !== -1 && finalIdx === currentMatchIndex && message.roomCode) {
+                  // Ensure final match roomCode is up to date
+                  const finalMatch = bracket[finalIdx];
+                  if (finalMatch && !finalMatch.roomCode) {
+                    finalMatch.roomCode = message.roomCode;
+                  }
+                }
+              }
+
+            // Sync bracket roomCode with backend payload (payload is source of truth)
             if (roomCode && tournamentType === 'remote') {
               const bracket = gameState.tournament?.bracket || [];
-              const currentMatch = bracket[currentMatchIndex];
-              if (currentMatch && currentMatch.roomCode && currentMatch.roomCode !== roomCode) {
-                console.warn('[Frontend] Received gameState for different room:', {
-                  receivedRoomCode: roomCode,
-                  expectedRoomCode: currentMatch.roomCode,
-                  currentMatchIndex
-                });
-                // Still process it, but log the mismatch
+              const payloadMatch = bracket.find(m =>
+                (roomCode && m.roomCode === roomCode) ||
+                (message.matchId && m.id === message.matchId)
+              );
+              if (payloadMatch && payloadMatch.roomCode !== roomCode) {
+                const updatedBracket = bracket.map(m =>
+                  m.id === payloadMatch.id ? { ...m, roomCode } : m
+                );
+                if (gameState.tournament) {
+                  setTournament({ ...gameState.tournament, bracket: updatedBracket });
+                }
               }
             }
 
             // Accept gameState if we're in remote tournament and either playing or bracket step
             // Accept gameState for remote tournaments when playing (bracket step not used for remote)
-            if (tournamentType === 'remote' && tournamentStep === 'playing') {
+            if (tournamentType === 'remote' && (tournamentStep === 'playing' || tournamentStep === 'registration')) {
               // Verify roomCode matches current match if available
               const receivedRoomCode = message.roomCode;
               const bracket = gameState.tournament?.bracket || [];
               const currentMatch = bracket[currentMatchIndex];
               const isFinalMatch = message.round === 2;
+              // If final match payload arrives but local bracket lacks players, hydrate bracket entry from payload
+              if (isFinalMatch) {
+                const finalIdx = bracket.findIndex((m: any) => m.round === 2);
+                if (finalIdx !== -1) {
+                  const finalMatch = bracket[finalIdx];
+                  const hasPlayers = !!finalMatch.player1 && !!finalMatch.player2;
+                  if (!hasPlayers && message.payload?.player1 && message.payload?.player2) {
+                    const updatedBracket = bracket.map((m: any, idx: number) =>
+                      idx === finalIdx
+                        ? { ...m, player1: message.payload.player1, player2: message.payload.player2 }
+                        : m
+                    );
+                    if (gameState.tournament) {
+                      setTournament({ ...gameState.tournament, bracket: updatedBracket });
+                    }
+                  }
+                }
+              }
 
-              // CRITICAL: Check if this is final match BEFORE rejecting roomCode mismatch
-              // This allows Round 1 winners to receive final match gameState even if currentMatchIndex
-              // still points to their Round 1 match
+              // If we were still in registration but received a valid gameState, move to playing
+              if (tournamentStep !== 'playing') {
+                setTournamentStep('playing');
+                setIsMatchActive(true);
+              }
+
+              // Do not reject on roomCode mismatch; align to payload matchId/roomCode
               if (receivedRoomCode && currentMatch && currentMatch.roomCode && currentMatch.roomCode !== receivedRoomCode) {
-                // If this is final match gameState, allow it - we'll update currentMatchIndex below
-                if (!isFinalMatch) {
-                  console.warn('[Frontend] Received gameState for different room (not final match):', {
-                  receivedRoomCode,
-                  expectedRoomCode: currentMatch.roomCode,
-                  currentMatchIndex,
-                    currentMatchId: currentMatch.id,
-                    messageRound: message.round
-                });
-                  // Don't process if it's for a different match (and not final match)
-                break;
-                } else {
-                  console.log('[Frontend] Received final match gameState with different roomCode - will update currentMatchIndex:', {
-                    receivedRoomCode,
-                    currentRoomCode: currentMatch.roomCode,
-                    currentMatchIndex,
-                    currentMatchId: currentMatch.id,
-                    messageRound: message.round
-                  });
+                const targetMatch = bracket.find(m =>
+                  (receivedRoomCode && m.roomCode === receivedRoomCode) ||
+                  (message.matchId && m.id === message.matchId)
+                );
+                if (targetMatch) {
+                  const targetIdx = bracket.findIndex(m => m.id === targetMatch.id);
+                  if (targetIdx !== -1 && targetIdx !== currentMatchIndex) {
+                    setCurrentMatchIndex(targetIdx);
+                  }
+                  if (receivedRoomCode && targetMatch.roomCode !== receivedRoomCode) {
+                    const updatedBracket = bracket.map(m =>
+                      m.id === targetMatch.id ? { ...m, roomCode: receivedRoomCode } : m
+                    );
+                    if (gameState.tournament) {
+                      setTournament({ ...gameState.tournament, bracket: updatedBracket });
+                    }
+                  }
                 }
               }
 
@@ -1069,24 +1128,19 @@ export default function TournamentPage() {
                       } else {
                         // User not yet in final match - ONLY transition if they've manually clicked
                         // Final match should ONLY start when both winners manually click "Proceed to Final Match"
-                        if (startFinalMatchManually && finalMatchIndex !== -1) {
-                          // User manually clicked - transition immediately
-                          console.log('[Frontend] User manually clicked - transitioning to final match and processing gameState');
-                          setCurrentMatchIndex(finalMatchIndex);
-                          setTournamentStep('playing');
-                          setIsMatchActive(true);
-                          setWaitingForOtherWinner(false);
-                          setIsReadyForFinalMatch(false);
-                          setShowMatchCompletionModal(false);
-                          setShowTournamentWinnerMessage(false);
-                        } else {
-                          // Don't transition - user must manually click "Proceed to Final Match" button
-                          console.log('[Frontend] Final match gameState received but user has not manually clicked - waiting for manual action', {
-                            startFinalMatchManually
+                        if (finalMatchIndex !== -1) {
+                          console.log('[Frontend] Auto-transitioning to final match and processing gameState (remote)', {
+                            finalMatchIndex
                           });
-                          // Break to prevent auto-transition - user must click button first
-                          break;
+                          setCurrentMatchIndex(finalMatchIndex);
                         }
+                        setTournamentStep('playing');
+                        setIsMatchActive(true);
+                        setWaitingForOtherWinner(false);
+                        setIsReadyForFinalMatch(false);
+                        setShowMatchCompletionModal(false);
+                        setShowTournamentWinnerMessage(false);
+                        setStartFinalMatchManually(true);
                       }
                     } else {
                       // Round 1 match - allow auto-transition
@@ -1152,39 +1206,17 @@ export default function TournamentPage() {
 
                     // CRITICAL: For final match (Round 2), check manual click BEFORE setting index or transitioning
                     if (targetMatch.round === 2) {
-                      if (tournamentStep === 'playing' && (isMatchActive || correctMatchIndex === currentMatchIndex)) {
-                        // User is already playing final match - allow gameState updates
-                        console.log('[Frontend] Final match gameState - user already in final match, updating gameState');
-                        // Ensure match is marked as active
-                        setIsMatchActive(true);
-                        shouldAcceptGameState = true;
-                        // Update index if needed (user already in match)
-                        if (correctMatchIndex !== -1 && correctMatchIndex !== currentMatchIndex) {
-                          setCurrentMatchIndex(correctMatchIndex);
-                        }
-                      } else {
-                        // User not yet in final match - ONLY transition if manually initiated
-                        if (startFinalMatchManually) {
-                          // User manually clicked "Proceed to Final Match" - transition and process gameState
-                          console.log('[Frontend] Final match gameState received - user manually clicked button, transitioning and processing gameState');
-                          if (correctMatchIndex !== -1) {
-                            setCurrentMatchIndex(correctMatchIndex);
-                          }
-                          setTournamentStep('playing');
-                          setIsMatchActive(true);
-                          setWaitingForOtherWinner(false);
-                          setIsReadyForFinalMatch(false);
-                          setShowMatchCompletionModal(false);
-                          setShowTournamentWinnerMessage(false);
-                          // Allow gameState to be processed
-                          shouldAcceptGameState = true;
-                        } else {
-                          console.log('[Frontend] Final match gameState received but user has not manually clicked button - rejecting gameState');
-                          // Don't process gameState or update index until user manually clicks button
-                          shouldAcceptGameState = false;
-                          // Don't update currentMatchIndex for final match if user hasn't clicked
-                        }
+                      // Always accept final match gameState and sync index
+                      if (correctMatchIndex !== -1 && correctMatchIndex !== currentMatchIndex) {
+                        setCurrentMatchIndex(correctMatchIndex);
                       }
+                      setTournamentStep('playing');
+                      setIsMatchActive(true);
+                      setWaitingForOtherWinner(false);
+                      setIsReadyForFinalMatch(false);
+                      setShowMatchCompletionModal(false);
+                      setShowTournamentWinnerMessage(false);
+                      shouldAcceptGameState = true;
                     } else {
                       // Round 1 match - allow normal index correction and gameState acceptance
                       shouldAcceptGameState = true;
@@ -1281,8 +1313,14 @@ export default function TournamentPage() {
                       localTimestamp: Date.now()
                     });
                   }
-                  // Only update serverGameState if verified to be for user's match
-                  setServerGameState(message.payload);
+                    // Only update serverGameState if verified to be for user's match
+                    const enrichedPayload = {
+                      ...message.payload,
+                      roomCode: message.roomCode ?? message.payload?.roomCode,
+                      matchId: message.matchId ?? message.payload?.matchId,
+                      round: message.round ?? message.payload?.round,
+                    };
+                    setServerGameState(enrichedPayload);
                 } else {
                   const isMatch1 = message.matchId === 1;
                   const isMatch2 = message.matchId === 2;
@@ -1335,7 +1373,20 @@ export default function TournamentPage() {
               // Update serverGameState with final state to prevent freezing
               if (finalGameState) {
                 console.log('[Frontend] Setting final gameState from gameOver message');
-                setServerGameState(finalGameState);
+                const enrichedFinal = {
+                  ...finalGameState,
+                  roomCode: finalGameState.roomCode
+                    || gameState.tournament?.bracket?.[currentMatchIndex]?.roomCode
+                    || serverGameState?.roomCode
+                    || message.roomCode,
+                  matchId: finalGameState.matchId
+                    || gameState.tournament?.bracket?.[currentMatchIndex]?.id
+                    || message.matchId,
+                  round: finalGameState.round
+                    || gameState.tournament?.bracket?.[currentMatchIndex]?.round
+                    || message.round,
+                };
+                setServerGameState(enrichedFinal);
               }
 
               // Find winner player object from current match
@@ -3161,17 +3212,6 @@ export default function TournamentPage() {
               <label className="block text-white text-xs xs:text-sm sm:text-base md:text-lg font-semibold mb-1 xs:mb-2 sm:mb-3 md:mb-4">{t('game.tournamentType')}</label>
               <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                 <button
-                  onClick={() => setTournamentType('local')}
-                  className={`p-2 xs:p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all ${
-                    tournamentType === 'local'
-                      ? 'border-purple-400 bg-purple-600 bg-opacity-20'
-                      : 'border-gray-600 bg-gray-800'
-                  }`}
-                >
-                  <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">{t('game.localTournament')}</h3>
-                  <p className="text-gray-300 text-xs xs:text-sm">{t('game.allPlayersSameDevice')}</p>
-                </button>
-                <button
                   onClick={() => setTournamentType('remote')}
                   className={`p-2 xs:p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all ${
                     tournamentType === 'remote'
@@ -3181,6 +3221,17 @@ export default function TournamentPage() {
                 >
                   <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">{t('game.remoteTournament')}</h3>
                   <p className="text-gray-300 text-xs xs:text-sm">{t('game.playersJoinDifferentDevices')}</p>
+                </button>
+                <button
+                  onClick={() => setTournamentType('local')}
+                  className={`p-2 xs:p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all ${
+                    tournamentType === 'local'
+                      ? 'border-purple-400 bg-purple-600 bg-opacity-20'
+                      : 'border-gray-600 bg-gray-800'
+                  }`}
+                >
+                  <h3 className="text-white font-semibold mb-1 text-xs xs:text-sm md:text-base">{t('game.localTournament')}</h3>
+                  <p className="text-gray-300 text-xs xs:text-sm">{t('game.allPlayersSameDevice')}</p>
                 </button>
               </div>
             </div>
@@ -3762,7 +3813,7 @@ export default function TournamentPage() {
                                   key={(friend as any).id || (friend as any).id_user || `friend-${index}`}
                                   onClick={() => {
                                     if (tournamentId) {
-                                      inviteToTournament(friend.id);
+                                      inviteToTournament(String(friend.id ?? (friend as any).id_user ?? ''));
                                       setShowFriendsListExpanded(false);
                                     }
                                   }}
@@ -4170,6 +4221,7 @@ export default function TournamentPage() {
             {tournamentType === 'remote' ? (
               // Remote tournament - use WebSocket mode
               <PingPongGame
+                socket={socket}
                 tournamentMode={false}
                 serverGameState={serverGameState}
                 setServerGameState={setServerGameState}
