@@ -1320,6 +1320,9 @@ export default function TournamentPage() {
                       matchId: message.matchId ?? message.payload?.matchId,
                       round: message.round ?? message.payload?.round,
                     };
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TournamentPage:setServerGameState',message:'Setting serverGameState',data:{matchId:enrichedPayload.matchId,roomCode:enrichedPayload.roomCode,round:enrichedPayload.round},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+                    // #endregion
                     setServerGameState(enrichedPayload);
                 } else {
                   const isMatch1 = message.matchId === 1;

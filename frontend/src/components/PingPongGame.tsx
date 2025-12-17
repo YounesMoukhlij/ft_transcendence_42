@@ -353,6 +353,12 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const activeRoomCode = serverGameState?.roomCode;
   const activeMatchId = (serverGameState as any)?.matchId;
 
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PingPongGame.tsx:activeMatchId',message:'activeMatchId changed',data:{activeMatchId,activeRoomCode,hasServerGameState:!!serverGameState},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+  }, [activeMatchId, activeRoomCode, serverGameState]);
+  // #endregion
+
   // Unified state
   const [winner, setWinner] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -427,6 +433,12 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       // Determine if this is a remote game (has serverGameState) or local game
       const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
       const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
+
+      // #region agent log
+      if (e.key === 'w' || e.key === 's' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PingPongGame.tsx:handleKeyDown',message:'Key pressed',data:{key:e.key,isRemoteGame,isLocalGame,tournamentMode,hasServerGameState:!!serverGameStateRef.current,roomCode:activeRoomCodeRef.current,matchId:activeMatchIdRef.current},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
+      }
+      // #endregion
 
       if (isLocalGame) {
         // Local tournament, AI mode, or local mode - use keyboard controls
