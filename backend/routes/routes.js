@@ -63,9 +63,9 @@ export default async function routes(fastify, options) {
   
 
     fastify.post('/AddUser', AddUser);
-    fastify.get('/getAllUsers', getAllUsers);
-    fastify.get('/getUserById/:id', getUserById);
-    fastify.get('/getUserByEmail/:email', getUserByEmail);
+    // fastify.get('/getAllUsers', getAllUsers);
+    // fastify.get('/getUserById/:id', getUserById);
+    // fastify.get('/getUserByEmail/:email', getUserByEmail);
     fastify.delete('/DeleteUserById/:id', DeleteUserById);
     fastify.post('/sendGameChallenge' , sendGameChallenge);
     fastify.post('/startGame' , AcceptGameChallenge);
@@ -108,7 +108,7 @@ export default async function routes(fastify, options) {
     // fastify.post('/resetPassword', resetPassword);
 
     fastify.post('/login', login);
-    fastify.post('/refreshToken', refreshToken);
+    // fastify.post('/refreshToken', refreshToken);
    
     // ====== GOOGLE OAUTH ROUTES ======
     // Step 1: Initiate OAuth flow

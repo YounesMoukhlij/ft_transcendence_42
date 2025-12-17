@@ -381,6 +381,7 @@ const ProfileSettingsPage = () => {
         handleSaveProfile={handleSaveProfile}
         isLoading={isLoading}
         setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+        previewImage={previewImage}
       />
     ),
     security: (
