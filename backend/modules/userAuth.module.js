@@ -13,6 +13,7 @@ import stream from 'stream';
 const pipeline = promisify(stream.pipeline);
 
 export async function me (request, reply) {
+    console.log("avatar me called");
     const token = request.headers.authorization?.split(' ')[1];
     if (!token) {
         return reply.code(401).send({ success: false, message: "No token provided" });
@@ -494,7 +495,7 @@ export async function loginVerify2FA(request, reply) {
         const { password: _, twoFA_secret: __, ...userWithoutPassword } = user;
         
         request.server.db
-            .prepare("UPDATE users SET access_token = ? , WHERE id_user = ?")
+            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
             .run(accessToken, user.id_user);
         
         userWithoutPassword.access_token = accessToken;

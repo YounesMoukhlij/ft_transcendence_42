@@ -28,11 +28,15 @@ const app = fastify({
 
 
   app.register(cors, {
-    origin: '*',
+    origin: [
+    'http://10.11.9.6:3000', 
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+  ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true, // zmoumni for frontend middleware
     allowedHeaders: ["Content-Type", "Authorization"], // zmoumni for frontend middleware
-    origin: "http://localhost:3000", // zmoumni for frontend middleware
+    // origin: "http://0.0.0.0:3000", // zmoumni for frontend middleware
 
   });
 
@@ -52,21 +56,21 @@ async function startServer() {
       app.log.info('Uploads directory created at:', uploadsDir);
     }
 
-    // console.log('Connecting to Redis...');
-    // const redisClient = createClient({
-    //   url: process.env.REDIS_URL
-    // });
+    console.log('Connecting to Redis...');
+    const redisClient = createClient({
+      url: process.env.REDIS_URL
+    });
 
     // 2. Add an error listener to catch connection issues
-    // redisClient.on('error', err => app.log.error('Redis Client Error', err));
+    redisClient.on('error', err => app.log.error('Redis Client Error', err));
 
     // 3. Connect to the Redis server
-    // await redisClient.connect();
-    // app.log.info('Successfully connected to Redis.');
+    await redisClient.connect();
+    app.log.info('Successfully connected to Redis.');
 
     // 4. Decorate the Fastify instance with the Redis client
     // This makes it available in all routes via `request.server.redis`
-    // app.decorate('redis', redisClient);
+    app.decorate('redis', redisClient);
 
 
 
@@ -114,8 +118,8 @@ async function startServer() {
   function statusSahre(id  , mode){
     const allowQuery = db.prepare('SELECT status_share FROM users WHERE id_user = ?');
     const result = allowQuery.get(id);  
-    if (!result.status_share)
-      mode = 0;
+    // if (!result.status_share)
+    //   mode = 0;
     const getFriendsStmt1 = db.prepare(`SELECT user_id  FROM friends WHERE friend_id = ?`);
     const getFriendsStmt2 = db.prepare(`SELECT friend_id  FROM friends WHERE user_id = ?`);
 
@@ -258,7 +262,7 @@ wss.on("connection", (socket, req) => {
 
 
 
-await app.listen({ port: process.env.PORT, host: '0.0.0.0' });
+await app.listen({ port: process.env.PORT, host: process.env.HOST });
 
   } catch (err) {
     app.log.error(err);
