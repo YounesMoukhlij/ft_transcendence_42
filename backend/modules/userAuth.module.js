@@ -93,7 +93,7 @@ export async function AddUser(request, reply) {
         const hashedPassword = await hashPassword(password);
         const query = request.server.db
             .prepare("INSERT INTO users (username, fullname, email, password, profile_img) VALUES (?, ?, ?, ?, ?)");
-        const result = query.run(username, username, email, hashedPassword, DEFAULT_PROFILE_IMAGE);
+        const result = query.run(username, username, email, hashedPassword, process.env.DEFAULT_PROFILE_IMAGE);
 
         return reply.code(201).send({
             success: true,
@@ -447,7 +447,7 @@ export async function login(request, reply) {
         
         const { password: _, twoFA_secret: __, ...userWithoutPassword } = user;
         request.server.db
-            .prepare("UPDATE users SET access_token = ? , WHERE id_user = ?")
+            .prepare("UPDATE users SET access_token = ?  WHERE id_user = ?")
             .run(token, user.id_user);
         
         userWithoutPassword.access_token = token;
