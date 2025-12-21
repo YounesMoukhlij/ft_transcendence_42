@@ -335,7 +335,6 @@
     "inviteAFriend": "Invite a Friend",
     "searchRandomOpponentButton": "Search Random Opponent",
     "gameOver": "Game Over",
-    "opponentLeft": "Opponent Left",
     "isTheWinner": "{winner} is the winner!",
     "wins": "{winner} wins!",
     "won": "{winner} won!",
@@ -458,6 +457,7 @@
     "tournamentFeature": "Tournament Feature",
     "tournamentSetupRegistrationOnly": "Tournament setup and registration only",
     "tournamentChampion": "Tournament Champion!",
+    "tournamentWinner": "Tournament Winner",
     "tournamentCancelled": "Tournament Cancelled",
     "tournamentWasCancelled": "The tournament was cancelled.",
     "tournamentFinished": "Tournament Finished",
@@ -509,7 +509,15 @@
     "bracketView": "Bracket View",
     "switchToSpectator": "Switch to Spectator View",
     "backToBracket": "Back to Bracket",
-    "TournamentDone": "Tournament Done"
+    "TournamentDone": "Tournament Done",
+    "round1Winner": "Round 1 Winner!",
+    "congratulationsAdvanced": "Congratulations! You advanced to the Final Match!",
+    "bothMatchesComplete": "Both matches complete! Ready for final.",
+    "victory": "Victory!",
+    "youWon": "YOU WON!",
+    "opponentLeft": "Opponent Left",
+    "opponentLeftMessage": "The other player has left the game, you win!",
+    "processingWin": "Processing your win..."
   }
 }
 

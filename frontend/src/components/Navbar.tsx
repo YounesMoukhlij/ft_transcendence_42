@@ -788,7 +788,7 @@ useEffect(() => {
         if (user) {
           clearUser();
         }
-        router.push('/login');
+        router.push('/signIn');
         return;
       }
 
@@ -1899,3 +1899,4 @@ useEffect(() => {
     </>
   );
 }
+

@@ -20,9 +20,9 @@ export default function ModeSwiper()
 
     const modes = [
       { id: 1, title: t('game.gameVsHuman'), description: t('game.playOnline'), buttonname: t('game.tournament'), image: "/tournament.png", mode: 'tournament' as const },
-      // { id: 2, title: t('game.remoteGame'), description: t('game.playWithFriendOnline'), buttonname: t('game.1v1Remote'), image: "/1v1.png", mode: 'remote-options' as const },
-      // { id: 3, title: t('game.gameVsHuman'), description: t('game.playAgainstComputer'), buttonname: t('game.ai'), image: "/robot.png", mode: 'ai' as const },
-      // { id: 4, title: t('game.gameVsHuman'), description: t('game.playWithFriend'), buttonname: t('game.1Versus1'), image: "/1v1.png", mode: 'local' as const },
+      { id: 2, title: t('game.remoteGame'), description: t('game.playWithFriendOnline'), buttonname: t('game.1v1Remote'), image: "/1v1.png", mode: 'remote-options' as const },
+      // { id: 2, title: t('game.gameVsHuman'), description: t('game.playAgainstComputer'), buttonname: t('game.ai'), image: "/robot.png", mode: 'ai' as const },
+      // { id: 3, title: t('game.gameVsHuman'), description: t('game.playWithFriend'), buttonname: t('game.1Versus1'), image: "/1v1.png", mode: 'local' as const },
       // { id: 5, title: t('game.ticTacToe'), description: t('game.playXOGameLocally'), buttonname: t('game.xOGame'), image: "/1v1.png", mode: 'tic-tac-toe' as const },
     ];
 
@@ -59,11 +59,11 @@ export default function ModeSwiper()
           effect="fade"
           slidesPerView={1}
           navigation
-          speed={2500}
+          speed={1500}
           className="h-full"
           loop={true}
           autoplay={{
-              delay: 3000,
+              delay: 4000,
               disableOnInteraction: false,
               pauseOnMouseEnter: true,
           }}

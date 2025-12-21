@@ -44,7 +44,6 @@ export default function RemoteGameRoomPage() {
   const [rematchOffer, setRematchOffer] = useState(false);
   const [rematchDeclinedMessage, setRematchDeclinedMessage] = useState('');
   const [rematchRequested, setRematchRequested] = useState(false);
-  const [activeSocket, setActiveSocket] = useState<WebSocket | null>(null);
   const [gameOver, setGameOver] = useState<{
     winner: string;
     finalScore: any;
@@ -380,20 +379,16 @@ export default function RemoteGameRoomPage() {
     messageHandlerAttachedRef.current = false;
 
     // Try to get WebSocket connection - first from store, then from globalSocket
-    let wsSocket = socket;
+    let activeSocket = socket;
 
     // If socket from store is not available, try to get it from globalSocket
-    if (!wsSocket || wsSocket.readyState === WebSocket.CLOSED || wsSocket.readyState === WebSocket.CLOSING) {
+    if (!activeSocket || activeSocket.readyState === WebSocket.CLOSED || activeSocket.readyState === WebSocket.CLOSING) {
       try {
-        wsSocket = getWebSocket();
+        activeSocket = getWebSocket();
       } catch (err) {
         console.error('Failed to get WebSocket:', err);
       }
     }
-
-    // Store the active socket for use by PingPongGame
-    setActiveSocket(wsSocket);
-    const activeSocket = wsSocket;
 
     // Message handler function
     const handleMessage = (event: MessageEvent) => {
@@ -403,29 +398,34 @@ export default function RemoteGameRoomPage() {
           case 'gameState':
             // Use functional update to prevent infinite loops
             setServerGameState(prev => {
-              // Include roomCode from message level into payload
-              const newState = {
+              // Merge roomCode from message into payload (needed for paddle moves)
+              const enrichedPayload = {
                 ...message.payload,
-                roomCode: message.roomCode || roomCode,
-                matchId: message.matchId
+                roomCode: message.roomCode ?? message.payload?.roomCode ?? roomCode,
+                matchId: message.matchId ?? message.payload?.matchId
               };
+
+              // Log receipt of gameState for debugging
+              if (!prev || JSON.stringify(prev) !== JSON.stringify(enrichedPayload)) {
+                console.log('[RemoteGameRoom] Received gameState update:', {
+                  hasPayload: !!message.payload,
+                  hasBall: !!message.payload?.ball,
+                  player1Score: message.payload?.player1?.score,
+                  player2Score: message.payload?.player2?.score,
+                  roomCode: enrichedPayload.roomCode,
+                  timestamp: message.timestamp
+                });
+              }
+
               // Only update if the payload is actually different
-              if (JSON.stringify(prev) === JSON.stringify(newState)) {
+              if (JSON.stringify(prev) === JSON.stringify(enrichedPayload)) {
                 return prev;
               }
-              return newState;
+              return enrichedPayload;
             });
             break;
           case 'opponentLeft':
             setOpponentLeft(true);
-            // Auto-redirect to lobby after 10 seconds when opponent leaves
-            if (autoRedirectTimerRef.current) {
-              clearTimeout(autoRedirectTimerRef.current);
-            }
-            autoRedirectTimerRef.current = setTimeout(() => {
-              console.log('[RemoteGameRoom] Auto-redirecting to lobby after opponent left');
-              router.push('/game/remote');
-            }, 10000); // 10 seconds
             break;
           case 'rematch:offer':
             setRematchOffer(true);
@@ -444,8 +444,12 @@ export default function RemoteGameRoomPage() {
             // Reset flags so fullscreen can trigger again for rematch
             autoFullscreenAttemptedRef.current = false;
             gameStartedRef.current = false;
-            // Use functional update to prevent infinite loops
-            setServerGameState(message.payload);
+            // Use functional update to prevent infinite loops - include roomCode
+            setServerGameState({
+              ...message.payload,
+              roomCode: message.roomCode ?? message.payload?.roomCode ?? roomCode,
+              matchId: message.matchId ?? message.payload?.matchId
+            });
             setRematchOffer(false);
             setRematchDeclinedMessage('');
             setRematchRequested(false);
@@ -476,14 +480,7 @@ export default function RemoteGameRoomPage() {
               setRematchRequested(false);
               setRematchDeclinedMessage('');
               setOpponentLeft(true);
-              // Auto-redirect to lobby after 10 seconds when opponent quits
-              if (autoRedirectTimerRef.current) {
-                clearTimeout(autoRedirectTimerRef.current);
-              }
-              autoRedirectTimerRef.current = setTimeout(() => {
-                console.log('[RemoteGameRoom] Auto-redirecting to lobby after opponent left');
-                router.push('/game/remote');
-              }, 10000); // 10 seconds
+              // Don't set auto-redirect timer for opponent quit - user should manually leave
             }
             break;
           case 'matchFound':
@@ -591,6 +588,12 @@ export default function RemoteGameRoomPage() {
     if (!messageHandlerAttachedRef.current) {
       activeSocket.addEventListener('message', handleMessage);
       messageHandlerAttachedRef.current = true;
+
+      // Request current game state when joining the room
+      activeSocket.send(JSON.stringify({
+        type: 'requestGameState',
+        payload: { roomCode }
+      }));
     }
 
     return () => {
@@ -672,137 +675,81 @@ export default function RemoteGameRoomPage() {
     >
       {/* Game Over Screen */}
       {gameOver ? (
-        <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl">
-          <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
-            {/* Trophy Icon */}
-            <div className="mb-4 sm:mb-6">
-              <span className="text-5xl sm:text-6xl drop-shadow-lg">
-                {gameOver.reason === 'opponentQuit' ? '🚪' : '🏆'}
-              </span>
-            </div>
+        <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
+          <h2 className="text-4xl font-bold mb-4">{t('game.gameOver')}</h2>
+          <p className="text-2xl mt-4 mb-6">{t('game.isTheWinner', { winner: gameOver.winner })}</p>
 
-            {/* Title */}
-            <h2 className="text-2xl sm:text-4xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
-              {gameOver.reason === 'opponentQuit' ? t('game.opponentLeft') : t('game.gameOver')}
-            </h2>
+          {/* Show opponent quit message if applicable */}
+          {gameOver.reason === 'opponentQuit' && gameOver.message && (
+            <p className="text-yellow-400 text-lg mb-4 font-semibold">{gameOver.message}</p>
+          )}
 
-            {/* Winner Text */}
-            <p className="text-lg sm:text-2xl text-gray-200 font-semibold mb-2">
-              {t('game.isTheWinner', { winner: gameOver.winner })}
-            </p>
+          <p className="text-lg mb-4">
+            {t('game.finalScore')}: {gameOver.finalScore.player1} - {gameOver.finalScore.player2}
+          </p>
 
-            {/* Show opponent quit message if applicable */}
-            {gameOver.reason === 'opponentQuit' && gameOver.message && (
-              <p className="text-yellow-400 text-sm mb-4 font-medium">{gameOver.message}</p>
-            )}
+          {/* Only show rematch options if opponent didn't quit (they're still available for rematch) */}
+          {gameOver.reason !== 'opponentQuit' && (
+            <>
+              {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage}</p>}
 
-            {/* Score Card */}
-            <div className="flex items-center justify-center gap-4 sm:gap-6 mb-6 sm:mb-8">
-              <div className="flex flex-col items-center">
-                <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">
-                  {player1Username || 'Player 1'}
-                </span>
-                <span className={`text-3xl sm:text-5xl font-black ${gameOver.finalScore.player1 > gameOver.finalScore.player2 ? 'text-green-400' : 'text-gray-300'}`}>
-                  {gameOver.finalScore.player1}
-                </span>
-              </div>
-              <span className="text-xl sm:text-2xl text-gray-500 font-light">—</span>
-              <div className="flex flex-col items-center">
-                <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">
-                  {player2Username || 'Player 2'}
-                </span>
-                <span className={`text-3xl sm:text-5xl font-black ${gameOver.finalScore.player2 > gameOver.finalScore.player1 ? 'text-green-400' : 'text-gray-300'}`}>
-                  {gameOver.finalScore.player2}
-                </span>
-              </div>
-            </div>
-
-            {/* Rematch declined message */}
-            {rematchDeclinedMessage && (
-              <p className="text-red-400 text-sm mb-4">{rematchDeclinedMessage}</p>
-            )}
-
-            {/* Rematch Options - Only if opponent didn't quit */}
-            {gameOver.reason !== 'opponentQuit' && (
-              <div className="mb-4">
-                {rematchOffer ? (
-                  <div className="space-y-3">
-                    <p className="text-yellow-400 text-sm font-medium">{t('game.opponentRequestedRematch')}</p>
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      <button
-                        onClick={handleAcceptRematch}
-                        className="group relative px-6 py-3 rounded-xl font-bold text-base overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 active:scale-95 transition-all duration-200"
-                      >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {t('game.acceptRematch')}
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (socket && socket.readyState === WebSocket.OPEN) {
-                            socket.send(JSON.stringify({ type: 'rematch:decline' }));
-                            setRematchOffer(false);
-                            if (autoRedirectTimerRef.current) {
-                              clearTimeout(autoRedirectTimerRef.current);
-                              autoRedirectTimerRef.current = null;
-                            }
-                          }
-                        }}
-                        className="group px-6 py-3 rounded-xl font-bold text-base bg-red-600/80 text-white border border-red-500 hover:bg-red-500 hover:scale-105 active:scale-95 transition-all duration-200"
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                          {t('common.decline')}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                ) : rematchRequested ? (
-                  <p className="text-yellow-400 text-sm font-medium animate-pulse">{t('game.waitingForOpponentRematch')}</p>
-                ) : (
+              {rematchOffer ? (
+                <div>
+                  <p className="text-yellow-400 mb-4">{t('game.opponentRequestedRematch')}</p>
+                  <button
+                    onClick={handleAcceptRematch}
+                    className="mt-4 px-6 py-3 bg-yellow-500 rounded-lg text-lg hover:bg-yellow-600 transition-colors"
+                  >
+                    {t('game.acceptRematch')}
+                  </button>
                   <button
                     onClick={() => {
                       if (socket && socket.readyState === WebSocket.OPEN) {
-                        socket.send(JSON.stringify({ type: 'rematch:request' }));
-                        setRematchRequested(true);
-                        setRematchDeclinedMessage('');
+                        socket.send(JSON.stringify({ type: 'rematch:decline' }));
+                        setRematchOffer(false);
+                        // Clear auto-redirect timer since user is interacting
                         if (autoRedirectTimerRef.current) {
                           clearTimeout(autoRedirectTimerRef.current);
                           autoRedirectTimerRef.current = null;
                         }
                       }
                     }}
-                    className="group relative px-6 py-3 rounded-xl font-bold text-base overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 active:scale-95 transition-all duration-200"
+                    className="mt-4 ml-4 px-6 py-3 bg-red-500 rounded-lg text-lg hover:bg-red-600 transition-colors"
                   >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      {t('game.requestRematch')}
-                    </span>
+                    {t('common.decline')}
                   </button>
-                )}
-              </div>
-            )}
+                </div>
+              ) : rematchRequested ? (
+                <p className="text-yellow-400 mb-4">{t('game.waitingForOpponentRematch')}</p>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                      socket.send(JSON.stringify({ type: 'rematch:request' }));
+                      setRematchRequested(true);
+                      setRematchDeclinedMessage(''); // Clear any previous decline message
+                      // Clear auto-redirect timer since user is interacting
+                      if (autoRedirectTimerRef.current) {
+                        clearTimeout(autoRedirectTimerRef.current);
+                        autoRedirectTimerRef.current = null;
+                      }
+                    }
+                  }}
+                  className="mt-4 px-6 py-3 bg-green-500 rounded-lg text-lg hover:bg-green-600 transition-colors"
+                >
+                  {t('game.requestRematch')}
+                </button>
+              )}
+            </>
+          )}
 
-            {/* Back to Lobby Button */}
-            <button
-              onClick={leaveRoom}
-              className="group px-6 py-3 rounded-xl font-bold text-base bg-gray-700/80 text-gray-200 border border-gray-600 hover:bg-gray-600 hover:border-gray-500 hover:scale-105 active:scale-95 transition-all duration-200"
-            >
-              <span className="flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-                {t('game.backToGameLobby')}
-              </span>
-            </button>
-          </div>
+          {/* Always show back to lobby button */}
+          <button
+            onClick={leaveRoom}
+            className={`mt-4 ${gameOver.reason !== 'opponentQuit' ? 'ml-4' : ''} px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors`}
+          >
+            {t('game.backToGameLobby')}
+          </button>
         </div>
       ) : (
         <>
@@ -810,6 +757,7 @@ export default function RemoteGameRoomPage() {
           {!isFullscreen && (
             <div className="mb-4 text-center w-full max-w-4xl">
               <h2 className="text-2xl font-bold text-white mb-2">{t('game.onlineGame')}</h2>
+              <p className="text-gray-300">{t('game.room')}: {roomCode}</p>
             </div>
           )}
 
@@ -932,10 +880,10 @@ export default function RemoteGameRoomPage() {
                   } : {}}
                 >
                   <PingPongGame
+                    socket={socket || getWebSocket()}
                     serverGameState={serverGameState}
                     opponentLeft={opponentLeft}
                     setServerGameState={setServerGameState}
-                    socket={activeSocket}
                     rematchDeclinedMessage={rematchDeclinedMessage}
                     setRematchDeclinedMessage={setRematchDeclinedMessage}
                     rematchOffer={rematchOffer}
@@ -954,7 +902,7 @@ export default function RemoteGameRoomPage() {
                     <span className="font-semibold">Controls:</span> Use <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">W</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">S</kbd> or <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↑</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↓</kbd> keys to move your paddle
                   </p>
                   <p className="text-gray-400 text-xs md:text-sm mb-2">
-                    Score to win: 10
+                    First to 10 points wins!
                   </p>
                   <p className="text-gray-500 text-xs">
                     Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-xs">F</kbd> for fullscreen mode
@@ -998,8 +946,8 @@ export default function RemoteGameRoomPage() {
               <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-6 py-3 border border-gray-700 shadow-xl">
                 <div className="flex items-center gap-4 text-white text-sm flex-wrap justify-center">
                   <div>
-                    <span className="opacity-70">Score to win: </span>
-                    <span className="font-semibold">10</span>
+                    <span className="opacity-70">Room: </span>
+                    <span className="font-semibold">{roomCode}</span>
                   </div>
                   <div className="h-4 w-px bg-gray-600"></div>
                   <div>

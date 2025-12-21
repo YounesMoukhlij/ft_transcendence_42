@@ -242,6 +242,57 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
       break;
     }
 
+    case 'requestGameState': {
+      // Client requesting current game state (e.g., after page navigation)
+      const roomCode = message.payload?.roomCode;
+      if (roomCode) {
+        const room = gameManager.gameRooms.get(roomCode);
+        if (room && room.gameState) {
+          // Send current game state to requesting player
+          // Use room.gameState which contains the actual game state (paddles, ball, scores)
+          const gameState = {
+            player1: {
+              id: room.gameState.player1.id,
+              username: room.gameState.player1.username,
+              avatar: room.gameState.player1.avatar || null,
+              y: room.gameState.player1.y,
+              score: room.gameState.player1.score,
+              customization: room.gameState.player1.customization || room.player1.customization || null
+            },
+            player2: {
+              id: room.gameState.player2.id,
+              username: room.gameState.player2.username,
+              avatar: room.gameState.player2.avatar || null,
+              y: room.gameState.player2.y,
+              score: room.gameState.player2.score,
+              customization: room.gameState.player2.customization || room.player2.customization || null
+            },
+            ball: room.gameState.ball
+          };
+
+          // Add tournament context if available
+          const gameStateMessage = {
+            type: 'gameState',
+            roomCode: roomCode,
+            payload: gameState
+          };
+
+          if (room.tournamentContext) {
+            gameStateMessage.tournamentId = room.tournamentContext.tournamentId;
+            gameStateMessage.matchId = room.tournamentContext.matchId;
+            gameStateMessage.round = room.tournamentContext.round;
+            gameStateMessage.matchNumber = room.tournamentContext.matchNumber;
+          }
+
+          socket.send(JSON.stringify(gameStateMessage));
+          console.log(`[requestGameState] Sent game state to player ${userId} for room ${roomCode}`);
+        } else {
+          console.warn(`[requestGameState] Room ${roomCode} not found or has no gameState`);
+        }
+      }
+      break;
+    }
+
     case 'leaveRoom': {
       const roomCode = message.payload?.roomCode;
       if (roomCode) {

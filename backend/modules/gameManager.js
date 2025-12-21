@@ -7,7 +7,7 @@ const PADDLE_HEIGHT = 100;
 const BALL_RADIUS = 10;
 const PADDLE_SPEED = 12; // Increased from 8 for faster gameplay
 const BALL_SPEED = 4.5; // Reduced for slower, softer ball movement in remote game (was 6)
-const WINNING_SCORE = 10;
+const WINNING_SCORE = 4;
 
 class GameManager {
   constructor(db, usersSocket) {
@@ -125,20 +125,48 @@ class GameManager {
     const roomCode = this.generateRoomCode();
     const gameState = this.initializeGameState(player1, player2, tournamentContext);
 
+    // CRITICAL: Ensure we have the latest valid sockets from usersSocket map
+    // This prevents stale sockets from being stored in the room
+    const freshP1Socket = this.usersSocket.get(player1.id.toString());
+    const freshP2Socket = this.usersSocket.get(player2.id.toString());
+
+    // Use fresh socket if available and open, otherwise use provided socket
+    const validP1Socket = (freshP1Socket && freshP1Socket.readyState === 1) ? freshP1Socket : player1.socket;
+    const validP2Socket = (freshP2Socket && freshP2Socket.readyState === 1) ? freshP2Socket : player2.socket;
+
+    // Validate both sockets before creating room
+    if (!validP1Socket || validP1Socket.readyState !== 1) {
+      console.error(`[createGameRoom] ERROR: Player1 (${player1.id}) socket is invalid:`, {
+        hasSocket: !!validP1Socket,
+        readyState: validP1Socket?.readyState,
+        hasFreshSocket: !!freshP1Socket,
+        freshReadyState: freshP1Socket?.readyState
+      });
+    }
+
+    if (!validP2Socket || validP2Socket.readyState !== 1) {
+      console.error(`[createGameRoom] ERROR: Player2 (${player2.id}) socket is invalid:`, {
+        hasSocket: !!validP2Socket,
+        readyState: validP2Socket?.readyState,
+        hasFreshSocket: !!freshP2Socket,
+        freshReadyState: freshP2Socket?.readyState
+      });
+    }
+
     const room = {
       id: roomCode,
       player1: {
         id: player1.id,
         username: player1.username,
         avatar: player1.avatar || null,  // Store avatar in room for reference
-        socket: player1.socket,
+        socket: validP1Socket, // Use validated socket
         customization: player1.customization || {}
       },
       player2: {
         id: player2.id,
         username: player2.username,
         avatar: player2.avatar || null,  // Store avatar in room for reference
-        socket: player2.socket,
+        socket: validP2Socket, // Use validated socket
         customization: player2.customization || {}
       },
       gameState,
@@ -185,8 +213,8 @@ class GameManager {
     this.gameRooms.set(roomCode, room);
     this.startGameLoop(roomCode);
 
-    // Notify both players
-    this.sendToPlayer(player1.socket, {
+    // Notify both players using validated sockets
+    const p1Notified = this.sendToPlayer(validP1Socket, {
       type: 'matchFound',
       payload: {
         roomCode,
@@ -197,7 +225,7 @@ class GameManager {
       }
     });
 
-    this.sendToPlayer(player2.socket, {
+    const p2Notified = this.sendToPlayer(validP2Socket, {
       type: 'matchFound',
       payload: {
         roomCode,
@@ -207,14 +235,25 @@ class GameManager {
         ]
       }
     });
+
+    if (!p1Notified || !p2Notified) {
+      console.warn(`[createGameRoom] Failed to notify one or both players:`, {
+        player1Notified: p1Notified,
+        player2Notified: p2Notified,
+        player1Id: player1.id,
+        player2Id: player2.id,
+        roomCode
+      });
+    }
 
     return { roomCode, gameState };
   }
 
   // Find room by player ID
   findRoomByPlayer(playerId) {
+    const playerIdStr = String(playerId);
     for (const [roomCode, room] of this.gameRooms.entries()) {
-      if (room.player1.id === playerId || room.player2.id === playerId) {
+      if (String(room.player1.id) === playerIdStr || String(room.player2.id) === playerIdStr) {
         return { roomCode, room };
       }
     }
@@ -240,26 +279,21 @@ class GameManager {
 
     // CRITICAL: Update paddle direction atomically to prevent race conditions
     // This ensures paddle direction is set before the next game loop iteration
-    if (room.player1.id === playerId) {
+    const playerIdStr = String(playerId);
+    if (String(room.player1.id) === playerIdStr) {
       room.paddleDirections.player1 = direction;
       if (matchLabel) {
         console.log(`[handlePaddleMove] ${matchLabel}: Player1 (${playerId}) direction: ${direction}`);
       } else {
         console.log(`[handlePaddleMove] Player1 (${playerId}) direction set to: ${direction}`);
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'B2',location:'backend/modules/gameManager.js:handlePaddleMove',message:'Set direction for player1',data:{playerId, direction, roomCode, matchId, round: room.tournamentContext?.round},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-    } else if (room.player2.id === playerId) {
+    } else if (String(room.player2.id) === playerIdStr) {
       room.paddleDirections.player2 = direction;
       if (matchLabel) {
         console.log(`[handlePaddleMove] ${matchLabel}: Player2 (${playerId}) direction: ${direction}`);
       } else {
         console.log(`[handlePaddleMove] Player2 (${playerId}) direction set to: ${direction}`);
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'B2',location:'backend/modules/gameManager.js:handlePaddleMove',message:'Set direction for player2',data:{playerId, direction, roomCode, matchId, round: room.tournamentContext?.round},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     } else {
       console.warn(`[handlePaddleMove] Player ${playerId} not found in room ${roomCode}`);
     }
@@ -460,6 +494,16 @@ class GameManager {
               type: 'gameOver',
               payload: gameOverPayload
             });
+
+            // For tournament matches, also send opponentLeft message to show animation
+            if (room.tournamentContext) {
+              this.sendToPlayer(connectedPlayer.socket, {
+                type: 'opponentLeft',
+                data: {
+                  message: 'The other player has left the game, you win!'
+                }
+              });
+            }
           }
 
           // Save game history with quitter as loser
@@ -467,6 +511,41 @@ class GameManager {
 
           // Award XP: Winner gets 500, Loser gets 200 (for remote games)
           this.awardXP(winnerId, loserId, 500, 200, 'casual');
+
+          // CRITICAL: For tournament matches, automatically report match result
+          // This ensures the tournament advances when a player disconnects
+          if (room.tournamentContext) {
+            const tournamentId = room.tournamentContext.tournamentId;
+            const matchId = room.tournamentContext.matchId;
+
+            // Get winner player object (with all required fields: id, name, avatar, username)
+            const winnerPlayer = {
+              id: winnerId,
+              name: winnerUsername,
+              username: winnerUsername,
+              avatar: connectedPlayer.avatar || null
+            };
+
+            console.log(`[startGameLoop] Tournament match finished due to disconnect - automatically reporting result:`, {
+              tournamentId,
+              matchId,
+              winner: winnerPlayer.name,
+              quitter: loserUsername,
+              round: room.tournamentContext.round
+            });
+
+            // Automatically report match result to tournament system
+            try {
+              const matchResult = this.handleMatchResult(tournamentId, matchId, winnerPlayer, winnerId);
+              if (matchResult.error) {
+                console.error(`[startGameLoop] Failed to report tournament match result:`, matchResult.error);
+              } else {
+                console.log(`[startGameLoop] Successfully reported tournament match result for match ${matchId}`);
+              }
+            } catch (error) {
+              console.error(`[startGameLoop] Error reporting tournament match result:`, error);
+            }
+          }
 
           // Remove room
           this.gameRooms.delete(roomCode);
@@ -707,30 +786,33 @@ class GameManager {
 
     // CRITICAL: Get fresh socket references right before sending to avoid race conditions
     // This ensures we always use the latest socket, even if player reconnected
-    let player1Socket = room.player1.socket;
-    let player2Socket = room.player2.socket;
-
-    // Always check for updated sockets from usersSocket map (handles reconnections)
+    // Always check for updated sockets from usersSocket map FIRST (handles reconnections)
     const freshP1Socket = this.usersSocket.get(room.player1.id.toString());
     const freshP2Socket = this.usersSocket.get(room.player2.id.toString());
 
+    // Use fresh socket if available and open, otherwise fall back to stored socket
+    let player1Socket = (freshP1Socket && freshP1Socket.readyState === 1) ? freshP1Socket : room.player1.socket;
+    let player2Socket = (freshP2Socket && freshP2Socket.readyState === 1) ? freshP2Socket : room.player2.socket;
+
     // Update room sockets if we found fresher ones that are open
     if (freshP1Socket && freshP1Socket.readyState === 1) {
-      if (player1Socket !== freshP1Socket) {
+      if (room.player1.socket !== freshP1Socket) {
         room.player1.socket = freshP1Socket;
-        player1Socket = freshP1Socket;
         if (matchLabel) {
           console.log(`[broadcastGameState] ${matchLabel}: Updated socket for player1 (${room.player1.id})`);
+        } else {
+          console.log(`[broadcastGameState] Updated socket for player1 (${room.player1.id}) in room ${roomCode}`);
         }
       }
     }
 
     if (freshP2Socket && freshP2Socket.readyState === 1) {
-      if (player2Socket !== freshP2Socket) {
+      if (room.player2.socket !== freshP2Socket) {
         room.player2.socket = freshP2Socket;
-        player2Socket = freshP2Socket;
         if (matchLabel) {
           console.log(`[broadcastGameState] ${matchLabel}: Updated socket for player2 (${room.player2.id})`);
+        } else {
+          console.log(`[broadcastGameState] Updated socket for player2 (${room.player2.id}) in room ${roomCode}`);
         }
       }
     }
@@ -914,6 +996,16 @@ class GameManager {
         type: 'gameOver',
         payload: gameOverPayload
       });
+
+      // For tournament matches, also send opponentLeft message to show animation
+      if (room.tournamentContext) {
+        this.sendToPlayer(winner.socket, {
+          type: 'opponentLeft',
+          data: {
+            message: 'The other player has left the game, you win!'
+          }
+        });
+      }
     }
 
     // Save game history with quitter as loser
@@ -921,6 +1013,41 @@ class GameManager {
 
     // Award XP: Winner gets 500, Loser gets 200 (for remote games)
     this.awardXP(winner.id, quitter.id, 500, 200, 'casual');
+
+    // CRITICAL: For tournament matches, automatically report match result
+    // This ensures the tournament advances when a player disconnects
+    if (room.tournamentContext) {
+      const tournamentId = room.tournamentContext.tournamentId;
+      const matchId = room.tournamentContext.matchId;
+
+      // Get winner player object (with all required fields: id, name, avatar, username)
+      const winnerPlayer = {
+        id: winner.id,
+        name: winner.username,
+        username: winner.username,
+        avatar: winner.avatar || null
+      };
+
+      console.log(`[removePlayer] Tournament match finished due to disconnect - automatically reporting result:`, {
+        tournamentId,
+        matchId,
+        winner: winnerPlayer.name,
+        quitter: quitter.username,
+        round: room.tournamentContext.round
+      });
+
+      // Automatically report match result to tournament system
+      try {
+        const matchResult = this.handleMatchResult(tournamentId, matchId, winnerPlayer, winner.id);
+        if (matchResult.error) {
+          console.error(`[removePlayer] Failed to report tournament match result:`, matchResult.error);
+        } else {
+          console.log(`[removePlayer] Successfully reported tournament match result for match ${matchId}`);
+        }
+      } catch (error) {
+        console.error(`[removePlayer] Error reporting tournament match result:`, error);
+      }
+    }
 
     // Remove room
     this.gameRooms.delete(roomCode);
@@ -2315,10 +2442,14 @@ class GameManager {
           finalMatch.status = 'pending';
           finalMatch.winner = null;
 
-          const finalResult = this.createFinalMatchRoom(tournamentId);
-          if (finalResult?.error) {
-            console.error(`[handleMatchResult] Failed to create final match room: ${finalResult.error}`);
-          }
+          // Delay final match start by 4 seconds to sync with frontend winner badge display
+          console.log(`[handleMatchResult] Delaying final match start by 4 seconds...`);
+          setTimeout(() => {
+            const finalResult = this.createFinalMatchRoom(tournamentId);
+            if (finalResult?.error) {
+              console.error(`[handleMatchResult] Failed to create final match room: ${finalResult.error}`);
+            }
+          }, 4000);
         } else {
           console.error(`[handleMatchResult] ERROR: Missing final match or semi winners - cannot start final.`);
         }

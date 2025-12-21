@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext, Player, TournamentMatch } from '@/components/GameContext';
 import PingPongGame from '@/components/PingPongGame';
@@ -161,7 +161,22 @@ export default function TournamentPage() {
   const [matchWinner, setMatchWinner] = useState<Player | null>(null);
   const [showTournamentWinnerMessage, setShowTournamentWinnerMessage] = useState(false);
   const [showMatchCompletionModal, setShowMatchCompletionModal] = useState(false);
-  // REMOVED: showRound1WinnerBadge - no badge between Round 1 and Round 2
+  const [showRound1WinnerBadge, setShowRound1WinnerBadge] = useState(false); // Show badge after winning Round 1
+
+  // Auto-dismiss Round 1 winner badge after 4 seconds
+  useEffect(() => {
+    if (showRound1WinnerBadge) {
+      const timer = setTimeout(() => setShowRound1WinnerBadge(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showRound1WinnerBadge]);
+
+  // State to track if champion badge is showing (for auto-dismiss)
+  const [showChampionBadge, setShowChampionBadge] = useState(true); // Start true so it shows when champion is detected
+
+  // Auto-dismiss champion badge after 4 seconds and advance to bracket
+  const championBadgeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const [isMatchActive, setIsMatchActive] = useState(false); // Prevent auto-switching during active match
   const [showLoserOptionsModal, setShowLoserOptionsModal] = useState(false);
   const [finishedMatchRound, setFinishedMatchRound] = useState<number | null>(null);
@@ -247,7 +262,7 @@ export default function TournamentPage() {
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 401) {
           clearUser();
-          router.push('/login');
+          router.push('/signIn');
         }
         console.error('Error fetching user data:', error);
       }
@@ -338,11 +353,13 @@ export default function TournamentPage() {
         }
 
         // Clear sessionStorage (only in browser)
+        // NOTE: Don't clear 'isInvitedPlayer' yet - it's needed by the tournamentJoined WebSocket handler
+        // It will be cleared after the WebSocket message is processed
         if (typeof window !== 'undefined') {
           sessionStorage.removeItem('pendingTournamentId');
           sessionStorage.removeItem('pendingTournament');
-          sessionStorage.removeItem('isInvitedPlayer');
           sessionStorage.removeItem('tournamentStep');
+          // Keep 'isInvitedPlayer' for now - will be cleared in tournamentJoined handler
           setPendingTournamentIdFromStorage(null); // Update state to reflect clearing
         }
       } catch (err) {
@@ -416,6 +433,37 @@ export default function TournamentPage() {
     }
   }, [tournamentStep, currentMatchIndex, gameState.tournament?.bracket?.length, isMatchActive]);
 
+  // CRITICAL: Reset opponentLeft when switching to a different match
+  // Track the last matchId and round to reset when either changes
+  const lastMatchIdRef = React.useRef<number | null>(null);
+  const lastRoundRef = React.useRef<number | null>(null);
+  useEffect(() => {
+    if (tournamentType === 'remote' && tournamentStep === 'playing' && gameState.tournament?.bracket) {
+      const currentMatch = gameState.tournament.bracket[currentMatchIndex];
+      if (currentMatch && currentMatch.id) {
+        // Reset if matchId changed OR if round changed (especially Round 1 -> Round 2)
+        const matchIdChanged = lastMatchIdRef.current !== null && lastMatchIdRef.current !== currentMatch.id;
+        const roundChanged = lastRoundRef.current !== null && lastRoundRef.current !== currentMatch.round;
+
+        if (matchIdChanged || roundChanged) {
+          console.log('[Frontend] Match changed - resetting opponentLeft', {
+            oldMatchId: lastMatchIdRef.current,
+            newMatchId: currentMatch.id,
+            oldRound: lastRoundRef.current,
+            newRound: currentMatch.round,
+            currentMatchIndex,
+            matchIdChanged,
+            roundChanged
+          });
+          setOpponentLeft(false);
+        }
+
+        lastMatchIdRef.current = currentMatch.id;
+        lastRoundRef.current = currentMatch.round;
+      }
+    }
+  }, [currentMatchIndex, tournamentType, tournamentStep, gameState.tournament?.bracket]);
+
   // Effect to auto-find random opponent when tournament is created
   useEffect(() => {
     if (shouldAutoFindRandomOpponent && tournamentId && socket && isHost) {
@@ -451,6 +499,12 @@ export default function TournamentPage() {
             break;
 
           case 'tournamentJoined':
+            // Check isInvitedPlayer BEFORE it might be cleared by other code
+            // This needs to be checked early because sessionStorage might be cleared in useEffect
+            const isInvitedPlayer = typeof window !== 'undefined'
+              ? sessionStorage.getItem('isInvitedPlayer') === 'true'
+              : false;
+
             // User accepted an invitation and joined a tournament
             setRemoteTournament(message.data.tournament);
             // Check if user is the host
@@ -462,8 +516,14 @@ export default function TournamentPage() {
             // CRITICAL: Invited friends (non-host) should ALWAYS see Tournament Lobby, never Setup
             // Only host can see setup/customization screens
             if (!isUserHost) {
-              // This is an invited friend - force them to Tournament Lobby
-              setTournamentStep('registration');
+              // All non-host players (invited friends OR random opponents) should see Tournament Lobby
+              if (isInvitedPlayer) {
+                console.log("younes This is an invited player");
+                setTournamentStep('registration');
+              } else {
+                console.log("younes This is not an invited player (random opponent)");
+                setTournamentStep('registration');
+              }
             } else {
               // This is the host - they can see setup/customization
               // But if tournament is full, go to customization
@@ -477,6 +537,12 @@ export default function TournamentPage() {
             setIsFindingRandomOpponent(false);
             setShowFriendsListExpanded(false);
             setShowRandomOpponentExpanded(false);
+
+            // Clear isInvitedPlayer from sessionStorage after processing the message
+            // This ensures the WebSocket handler can read it before it's cleared
+            if (typeof window !== 'undefined') {
+              sessionStorage.removeItem('isInvitedPlayer');
+            }
             break;
 
           case 'tournamentUpdated':
@@ -686,25 +752,20 @@ export default function TournamentPage() {
                         (finalMatch.player1.id?.toString() === userId || finalMatch.player1.id === parseInt(userId)) ||
                         (finalMatch.player2.id?.toString() === userId || finalMatch.player2.id === parseInt(userId));
 
-                          // DISABLED: Auto-transition to final match
                           // Final match should only start when both winners manually click "Proceed to Final Match"
-                          // REMOVED: No badges or messages for Round 1 winners
                       if (isUserInFinal && userMatch.round === 1) {
-                            // REMOVED: No completion modal for Round 1 winners
-                            console.log('[Frontend] User won Round 1 - no badge/message shown');
+                            console.log('[Frontend] User won Round 1 - showing winner badge');
                         setMatchWinner(userMatch.winner);
-                            // Don't show modals for Round 1 winners
+                        setShowRound1WinnerBadge(true); // Show the winner badge
                       } else {
-                            // REMOVED: No completion modal for Round 1 winners
-                            console.log('[Frontend] Current user match finished - no badge/message for Round 1 winner');
+                            console.log('[Frontend] Current user match finished - showing winner badge');
                         setMatchWinner(userMatch.winner);
-                            // Don't show modals for Round 1 winners
+                        setShowRound1WinnerBadge(true); // Show the winner badge
               }
                     } else {
-                          // REMOVED: No completion modal for Round 1 winners
-                          console.log('[Frontend] Current user match finished - no badge/message for Round 1 winner');
+                          console.log('[Frontend] Current user match finished - showing winner badge');
                       setMatchWinner(userMatch.winner);
-                        // Don't show modals for Round 1 winners
+                      setShowRound1WinnerBadge(true); // Show the winner badge
               }
                     } else {
                         // User is NOT the winner - don't show winner badge
@@ -883,6 +944,11 @@ export default function TournamentPage() {
 
               // Auto-switch to final match on round 2 payloads
               if (message.round === 2) {
+                // CRITICAL: Reset opponentLeft IMMEDIATELY when detecting final match (round 2)
+                // This must happen BEFORE any other processing to prevent stale state
+                console.log('[Frontend] Detected round 2 (final match) - resetting opponentLeft immediately');
+                setOpponentLeft(false);
+
                 const finalIdx = bracket.findIndex(m => m.round === 2);
                 if (finalIdx !== -1 && finalIdx !== currentMatchIndex) {
                   console.log('[Frontend] AUTO-SWITCH to final match on round 2 payload', {
@@ -935,6 +1001,23 @@ export default function TournamentPage() {
               const bracket = gameState.tournament?.bracket || [];
               const currentMatch = bracket[currentMatchIndex];
               const isFinalMatch = message.round === 2;
+
+              // CRITICAL: Reset opponentLeft IMMEDIATELY when detecting final match (round 2)
+              // This must happen BEFORE any matchId checks to prevent stale state
+              if (isFinalMatch) {
+                console.log('[Frontend] Detected final match (round 2) in gameState - resetting opponentLeft immediately');
+                setOpponentLeft(false);
+              }
+
+              // CRITICAL: Reset opponentLeft when receiving gameState for a different match
+              if (message.matchId && currentMatch && currentMatch.id !== message.matchId) {
+                console.log('[Frontend] Match changed - resetting opponentLeft', {
+                  oldMatchId: currentMatch.id,
+                  newMatchId: message.matchId
+                });
+                setOpponentLeft(false);
+              }
+
               // If final match payload arrives but local bracket lacks players, hydrate bracket entry from payload
               if (isFinalMatch) {
                 const finalIdx = bracket.findIndex((m: any) => m.round === 2);
@@ -970,6 +1053,8 @@ export default function TournamentPage() {
                   const targetIdx = bracket.findIndex(m => m.id === targetMatch.id);
                   if (targetIdx !== -1 && targetIdx !== currentMatchIndex) {
                     setCurrentMatchIndex(targetIdx);
+                    // CRITICAL: Reset opponentLeft when switching to a different match
+                    setOpponentLeft(false);
                   }
                   if (receivedRoomCode && targetMatch.roomCode !== receivedRoomCode) {
                     const updatedBracket = bracket.map(m =>
@@ -1320,9 +1405,6 @@ export default function TournamentPage() {
                       matchId: message.matchId ?? message.payload?.matchId,
                       round: message.round ?? message.payload?.round,
                     };
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TournamentPage:setServerGameState',message:'Setting serverGameState',data:{matchId:enrichedPayload.matchId,roomCode:enrichedPayload.roomCode,round:enrichedPayload.round},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-                    // #endregion
                     setServerGameState(enrichedPayload);
                 } else {
                   const isMatch1 = message.matchId === 1;
@@ -1371,7 +1453,27 @@ export default function TournamentPage() {
             // Handle game over message from backend (match finished)
             console.log('[Frontend] Received gameOver message:', message.payload);
             if (tournamentType === 'remote' && tournamentStep === 'playing' && message.payload) {
-              const { winner, finalGameState, finalScore } = message.payload;
+              const { winner, finalGameState, finalScore, reason } = message.payload;
+
+              // Get current match to verify this message is for the current match
+              const bracket = gameState.tournament?.bracket || [];
+              const currentMatch = bracket[currentMatchIndex];
+              const messageMatchId = message.matchId || finalGameState?.matchId || message.payload?.matchId;
+              const isForCurrentMatch = !messageMatchId || !currentMatch || currentMatch.id === messageMatchId;
+
+              // If opponent quit, show opponentLeft animation ONLY if it's for the current match
+              if (reason === 'opponentQuit' && isForCurrentMatch) {
+                console.log('[Frontend] Setting opponentLeft to true for current match:', {
+                  currentMatchId: currentMatch?.id,
+                  messageMatchId: messageMatchId
+                });
+                setOpponentLeft(true);
+              } else if (reason === 'opponentQuit' && !isForCurrentMatch) {
+                console.log('[Frontend] Ignoring opponentQuit - not for current match:', {
+                  currentMatchId: currentMatch?.id,
+                  messageMatchId: messageMatchId
+                });
+              }
 
               // Update serverGameState with final state to prevent freezing
               if (finalGameState) {
@@ -1392,9 +1494,7 @@ export default function TournamentPage() {
                 setServerGameState(enrichedFinal);
               }
 
-              // Find winner player object from current match
-              const bracket = gameState.tournament?.bracket || [];
-              const currentMatch = bracket[currentMatchIndex];
+              // Find winner player object from current match (bracket and currentMatch already declared above)
 
               if (currentMatch && winner) {
                 // Determine which player won
@@ -1421,8 +1521,24 @@ export default function TournamentPage() {
             // Handle opponent leaving in remote tournament match
             console.log('[Frontend] Received opponentLeft message');
             if (tournamentType === 'remote' && tournamentStep === 'playing') {
-              console.log('[Frontend] Setting opponentLeft to true');
-              setOpponentLeft(true);
+              // Get current match to verify this message is for the current match
+              const bracket = gameState.tournament?.bracket || [];
+              const currentMatch = bracket[currentMatchIndex];
+              const messageMatchId = message.matchId || message.data?.matchId;
+              const isForCurrentMatch = !messageMatchId || !currentMatch || currentMatch.id === messageMatchId;
+
+              if (isForCurrentMatch) {
+                console.log('[Frontend] Setting opponentLeft to true for current match:', {
+                  currentMatchId: currentMatch?.id,
+                  messageMatchId: messageMatchId
+                });
+                setOpponentLeft(true);
+              } else {
+                console.log('[Frontend] Ignoring opponentLeft - not for current match:', {
+                  currentMatchId: currentMatch?.id,
+                  messageMatchId: messageMatchId
+                });
+              }
             }
             break;
 
@@ -1987,6 +2103,84 @@ export default function TournamentPage() {
     setMatchWinner,
     setShowTournamentWinnerMessage
   ]);
+
+  // Consolidated handler for "Proceed to Final Match" button
+  const handleProceedToFinalMatch = useCallback((source: string = 'unknown') => {
+    if (waitingForOtherWinner) {
+      // Already clicked, do nothing
+      return;
+    }
+
+    console.log(`[Frontend] User clicked "Proceed to Final Match" (${source})`);
+    setIsReadyForFinalMatch(true);
+    setWaitingForOtherWinner(true);
+    setStartFinalMatchManually(true);
+
+    const bracket = gameState.tournament?.bracket || [];
+    const finalMatch = bracket.find((m: any) => m.round === 2);
+
+    // Validate final match has all required properties including valid roomCode
+    const hasValidRoom = finalMatch?.roomCode &&
+                       typeof finalMatch.roomCode === 'string' &&
+                       finalMatch.roomCode.trim().length > 0;
+    const isFinalMatchReady = finalMatch &&
+                             finalMatch.player1 &&
+                             finalMatch.player2 &&
+                             hasValidRoom;
+
+    if (isFinalMatchReady) {
+      // Final match is ready with room created, transition immediately
+      console.log('[Frontend] Final match is ready with room, transitioning to final match');
+      setWaitingForOtherWinner(false);
+      setIsReadyForFinalMatch(false);
+      const finalMatchIndex = bracket.findIndex((m: any) => m.id === finalMatch.id);
+      if (finalMatchIndex !== -1) {
+        setCurrentMatchIndex(finalMatchIndex);
+        setTournamentStep('playing');
+        setIsMatchActive(true);
+        setShowMatchCompletionModal(false);
+        setShowTournamentWinnerMessage(false);
+        console.log('[Frontend] ✓ Successfully transitioned to final match:', {
+          finalMatchIndex,
+          roomCode: finalMatch.roomCode,
+          player1: finalMatch.player1.name,
+          player2: finalMatch.player2.name,
+          status: finalMatch.status
+        });
+      } else {
+        console.error('[Frontend] Could not find final match index in bracket!');
+      }
+    } else {
+      // Final match not ready yet (missing room or players)
+      console.log('[Frontend] User ready for final match, but final match room not created yet. Requesting creation...', {
+        missingRoom: !hasValidRoom,
+        missingPlayers: !(finalMatch?.player1 && finalMatch?.player2),
+        missingMatch: !finalMatch,
+        tournamentId,
+        hasSocket: !!socket
+      });
+
+      // Ask backend to ensure / create final match room
+      if (socket && tournamentId) {
+        socket.send(JSON.stringify({
+          type: 'game',
+          action: 'ensureFinalMatchRoom',
+          payload: { tournamentId }
+        }));
+      }
+    }
+  }, [
+    waitingForOtherWinner,
+    gameState.tournament?.bracket,
+    socket,
+    tournamentId,
+    setCurrentMatchIndex,
+    setTournamentStep,
+    setIsMatchActive,
+    setShowMatchCompletionModal,
+    setShowTournamentWinnerMessage
+  ]);
+
   const startTournament = useCallback((players?: Player[]) => {
     if (tournamentType === 'local') {
       // Local tournament logic - use provided players or registeredPlayers
@@ -3015,6 +3209,15 @@ export default function TournamentPage() {
       playableMatches.every(m => m.status === 'finished' && m.winner);
     const champion = isComplete ? bracket[bracket.length - 1]?.winner : null;
 
+    // Auto-dismiss champion badge after 4 seconds
+    if (champion && showChampionBadge && !championBadgeTimerRef.current) {
+      championBadgeTimerRef.current = setTimeout(() => {
+        setShowChampionBadge(false);
+        setTournamentStep('bracket');
+        championBadgeTimerRef.current = null;
+      }, 4000);
+    }
+
     return (
       <div className="w-full bg-gray-800 bg-opacity-90 rounded-lg sm:rounded-xl lg:rounded-2xl shadow-xl border border-purple-400 p-3 sm:p-4 lg:p-6">
         <h3 className="text-lg sm:text-xl font-bold text-purple-300 mb-3 sm:mb-4 text-center">
@@ -3022,13 +3225,48 @@ export default function TournamentPage() {
         </h3>
 
 
-        {champion && (
-          <div className="text-center mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 rounded-lg shadow-xl border-2 border-yellow-300 animate-pulse">
-            <FaTrophy className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-200 mx-auto mb-2 sm:mb-3 animate-bounce" />
-            <h4 className="text-base sm:text-lg font-bold text-white mb-1 sm:mb-2">{t('game.tournamentChampion')}</h4>
-            <div className="flex items-center justify-center gap-2 sm:gap-3">
-              <img src={champion.avatar} alt={champion.name} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-yellow-300 shadow-lg" />
-              <span className="text-sm sm:text-base lg:text-lg font-semibold text-white">{champion.name}</span>
+        {champion && showChampionBadge && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="relative p-1 rounded-3xl bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 shadow-2xl shadow-yellow-500/50 animate-pulse">
+              <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl p-8 sm:p-12 text-center min-w-[320px] sm:min-w-[400px]">
+                {/* Confetti effect */}
+                <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                  <div className="absolute top-4 left-8 w-2 h-2 bg-yellow-400 rounded-full animate-ping" style={{ animationDelay: '0s' }}></div>
+                  <div className="absolute top-8 right-12 w-3 h-3 bg-orange-400 rounded-full animate-ping" style={{ animationDelay: '0.3s' }}></div>
+                  <div className="absolute bottom-12 left-12 w-2 h-2 bg-amber-400 rounded-full animate-ping" style={{ animationDelay: '0.6s' }}></div>
+                  <div className="absolute bottom-8 right-8 w-3 h-3 bg-yellow-300 rounded-full animate-ping" style={{ animationDelay: '0.9s' }}></div>
+                </div>
+
+                {/* Trophy Icon */}
+                <div className="mb-6 relative">
+                  <div className="absolute inset-0 blur-2xl bg-yellow-400/30 rounded-full"></div>
+                  <FaTrophy className="w-20 h-20 sm:w-28 sm:h-28 text-yellow-400 mx-auto relative z-10 drop-shadow-2xl animate-bounce" />
+                </div>
+
+                {/* Title */}
+                <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 bg-gradient-to-r from-yellow-200 via-amber-300 to-orange-400 bg-clip-text text-transparent tracking-tight">
+                  {t('game.tournamentChampion')}
+                </h2>
+
+                {/* Champion Info */}
+                <div className="flex flex-col items-center gap-4 mb-8">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full blur-md"></div>
+                    <img
+                      src={champion.avatar}
+                      alt={champion.name}
+                      className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-yellow-400 shadow-xl object-cover"
+                    />
+                    <div className="absolute -bottom-2 -right-2 bg-yellow-400 rounded-full p-2">
+                      <FaCrown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-900" />
+                    </div>
+                  </div>
+                  <span className="text-2xl sm:text-3xl font-bold text-white tracking-wide">{champion.name}</span>
+                </div>
+
+                {/* Auto-advancing message */}
+                <p className="text-gray-400 text-sm">Auto-dismissing in 4 seconds...</p>
+              </div>
             </div>
           </div>
         )}
@@ -4221,7 +4459,32 @@ export default function TournamentPage() {
               height: 'auto'
             } : {}}
           >
-            {tournamentType === 'remote' ? (
+            {/* Opponent Left / YOU WON Animation - shown when opponent leaves during tournament match */}
+            {tournamentType === 'remote' && opponentLeft && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-95 backdrop-blur-sm">
+                <div className="text-center p-6 sm:p-8 md:p-12 rounded-2xl bg-gradient-to-br from-purple-900 via-pink-900 to-red-900 border-4 border-yellow-400 shadow-2xl animate-pulse max-w-2xl mx-4">
+                  <div className="mb-6">
+                    <div className="text-6xl sm:text-8xl md:text-9xl mb-4 animate-bounce">🏆</div>
+                  </div>
+                  <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 animate-pulse">
+                    {t('game.youWon') || 'YOU WON!'}
+                  </h2>
+                  <p className="text-xl sm:text-2xl md:text-3xl text-yellow-300 mb-6 font-semibold">
+                    {t('game.opponentLeftMessage') || 'The other player has left the game, you win!'}
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-green-400">
+                    <svg className="animate-spin h-6 w-6 sm:h-8 sm:w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-base sm:text-lg md:text-xl">{t('game.processingWin') || 'Processing your win...'}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Only render game if opponent hasn't left */}
+            {!opponentLeft && tournamentType === 'remote' ? (
               // Remote tournament - use WebSocket mode
               <PingPongGame
                 socket={socket}
@@ -4231,19 +4494,122 @@ export default function TournamentPage() {
                 opponentLeft={opponentLeft}
                 isTournamentFinalMatch={isLastMatch}
               />
-            ) : (
+            ) : !opponentLeft && tournamentType === 'local' ? (
               // Local tournament - use local mode
-            <PingPongGame
-              tournamentMode={true}
-              tournamentPlayers={currentPlayers}
-              onTournamentMatchEnd={handleGameComplete}
-            />
-            )}
+              <PingPongGame
+                tournamentMode={true}
+                tournamentPlayers={currentMatch.player1 && currentMatch.player2 ? [
+                  {
+                    id: currentMatch.player1.id ?? currentMatch.player1.id_user ?? 0,
+                    name: currentMatch.player1.name,
+                    avatar: currentMatch.player1.avatar,
+                    color: currentMatch.player1.color ?? '#10B981',
+                    username: currentMatch.player1.username,
+                    id_user: typeof currentMatch.player1.id_user === 'number' ? currentMatch.player1.id_user : undefined
+                  },
+                  {
+                    id: currentMatch.player2.id ?? currentMatch.player2.id_user ?? 0,
+                    name: currentMatch.player2.name,
+                    avatar: currentMatch.player2.avatar,
+                    color: currentMatch.player2.color ?? '#10B981',
+                    username: currentMatch.player2.username,
+                    id_user: typeof currentMatch.player2.id_user === 'number' ? currentMatch.player2.id_user : undefined
+                  }
+                ] : []}
+                onTournamentMatchEnd={(winner) => {
+                  // Convert types/game.Player to GameContext.Player
+                  const gameContextWinner: Player = {
+                    name: winner.name,
+                    avatar: winner.avatar,
+                    color: winner.color ?? '#10B981',
+                    id: winner.id,
+                    id_user: winner.id_user,
+                    username: winner.username
+                  };
+                  handleGameComplete(gameContextWinner);
+                }}
+              />
+            ) : null}
           </div>
 
-          {/* REMOVED: Round 1 Winner Badge - no badge between Round 1 and Round 2 for winners */}
+          {/* Round 1 Winner Badge - shown after winning Round 1 */}
+          {tournamentType === 'remote' && showRound1WinnerBadge && !isLastMatch && (() => {
+            const bracket = gameState.tournament?.bracket || [];
+            const userId = user?.id_user?.toString();
 
-          {/* Minimal "Proceed to Final Match" button for Round 1 winners (no badges/messages) */}
+            // Check if user is a winner of any Round 1 match
+            const round1Matches = bracket.filter((m: any) => m.round === 1);
+            const userRound1Match = round1Matches.find((m: any) =>
+              m.status === 'finished' &&
+              m.winner &&
+              m.player1 && m.player2 &&
+              (m.player1.id?.toString() === userId ||
+               m.player1.id === parseInt(userId || '0') ||
+               m.player2.id?.toString() === userId ||
+               m.player2.id === parseInt(userId || '0'))
+            );
+
+            const isRound1Winner = userRound1Match && userRound1Match.winner && userId && (
+              userRound1Match.winner.id?.toString() === userId ||
+              userRound1Match.winner.id === parseInt(userId) ||
+              userRound1Match.winner.id_user?.toString() === userId ||
+              userRound1Match.winner.id_user === parseInt(userId) ||
+              userRound1Match.winner.name === user?.username ||
+              userRound1Match.winner.username === user?.username
+            );
+
+            if (!isRound1Winner) return null;
+
+            // Check if final match is ready (both Round 1 matches finished)
+            const finalMatch = bracket.find((m: any) => m.round === 2);
+            const bothRound1Finished = round1Matches.every((m: any) => m.status === 'finished');
+
+            return (
+              <div className="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="bg-gradient-to-br from-yellow-500/20 via-orange-500/20 to-red-500/20 p-1 rounded-2xl shadow-2xl">
+                  <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-8 text-center max-w-md">
+                    {/* Trophy Icon */}
+                    <div className="mb-6">
+                      <span className="text-6xl sm:text-7xl drop-shadow-lg animate-bounce">🏆</span>
+                    </div>
+
+                    {/* Winner Title */}
+                    <h2 className="text-3xl sm:text-4xl font-extrabold mb-3 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                      {t('game.round1Winner') || 'Round 1 Winner!'}
+                    </h2>
+
+                    {/* Congratulations Message */}
+                    <p className="text-lg sm:text-xl text-gray-200 font-semibold mb-6">
+                      {t('game.congratulationsAdvanced') || 'Congratulations! You advanced to the Final Match!'}
+                    </p>
+
+                    {/* Waiting Status */}
+                    {!bothRound1Finished ? (
+                      <div className="mb-6">
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                          <div className="w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
+                          <div className="w-3 h-3 bg-orange-400 rounded-full animate-ping" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-3 h-3 bg-red-400 rounded-full animate-ping" style={{ animationDelay: '0.4s' }}></div>
+                        </div>
+                        <p className="text-yellow-300 text-sm sm:text-base font-medium animate-pulse">
+                          {t('game.waitingForOtherMatch') || 'Waiting for the other match to finish...'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mb-6">
+                        <p className="text-green-400 text-sm sm:text-base font-medium">
+                          {t('game.bothMatchesComplete') || 'Both matches complete! Ready for final.'}
+                        </p>
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* "Proceed to Final Match" button for Round 1 winners */}
           {tournamentType === 'remote' && !isLastMatch && (() => {
             const bracket = gameState.tournament?.bracket || [];
             const userId = user?.id_user?.toString();
@@ -4291,54 +4657,47 @@ export default function TournamentPage() {
 
             return (
               <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-                <div className="flex flex-col items-center gap-4">
-                  {/* Waiting animation when button clicked */}
-                  {waitingForOtherWinner && (
+                {/* Simple Modern Winning Card */}
+                <div className="bg-gradient-to-br from-yellow-500/20 via-orange-500/20 to-red-500/20 p-1 rounded-2xl shadow-2xl">
+                  <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center max-w-sm">
+                    {/* Trophy Icon */}
                     <div className="mb-4">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <div className="w-3 h-3 bg-purple-400 rounded-full animate-ping"></div>
-                        <div className="w-3 h-3 bg-pink-400 rounded-full animate-ping" style={{ animationDelay: '0.2s' }}></div>
-                        <div className="w-3 h-3 bg-blue-400 rounded-full animate-ping" style={{ animationDelay: '0.4s' }}></div>
-                      </div>
-                      <p className="text-yellow-300 text-sm sm:text-base font-semibold animate-pulse text-center">
-                        {t('game.waitingForOtherWinner') || 'Waiting for the other winner...'}
-                      </p>
+                      <FaTrophy className="w-16 h-16 sm:w-20 sm:h-20 text-yellow-400 mx-auto drop-shadow-lg animate-bounce" />
                     </div>
-                  )}
 
-                  {/* Proceed to Final Match button - show even when waiting */}
-                  <button
-                    onClick={() => {
-                      if (waitingForOtherWinner) {
-                        // Already clicked, do nothing
-                        return;
-                      }
-                      console.log('[Frontend] User clicked "Proceed to Final Match" (minimal UI)');
-                      setIsReadyForFinalMatch(true);
-                      setWaitingForOtherWinner(true);
-                      setStartFinalMatchManually(true);
+                    {/* Winner Title */}
+                    <h2 className="text-2xl sm:text-3xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                      {t('game.round1Winner') || 'Round 1 Winner!'}
+                    </h2>
 
-                      // Send readiness to backend
-                      if (socket && tournamentId) {
-                        socket.send(JSON.stringify({
-                          type: 'game',
-                          action: 'ensureFinalMatchRoom',
-                          payload: { tournamentId }
-                        }));
-                      }
-                    }}
-                    disabled={waitingForOtherWinner}
-                    className={`px-6 py-3 rounded-lg font-semibold text-base sm:text-lg transition-all transform shadow-lg ${
-                      waitingForOtherWinner
-                        ? 'bg-gray-600 cursor-not-allowed'
-                        : 'bg-green-600 hover:bg-green-700 hover:scale-105'
-                    } text-white`}
-                  >
-                    {waitingForOtherWinner
-                      ? (t('game.waitingForOtherWinner') || 'Waiting for the other winner...')
-                      : (t('game.proceedToFinalMatch') || 'Proceed to Final Match')
-                    }
-                  </button>
+                    {/* Status Message */}
+                    {waitingForOtherWinner ? (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
+                          <div className="w-2 h-2 bg-orange-400 rounded-full animate-ping" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 bg-red-400 rounded-full animate-ping" style={{ animationDelay: '0.4s' }}></div>
+                        </div>
+                        <p className="text-yellow-300 text-sm font-medium animate-pulse">
+                          {t('game.waitingForOtherWinner') || 'Waiting for the other winner...'}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-green-400 text-sm font-medium mt-2">
+                        {t('game.bothMatchesComplete') || 'Both matches complete! Ready for final.'}
+                      </p>
+                    )}
+
+                    {/* Proceed Button (if both matches complete) */}
+                    {/* {!waitingForOtherWinner && finalMatchReadyForButton && (
+                      <button
+                        onClick={() => handleProceedToFinalMatch('minimal UI')}
+                        className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all transform hover:scale-105"
+                      >
+                        {t('game.proceedToFinalMatch') || 'Proceed to Final Match'}
+                      </button>
+                    )} */}
+                  </div>
                 </div>
               </div>
             );
@@ -4481,82 +4840,10 @@ export default function TournamentPage() {
 
                     return shouldShowButton ? (
                     <button
-                      onClick={() => {
-                          console.log('[Frontend] User clicked "Proceed to Final Match" from match completion modal');
-                          setIsReadyForFinalMatch(true);
-                          setWaitingForOtherWinner(true);
-                          setStartFinalMatchManually(true); // Mark that user manually initiated final match
-                          // Check if final match exists and has players (room may or may not be created yet)
-                          const bracket = gameState.tournament?.bracket || [];
-                          const finalMatch = bracket.find((m: any) => m.round === 2);
-
-                          // Validate final match has all required properties including valid roomCode
-                          const hasValidRoom = finalMatch?.roomCode &&
-                                             typeof finalMatch.roomCode === 'string' &&
-                                             finalMatch.roomCode.trim().length > 0;
-                          const isFinalMatchReady = finalMatch &&
-                                                   finalMatch.player1 &&
-                                                   finalMatch.player2 &&
-                                                   hasValidRoom;
-
-                          console.log('[Frontend] Final match validation:', {
-                            hasFinalMatch: !!finalMatch,
-                            hasPlayer1: !!finalMatch?.player1,
-                            hasPlayer2: !!finalMatch?.player2,
-                            hasRoomCode: !!finalMatch?.roomCode,
-                            roomCodeValid: hasValidRoom,
-                            roomCodeValue: finalMatch?.roomCode,
-                            status: finalMatch?.status,
-                            isReady: isFinalMatchReady
-                          });
-
-                          if (isFinalMatchReady) {
-                            // Final match is ready with room created, transition immediately
-                            console.log('[Frontend] Final match is ready with room, transitioning to final match');
-                            setWaitingForOtherWinner(false);
-                            setIsReadyForFinalMatch(false);
-                            const finalMatchIndex = bracket.findIndex((m: any) => m.id === finalMatch.id);
-                            if (finalMatchIndex !== -1) {
-                              setCurrentMatchIndex(finalMatchIndex);
-                              setTournamentStep('playing');
-                              setIsMatchActive(true);
-                        setShowMatchCompletionModal(false);
-                        setShowTournamentWinnerMessage(false);
-                              console.log('[Frontend] ✓ Successfully transitioned to final match (Match Completion Modal):', {
-                                finalMatchIndex,
-                                roomCode: finalMatch.roomCode,
-                                player1: finalMatch.player1.name,
-                                player2: finalMatch.player2.name,
-                                status: finalMatch.status
-                              });
-                            } else {
-                              console.error('[Frontend] Could not find final match index in bracket!');
-                            }
-                          } else {
-                            // Final match not ready yet (missing room or players)
-                            console.log('[Frontend] User ready for final match, but final match room not created yet. Requesting creation...', {
-                              missingRoom: !hasValidRoom,
-                              missingPlayers: !(finalMatch?.player1 && finalMatch?.player2),
-                              missingMatch: !finalMatch,
-                              tournamentId,
-                              hasSocket: !!socket
-                            });
-
-                            // Ask backend to ensure / create final match room
-                            if (socket && tournamentId) {
-                              socket.send(JSON.stringify({
-                                type: 'game',
-                                action: 'ensureFinalMatchRoom',
-                                payload: {
-                                  tournamentId
-                                }
-                              }));
-                            }
-                          }
-                        }}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base transition-all transform hover:scale-105"
-                      >
-                        {t('game.proceedToFinalMatch') || 'Proceed to Final Match'}
+                      onClick={() => handleProceedToFinalMatch('match completion modal')}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base transition-all transform hover:scale-105"
+                    >
+                      {t('game.proceedToFinalMatch') || 'Proceed to Final Match'}
                     </button>
                     ) : null;
                   })()}
@@ -4701,25 +4988,7 @@ export default function TournamentPage() {
 
                     return shouldShowButton ? (
                       <button
-                        onClick={() => {
-                          if (waitingForOtherWinner) {
-                            // Already clicked, do nothing
-                            return;
-                          }
-                          console.log('[Frontend] User clicked "Proceed to Final Match" (tournament winner message)');
-                          setIsReadyForFinalMatch(true);
-                          setWaitingForOtherWinner(true);
-                          setStartFinalMatchManually(true);
-
-                          // Send readiness to backend
-                          if (socket && tournamentId) {
-                            socket.send(JSON.stringify({
-                              type: 'game',
-                              action: 'ensureFinalMatchRoom',
-                              payload: { tournamentId }
-                            }));
-                          }
-                        }}
+                        onClick={() => handleProceedToFinalMatch('tournament winner message')}
                         disabled={waitingForOtherWinner}
                         className={`px-4 py-2 rounded-lg font-semibold text-sm sm:text-base transition-all transform ${
                           waitingForOtherWinner
@@ -4727,6 +4996,7 @@ export default function TournamentPage() {
                             : 'bg-green-600 hover:bg-green-700 hover:scale-105'
                         } text-white`}
                       >
+
                         {waitingForOtherWinner
                           ? (t('game.waitingForOtherWinner') || 'Waiting for the other winner...')
                           : (t('game.proceedToFinalMatch') || 'Proceed to Final Match')
@@ -4870,15 +5140,15 @@ export default function TournamentPage() {
                 </button>
               )}
 
-              {/* Show Next Match button when current match is finished and there are more matches (not final match) */}
-              {currentMatch?.status === 'finished' && nextMatch && !isLastMatch && (
+              {/* Show Next Match button when current match is finished and there are more matches (not final match) - Only for local tournaments */}
+              {/* {currentMatch?.status === 'finished' && nextMatch && !isLastMatch && tournamentType === 'local' && (
                 <button
                   onClick={proceedToNextMatch}
                   className="px-3 py-2 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                 >
                   {t('game.nextMatch')}
                 </button>
-              )}
+              )} */}
             </div>
 
             {/* Next Match Info */}
@@ -5009,8 +5279,8 @@ export default function TournamentPage() {
     }
 
     return (
-      <div className="flex flex-col items-center justify-center w-full h-full p-2 sm:p-4 md:p-8 h-full ">
-        <div className="w-full h-[100%] b-4 border-white">
+      <div className="flex  flex-col items-center justify-center w-full h-full p-2 sm:p-4 md:p-8 h-full ">
+        <div className="w-full h-[100%] b-4 flex-center justify-center border-white">
           {/* Champion Celebration Section */}
           <div className="text-center mb-4 sm:mb-6 animate-pulse">
             <div className="bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-xl border-2 border-yellow-300">
@@ -5093,7 +5363,7 @@ export default function TournamentPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-col h-[10%] sm:flex-row justify-center gap-3 sm:gap-4">
-            <button
+            {/* <button
               onClick={() => {
                 // Reset tournament state and go back to setup
                 setTournamentStep('setup');
@@ -5106,7 +5376,7 @@ export default function TournamentPage() {
               className="px-3 py-3 sm:px-4 sm:py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all hover:scale-105"
             >
               {t('game.newTournament')}
-            </button>
+            </button> */}
             {tournamentType === 'local' && (
             <button
               onClick={() => setTournamentStep('bracket')}

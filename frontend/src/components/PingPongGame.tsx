@@ -107,13 +107,12 @@ const useLocalGameState = (players: Player[]) => {
     setGameState(prev => {
       // Paddles - smooth movement based on delta time
       const newPaddles = [...prev.paddles];
-      // Player 1 (left paddle) - W/S only in local/tournament mode, W/S or ArrowUp/ArrowDown in AI mode
+      // AI mode: Support both W/S and Arrow Up/Down keys for player 1
       if (isAIMode) {
-        // AI mode: Player 1 can use both W/S and Arrow keys
         if (keysPressed['w'] || keysPressed['ArrowUp']) newPaddles[0] -= PADDLE_SPEED * deltaTime;
         if (keysPressed['s'] || keysPressed['ArrowDown']) newPaddles[0] += PADDLE_SPEED * deltaTime;
       } else {
-        // Local/Tournament mode: Player 1 uses only W/S
+        // Local/tournament mode: Only W/S for player 1
         if (keysPressed['w']) newPaddles[0] -= PADDLE_SPEED * deltaTime;
         if (keysPressed['s']) newPaddles[0] += PADDLE_SPEED * deltaTime;
       }
@@ -351,13 +350,20 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const router = useRouter();
   const { t } = useTranslation();
   const activeRoomCode = serverGameState?.roomCode;
-  const activeMatchId = (serverGameState as any)?.matchId;
+  const activeMatchId = serverGameState?.matchId;
 
-  // #region agent log
+  // Debug: log roomCode status for remote 1v1
   useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PingPongGame.tsx:activeMatchId',message:'activeMatchId changed',data:{activeMatchId,activeRoomCode,hasServerGameState:!!serverGameState},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
-  }, [activeMatchId, activeRoomCode, serverGameState]);
-  // #endregion
+    if (serverGameState && !tournamentMode) {
+      console.log('[PingPongGame] Remote 1v1 state:', {
+        hasServerGameState: !!serverGameState,
+        roomCode: activeRoomCode,
+        matchId: activeMatchId,
+        hasSocket: !!socket,
+        socketState: socket?.readyState
+      });
+    }
+  }, [serverGameState, activeRoomCode, activeMatchId, socket, tournamentMode]);
 
   // Unified state
   const [winner, setWinner] = useState<string | null>(null);
@@ -374,14 +380,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   // Local game state - use gameState.players for local mode, tournamentPlayers for tournament mode
   const localPlayers = tournamentMode ? tournamentPlayers : (gameState.mode === 'local' ? gameState.players : []);
   const { scores, paddles, ball, updateGameState, resetGameState } = useLocalGameState(localPlayers);
-
-  // Refs for draw function to avoid re-creating it every frame
-  const scoresRef = useRef(scores);
-  const paddlesRef = useRef(paddles);
-  const ballRef = useRef(ball);
-  useEffect(() => { scoresRef.current = scores; }, [scores]);
-  useEffect(() => { paddlesRef.current = paddles; }, [paddles]);
-  useEffect(() => { ballRef.current = ball; }, [ball]);
 
   // Track if we've initialized the game to prevent infinite loops
   const gameInitializedRef = useRef<string | null>(null);
@@ -408,7 +406,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     }
   }, [tournamentPlayers, tournamentMode, gameState.mode, resetGameState, localPlayers]);
 
-  // Refs for keyboard handler to avoid re-bindings on every serverGameState change
+  // Refs for keyboard handlers - prevents re-attaching listeners on every serverGameState change
   const serverGameStateRef = useRef(serverGameState);
   const activeRoomCodeRef = useRef(activeRoomCode);
   const activeMatchIdRef = useRef(activeMatchId);
@@ -420,90 +418,60 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   useEffect(() => { winnerRef2.current = winner; }, [winner]);
   useEffect(() => { socketRef.current = socket; }, [socket]);
 
-  // Track last sent direction to avoid spamming the same command
-  const lastSentDirectionRef = useRef<string | null>(null);
-
-  // Keyboard controls for local, remote, and AI modes
+  // Keyboard controls for local, remote, and AI modes - stable event listeners using refs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore key repeat events
-      if (e.repeat) return;
+      if (e.repeat) return; // Ignore key repeat
       if (winnerRef2.current) return;
 
       // Determine if this is a remote game (has serverGameState) or local game
       const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
       const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
 
-      // #region agent log
-      if (e.key === 'w' || e.key === 's' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-        fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PingPongGame.tsx:handleKeyDown',message:'Key pressed',data:{key:e.key,isRemoteGame,isLocalGame,tournamentMode,hasServerGameState:!!serverGameStateRef.current,roomCode:activeRoomCodeRef.current,matchId:activeMatchIdRef.current},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
-      }
-      // #endregion
-
       if (isLocalGame) {
-        // Local tournament, AI mode, or local mode - use keyboard controls
         keysPressed.current[e.key] = true;
       } else if (isRemoteGame) {
-        // Remote mode - send paddle moves to backend
         const roomCode = activeRoomCodeRef.current;
         const matchId = activeMatchIdRef.current;
         const ws = socketRef.current;
         if (!roomCode) return;
 
         let direction: string | null = null;
-        if (e.key === 'w' || e.key === 'ArrowUp') {
-          direction = 'up';
-        } else if (e.key === 's' || e.key === 'ArrowDown') {
-          direction = 'down';
-        }
+        if (e.key === 'w' || e.key === 'ArrowUp') direction = 'up';
+        else if (e.key === 's' || e.key === 'ArrowDown') direction = 'down';
 
-        // Only send if direction changed
-        if (direction && direction !== lastSentDirectionRef.current) {
-          lastSentDirectionRef.current = direction;
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-              type: 'paddleMove',
-              payload: { direction, roomCode, matchId }
-            }));
-          }
+        if (direction && ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'paddleMove',
+            payload: { direction, roomCode, matchId }
+          }));
         }
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-        if (winnerRef2.current) return;
+      if (winnerRef2.current) return;
 
-        // Determine if this is a remote game (has serverGameState) or local game
-        const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
-        const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
+      const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
+      const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
 
-        if (isLocalGame) {
-            // Local tournament, AI mode, or local mode - use keyboard controls
-            keysPressed.current[e.key] = false;
-        } else if (isRemoteGame) {
-            // Remote mode - send stop command to backend
-            const roomCode = activeRoomCodeRef.current;
-            const matchId = activeMatchIdRef.current;
-            const ws = socketRef.current;
-            if (!roomCode) return;
-            if (
-                e.key === 'w' ||
-                e.key === 'ArrowUp' ||
-                e.key === 's' ||
-                e.key === 'ArrowDown'
-            ) {
-                // Only send stop if we were moving
-                if (lastSentDirectionRef.current !== 'stop') {
-                  lastSentDirectionRef.current = 'stop';
-                  if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({
-                      type: 'paddleMove',
-                      payload: { direction: 'stop', roomCode, matchId }
-                    }));
-                  }
-                }
-            }
+      if (isLocalGame) {
+        keysPressed.current[e.key] = false;
+      } else if (isRemoteGame) {
+        const roomCode = activeRoomCodeRef.current;
+        const matchId = activeMatchIdRef.current;
+        const ws = socketRef.current;
+        if (!roomCode) return;
+
+        if (e.key === 'w' || e.key === 'ArrowUp' || e.key === 's' || e.key === 'ArrowDown') {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'paddleMove',
+              payload: { direction: 'stop', roomCode, matchId }
+            }));
+          }
         }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -513,7 +481,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [tournamentMode, gameState.mode]);
+  }, [tournamentMode, gameState.mode]); // Stable deps - refs handle dynamic values
 
   // Game loop for local tournament, AI mode, and local mode - improved with delta time
   const gameModeRef = useRef(gameState.mode);
@@ -635,7 +603,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     const isRemoteMode = !!serverGameState && !tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local';
     const shouldProcess = isRemoteMode && serverGameState;
 
-    if (shouldProcess) {
+    if (shouldProcess && serverGameState?.ball) {
       const now = Date.now();
       const timeSinceUpdate = now - lastUpdateTimeRef.current;
 
@@ -692,17 +660,38 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     }
   }, [serverGameState, tournamentMode, gameState.mode]);
 
-  // Drawing logic (works for both modes)
+  // Refs for draw function to avoid recreating callback every frame
+  const serverGameStateDrawRef = useRef(serverGameState);
+  const paddlesRef = useRef(paddles);
+  const ballRef = useRef(ball);
+  const scoresRef = useRef(scores);
+  const gameStateRef = useRef(gameState);
+  const userRef = useRef(user);
+  useEffect(() => { serverGameStateDrawRef.current = serverGameState; }, [serverGameState]);
+  useEffect(() => { paddlesRef.current = paddles; }, [paddles]);
+  useEffect(() => { ballRef.current = ball; }, [ball]);
+  useEffect(() => { scoresRef.current = scores; }, [scores]);
+  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+  useEffect(() => { userRef.current = user; }, [user]);
+
+  // Drawing logic (works for both modes) - uses refs for all dynamic values to stay stable
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Access all dynamic values via refs
+    const currentGameState = gameStateRef.current;
+    const currentPaddles = paddlesRef.current;
+    const currentBall = ballRef.current;
+    const currentScores = scoresRef.current;
+    const currentUser = userRef.current;
+
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    if (tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local') {
-      const { customisation } = gameState;
+    if (tournamentMode || currentGameState.mode === 'ai' || currentGameState.mode === 'local') {
+      const { customisation } = currentGameState;
       // Local Tournament, AI mode, or Local mode Draw
 
       // Table background - handle both solid colors and gradients (same logic as remote mode)
@@ -755,11 +744,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Use refs for smooth rendering without re-creating draw callback
-      const currentPaddles = paddlesRef.current;
-      const currentBall = ballRef.current;
-      const currentScores = scoresRef.current;
-
       // Player 1 paddle (left side - human player) - with shadow
       ctx.save();
       ctx.shadowBlur = 10;
@@ -770,7 +754,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
       // Player 2 paddle (right side - AI in AI mode, human in tournament mode) - with shadow
       ctx.save();
-      const paddle2Color = gameState.mode === 'ai' ? '#888888' : (customisation?.paddleColor || '#0000ff');
+      const paddle2Color = currentGameState.mode === 'ai' ? '#888888' : (customisation?.paddleColor || '#0000ff');
       ctx.shadowBlur = 10;
       ctx.shadowColor = paddle2Color;
       ctx.fillStyle = paddle2Color;
@@ -789,21 +773,20 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
       ctx.fillStyle = '#fff';
       ctx.font = '45px Arial';
-      ctx.fillText(currentScores.player1.toString(), GAME_WIDTH / 2 - 100, 80);
-      ctx.fillText(currentScores.player2.toString(), GAME_WIDTH / 2 + 60, 80);
+      ctx.fillText(currentScores.player1.toString(), GAME_WIDTH / 2 - 100, 50);
+      ctx.fillText(currentScores.player2.toString(), GAME_WIDTH / 2 + 60, 50);
 
     } else if (serverGameStateDrawRef.current) {
-      // Remote Game Draw - use server state directly for accurate sync
-      const currentServerState = serverGameStateDrawRef.current;
-
-      // Use server state directly - server sends at 60 FPS which is smooth enough
-      // Complex interpolation was causing lag issues
-      const displayState = currentServerState;
+      // Remote Game Draw - use server state directly (server sends at 60 FPS)
+      const displayState = serverGameStateDrawRef.current;
 
       const { player1, player2, ball: remoteBall } = displayState;
 
+      // Guard against missing data
+      if (!player1 || !player2 || !remoteBall) return;
+
       // Determine which player is the current user
-      const currentUserId = user?.id_user;
+      const currentUserId = currentUser?.id_user;
       // Convert IDs to strings for comparison (backend may send numbers or strings)
       const player1Id = player1.id?.toString();
       const player2Id = player2.id?.toString();
@@ -811,18 +794,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
       const isPlayer1 = currentUserIdStr && player1Id === currentUserIdStr;
       const isPlayer2 = currentUserIdStr && player2Id === currentUserIdStr;
-
-      // Log player ID matching for debugging
-      if (!isPlayer1 && !isPlayer2 && currentUserId) {
-        console.warn('[PingPongGame] Player ID mismatch:', {
-          currentUserId: currentUserIdStr,
-          player1Id,
-          player2Id,
-          player1Username: player1.username,
-          player2Username: player2.username,
-          userUsername: user?.username
-        });
-      }
 
       // Use current player's customization for table, ball, and own paddle
       // Use opponent's customization only for their paddle
@@ -897,26 +868,25 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
       ctx.fillStyle = '#fff';
       ctx.font = '45px Arial';
-      ctx.fillText(player1.score.toString(), GAME_WIDTH / 2 - 100, 80);
-      ctx.fillText(player2.score.toString(), GAME_WIDTH / 2 + 60, 80);
+      ctx.fillText(player1.score.toString(), GAME_WIDTH / 2 - 100, 50);
+      ctx.fillText(player2.score.toString(), GAME_WIDTH / 2 + 60, 50);
     }
 
-  }, [tournamentMode, gameState, user]); // Removed serverGameState - use ref instead
+  }, [tournamentMode]); // All dynamic values accessed via refs for stable callback
 
-  // Ref for serverGameState to avoid draw callback recreation
-  const serverGameStateDrawRef = useRef(serverGameState);
-  useEffect(() => { serverGameStateDrawRef.current = serverGameState; }, [serverGameState]);
+  // Render loop - stable, uses ref to always call latest draw
+  const drawRef = useRef(draw);
+  useEffect(() => { drawRef.current = draw; }, [draw]);
 
-  // Render loop - stable, doesn't depend on changing state
   useEffect(() => {
     let animationFrameId: number;
     const render = () => {
-      draw();
+      drawRef.current();
       animationFrameId = requestAnimationFrame(render);
     };
     animationFrameId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [draw]);
+  }, []); // Empty deps - render loop runs once, uses ref for latest draw
 
   // --- UI Rendering ---
 
@@ -944,20 +914,77 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     );
   }
 
-  // Winner screen for remote game (but not for tournament final match)
+  // Winner screen for remote game (but not for tournament final match) - Modern and decorated (like AI/local mode)
   if (winner && !tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local' && !isTournamentFinalMatch) {
+    const isUserWinner = winner === user?.username;
+    const player1Score = serverGameState?.player1?.score || 0;
+    const player2Score = serverGameState?.player2?.score || 0;
+    const player1Name = serverGameState?.player1?.username || 'Player 1';
+    const player2Name = serverGameState?.player2?.username || 'Player 2';
+    const winnerIsPlayer1 = player1Score > player2Score;
+
     return (
-      <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
-        <h2 className="text-4xl font-bold mb-4">{t('game.TournamentDone')}</h2>
-        <p className="text-2xl mt-4 mb-6">{t('game.isTheWinner', { winner })}</p>
+      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl animate-pulse">
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
+          {/* Trophy/Skull Icon with Animation */}
+          <div className="mb-4 sm:mb-6">
+            <div className="text-6xl sm:text-8xl drop-shadow-lg animate-bounce">
+              {isUserWinner ? '🏆' : '💀'}
+            </div>
+          </div>
 
-        {rematchDeclinedMessage && <p className="text-red-400 mb-4">{rematchDeclinedMessage} asdasdasd </p>}
+          {/* Title with Gradient */}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
+            {isUserWinner ? t('game.victory') || 'Victory!' : t('game.gameOver') || 'Game Over'}
+          </h2>
 
+          {/* Winner Name */}
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-white">
+            {t('game.isTheWinner', { winner }) || `${winner} Won!`}
+          </p>
 
+          {/* Score Card */}
+          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border-2 border-purple-400/50">
+            <p className="text-sm text-gray-300 mb-2">Final Score</p>
+            <div className="flex items-center justify-center gap-4">
+              <div className="text-center">
+                <p className="text-lg sm:text-xl font-bold text-white">{player1Name}</p>
+                <p className={`text-3xl sm:text-4xl font-extrabold ${winnerIsPlayer1 ? 'text-yellow-400' : 'text-purple-300'}`}>
+                  {player1Score}
+                </p>
+              </div>
+              <span className="text-2xl text-gray-400">-</span>
+              <div className="text-center">
+                <p className="text-lg sm:text-xl font-bold text-white">{player2Name}</p>
+                <p className={`text-3xl sm:text-4xl font-extrabold ${!winnerIsPlayer1 ? 'text-yellow-400' : 'text-pink-300'}`}>
+                  {player2Score}
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <button onClick={handleExit} className="mt-4 ml-4 px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors">
-          Back to Game Lobby
-        </button>
+          {rematchDeclinedMessage && (
+            <p className="text-red-400 mb-4 text-sm">{rematchDeclinedMessage}</p>
+          )}
+
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {rematchOffer && handleAcceptRematch && (
+              <button
+                onClick={handleAcceptRematch}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
+              >
+                Accept Rematch
+              </button>
+            )}
+            <button
+              onClick={handleExit}
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
+            >
+              {t('game.backToLobby') || 'Back to Game Lobby'}
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -967,73 +994,62 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     return <div className="text-white">Connecting to game...</div>;
   }
 
-  // Winner screen for AI mode
+  // Winner screen for AI mode - Modern and decorated
   if (winner && gameState.mode === 'ai') {
     const isPlayerWinner = winner === 'You';
     return (
-      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl">
+      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl animate-pulse">
         <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
-          {/* Trophy/Skull Icon */}
+          {/* Trophy/Skull Icon with Animation */}
           <div className="mb-4 sm:mb-6">
-            <span className="text-5xl sm:text-6xl drop-shadow-lg">
-              {isPlayerWinner ? '🏆' : '💀'}
-            </span>
+            <div className="text-6xl sm:text-8xl drop-shadow-lg animate-bounce">
+              {isPlayerWinner ? '🏆' : '🤖'}
+            </div>
           </div>
 
-          {/* Title */}
-          <h2 className="text-2xl sm:text-4xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
+          {/* Title with Gradient */}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
             {isPlayerWinner ? 'Victory!' : 'Game Over'}
           </h2>
 
-          {/* Winner Text */}
-          <p className="text-lg sm:text-2xl text-gray-200 font-semibold mb-4 sm:mb-6">
-            {isPlayerWinner ? 'You defeated the AI!' : 'The AI wins this round'}
+          {/* Winner Name */}
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-white">
+            {winner} Won!
           </p>
 
           {/* Score Card */}
-          <div className="flex items-center justify-center gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <div className="flex flex-col items-center">
-              <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">You</span>
-              <span className={`text-3xl sm:text-5xl font-black ${isPlayerWinner ? 'text-green-400' : 'text-gray-300'}`}>
-                {scores.player1}
-              </span>
-            </div>
-            <span className="text-xl sm:text-2xl text-gray-500 font-light">—</span>
-            <div className="flex flex-col items-center">
-              <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">AI</span>
-              <span className={`text-3xl sm:text-5xl font-black ${!isPlayerWinner ? 'text-red-400' : 'text-gray-300'}`}>
-                {scores.player2}
-              </span>
+          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border-2 border-purple-400/50">
+            <p className="text-sm text-gray-300 mb-2">Final Score</p>
+            <div className="flex items-center justify-center gap-4">
+              <div className="text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-white">You</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-purple-300">{scores.player1}</p>
+              </div>
+              <span className="text-2xl text-gray-400">-</span>
+              <div className="text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-white">AI</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-pink-300">{scores.player2}</p>
+              </div>
             </div>
           </div>
 
           {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => {
                 setWinner(null);
                 resetGameState();
                 keysPressed.current = {};
               }}
-              className="group relative px-6 py-3 rounded-xl font-bold text-base sm:text-lg overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 active:scale-95 transition-all duration-200"
+              className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Play Again
-              </span>
+              Play Again
             </button>
             <button
               onClick={handleExit}
-              className="group px-6 py-3 rounded-xl font-bold text-base sm:text-lg bg-gray-700/80 text-gray-200 border border-gray-600 hover:bg-gray-600 hover:border-gray-500 hover:scale-105 active:scale-95 transition-all duration-200"
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              <span className="flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-                Exit
-              </span>
+              Back to Game Modes
             </button>
           </div>
         </div>
@@ -1041,79 +1057,76 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     );
   }
 
-  // Winner screen for local mode
+  // Winner screen for local mode - Modern and decorated (like AI mode)
   if (winner && gameState.mode === 'local' && !tournamentMode) {
-    const player1Name = localPlayers[0]?.name || 'Player 1';
-    const player2Name = localPlayers[1]?.name || 'Player 2';
-    const isPlayer1Winner = winner === player1Name;
+    const winnerIsPlayer1 = winner === localPlayers[0]?.name;
+    const winnerPlayer = winnerIsPlayer1 ? localPlayers[0] : localPlayers[1];
+    const loserPlayer = winnerIsPlayer1 ? localPlayers[1] : localPlayers[0];
+
     return (
-      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl">
+      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl animate-pulse">
         <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
-          {/* Trophy Icon */}
+          {/* Trophy Icon with Animation */}
           <div className="mb-4 sm:mb-6">
-            <span className="text-5xl sm:text-6xl drop-shadow-lg">🏆</span>
+            <div className="text-6xl sm:text-8xl drop-shadow-lg animate-bounce">
+              🏆
+            </div>
           </div>
 
-          {/* Title */}
-          <h2 className="text-2xl sm:text-4xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
+          {/* Title with Gradient */}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
             Victory!
           </h2>
 
-          {/* Winner Text */}
-          <p className="text-lg sm:text-2xl text-gray-200 font-semibold mb-4 sm:mb-6">
-            {winner} wins!
+          {/* Winner Name */}
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-white">
+            {winner} Wins! 🎉
           </p>
 
           {/* Score Card */}
-          <div className="flex items-center justify-center gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <div className="flex flex-col items-center">
-              <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">{player1Name}</span>
-              <span className={`text-3xl sm:text-5xl font-black ${isPlayer1Winner ? 'text-green-400' : 'text-gray-300'}`}>
-                {scores.player1}
-              </span>
-            </div>
-            <span className="text-xl sm:text-2xl text-gray-500 font-light">—</span>
-            <div className="flex flex-col items-center">
-              <span className="text-xs sm:text-sm uppercase tracking-wider text-gray-400 mb-1">{player2Name}</span>
-              <span className={`text-3xl sm:text-5xl font-black ${!isPlayer1Winner ? 'text-green-400' : 'text-gray-300'}`}>
-                {scores.player2}
-              </span>
+          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border-2 border-purple-400/50">
+            <p className="text-sm text-gray-300 mb-2">Final Score</p>
+            <div className="flex items-center justify-center gap-4">
+              <div className="text-center">
+                <p className="text-lg sm:text-xl font-bold text-white">{localPlayers[0]?.name || 'Player 1'}</p>
+                <p className={`text-3xl sm:text-4xl font-extrabold ${winnerIsPlayer1 ? 'text-yellow-400' : 'text-purple-300'}`}>
+                  {scores.player1}
+                </p>
+              </div>
+              <span className="text-2xl text-gray-400">-</span>
+              <div className="text-center">
+                <p className="text-lg sm:text-xl font-bold text-white">{localPlayers[1]?.name || 'Player 2'}</p>
+                <p className={`text-3xl sm:text-4xl font-extrabold ${!winnerIsPlayer1 ? 'text-yellow-400' : 'text-pink-300'}`}>
+                  {scores.player2}
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => {
-                keysPressed.current = {};
+                keysPressed.current = {}; // Clear any pressed keys first
                 setWinner(null);
                 resetGameState();
+                // Small delay to ensure state is reset before game loop restarts
                 setTimeout(() => {
-                  if (onGameOver) onGameOver(null);
+                  if (onGameOver) onGameOver(null); // Notify parent that game is reset
                 }, 50);
               }}
-              className="group relative px-6 py-3 rounded-xl font-bold text-base sm:text-lg overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 active:scale-95 transition-all duration-200"
+              className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Play Again
-              </span>
+              Play Again
             </button>
             <button
               onClick={() => {
-                if (onGameOver) onGameOver(null);
+                if (onGameOver) onGameOver(null); // Notify parent before exit
                 handleExit();
               }}
-              className="group px-6 py-3 rounded-xl font-bold text-base sm:text-lg bg-gray-700/80 text-gray-200 border border-gray-600 hover:bg-gray-600 hover:border-gray-500 hover:scale-105 active:scale-95 transition-all duration-200"
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              <span className="flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-                Exit
-              </span>
+              Back to Game Modes
             </button>
           </div>
         </div>
@@ -1126,58 +1139,42 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const winningScore = gameState.mode === 'ai' ? AI_WINNING_SCORE : WINNING_SCORE;
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full min-h-0 p-2 sm:p-4 overflow-hidden">
-      <div
-        className="relative flex justify-center items-center flex-shrink"
-        style={{
-          width: '100%',
-
-          maxWidth: 'min(100%, 90vw, 800px)',
-          maxHeight: 'min(calc(100vh - 200px), calc(90vw * 0.75), 600px)',
-          aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}`
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          width={GAME_WIDTH}
-          height={GAME_HEIGHT}
-          className="bg-gray-800 rounded-lg sm:rounded-xl shadow-lg sm:shadow-2xl border border-gray-700 block"
+    <div className="flex flex-col items-center justify-center">
+      <div className="relative w-full flex justify-center items-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
+      <canvas
+        ref={canvasRef}
+        width={GAME_WIDTH}
+        height={GAME_HEIGHT}
+        className="bg-gray-800 rounded-lg shadow-lg"
           style={{
             width: '100%',
             height: '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
             objectFit: 'contain',
           }}
         />
       </div>
-      <div className="mt-2 sm:mt-4 text-center text-white px-2">
+      <div className="mt-4 text-center text-white">
         {gameState.mode === 'ai' ? (
           <>
-            <p className="text-xs sm:text-sm md:text-base">
-              <span className="font-semibold text-purple-400">Controls:</span>{' '}
-              <span className="bg-gray-700 px-1.5 sm:px-2 py-0.5 rounded text-xs font-mono">W</span>
-              <span className="mx-0.5 sm:mx-1">/</span>
-              <span className="bg-gray-700 px-1.5 sm:px-2 py-0.5 rounded text-xs font-mono">S</span>
-              <span className="mx-1 sm:mx-2 text-gray-400">or</span>
-              <span className="bg-gray-700 px-1.5 sm:px-2 py-0.5 rounded text-xs font-mono">↑</span>
-              <span className="mx-0.5 sm:mx-1">/</span>
-              <span className="bg-gray-700 px-1.5 sm:px-2 py-0.5 rounded text-xs font-mono">↓</span>
-            </p>
-            <p className="text-xs sm:text-sm text-gray-400 mt-1">Score to win: {AI_WINNING_SCORE}</p>
+            <p>Use W/S keys to move your paddle.</p>
+            <p>First to {AI_WINNING_SCORE} points wins!</p>
           </>
         ) : tournamentMode ? (
           <>
-            <p className="text-xs sm:text-sm">Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
-            <p className="text-xs sm:text-sm text-gray-400">Score to win: {WINNING_SCORE}</p>
+            <p>Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
+            <p>First to {WINNING_SCORE} points wins!</p>
           </>
         ) : gameState.mode === 'local' ? (
           <>
-            <p className="text-xs sm:text-sm">Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
-            <p className="text-xs sm:text-sm text-gray-400">Score to win: {WINNING_SCORE}</p>
+            <p>Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
+            <p>First to {WINNING_SCORE} points wins!</p>
           </>
         ) : (
           <>
-            <p className="text-xs sm:text-sm">Use W/S or Arrow Up/Down keys to move your paddle.</p>
-            <p className="text-xs sm:text-sm text-gray-400">Score to win: {WINNING_SCORE}</p>
+            <p>Use W/S or Arrow Up/Down keys to move your paddle.</p>
+            <p>First to {WINNING_SCORE} points wins!</p>
           </>
         )}
       </div>

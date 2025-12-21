@@ -200,7 +200,16 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-
+      {/* Fullscreen Button */}
+      {!isFullscreen && (
+        <button
+          onClick={toggleFullscreen}
+          className="absolute top-4 right-4 z-20 px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-xl font-semibold hover:bg-white/30 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30"
+          title="Press F for fullscreen"
+        >
+          ⛶ Fullscreen
+        </button>
+      )}
 
       {/* Main Game Container */}
       <div className="relative z-10 w-full max-w-2xl">
@@ -315,18 +324,13 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
                 ✕ Exit Fullscreen
               </button>
             )}
-
-
           </div>
 
           {/* Instructions */}
           {!isFullscreen && (
             <div className="mt-6 text-center">
               <p className="text-white/70 text-sm md:text-base">
-                Player <span className="font-bold text-cyan-400">X</span> goes first. Click on a cell to make your move!
-              </p>
-              <p className="text-white/70 text-sm md:text-base">
-                Press on <span className="font-bold text-yellow-400">F</span> to exit fullscreen.
+                Player <span className="font-bold text-cyan-400">X</span> goes first. Click on a cell to make your move! Press <span className="font-bold text-yellow-400">F</span> for fullscreen.
               </p>
             </div>
           )}

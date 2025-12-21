@@ -7,8 +7,10 @@ export interface ServerGameState {
 }
 
 export interface Player {
-  id?: string | number;
+  id: string | number;
   name: string;
-  avatar?: string;
+  avatar: string;
   color?: string;
+  username?: string;
+  id_user?: number;
 }

@@ -61,7 +61,7 @@ export default function InviteFriendPage() {
 
             // Clear user state and redirect to login
             clearUser();
-            router.push('/login');
+            router.push('/signIn');
             return;
           } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
             // Network timeout
