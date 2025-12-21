@@ -139,7 +139,23 @@ export default function TournamentPage() {
   const setUser = useUserStore((state) => state.setUser);
   const clearUser = useUserStore((state) => state.clearUser);
   const { gameState, setGameMode, setPlayers, setTournament, updateTournamentMatch, setCustomisation } = useGameContext();
-  const [tournamentStep, setTournamentStep] = useState<'setup' | 'registration' | 'customization' | 'playing' | 'bracket' | 'finished' | 'search' | 'browse' | 'createOptions'>('setup');
+
+  // Initialize tournamentStep from sessionStorage synchronously to prevent flash of setup screen for invited players
+  // Only initialize to 'registration' if user is an invited player WITH tournament context (pendingTournamentId)
+  // This prevents regular users from seeing the lobby due to stale sessionStorage data
+  const [tournamentStep, setTournamentStep] = useState<'setup' | 'registration' | 'customization' | 'playing' | 'bracket' | 'finished' | 'search' | 'browse' | 'createOptions'>(() => {
+    // Check sessionStorage synchronously during initialization (only in browser)
+    if (typeof window !== 'undefined') {
+      const isInvitedPlayer = sessionStorage.getItem('isInvitedPlayer') === 'true';
+      const pendingTournamentId = sessionStorage.getItem('pendingTournamentId');
+      // Only initialize to 'registration' if user is an invited player AND has tournament context
+      // This ensures regular users creating tournaments always start at 'setup'
+      if (isInvitedPlayer && pendingTournamentId) {
+        return 'registration';
+      }
+    }
+    return 'setup';
+  });
 
   const [startFinalMatchManually, setStartFinalMatchManually] = useState(false);
 
@@ -148,8 +164,21 @@ export default function TournamentPage() {
   useEffect(() => {
     console.log('[Frontend] Tournament step changed to:', tournamentStep);
   }, [tournamentStep]);
-  // Default to remote tournaments
-  const [tournamentType, setTournamentType] = useState<'local' | 'remote'>('remote');
+
+  // Initialize tournamentType - set to 'remote' for invited players to prevent flash
+  // Only set to 'remote' if user is an invited player WITH tournament context
+  const [tournamentType, setTournamentType] = useState<'local' | 'remote'>(() => {
+    // Check sessionStorage synchronously during initialization (only in browser)
+    if (typeof window !== 'undefined') {
+      const isInvitedPlayer = sessionStorage.getItem('isInvitedPlayer') === 'true';
+      const pendingTournamentId = sessionStorage.getItem('pendingTournamentId');
+      // If user is an invited player with tournament context, they're always in a remote tournament
+      if (isInvitedPlayer && pendingTournamentId) {
+        return 'remote';
+      }
+    }
+    return 'remote'; // Default to remote tournaments
+  });
   const [playerCount, setPlayerCount] = useState<4>(4);
   const [registeredPlayers, setRegisteredPlayers] = useState<Player[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
@@ -320,6 +349,28 @@ export default function TournamentPage() {
     }
   }, []);
 
+  // CRITICAL: Check for invited players immediately and on every render
+  // This ensures invited players never see the setup screen, but ONLY if they have tournament context
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const isInvitedPlayer = sessionStorage.getItem('isInvitedPlayer') === 'true';
+    const pendingTournamentId = sessionStorage.getItem('pendingTournamentId');
+
+    // Only redirect if user is an invited player AND has tournament context (pendingTournamentId or tournamentId)
+    // Don't redirect if they're trying to create a new tournament (no tournament context)
+    if (isInvitedPlayer && (pendingTournamentId || tournamentId || remoteTournament)) {
+      // If user is an invited player with tournament context, immediately set step to 'registration' and tournament type to 'remote'
+      // This prevents the setup screen from showing even if tournament data hasn't loaded yet
+      if (tournamentStep === 'setup') {
+        setTournamentStep('registration');
+      }
+      if (tournamentType !== 'remote') {
+        setTournamentType('remote');
+      }
+    }
+  }, [tournamentStep, tournamentType, tournamentId, remoteTournament]); // Run when step, type, or tournament data changes
+
   useEffect(() => {
     setGameMode('tournament');
 
@@ -331,6 +382,24 @@ export default function TournamentPage() {
     const pendingTournament = sessionStorage.getItem('pendingTournament');
     const isInvitedPlayer = sessionStorage.getItem('isInvitedPlayer') === 'true';
     const savedTournamentStep = sessionStorage.getItem('tournamentStep');
+
+    // CRITICAL: Clean up stale sessionStorage if user is NOT an invited player and has no tournament context
+    // This ensures regular users creating tournaments don't see stale data from previous sessions
+    if (!isInvitedPlayer && !pendingTournamentId && !tournamentId && !remoteTournament) {
+      // User is creating a new tournament - clear any stale invitation data
+      sessionStorage.removeItem('isInvitedPlayer');
+      sessionStorage.removeItem('pendingTournamentId');
+      sessionStorage.removeItem('pendingTournament');
+      sessionStorage.removeItem('tournamentStep');
+    }
+
+    // CRITICAL: If user is an invited player WITH tournament context, set step to registration immediately
+    // Only redirect if they have pendingTournamentId (meaning they're joining an existing tournament)
+    // Don't redirect if they're trying to create a new tournament
+    if (isInvitedPlayer && pendingTournamentId && tournamentStep === 'setup') {
+      setTournamentStep('registration');
+      setTournamentType('remote');
+    }
 
     if (pendingTournamentId && pendingTournament && !tournamentId && !remoteTournament) {
       try {
@@ -3400,14 +3469,15 @@ export default function TournamentPage() {
   // Setup phase
   if (tournamentStep === 'setup') {
     // Check if user is coming from accepting an invite (check sessionStorage)
-    // ONLY show loading screen if pendingTournamentId exists (set when accepting invite)
-    // Use state instead of direct sessionStorage access to avoid SSR issues
-    const pendingTournamentId = pendingTournamentIdFromStorage;
+    // Read directly from sessionStorage to avoid timing issues with state updates
     const isInvitedPlayer = typeof window !== 'undefined' ? sessionStorage.getItem('isInvitedPlayer') === 'true' : false;
+    const pendingTournamentIdFromStorageDirect = typeof window !== 'undefined' ? sessionStorage.getItem('pendingTournamentId') : null;
+    const pendingTournamentId = pendingTournamentIdFromStorageDirect || pendingTournamentIdFromStorage;
 
-    // CRITICAL: If this is an invited friend, they should NEVER see the setup screen
+    // CRITICAL: If this is an invited friend WITH tournament context, they should NEVER see the setup screen
     // Automatically set tournamentType to 'remote' and redirect to Tournament Lobby
-    if (isInvitedPlayer && (pendingTournamentId || tournamentId)) {
+    // Only redirect if they have tournament context (pendingTournamentId or tournamentId) to avoid redirecting users creating new tournaments
+    if (isInvitedPlayer && (pendingTournamentId || tournamentId || remoteTournament)) {
       // Automatically set tournamentType to 'remote' for invited players
       if (tournamentType !== 'remote') {
         setTournamentType('remote');
@@ -3972,7 +4042,51 @@ export default function TournamentPage() {
 
   // Registration phase
   if (tournamentStep === 'registration') {
-    if (tournamentType === 'remote' && (tournamentId || pendingTournamentIdFromStorage)) {
+    // Check if user is an invited player (from sessionStorage) - they should ALWAYS see remote tournament lobby
+    const isInvitedPlayerFromStorage = typeof window !== 'undefined' ? sessionStorage.getItem('isInvitedPlayer') === 'true' : false;
+
+    // Also check if we're in a remote tournament context (for additional safety)
+    const hasRemoteTournamentContext = tournamentType === 'remote' && (tournamentId || pendingTournamentIdFromStorage || remoteTournament);
+
+    // Safety check: If user is not an invited player and has no tournament context, redirect to setup
+    // This handles cases where stale sessionStorage data or other issues caused initialization to 'registration'
+    // Also check pendingTournamentId to be extra safe
+    const pendingTournamentIdCheck = typeof window !== 'undefined' ? sessionStorage.getItem('pendingTournamentId') : null;
+    if (!isInvitedPlayerFromStorage && !hasRemoteTournamentContext && !pendingTournamentIdCheck) {
+      // Regular user trying to create a tournament - redirect to setup
+      console.log('[Tournament] Regular user detected at registration - redirecting to setup');
+      setTournamentStep('setup');
+      return null; // Prevent rendering registration screen
+    }
+
+    // Show remote tournament lobby if:
+    // 1. Tournament type is remote AND we have tournament context, OR
+    // 2. User is an invited player WITH tournament context (pendingTournamentId or tournamentId)
+    // This ensures invited players NEVER see the local PlayerRegistration component
+    // BUT regular users creating tournaments don't see the lobby (they won't have isInvitedPlayer set)
+    // Note: The safety check above already filtered out regular users without context
+    const pendingTournamentIdForLobby = typeof window !== 'undefined' ? sessionStorage.getItem('pendingTournamentId') : null;
+    const shouldShowRemoteLobby = hasRemoteTournamentContext || (isInvitedPlayerFromStorage && (pendingTournamentIdForLobby || tournamentId));
+
+    // Debug logging to understand the flow
+    if (isInvitedPlayerFromStorage) {
+      console.log('[Tournament Registration] Invited player detected:', {
+        isInvitedPlayerFromStorage,
+        hasRemoteTournamentContext,
+        tournamentType,
+        tournamentId,
+        pendingTournamentIdFromStorage,
+        hasRemoteTournament: !!remoteTournament,
+        shouldShowRemoteLobby
+      });
+    }
+
+    if (shouldShowRemoteLobby) {
+      // Ensure tournament type is set to remote for invited players
+      if (isInvitedPlayerFromStorage && tournamentType !== 'remote') {
+        setTournamentType('remote');
+      }
+
       // Remote tournament registration waiting screen
       const currentPlayerCount = remoteTournament?.registeredPlayers?.length || 0;
       const isFull = currentPlayerCount >= playerCount;
@@ -4101,7 +4215,8 @@ export default function TournamentPage() {
                 );
               })()}
 
-              {remoteTournament?.registeredPlayers && (
+              {/* Show registered players list, or loading state if tournament data hasn't loaded yet */}
+              {remoteTournament?.registeredPlayers ? (
                 <div className="grid gap-2 xs:gap-3 grid-cols-1 xs:grid-cols-2">
                   {remoteTournament.registeredPlayers.map((player: Player, index: number) => (
                     <div key={player.id || `player-${index}`} className="bg-gray-800 rounded-lg p-2 xs:p-3 border border-purple-400">
@@ -4132,7 +4247,13 @@ export default function TournamentPage() {
                     </div>
                   ))}
                 </div>
-              )}
+              ) : isInvitedPlayerFromStorage ? (
+                // Loading state for invited players waiting for tournament data
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-300 mb-4"></div>
+                  <p className="text-gray-300 text-sm">{t('game.loadingTournamentData') || 'Loading tournament data...'}</p>
+                </div>
+              ) : null}
             </div>
 
             {/* Join Requests Management for Host */}
@@ -4294,7 +4415,33 @@ export default function TournamentPage() {
         </div>
       );
     } else {
-      // Local tournament registration
+      // CRITICAL: Double-check if user is an invited player before showing local registration
+      // This is a safety check to ensure invited players NEVER see PlayerRegistration
+      const finalIsInvitedPlayerCheck = typeof window !== 'undefined' ? sessionStorage.getItem('isInvitedPlayer') === 'true' : false;
+
+      if (finalIsInvitedPlayerCheck) {
+        // User is an invited player - force remote tournament lobby view
+        console.log('[Tournament] Invited player detected in else block - redirecting to remote lobby');
+        if (tournamentType !== 'remote') {
+          setTournamentType('remote');
+        }
+        // Show loading state until tournament data loads
+        return (
+          <div className="flex flex-col items-center justify-center h-full p-1 xs:p-2 sm:p-4 md:p-8">
+            <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl mx-auto bg-gray-900 bg-opacity-90 rounded-lg xs:rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl border-2 border-purple-500 p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
+              <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-purple-300 mb-3 xs:mb-4 sm:mb-6 text-center">
+                {t('game.tournamentLobby')}
+              </h2>
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-300 mb-4"></div>
+                <p className="text-gray-300 text-sm">{t('game.loadingTournamentData') || 'Loading tournament data...'}</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Local tournament registration (only for users creating local tournaments)
       return (
         <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 md:p-8">
           <PlayerRegistration

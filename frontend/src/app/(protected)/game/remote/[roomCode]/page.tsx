@@ -53,6 +53,27 @@ export default function RemoteGameRoomPage() {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Client-side WebSocket - only initialized on the client to avoid SSR errors
+  const [clientSocket, setClientSocket] = useState<WebSocket | null>(null);
+
+  // Initialize client socket only on the client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        // Use socket from store if available, otherwise get from globalSocket
+        if (socket && socket.readyState !== WebSocket.CLOSED && socket.readyState !== WebSocket.CLOSING) {
+          setClientSocket(socket);
+        } else {
+          const ws = getWebSocket();
+          setClientSocket(ws);
+        }
+      } catch (err) {
+        console.error('Failed to get WebSocket:', err);
+        setClientSocket(null);
+      }
+    }
+  }, [socket]);
+
   // Player profile images state
   const [player1ProfileImg, setPlayer1ProfileImg] = useState<string>(defaultProfileImg);
   const [player2ProfileImg, setPlayer2ProfileImg] = useState<string>(defaultProfileImg);
@@ -880,7 +901,7 @@ export default function RemoteGameRoomPage() {
                   } : {}}
                 >
                   <PingPongGame
-                    socket={socket || getWebSocket()}
+                    socket={socket || clientSocket}
                     serverGameState={serverGameState}
                     opponentLeft={opponentLeft}
                     setServerGameState={setServerGameState}
