@@ -6,6 +6,10 @@ export async function getTournamentBracket(request, reply) {
 
   const tournament_id = request.params.id;
 
+  if (!tournament_id) {
+    return reply.code(400).send({ error: "tournament id is required" });
+  }
+
     try{
     const query = request.server.db.prepare(
       `select game_date as date, 
@@ -17,7 +21,9 @@ export async function getTournamentBracket(request, reply) {
        where tournament_id =? ORDER BY game_date`
   );
     const tournament = query.all(tournament_id); 
-    if (!tournament) return reply.code(404).send({error: "tournament not found" });
+    if (!tournament || tournament.length === 0) {
+      return reply.code(404).send({ error: "tournament not found" });
+    }
 
   let Matches = [];
   let firstWinner; 

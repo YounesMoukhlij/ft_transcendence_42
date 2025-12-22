@@ -1,14 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { Badge } from "./ui/badge"
-import { Button } from "./ui/button"
-import { Calendar, Download, Link, ExternalLink } from "lucide-react"
+import { Calendar, Link, ExternalLink } from "lucide-react"
 import { GameModalDemo } from "./ui/modal"
-import { formatDuration } from "../hooks/useCountUp"
 import { useState, useEffect} from "react"
 import { GameDetails } from "@/types/user"
 import { useUserStore } from "@/store/userStore";
-import axios from "axios"
 import { useRouter } from "next/navigation"
+import api from "@/lib/api";
 
 interface MatchHistoryTableProps {
   username: string
@@ -18,36 +16,31 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
   const { user: currentUser } = useUserStore();
   const [selectedMatch, setSelectedMatch] = useState<GameDetails | null>(null)
   const [matchHistory, setMatchHistory] = useState<GameDetails[] | null>(null)
-  const [error, setError] = useState<string | null>(null);
   const targetUsername = username;
   const router = useRouter();
 
 
-  console.log(currentUser.username, "ordered match history of ", targetUsername);
-
    useEffect(() => {
     const fetchMatchHistory = async () => {
       if (!currentUser?.access_token) {
-        setError("You must be logged in to view profiles");
+        console.log("You must be logged in to view profiles");
         return;
       }
       if (!targetUsername) {
-        setError("Username is missing");
+        console.log("Username is missing");
         return;
       }
 
       try {
-        const res = await axios.get<GameDetails[]>(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMatchHistory/${targetUsername}`,
+        const res = await api.get<GameDetails[]>(
+          `/getMatchHistory/${targetUsername}`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }
         );
         setMatchHistory(res.data);
-        console.log(res.data);
       } catch (err) {
         console.error(err);
-        setError(`Failed to load profile for ${targetUsername}`);
       }
     };
 
