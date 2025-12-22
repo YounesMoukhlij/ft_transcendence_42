@@ -39,9 +39,10 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
 
   const players = data;
   const filteredAndSortedPlayers = useMemo(() => {
-  const filtered = players?.filter((player) => player.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    let filtered = players?.filter((player) => player.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
-   // Apply sorting
+
+    // Apply sorting
     if (sortField && sortDirection) {
       filtered?.sort((a, b) => {
         const aVal = a[sortField]

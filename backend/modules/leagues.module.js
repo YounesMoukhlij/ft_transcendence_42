@@ -4,9 +4,8 @@ import jwt from 'jsonwebtoken';
 export async function getLeagueStats(request, reply) {
   const authHeader = request.headers['authorization'];
     
-  if (!authHeader) {
-    return reply.code(401).send("missing token");
-  }
+  if (!authHeader)
+    reply.code(401).send("missing token");
         
   const token = authHeader.split(' ')[1];
   let decodedObject;
@@ -55,9 +54,7 @@ export async function getLeagueStats(request, reply) {
     );
     const leagueStats = query.all(minExp, maxExp); // use .get() for single row
 
-    if (!leagueStats || leagueStats.length === 0) {
-      return reply.code(404).send({ error: "league not found" });
-    }
+    if (!leagueStats) return reply.code(404).send({ error: "league not found" });
 
     let i = 0;
     leagueStats.forEach(player => {

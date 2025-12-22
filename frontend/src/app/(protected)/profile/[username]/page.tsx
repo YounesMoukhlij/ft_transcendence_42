@@ -1,13 +1,11 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import api from "@/lib/api";
+import axios from "axios";
 import { Profile } from "@/app/(protected)/profile/components/profile";
 import { useUserStore } from "@/store/userStore";
 import { User } from "@/types/user";
 import "@/app/(protected)/profile/style.css";
-import { useRouter } from "next/navigation";
-import Loading from "@/components/Loading/page";
 
 interface UserProfileProps {
   params: Promise<{ username: string }>;
@@ -16,40 +14,35 @@ interface UserProfileProps {
 export default function UserProfile({ params }: UserProfileProps) {
   const { username } = use(params);
   const { user: currentUser, addSentRequestsArray, setFriends } = useUserStore();
-  const router = useRouter();
 
   const [profile, setProfile] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!currentUser?.access_token) return; // still no user → skip
-    if (!username) return;
 
-    let active = true;
-    setLoading(true);
+    if (!currentUser?.access_token) return;     // still no user → skip
+    if (!username) return;
 
     const fetchProfile = async () => {
       try {
-        const res = await api.get<User>(`/getUserStats/${username}`,{
-          headers: { Authorization: `Bearer ${currentUser.access_token}` },
-        });
-        if (!active) return;
+        const res = await axios.get<User>(
+          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getUserStats/${username}`,
+          {
+            headers: { Authorization: `Bearer ${currentUser.access_token}` },
+          }
+        );
         setProfile(res.data);
       } catch (err) {
         console.error("Error loading profile:", err);
-        if ((err as any).response?.status === 404) {
-          router.replace('/not-found');
-          return; 
-        }
       }
       try {
-         const res = await api.get(
-          `/getSentRequests`,
+         const res = await axios.get(
+          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getSentRequests`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }
         );
         addSentRequestsArray(res.data.filter(object => object.title == "request friend"));
+
       }
       catch (err)
       {
@@ -58,13 +51,13 @@ export default function UserProfile({ params }: UserProfileProps) {
 
      
       try {
-        const res = await api.get(`/GetFriends`, {
+        const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
           params: { username: currentUser.username },
           headers: { Authorization: `Bearer ${currentUser.access_token}` }
         }
           
       );
-        if (!active) return;
+
         setFriends(res.data);
       } catch (err) {
         console.log(err);
@@ -72,13 +65,12 @@ export default function UserProfile({ params }: UserProfileProps) {
     };
 
     fetchProfile();
-    return () => { active = false; };
   }, [username, currentUser]);
 
   // --- RENDER PROTECTION ---
 
-  if (!currentUser || loading) return <Loading />; // waiting for user or data
-  if (!profile) return <Loading />; // safety fallback while axios resolves
+  if (!currentUser) return null;         // no logged-in user yet
+  if (!profile) return null;             // waiting for axios
 
   return <Profile user={profile} />;
 }

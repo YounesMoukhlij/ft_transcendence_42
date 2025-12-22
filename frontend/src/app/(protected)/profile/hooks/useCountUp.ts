@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 const useCountUp = (endValue: number, duration: number = 2000) => {
   const [count, setCount] = useState(0);
   const startValue = 0;
+  const increment = (endValue - startValue) / (duration / 10); // Adjust '10' for smoother animation
 
   useEffect(() => {
     if (endValue === 0) return;

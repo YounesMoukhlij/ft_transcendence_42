@@ -105,7 +105,7 @@ export function IllustrationGraph({ data }: ChartProps) {
       if (isNaN(operation))
         operation = 0;
 
-      const result = height - padding - operation * (height - padding * 2);
+      let result = height - padding - operation * (height - padding * 2);
       if (isNaN(v) || isNaN(result))
       {
         return 0;
@@ -121,6 +121,7 @@ export function IllustrationGraph({ data }: ChartProps) {
       .join(" ")
 
   const ticks = Array.from({ length: 5 }, (_, i) => Math.round((maxValue / 4) * i));
+  console.log(ticks);
 
   return (
 

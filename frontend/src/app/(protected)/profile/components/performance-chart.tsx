@@ -7,7 +7,7 @@ import { TrendingUp} from "lucide-react"
 import { Button } from "./ui/button"
 import { useState, useEffect } from "react"
 import { useUserStore } from "@/store/userStore"
-import api from "@/lib/api"
+import axios from "axios"
 
 
 
@@ -29,30 +29,32 @@ export function PerformanceChart({username }: PerformanceChartProps) {
 
   const { user: currentUser } = useUserStore();
   const [performaceData, setPerformanceData] = useState<PerformanceData[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const targetUsername = username;
   useEffect(() => {
     const fetchPlayerProgressData = async () => {
       if (!currentUser?.access_token) {
-        console.log("You must be logged in to view profiles");
+        setError("You must be logged in to view profiles");
         return;
       }
       if (!targetUsername) {
-        console.log("Username is missing");
+        setError("Username is missing");
         return;
       }
 
       try {
-        const res = await api.get<PerformanceData[]>(
-          `/getPlayerProgress/${targetUsername}`,
+        const res = await axios.get<PerformanceData[]>(
+          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getPlayerProgress/${targetUsername}`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }
         );
+        console.log("Data is received: ", res.data);
         setPerformanceData(res.data);
       } catch (err) {
         console.error(err);
-        console.log(`Failed to load profile for ${targetUsername}`);
+        setError(`Failed to load profile for ${targetUsername}`);
       }
     };
 

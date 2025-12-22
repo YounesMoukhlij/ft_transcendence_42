@@ -1,63 +1,58 @@
-"use client";
+"use client"
+import { use, useState, useEffect } from 'react';
 
-import { use, useEffect, useState } from "react";
-import api from "@/lib/api";
-import { PlayerTable } from "@/app/(protected)/leagues/player-table";
+
+import { PlayerTable } from "@/app/(protected)/leagues/player-table"
+import axios from "axios"
+import "@/app/(protected)/profile/style.css"
 import { useUserStore } from "@/store/userStore";
-import "@/app/(protected)/profile/style.css";
-import { useRouter } from "next/navigation";
-import Loading from "@/components/Loading/page";
+
+
 
 interface LeaguePageProps {
-  params: Promise<{ league: string }>;
+  params: Promise<{ league : string }>; // dynamic route
 }
 
-export default function LeagueTable({ params }: LeaguePageProps) {
-  const { league } = use(params);
+export default  function LeagueTable({ params }: LeaguePageProps) {
+ const { league } = use(params); // destructure to get the string
   const { user: currentUser } = useUserStore();
-  const router = useRouter();
-  const [leagueStats, setLeagueStats] = useState(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [leagueStats, setLeagueStats] = useState();
+  const [error, setError] = useState<string | null>(null);
+  const targetleague = league;
+  console.log("Hello");
+useEffect(() => {
+    const fetchMatchHistory = async () => {
+      if (!currentUser?.access_token) {
+        setError("You must be logged in to view profiles");
+        return;
+      }
+      if (!targetleague) {
+        setError("Username is missing");
+        return;
+      }
 
-  useEffect(() => {
-    if (!currentUser?.access_token) return;
-    if (!league) return;
-
-    let active = true;
-    setLoading(true);
-
-    const fetchLeagueStats = async () => {
       try {
-        const res = await api.get(`/getLeaguesStats/${league}`, {
-          headers: { Authorization: `Bearer ${currentUser.access_token}` },
-        });
-        if (!active) return;
+        const res = await axios.get(
+          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getLeaguesStats/${targetleague}`,
+          {
+            headers: { Authorization: `Bearer ${currentUser.access_token}` },
+          }
+        );
         setLeagueStats(res.data);
       } catch (err) {
-        console.error("Error loading league:", err);
-        if ((err as any).response?.status === 404) {
-          router.replace("/not-found");
-          return;
-        }
-      } finally {
-        setLoading(false);
+        console.error(err);
+        setError(`Failed to load profile for ${targetleague}`);
       }
     };
 
-    fetchLeagueStats();
-    return () => {
-      active = false;
-    };
-  }, [league, currentUser, router]);
+    fetchMatchHistory();
+  }, [targetleague, currentUser]);
 
-  if (!currentUser || loading) return <Loading />;
-  if (!leagueStats) return <Loading />;
-
-  return (
-    <div className="min-h-screen">
-      <div className="container mx-auto">
-        <PlayerTable league={league} data={leagueStats} />
+    return (
+      <div className="min-h-screen">
+        <div className="container">
+          <PlayerTable league={targetleague} data={leagueStats} />
+        </div>
       </div>
-    </div>
-  );
+    );
 }

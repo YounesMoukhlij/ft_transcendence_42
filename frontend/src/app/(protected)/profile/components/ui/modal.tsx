@@ -9,7 +9,9 @@ import {
   TableHead,
   TableRow,
 } from "./table"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card"
 import { MatchStats } from "./matchReport";
+import { useCountUp } from "../../hooks/useCountUp";
 import { GameDetails } from "@/types/user"
 import { formatDuration } from "../../hooks/useCountUp";
 
@@ -20,21 +22,21 @@ interface GameModalProps {
 }
 
 
-// const getleadingSeconds = (time : string) =>
-// { 
-//   let seconds :  number = 0;
-//   if (time.indexOf("m") == -1 && time.indexOf("s") != -1)
-//   {
-//     seconds += Number(time.substring(0, time.indexOf("s")));
+const getleadingSeconds = (time : string) =>
+{ 
+  let seconds :  number = 0;
+  if (time.indexOf("m") == -1 && time.indexOf("s") != -1)
+  {
+    seconds += Number(time.substring(0, time.indexOf("s")));
 
-//   }
-//   else if (time.indexOf("m") == 1)
-//   {
-//    seconds += Number(time.substring(0, time.indexOf("m"))) * 60;
-//    seconds += Number(time.substring(time.indexOf("m") + 1, time.indexOf("s")));
-//   }
-//   return seconds;
-// }
+  }
+  else if (time.indexOf("m") == 1)
+  {
+   seconds += Number(time.substring(0, time.indexOf("m"))) * 60;
+   seconds += Number(time.substring(time.indexOf("m") + 1, time.indexOf("s")));
+  }
+  return seconds;
+}
 
 
 export function GameModalDemo({game, onClose} : GameModalProps) 
