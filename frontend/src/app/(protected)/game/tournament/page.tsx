@@ -1745,6 +1745,7 @@ export default function TournamentPage() {
             // Host successfully cancelled the tournament
             const cancelMessage = message.data.message || 'Tournament cancelled successfully';
             setTournamentCancelledMessage(cancelMessage);
+            toast.info(cancelMessage);
             // Reset state
             setRemoteTournament(null);
             setTournamentId('');
@@ -1756,6 +1757,13 @@ export default function TournamentPage() {
             setShouldAutoFindRandomOpponent(false);
             setJoinRequests([]);
             setPendingJoinRequest(null);
+            // Clean up sessionStorage
+            if (typeof window !== 'undefined') {
+              sessionStorage.removeItem('isInvitedPlayer');
+              sessionStorage.removeItem('pendingTournamentId');
+              sessionStorage.removeItem('pendingTournament');
+              sessionStorage.removeItem('tournamentStep');
+            }
             // Auto-redirect after 3 seconds
             setTimeout(() => {
               router.push('/game');
@@ -1796,7 +1804,7 @@ export default function TournamentPage() {
             break;
 
           case 'tournamentJoinFailed':
-            alert(message.data.message);
+            toast.error(message.data.message || t('game.failedToJoinTournament') || 'Failed to join tournament');
             break;
 
           // New handlers for tournament search and join requests
@@ -1839,11 +1847,11 @@ export default function TournamentPage() {
 
           case 'tournamentJoinRequestSent':
             setPendingJoinRequest(message.data.tournamentId);
-            alert(message.data.message);
+            toast.success(message.data.message || t('game.joinRequestSent') || 'Join request sent successfully');
             break;
 
           case 'tournamentJoinRequestFailed':
-            alert(message.data.message);
+            toast.error(message.data.message || t('game.joinRequestFailed') || 'Failed to send join request');
             break;
 
           case 'tournamentJoinRequest':
@@ -1890,22 +1898,28 @@ export default function TournamentPage() {
 
           case 'tournamentJoinDeclined':
             // Player's join request was declined
-            alert(message.data.message);
+            toast.error(message.data.message || t('game.joinRequestDeclinedByHost') || 'Your join request was declined');
             setPendingJoinRequest(null);
             break;
 
           case 'joinRequestApproved':
             // Host feedback when they approve a request
-            setJoinRequests(prev => prev.filter(req => req.id !== message.data.player.id));
+            // Filter by player.id since backend sends player object, not requestId
+            setJoinRequests(prev => prev.filter(req => req.player.id !== message.data.player.id));
+            toast.success(t('game.joinRequestApproved', { playerName: message.data.player.name }) ||
+                        `${message.data.player.name} has been added to the tournament`);
             break;
 
           case 'joinRequestDeclined':
             // Host feedback when they decline a request
-            setJoinRequests(prev => prev.filter(req => req.id !== message.data.player.id));
+            // Filter by player.id since backend sends player object, not requestId
+            setJoinRequests(prev => prev.filter(req => req.player.id !== message.data.player.id));
+            toast.info(t('game.joinRequestDeclined', { playerName: message.data.player.name }) ||
+                      `Join request from ${message.data.player.name} has been declined`);
             break;
 
           case 'joinRequestError':
-            alert(message.data.message);
+            toast.error(message.data.message || t('game.joinRequestError') || 'An error occurred with the join request');
             break;
           case 'tournamentInvite':
             setTournamentInvites(prev => [...prev, message.data]);
@@ -1992,6 +2006,21 @@ export default function TournamentPage() {
         clearInterval(syncInterval);
       };
   }, [tournamentType, tournamentId, remoteTournament, user?.id_user, socket, isHost, tournamentStep, playerCount, router, setTournament, setPlayers, setCurrentMatchIndex]);
+
+  // Cleanup sessionStorage on component unmount if user navigates away
+  useEffect(() => {
+    return () => {
+      // Only clean up if we're not in an active tournament
+      // This prevents clearing data when user is still in a tournament
+      if (typeof window !== 'undefined' && !tournamentId && !remoteTournament) {
+        // Clean up any stale tournament-related sessionStorage
+        sessionStorage.removeItem('isInvitedPlayer');
+        sessionStorage.removeItem('pendingTournamentId');
+        sessionStorage.removeItem('pendingTournament');
+        sessionStorage.removeItem('tournamentStep');
+      }
+    };
+  }, [tournamentId, remoteTournament]);
 
   // Memoize frequently calculated values for performance
   const currentMatch = useMemo(() => {
@@ -3061,7 +3090,7 @@ export default function TournamentPage() {
     }));
         } catch (error) {
           console.error('Error sending tournament creation message:', error);
-          alert('Failed to create tournament. Please try again.');
+          toast.error(t('game.failedToCreateTournament') || 'Failed to create tournament. Please try again.');
         }
       }, { once: true });
       return;
@@ -3085,11 +3114,11 @@ export default function TournamentPage() {
         }));
       } catch (error) {
         console.error('Error sending tournament creation message:', error);
-        alert('Failed to create tournament. Please try again.');
+        toast.error(t('game.failedToCreateTournament') || 'Failed to create tournament. Please try again.');
       }
     } else {
       console.error('WebSocket is in an invalid state:', currentSocket.readyState);
-      alert('Connection error. Please refresh the page.');
+      toast.error(t('game.connectionError') || 'Connection error. Please refresh the page.');
     }
   };
 
@@ -3105,31 +3134,49 @@ export default function TournamentPage() {
   };
 
   const joinTournament = (tournamentId: string) => {
-    if (!socket) return;
-    socket.send(JSON.stringify({
-      type: 'game',
-      action: 'joinTournament',
-      payload: {
-        tournamentId: tournamentId,
-        playerName: user?.username || 'Player',
-        avatar: user?.avatar || defaultAvatars[1],
-        color: '#10B981'
-      }
-    }));
+    if (!socket) {
+      toast.error(t('game.cannotJoinTournament') || 'Unable to join tournament. Please check your connection.');
+      return;
+    }
+
+    try {
+      socket.send(JSON.stringify({
+        type: 'game',
+        action: 'joinTournament',
+        payload: {
+          tournamentId: tournamentId,
+          playerName: user?.username || 'Player',
+          avatar: user?.avatar || defaultAvatars[1],
+          color: '#10B981'
+        }
+      }));
+    } catch (error) {
+      console.error('Error joining tournament:', error);
+      toast.error(t('game.failedToJoinTournament') || 'Failed to join tournament. Please try again.');
+    }
   };
 
   const requestJoinTournament = (tournamentId: string) => {
-    if (!socket) return;
-    socket.send(JSON.stringify({
-      type: 'game',
-      action: 'requestJoinTournament',
-      payload: {
-        tournamentId: tournamentId,
-        playerName: user?.username || 'Player',
-        avatar: user?.avatar || defaultAvatars[1],
-        color: '#10B981'
-      }
-    }));
+    if (!socket) {
+      toast.error(t('game.cannotRequestJoin') || 'Unable to send join request. Please check your connection.');
+      return;
+    }
+
+    try {
+      socket.send(JSON.stringify({
+        type: 'game',
+        action: 'requestJoinTournament',
+        payload: {
+          tournamentId: tournamentId,
+          playerName: user?.username || 'Player',
+          avatar: user?.avatar || defaultAvatars[1],
+          color: '#10B981'
+        }
+      }));
+    } catch (error) {
+      console.error('Error requesting to join tournament:', error);
+      toast.error(t('game.failedToRequestJoin') || 'Failed to send join request. Please try again.');
+    }
   };
 
   const approveJoinRequest = (requestId: string) => {
@@ -3145,92 +3192,162 @@ export default function TournamentPage() {
   };
 
   const declineJoinRequest = (requestId: string) => {
-    if (!socket || !tournamentId) return;
-    socket.send(JSON.stringify({
-      type: 'game',
-      action: 'declineJoinRequest',
-      payload: {
-        tournamentId: tournamentId,
-        requestId: requestId
-      }
-    }));
+    if (!socket || !tournamentId) {
+      toast.error(t('game.cannotDeclineRequest') || 'Unable to decline request. Please check your connection.');
+      return;
+    }
+
+    try {
+      socket.send(JSON.stringify({
+        type: 'game',
+        action: 'declineJoinRequest',
+        payload: {
+          tournamentId: tournamentId,
+          requestId: requestId
+        }
+      }));
+    } catch (error) {
+      console.error('Error declining join request:', error);
+      toast.error(t('game.failedToDeclineRequest') || 'Failed to decline request. Please try again.');
+    }
   };
 
   const acceptTournamentInvite = (tournamentId: string) => {
-    if (!socket) return;
-    socket.send(JSON.stringify({
-      type: 'game',
-      action: 'acceptTournamentInvite',
-      payload: {
-        tournamentId,
-      }
-    }));
+    if (!socket) {
+      toast.error(t('game.cannotAcceptInvitation') || 'Unable to accept invitation. Please check your connection.');
+      return;
+    }
+
+    try {
+      socket.send(JSON.stringify({
+        type: 'game',
+        action: 'acceptTournamentInvite',
+        payload: {
+          tournamentId,
+        }
+      }));
+    } catch (error) {
+      console.error('Error accepting tournament invitation:', error);
+      toast.error(t('game.failedToAcceptInvitation') || 'Failed to accept invitation. Please try again.');
+    }
   };
 
   const inviteToTournament = (friendId: string) => {
-    if (!socket || !tournamentId) return;
-    socket.send(JSON.stringify({
-      type: 'game',
-      action: 'inviteToTournament',
-      payload: {
-        friendId,
-        tournamentId: tournamentId
-      }
-    }));
+    if (!socket || !tournamentId) {
+      toast.error(t('game.cannotInviteFriend') || 'Unable to invite friend. Please check your connection.');
+      return;
+    }
+
+    // Check if tournament is full
+    if (remoteTournament && remoteTournament.registeredPlayers?.length >= playerCount) {
+      toast.warning(t('game.tournamentFull') || 'Tournament is full. Cannot invite more players.');
+      return;
+    }
+
+    try {
+      socket.send(JSON.stringify({
+        type: 'game',
+        action: 'inviteToTournament',
+        payload: {
+          friendId,
+          tournamentId: tournamentId
+        }
+      }));
+      toast.success(t('game.invitationSent') || 'Invitation sent successfully');
+    } catch (error) {
+      console.error('Error sending tournament invitation:', error);
+      toast.error(t('game.failedToSendInvitation') || 'Failed to send invitation. Please try again.');
+    }
   };
 
   const findRandomOpponent = () => {
-    if (!socket || !tournamentId) return;
+    if (!socket || !tournamentId) {
+      toast.error(t('game.cannotFindOpponent') || 'Unable to find opponent. Please check your connection.');
+      return;
+    }
 
     // Check if tournament is already full
     const currentPlayers = remoteTournament?.registeredPlayers?.length || 0;
     if (currentPlayers >= playerCount) {
       setIsFindingRandomOpponent(false);
+      toast.warning(t('game.tournamentFull') || 'Tournament is full. Cannot search for more players.');
       return;
     }
 
-    setIsFindingRandomOpponent(true);
-    socket.send(JSON.stringify({
-      type: 'game',
-      action: 'findRandomOpponent',
-      payload: {
-        tournamentId: tournamentId,
-        playerName: user?.username || 'Player',
-        avatar: user?.avatar || defaultAvatars[1],
-        color: '#10B981'
-      }
-    }));
-    // Don't auto-reset - let tournamentUpdated handle it
+    try {
+      setIsFindingRandomOpponent(true);
+      socket.send(JSON.stringify({
+        type: 'game',
+        action: 'findRandomOpponent',
+        payload: {
+          tournamentId: tournamentId,
+          playerName: user?.username || 'Player',
+          avatar: user?.avatar || defaultAvatars[1],
+          color: '#10B981'
+        }
+      }));
+      // Don't auto-reset - let tournamentUpdated handle it
+    } catch (error) {
+      console.error('Error finding random opponent:', error);
+      toast.error(t('game.failedToFindOpponent') || 'Failed to search for opponent. Please try again.');
+      setIsFindingRandomOpponent(false);
+    }
   };
 
   const cancelTournament = () => {
-    if (!socket || !tournamentId || !isHost) return;
+    if (!socket || !tournamentId || !isHost) {
+      toast.error(t('game.cannotCancelTournament') || 'Unable to cancel tournament. Please check your connection.');
+      return;
+    }
     setShowCancelConfirmation(true);
   };
 
   const confirmCancelTournament = () => {
-    if (!socket || !tournamentId || !isHost) return;
-    socket.send(JSON.stringify({
-      type: 'game',
-      action: 'cancelTournament',
-      payload: {
-        tournamentId: tournamentId
-      }
-    }));
-    setShowCancelConfirmation(false);
-  };
-
-  const leaveTournament = () => {
-    if (!socket || !tournamentId || isHost) return;
-
-    if (window.confirm(t('game.confirmLeaveTournament') || 'Are you sure you want to leave this tournament?')) {
+    if (!socket || !tournamentId || !isHost) {
+      toast.error(t('game.cannotCancelTournament') || 'Unable to cancel tournament. Please check your connection.');
+      setShowCancelConfirmation(false);
+      return;
+    }
+    try {
       socket.send(JSON.stringify({
         type: 'game',
-        action: 'leaveTournament',
+        action: 'cancelTournament',
         payload: {
           tournamentId: tournamentId
         }
       }));
+      setShowCancelConfirmation(false);
+    } catch (error) {
+      console.error('Error cancelling tournament:', error);
+      toast.error(t('game.failedToCancelTournament') || 'Failed to cancel tournament. Please try again.');
+      setShowCancelConfirmation(false);
+    }
+  };
+
+  const leaveTournament = () => {
+    if (!socket || !tournamentId) {
+      toast.error(t('game.cannotLeaveTournament') || 'Unable to leave tournament. Please check your connection.');
+      return;
+    }
+
+    if (isHost) {
+      toast.warning(t('game.hostCannotLeave') || 'Host cannot leave tournament. Use cancel instead.');
+      return;
+    }
+
+    if (window.confirm(t('game.confirmLeaveTournament') || 'Are you sure you want to leave this tournament?')) {
+      try {
+        socket.send(JSON.stringify({
+          type: 'game',
+          action: 'leaveTournament',
+          payload: {
+            tournamentId: tournamentId
+          }
+        }));
+      } catch (error) {
+        console.error('Error leaving tournament:', error);
+        toast.error(t('game.failedToLeaveTournament') || 'Failed to leave tournament. Please try again.');
+      }
     }
   };
 
@@ -3588,7 +3705,7 @@ export default function TournamentPage() {
                   onClick={() => {
                       // Validate tournament name
                       if (!tournamentName.trim()) {
-                        alert(t('game.pleaseEnterTournamentName') || 'Please enter a tournament name');
+                        toast.error(t('game.pleaseEnterTournamentName') || 'Please enter a tournament name');
                         return;
                       }
                       // Create tournament as PUBLIC (false) so other players can see and request to join
@@ -3792,7 +3909,7 @@ export default function TournamentPage() {
                                 inviteToTournament((friend as any).id || (friend as any).id_user);
                                 setShowFriendsListExpanded(false);
                               } else {
-                                alert(t('game.pleaseWaitTournamentCreated'));
+                                toast.warning(t('game.pleaseWaitTournamentCreated') || 'Please wait for the tournament to be created');
                               }
                             }}
                             className="w-full flex items-center justify-between bg-gray-700 hover:bg-gray-600 p-2 sm:p-3 rounded-lg transition-all"
@@ -3930,7 +4047,7 @@ export default function TournamentPage() {
                                 inviteToTournament((friend as any).id || (friend as any).id_user);
                                 setShowFriendsListExpanded(false);
                               } else {
-                                alert(t('game.pleaseWaitTournamentCreated'));
+                                toast.warning(t('game.pleaseWaitTournamentCreated') || 'Please wait for the tournament to be created');
                               }
                             }}
                             className="w-full flex items-center justify-between bg-gray-700 hover:bg-gray-600 p-2 sm:p-3 rounded-lg transition-all"
@@ -4386,7 +4503,7 @@ export default function TournamentPage() {
                               if (tournamentId) {
                                 inviteToTournament((friend as any).id || (friend as any).id_user);
                               } else {
-                                alert(t('game.pleaseWaitTournamentCreated'));
+                                toast.warning(t('game.pleaseWaitTournamentCreated') || 'Please wait for the tournament to be created');
                               }
                             setShowFriendsListModal(false);
                               setSelectedSlot(null);
