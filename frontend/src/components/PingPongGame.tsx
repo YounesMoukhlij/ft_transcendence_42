@@ -65,7 +65,7 @@ interface PingPongGameProps {
   // Tournament mode props
   tournamentMode?: boolean;
   tournamentPlayers?: Player[];
-  onTournamentMatchEnd?: (winner: Player) => void;
+  onTournamentMatchEnd?: (winner: Player, player1Score?: number, player2Score?: number) => void;
   isTournamentFinalMatch?: boolean; // Hide rematch button and game over screen for final match
 
   // Local/AI game props
@@ -557,10 +557,10 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       if (tournamentMode && onTournamentMatchEnd && localPlayers.length >= 2) {
         if (scores.player1 >= WINNING_SCORE) {
           setWinner(localPlayers[0].name);
-          onTournamentMatchEnd(localPlayers[0]);
+          onTournamentMatchEnd(localPlayers[0], scores.player1, scores.player2);
         } else if (scores.player2 >= WINNING_SCORE) {
           setWinner(localPlayers[1].name);
-          onTournamentMatchEnd(localPlayers[1]);
+          onTournamentMatchEnd(localPlayers[1], scores.player1, scores.player2);
         }
       } else if (gameState.mode === 'ai') {
         // AI mode - check for winner

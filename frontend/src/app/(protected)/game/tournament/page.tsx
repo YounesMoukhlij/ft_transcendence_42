@@ -14,6 +14,7 @@ import { getBackendURL } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ServerGameState } from '@/types/game';
+import LocalTournamentManager from '@/components/LocalTournamentManager';
 
 // Move PlayerRegistration outside to prevent re-creation
 interface PlayerRegistrationProps {
@@ -326,18 +327,12 @@ export default function TournamentPage() {
     fetchFriends();
   }, [user, defaultAvatars]);
 
-  // Initialize tempPlayers only when needed
+  // Initialize tempPlayers only when needed (for remote tournaments that might use PlayerRegistration)
+  // Local tournaments now use LocalTournamentManager which handles its own tempPlayers
   useEffect(() => {
-    if (tournamentType === 'local') {
-      setTempPlayers([
-        { name: user?.username || 'Host Player', avatar: user?.avatar || defaultAvatars[0], color: '#3B82F6', id: user?.id_user?.toString() || '1' },
-        ...Array(playerCount - 1).fill(null).map((_, i) => ({
-          name: '',
-          avatar: defaultAvatars[i + 1],
-          color: ['#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'][i],
-          id: (i + 2).toString()
-        }))
-      ]);
+    if (tournamentType === 'remote') {
+      // Only initialize for remote tournaments if needed
+      // Local tournaments are handled by LocalTournamentManager
     }
   }, [playerCount, tournamentType, defaultAvatars, user]);
 
@@ -3583,7 +3578,17 @@ export default function TournamentPage() {
     );
   }
 
-  // Setup phase
+  // CRITICAL: If this is a local tournament, delegate to LocalTournamentManager
+  // This must be checked BEFORE any other phase checks to ensure local tournaments are handled separately
+  if (tournamentType === 'local') {
+    return (
+      <LocalTournamentManager
+        onBackToGameMenu={() => router.push('/game')}
+      />
+    );
+  }
+
+  // Setup phase (REMOTE TOURNAMENTS ONLY)
   if (tournamentStep === 'setup') {
     // Check if user is coming from accepting an invite (check sessionStorage)
     // Read directly from sessionStorage to avoid timing issues with state updates
@@ -3867,25 +3872,26 @@ export default function TournamentPage() {
 
                 {/* Invite Friend - expands inline to show friends list */}
                 {!showFriendsListExpanded ? (
-                  <button
-                    onClick={() => {
-                      // Always expand immediately when clicked
-                      setShowFriendsListExpanded(true);
-                      // If tournament doesn't exist, create it in the background (PUBLIC so players can see it)
-                      if (!remoteTournament || !tournamentId) {
-                        setShouldAutoFindRandomOpponent(false);
-                        setShouldShowFriendsModalAfterCreation(false);
-                        createRemoteTournament(false);
-                      }
-                    }}
-                    className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center gap-3"
-                  >
-                    <FaUser className="text-lg" />
-                    <div className="text-left">
-                      <div className="font-bold">{t('game.inviteFriend')}</div>
-                      <div className="text-xs sm:text-sm opacity-90">{t('game.inviteFriendFromList')}</div>
-                    </div>
-                  </button>
+                  <div></div>
+                  // <button
+                  //   onClick={() => {
+                  //     // Always expand immediately when clicked
+                  //     setShowFriendsListExpanded(true);
+                  //     // If tournament doesn't exist, create it in the background (PUBLIC so players can see it)
+                  //     if (!remoteTournament || !tournamentId) {
+                  //       setShouldAutoFindRandomOpponent(false);
+                  //       setShouldShowFriendsModalAfterCreation(false);
+                  //       createRemoteTournament(false);
+                  //     }
+                  //   }}
+                  //   className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center gap-3"
+                  // >
+                  //   <FaUser className="text-lg" />
+                  //   <div className="text-left">
+                  //     <div className="font-bold">{t('game.inviteFriend')}</div>
+                  //     <div className="text-xs sm:text-sm opacity-90">{t('game.inviteFriendFromList')}</div>
+                  //   </div>
+                  // </button>
                 ) : (
                   <div className="w-full bg-gray-800 rounded-lg p-3 sm:p-4 border border-purple-400">
                     <div className="flex items-center justify-between mb-3">
@@ -4159,6 +4165,15 @@ export default function TournamentPage() {
 
   // Registration phase
   if (tournamentStep === 'registration') {
+    // CRITICAL: If this is a local tournament, it should be handled by LocalTournamentManager
+    // This should not happen if LocalTournamentManager is working correctly, but add safety check
+    if (tournamentType === 'local') {
+      // Local tournaments should be handled by LocalTournamentManager
+      // This is a fallback - should not reach here
+      console.warn('[Tournament] Local tournament reached registration phase in main component - this should be handled by LocalTournamentManager');
+      return null;
+    }
+
     // Check if user is an invited player (from sessionStorage) - they should ALWAYS see remote tournament lobby
     const isInvitedPlayerFromStorage = typeof window !== 'undefined' ? sessionStorage.getItem('isInvitedPlayer') === 'true' : false;
 
@@ -4168,9 +4183,10 @@ export default function TournamentPage() {
     // Safety check: If user is not an invited player and has no tournament context, redirect to setup
     // This handles cases where stale sessionStorage data or other issues caused initialization to 'registration'
     // Also check pendingTournamentId to be extra safe
+    // NOTE: This check is ONLY for remote tournaments - local tournaments are handled separately
     const pendingTournamentIdCheck = typeof window !== 'undefined' ? sessionStorage.getItem('pendingTournamentId') : null;
     if (!isInvitedPlayerFromStorage && !hasRemoteTournamentContext && !pendingTournamentIdCheck) {
-      // Regular user trying to create a tournament - redirect to setup
+      // Regular user trying to create a remote tournament - redirect to setup
       console.log('[Tournament] Regular user detected at registration - redirecting to setup');
       setTournamentStep('setup');
       return null; // Prevent rendering registration screen
@@ -4534,6 +4550,7 @@ export default function TournamentPage() {
     } else {
       // CRITICAL: Double-check if user is an invited player before showing local registration
       // This is a safety check to ensure invited players NEVER see PlayerRegistration
+      // NOTE: This should not happen for local tournaments as they're handled by LocalTournamentManager
       const finalIsInvitedPlayerCheck = typeof window !== 'undefined' ? sessionStorage.getItem('isInvitedPlayer') === 'true' : false;
 
       if (finalIsInvitedPlayerCheck) {
@@ -4558,17 +4575,20 @@ export default function TournamentPage() {
         );
       }
 
-      // Local tournament registration (only for users creating local tournaments)
+      // This should not happen - local tournaments are handled by LocalTournamentManager
+      // This is a fallback for edge cases
+      console.warn('[Tournament] Reached PlayerRegistration in main component - local tournaments should use LocalTournamentManager');
       return (
         <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 md:p-8">
-          <PlayerRegistration
-            tempPlayers={tempPlayers}
-            defaultAvatars={defaultAvatars}
-            playerCount={playerCount}
-            updatePlayer={updatePlayer}
-            onComplete={handlePlayerRegistrationComplete}
-            onBack={handleBackToSetup}
-          />
+          <div className="text-center text-white">
+            <p>Local tournaments are handled separately. Please go back and select local tournament type.</p>
+            <button
+              onClick={() => setTournamentStep('setup')}
+              className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+            >
+              {t('game.back')}
+            </button>
+          </div>
         </div>
       );
     }
