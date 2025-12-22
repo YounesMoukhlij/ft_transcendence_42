@@ -13,10 +13,11 @@ import TwoFAModal from './components/TwoFAModal'
 import ProfileTab from './components/profile/page'
 import SecurityTab from './components/security/page'
 import HelpTab from './components/help/page'
-import Loading from '@/components/loading/page'
+import Loading from '@/components/Loading/page'
 
 const ProfileSettingsPage = () => {
-  const user = useUserStore((state) => state.user)
+  const {user} = useUserStore();
+  console.log("=====>", user);
   const setUser = useUserStore((state) => state.setUser)
   const hasHydrated = useUserStore((state) => state._hasHydrated)
   
@@ -115,14 +116,14 @@ const ProfileSettingsPage = () => {
     reader.readAsDataURL(file)
   }
 
-  const getProfileImageUrl = () => {
-    if (previewImage) return previewImage
-    const currentImg = user.profile_img || ${process.env.NEXT_PUBLIC_DEFAULT_PROFILE_IMG}
-    if (currentImg && currentImg.startsWith('/uploads/')) {
-      return `${process.env.NEXT_PUBLIC_BACK_API}${currentImg}`
-    }
-    return currentImg
-  }
+  // const getProfileImageUrl = () => {
+  //   if (previewImage) return previewImage
+  //   const currentImg = user.profile_img ;
+  //   if (currentImg && currentImg.startsWith('/uploads/')) {
+  //     return `${process.env.NEXT_PUBLIC_BACK_API}${currentImg}`
+  //   }
+  //   return currentImg
+  // }
 
   // 1. SAVE PROFILE (Axios)
   const handleSaveProfile = async () => {
@@ -375,12 +376,12 @@ const ProfileSettingsPage = () => {
         languages={languages}
         isPasswordAuth={isPasswordAuth}
         handleImageClick={handleImageClick}
-        getProfileImageUrl={getProfileImageUrl}
         fileInputRef={fileInputRef}
         handleImageChange={handleImageChange}
         handleSaveProfile={handleSaveProfile}
         isLoading={isLoading}
         setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+        previewImage={previewImage}
       />
     ),
     security: (
@@ -408,7 +409,7 @@ const ProfileSettingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-black text-white p-4 sm:p-6 md:p-10">
+    <div className=" w-full bg-black text-white p-4 sm:p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
         
         <div className="text-center mb-8">

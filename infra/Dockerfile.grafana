@@ -1,0 +1,45 @@
+
+FROM debian:bullseye
+
+LABEL maintainer="your-email@example.com"
+
+
+RUN apt-get update && \
+    apt-get install -y \
+    software-properties-common \
+    apt-transport-https \
+    curl \
+    gnupg \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+
+RUN curl https://packages.grafana.com/gpg.key | apt-key add -
+
+RUN echo "deb https://packages.grafana.com/oss/deb stable main" | tee /etc/apt/sources.list.d/grafana.list
+
+RUN apt-get update && \
+    apt-get install -y grafana && \
+    rm -rf /var/lib/apt/lists/*
+
+
+
+
+RUN chown -R grafana:grafana /var/lib/grafana /etc/grafana /var/log/grafana /usr/share/grafana && \
+    chmod -R 775 /var/lib/grafana /etc/grafana /var/log/grafana /usr/share/grafana
+
+# Set the homepath for Grafana
+ENV GF_PATHS_HOME=/usr/share/grafana
+ENV GF_PATHS_CONFIG=/etc/grafana/grafana.ini
+ENV GF_PATHS_DATA=/var/lib/grafana
+ENV GF_PATHS_LOGS=/var/log/grafana
+ENV GF_PATHS_PLUGINS=/var/lib/grafana/plugins
+
+
+EXPOSE 5000
+
+
+USER grafana
+
+
+CMD ["/usr/sbin/grafana-server", "--homepath", "/usr/share/grafana", "web"]

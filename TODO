@@ -1,9 +1,35 @@
-add env file in front and back
-getuser by id !! create /me endpoint that use only token : ok
-protect front end api 
-verify callback in google 
-remove private data in zustand !!
-remove fetch replace it with axios 
+- image and username problem in chat
+- Emoji table should be hidden when clicked anywhere and friend list in small 
+- implement game challenge from notification 
+- remove friend request from notify if handeled in profile 
 
 
-email in 2fa doesnt match ??? 
+
+must get friend in home 
+add message array fo zoostand 
+update room in db
+update add friend api
+add socket at layout
+Get freinds
+global css
+
+zoostand (updatelastmessage function ) 
+sql room
+
+
+
+chnage lib/api.js to ts
+
+kamlin bdlo axios b api from lib/api
+
+zmoumni
+>  design dyal nav almost done
+>  gha n3awd side bar almost done
+>  google mn poste akhor 
+> ana o ayoub f design dyalo 
+> abechcha yssayb design f chat simple white black gray
+
+
+ayoub 
+type script 
+not found f user ghalat example : /profile/tfo 

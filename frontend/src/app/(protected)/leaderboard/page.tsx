@@ -2,25 +2,17 @@ import Link from 'next/link';
 import { Trophy, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
+import {getProfileImageUrl} from '@/lib/utils'
+// const BACK_API = 'http://localhost:4444';
+// const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 
-const BACK_API = 'http://localhost:4444';
-const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 
-const getProfileImageUrl = (currentImg: string) => {
-  if (!currentImg) {
-    return defaultProfileImg;
-  }
-  if (currentImg && currentImg.startsWith('/uploads/')) {
-    return `${BACK_API}${currentImg}`;
-  }
-  return currentImg;
-};
 
 // --- Updated data fetching function with Pagination ---
 async function getLeaderboardData(token: string, page: number) {
   const limit = 10;
   // We pass ?page=X&limit=10 to the backend
-  const res = await fetch(`${BACK_API}/leaderboard?page=${page}&limit=${limit}`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/leaderboard?page=${page}&limit=${limit}`, {
     cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
