@@ -65,7 +65,7 @@ interface PingPongGameProps {
   // Tournament mode props
   tournamentMode?: boolean;
   tournamentPlayers?: Player[];
-  onTournamentMatchEnd?: (winner: Player, player1Score?: number, player2Score?: number) => void;
+  onTournamentMatchEnd?: (winner: Player) => void;
   isTournamentFinalMatch?: boolean; // Hide rematch button and game over screen for final match
 
   // Local/AI game props
@@ -352,31 +352,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const activeRoomCode = serverGameState?.roomCode;
   const activeMatchId = serverGameState?.matchId;
 
-  // For remote tournaments (final match), also check tournament bracket for roomCode if serverGameState doesn't have it
-  const tournamentRoomCode = !tournamentMode && gameState.tournament?.bracket
-    ? gameState.tournament.bracket.find((m: any) =>
-        m.round === 2 &&
-        m.status === 'playing' &&
-        m.roomCode &&
-        ((m.player1?.id?.toString() === user?.id_user?.toString() || m.player1?.id === user?.id_user) ||
-         (m.player2?.id?.toString() === user?.id_user?.toString() || m.player2?.id === user?.id_user))
-      )?.roomCode
-    : null;
-
-  const tournamentMatchId = !tournamentMode && gameState.tournament?.bracket
-    ? gameState.tournament.bracket.find((m: any) =>
-        m.round === 2 &&
-        m.status === 'playing' &&
-        m.roomCode &&
-        ((m.player1?.id?.toString() === user?.id_user?.toString() || m.player1?.id === user?.id_user) ||
-         (m.player2?.id?.toString() === user?.id_user?.toString() || m.player2?.id === user?.id_user))
-      )?.id
-    : null;
-
-  // Use serverGameState roomCode/matchId if available, otherwise fall back to tournament bracket
-  const effectiveRoomCode = activeRoomCode || tournamentRoomCode;
-  const effectiveMatchId = activeMatchId || tournamentMatchId;
-
   // Debug: log roomCode status for remote 1v1
   useEffect(() => {
     if (serverGameState && !tournamentMode) {
@@ -384,13 +359,11 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         hasServerGameState: !!serverGameState,
         roomCode: activeRoomCode,
         matchId: activeMatchId,
-        tournamentRoomCode,
-        effectiveRoomCode,
         hasSocket: !!socket,
         socketState: socket?.readyState
       });
     }
-  }, [serverGameState, activeRoomCode, activeMatchId, tournamentRoomCode, effectiveRoomCode, socket, tournamentMode]);
+  }, [serverGameState, activeRoomCode, activeMatchId, socket, tournamentMode]);
 
   // Unified state
   const [winner, setWinner] = useState<string | null>(null);
@@ -435,19 +408,15 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
   // Refs for keyboard handlers - prevents re-attaching listeners on every serverGameState change
   const serverGameStateRef = useRef(serverGameState);
-  const activeRoomCodeRef = useRef(effectiveRoomCode);
-  const activeMatchIdRef = useRef(effectiveMatchId);
+  const activeRoomCodeRef = useRef(activeRoomCode);
+  const activeMatchIdRef = useRef(activeMatchId);
   const winnerRef2 = useRef(winner);
   const socketRef = useRef(socket);
-  const gameStateRefForRoomCode = useRef(gameState);
-  const userRef = useRef(user);
   useEffect(() => { serverGameStateRef.current = serverGameState; }, [serverGameState]);
-  useEffect(() => { activeRoomCodeRef.current = effectiveRoomCode; }, [effectiveRoomCode]);
-  useEffect(() => { activeMatchIdRef.current = effectiveMatchId; }, [effectiveMatchId]);
+  useEffect(() => { activeRoomCodeRef.current = activeRoomCode; }, [activeRoomCode]);
+  useEffect(() => { activeMatchIdRef.current = activeMatchId; }, [activeMatchId]);
   useEffect(() => { winnerRef2.current = winner; }, [winner]);
   useEffect(() => { socketRef.current = socket; }, [socket]);
-  useEffect(() => { gameStateRefForRoomCode.current = gameState; }, [gameState]);
-  useEffect(() => { userRef.current = user; }, [user]);
 
   // Keyboard controls for local, remote, and AI modes - stable event listeners using refs
   useEffect(() => {
@@ -455,45 +424,17 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       if (e.repeat) return; // Ignore key repeat
       if (winnerRef2.current) return;
 
-      // Determine if this is a remote game (has serverGameState or tournament roomCode) or local game
-      const hasServerGameState = !!serverGameStateRef.current;
-      const currentUser = userRef.current;
-      const hasTournamentRoomCode = !tournamentMode && gameStateRefForRoomCode.current?.tournament?.bracket?.some((m: any) =>
-        m.round === 2 &&
-        m.status === 'playing' &&
-        m.roomCode &&
-        ((m.player1?.id?.toString() === currentUser?.id_user?.toString() || m.player1?.id === currentUser?.id_user) ||
-         (m.player2?.id?.toString() === currentUser?.id_user?.toString() || m.player2?.id === currentUser?.id_user))
-      );
-      const isRemoteGame = (hasServerGameState || hasTournamentRoomCode) && !tournamentMode;
+      // Determine if this is a remote game (has serverGameState) or local game
+      const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
       const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
 
       if (isLocalGame) {
         keysPressed.current[e.key] = true;
       } else if (isRemoteGame) {
-        let roomCode = activeRoomCodeRef.current;
-        let matchId = activeMatchIdRef.current;
-
-        // Fallback: get roomCode from tournament bracket if not in refs
-        if (!roomCode && !tournamentMode && gameStateRefForRoomCode.current?.tournament?.bracket) {
-          const finalMatch = gameStateRefForRoomCode.current.tournament.bracket.find((m: any) =>
-            m.round === 2 &&
-            m.status === 'playing' &&
-            m.roomCode &&
-            ((m.player1?.id?.toString() === currentUser?.id_user?.toString() || m.player1?.id === currentUser?.id_user) ||
-             (m.player2?.id?.toString() === currentUser?.id_user?.toString() || m.player2?.id === currentUser?.id_user))
-          );
-          if (finalMatch) {
-            roomCode = finalMatch.roomCode;
-            matchId = finalMatch.id;
-          }
-        }
-
+        const roomCode = activeRoomCodeRef.current;
+        const matchId = activeMatchIdRef.current;
         const ws = socketRef.current;
-        if (!roomCode) {
-          console.warn('[PingPongGame] Cannot send paddle move - no roomCode available');
-          return;
-        }
+        if (!roomCode) return;
 
         let direction: string | null = null;
         if (e.key === 'w' || e.key === 'ArrowUp') direction = 'up';
@@ -511,45 +452,16 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     const handleKeyUp = (e: KeyboardEvent) => {
       if (winnerRef2.current) return;
 
-      // Determine if this is a remote game (has serverGameState or tournament roomCode) or local game
-      const hasServerGameState = !!serverGameStateRef.current;
-      const currentUser = userRef.current;
-      const hasTournamentRoomCode = !tournamentMode && gameStateRefForRoomCode.current?.tournament?.bracket?.some((m: any) =>
-        m.round === 2 &&
-        m.status === 'playing' &&
-        m.roomCode &&
-        ((m.player1?.id?.toString() === currentUser?.id_user?.toString() || m.player1?.id === currentUser?.id_user) ||
-         (m.player2?.id?.toString() === currentUser?.id_user?.toString() || m.player2?.id === currentUser?.id_user))
-      );
-      const isRemoteGame = (hasServerGameState || hasTournamentRoomCode) && !tournamentMode;
+      const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
       const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
 
       if (isLocalGame) {
         keysPressed.current[e.key] = false;
       } else if (isRemoteGame) {
-        let roomCode = activeRoomCodeRef.current;
-        let matchId = activeMatchIdRef.current;
-
-        // Fallback: get roomCode from tournament bracket if not in refs
-        if (!roomCode && !tournamentMode && gameStateRefForRoomCode.current?.tournament?.bracket) {
-          const finalMatch = gameStateRefForRoomCode.current.tournament.bracket.find((m: any) =>
-            m.round === 2 &&
-            m.status === 'playing' &&
-            m.roomCode &&
-            ((m.player1?.id?.toString() === currentUser?.id_user?.toString() || m.player1?.id === currentUser?.id_user) ||
-             (m.player2?.id?.toString() === currentUser?.id_user?.toString() || m.player2?.id === currentUser?.id_user))
-          );
-          if (finalMatch) {
-            roomCode = finalMatch.roomCode;
-            matchId = finalMatch.id;
-          }
-        }
-
+        const roomCode = activeRoomCodeRef.current;
+        const matchId = activeMatchIdRef.current;
         const ws = socketRef.current;
-        if (!roomCode) {
-          console.warn('[PingPongGame] Cannot send paddle stop - no roomCode available');
-          return;
-        }
+        if (!roomCode) return;
 
         if (e.key === 'w' || e.key === 'ArrowUp' || e.key === 's' || e.key === 'ArrowDown') {
           if (ws && ws.readyState === WebSocket.OPEN) {
@@ -645,10 +557,10 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       if (tournamentMode && onTournamentMatchEnd && localPlayers.length >= 2) {
         if (scores.player1 >= WINNING_SCORE) {
           setWinner(localPlayers[0].name);
-          onTournamentMatchEnd(localPlayers[0], scores.player1, scores.player2);
+          onTournamentMatchEnd(localPlayers[0]);
         } else if (scores.player2 >= WINNING_SCORE) {
           setWinner(localPlayers[1].name);
-          onTournamentMatchEnd(localPlayers[1], scores.player1, scores.player2);
+          onTournamentMatchEnd(localPlayers[1]);
         }
       } else if (gameState.mode === 'ai') {
         // AI mode - check for winner
@@ -754,12 +666,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const ballRef = useRef(ball);
   const scoresRef = useRef(scores);
   const gameStateRef = useRef(gameState);
-  // userRef is already defined above in the keyboard handler section
+  const userRef = useRef(user);
   useEffect(() => { serverGameStateDrawRef.current = serverGameState; }, [serverGameState]);
   useEffect(() => { paddlesRef.current = paddles; }, [paddles]);
   useEffect(() => { ballRef.current = ball; }, [ball]);
   useEffect(() => { scoresRef.current = scores; }, [scores]);
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+  useEffect(() => { userRef.current = user; }, [user]);
 
   // Drawing logic (works for both modes) - uses refs for all dynamic values to stay stable
   const draw = useCallback(() => {
