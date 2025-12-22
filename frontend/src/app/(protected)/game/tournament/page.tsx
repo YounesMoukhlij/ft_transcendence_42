@@ -3867,25 +3867,26 @@ export default function TournamentPage() {
 
                 {/* Invite Friend - expands inline to show friends list */}
                 {!showFriendsListExpanded ? (
-                  <button
-                    onClick={() => {
-                      // Always expand immediately when clicked
-                      setShowFriendsListExpanded(true);
-                      // If tournament doesn't exist, create it in the background (PUBLIC so players can see it)
-                      if (!remoteTournament || !tournamentId) {
-                        setShouldAutoFindRandomOpponent(false);
-                        setShouldShowFriendsModalAfterCreation(false);
-                        createRemoteTournament(false);
-                      }
-                    }}
-                    className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center gap-3"
-                  >
-                    <FaUser className="text-lg" />
-                    <div className="text-left">
-                      <div className="font-bold">{t('game.inviteFriend')}</div>
-                      <div className="text-xs sm:text-sm opacity-90">{t('game.inviteFriendFromList')}</div>
-                    </div>
-                  </button>
+                  <div></div>
+                  // <button
+                  //   onClick={() => {
+                  //     // Always expand immediately when clicked
+                  //     setShowFriendsListExpanded(true);
+                  //     // If tournament doesn't exist, create it in the background (PUBLIC so players can see it)
+                  //     if (!remoteTournament || !tournamentId) {
+                  //       setShouldAutoFindRandomOpponent(false);
+                  //       setShouldShowFriendsModalAfterCreation(false);
+                  //       createRemoteTournament(false);
+                  //     }
+                  //   }}
+                  //   className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center gap-3"
+                  // >
+                  //   <FaUser className="text-lg" />
+                  //   <div className="text-left">
+                  //     <div className="font-bold">{t('game.inviteFriend')}</div>
+                  //     <div className="text-xs sm:text-sm opacity-90">{t('game.inviteFriendFromList')}</div>
+                  //   </div>
+                  // </button>
                 ) : (
                   <div className="w-full bg-gray-800 rounded-lg p-3 sm:p-4 border border-purple-400">
                     <div className="flex items-center justify-between mb-3">
