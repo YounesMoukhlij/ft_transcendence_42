@@ -1604,9 +1604,16 @@ class GameManager {
 
       // Determine if this is a tournament match
       const isTournamentMatch = room.tournamentContext !== null;
-      const tournamentId = isTournamentMatch ? room.tournamentContext.tournamentId : null;
+      const tournamentStringId = isTournamentMatch ? room.tournamentContext.tournamentId : null;
       const tournamentRound = isTournamentMatch ? room.tournamentContext.round : null;
       const gameType = isTournamentMatch ? 'tournament' : 'casual';
+
+      // Get the database tournament ID from the tournament object
+      let tournamentDbId = null;
+      if (tournamentStringId) {
+        const tournament = this.tournaments.get(tournamentStringId);
+        tournamentDbId = tournament?.dbId || null;
+      }
 
       stmt.run(
         winnerId,
@@ -1614,7 +1621,7 @@ class GameManager {
         winScore,
         loseScore,
         gameType, // 'tournament' for tournament matches, 'casual' for regular games
-        tournamentId, // tournament_id (NULL for casual games, tournament ID for tournament matches)
+        tournamentDbId, // tournament_id (NULL for casual games, database ID for tournament matches)
         tournamentRound, // tournament_round (NULL for casual games, round number for tournament matches)
         new Date().toISOString(),
         duration,
@@ -1638,7 +1645,7 @@ class GameManager {
 
       console.log(`Game history saved: Winner ${winnerId} (${winnerName}) (${winScore}-${loseScore}) vs Loser ${loserId} (${loserName})`);
       if (isTournamentMatch) {
-        console.log(`Tournament Match: Tournament ID ${tournamentId}, Round ${tournamentRound}`);
+        console.log(`Tournament Match: Tournament String ID ${tournamentStringId}, DB ID ${tournamentDbId}, Round ${tournamentRound}`);
         console.log(`Player Names: Winner=${winnerName} (Avatar: ${winnerAvatar || 'N/A'}), Loser=${loserName} (Avatar: ${loserAvatar || 'N/A'})`);
       }
       console.log(`Stats: Duration: ${duration}s, Longest Rally: ${stats.longestRally}, Avg Rally: ${averageRally.toFixed(2)}, Max Speed: ${ballMaxSpeedMetersPerSecond?.toFixed(2) || 0}m/s`);
@@ -1752,6 +1759,29 @@ class GameManager {
 
     this.tournaments.set(tournamentId, tournament);
     this.tournamentJoinRequests.set(tournamentId, new Map());
+
+    // Save tournament to database
+    try {
+      const stmt = this.db.prepare(`
+        INSERT INTO tournaments (name, host_id, status, player_count, is_private, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      const result = stmt.run(
+        tournament.name,
+        hostId,
+        'waiting',
+        playerCount,
+        isPrivate ? 1 : 0,
+        new Date().toISOString()
+      );
+      const dbTournamentId = result.lastInsertRowid;
+      console.log(`[createTournament] Tournament saved to database with ID: ${dbTournamentId}, name: ${tournament.name}`);
+
+      // Store the database ID in the tournament object for later reference
+      tournament.dbId = dbTournamentId;
+    } catch (error) {
+      console.error('[createTournament] Error saving tournament to database:', error);
+    }
 
     return { tournament, tournamentId };
   }
@@ -2412,6 +2442,17 @@ class GameManager {
     tournament.bracket = bracket;
     tournament.status = 'playing';
 
+    // Update tournament status in database
+    try {
+      if (tournament.dbId) {
+        const updateStmt = this.db.prepare('UPDATE tournaments SET status = ? WHERE id_tournament = ?');
+        updateStmt.run('playing', tournament.dbId);
+        console.log(`[startTournament] Tournament ${tournamentId} status updated to 'playing' in database`);
+      }
+    } catch (error) {
+      console.error('[startTournament] Error updating tournament status in database:', error);
+    }
+
     // Create game rooms for Round 1 matches and sync between players
     console.log(`[startTournament] Starting room creation for tournament ${tournamentId}`);
     console.log(`[startTournament] Bracket has ${bracket.length} matches`);
@@ -2759,6 +2800,28 @@ class GameManager {
       console.log(`[handleMatchResult] Final match finished - declaring champion`);
       tournament.status = 'finished';
       tournament.champion = winner;
+
+      // Update tournament in database
+      try {
+        if (tournament.dbId) {
+          const updateStmt = this.db.prepare(`
+            UPDATE tournaments
+            SET status = ?, champion_id = ?, completed_at = ?
+            WHERE id_tournament = ?
+          `);
+          updateStmt.run(
+            'finished',
+            winner.id || winner.id_user,
+            new Date().toISOString(),
+            tournament.dbId
+          );
+          console.log(`[handleMatchResult] Tournament ${tournamentId} updated in database with champion ${winner.name || winner.username}`);
+        } else {
+          console.warn(`[handleMatchResult] Tournament ${tournamentId} has no database ID, cannot update`);
+        }
+      } catch (error) {
+        console.error('[handleMatchResult] Error updating tournament in database:', error);
+      }
 
       // Clean up all tournament rooms
       const roomsToDelete = [];

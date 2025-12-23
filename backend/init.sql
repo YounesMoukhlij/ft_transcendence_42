@@ -128,7 +128,16 @@ CREATE TABLE message (
 
 CREATE TABLE tournaments (
     id_tournament INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,            -- optional, store hash of results on-chain
+    name TEXT NOT NULL,
+    host_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'waiting',  -- 'waiting', 'playing', 'finished'
+    player_count INTEGER NOT NULL,  -- Max players (usually 4)
+    is_private BOOLEAN DEFAULT 0,   -- 0: public, 1: private (invite-only)
+    champion_id INTEGER,             -- Winner of the tournament
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME,           -- When tournament finished
+    FOREIGN KEY (host_id) REFERENCES users(id_user),
+    FOREIGN KEY (champion_id) REFERENCES users(id_user)
 );
 
 -- Game settings (customization preferences)
