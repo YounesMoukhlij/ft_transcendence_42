@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useGameContext } from '../components/GameContext';
 import { useUserStore } from '../store/userStore';
 import { useRouter } from 'next/navigation';
@@ -19,7 +19,6 @@ const AI_WINNING_SCORE = 10; // AI games are first to 10 points
 const PADDLE_SPEED = 10; // Pixels per frame at 60 FPS (600 pixels/second)
 const BALL_INITIAL_SPEED = 6;
 const BALL_MAX_SPEED = 14;
-const BALL_SPEED_INCREMENT = 0.05; // Speed increase per collision
 const BALL_MIN_SPEED = 5;
 
 // AI difficulty settings - balanced for beatable gameplay
@@ -74,7 +73,7 @@ interface PingPongGameProps {
 }
 
 // Initial state for local game
-const useLocalGameState = (players: Player[]) => {
+const useLocalGameState = () => {
   const [gameState, setGameState] = useState({
     scores: { player1: 0, player2: 0 },
     paddles: [GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2],
@@ -331,10 +330,9 @@ const useLocalGameState = (players: Player[]) => {
 const PingPongGame: React.FC<PingPongGameProps> = ({
   serverGameState,
   opponentLeft,
-  setServerGameState,
   socket: socketProp,
   rematchDeclinedMessage,
-  setRematchDeclinedMessage,
+  setRematchDeclinedMessage: _setRematchDeclinedMessage,
   rematchOffer,
   handleAcceptRematch,
   tournamentMode = false,
@@ -344,6 +342,8 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   onGameOver,
   onScoreUpdate
 }) => {
+  // Suppress unused parameter warning - setRematchDeclinedMessage is part of the props interface but not used
+  void _setRematchDeclinedMessage;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const { gameState } = useGameContext();
@@ -369,7 +369,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
   // Unified state
   const [winner, setWinner] = useState<string | null>(null);
-  const [rematchRequested, setRematchRequested] = useState(false);
 
   // Interpolation state for smooth movement
   const previousGameStateRef = useRef<ServerGameState | null>(null);
@@ -380,14 +379,10 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const networkLatencyRef = useRef<number>(16.67); // Track network latency (default to 1 frame)
 
   // Local game state - use gameState.players for local mode, tournamentPlayers for tournament mode
-  const localPlayers = tournamentMode ? tournamentPlayers : (gameState.mode === 'local' ? gameState.players : []);
-  // Ensure all players have required id property for useLocalGameState (expects types/game.Player)
-  const localPlayersWithId = localPlayers.map((player, index) => ({
-    ...player,
-    id: player.id || `player-${index + 1}`,
-    id_user: typeof player.id_user === 'number' ? player.id_user : (typeof player.id_user === 'string' ? parseInt(player.id_user, 10) : undefined)
-  })) as Player[];
-  const { scores, paddles, ball, updateGameState, resetGameState } = useLocalGameState(localPlayersWithId);
+  const localPlayers = useMemo(() => {
+    return tournamentMode ? tournamentPlayers : (gameState.mode === 'local' ? gameState.players : []);
+  }, [tournamentMode, tournamentPlayers, gameState.mode, gameState.players]);
+  const { scores, paddles, ball, updateGameState, resetGameState } = useLocalGameState();
 
   // Track if we've initialized the game to prevent infinite loops
   const gameInitializedRef = useRef<string | null>(null);
@@ -566,7 +561,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   // Check for winner in local tournament, AI mode, and local mode
   useEffect(() => {
     const isLocalMode = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
-    const winningScore = gameState.mode === 'ai' ? AI_WINNING_SCORE : WINNING_SCORE;
 
     if (!winner && isLocalMode) {
       if (tournamentMode && onTournamentMatchEnd && localPlayers.length >= 2) {
@@ -749,7 +743,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             const colorMatch = tableBg.match(/#[0-9a-fA-F]{6}/);
             ctx.fillStyle = colorMatch ? colorMatch[0] : '#15803d';
           }
-        } catch (e) {
+        } catch {
           // Fallback to solid color - ensure it's a valid color
           const colorMatch = tableBg.match(/#[0-9a-fA-F]{6}/);
           ctx.fillStyle = colorMatch ? colorMatch[0] : '#15803d';
@@ -859,7 +853,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             const colorMatch = tableBg.match(/#[0-9a-fA-F]{6}/);
             ctx.fillStyle = colorMatch ? colorMatch[0] : '#15803d';
           }
-        } catch (e) {
+        } catch {
           // Fallback to solid color
           const colorMatch = tableBg.match(/#[0-9a-fA-F]{6}/);
           ctx.fillStyle = colorMatch ? colorMatch[0] : '#15803d';
@@ -924,13 +918,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     }
   };
 
-  const handleRematchRequest = () => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'rematch:request' }));
-      setRematchRequested(true);
-      if(setRematchDeclinedMessage) setRematchDeclinedMessage('');
-    }
-  };
 
   if (opponentLeft) {
     return (
@@ -1087,8 +1074,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   // Winner screen for local mode - Modern and decorated (like AI mode)
   if (winner && gameState.mode === 'local' && !tournamentMode) {
     const winnerIsPlayer1 = winner === localPlayers[0]?.name;
-    const winnerPlayer = winnerIsPlayer1 ? localPlayers[0] : localPlayers[1];
-    const loserPlayer = winnerIsPlayer1 ? localPlayers[1] : localPlayers[0];
 
     return (
       <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl animate-pulse">
@@ -1162,9 +1147,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   }
 
   // Main game display
-  const isLocalMode = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
-  const winningScore = gameState.mode === 'ai' ? AI_WINNING_SCORE : WINNING_SCORE;
-
   return (
     <div className="flex flex-col items-center justify-center">
       <div className="relative w-full flex justify-center items-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>

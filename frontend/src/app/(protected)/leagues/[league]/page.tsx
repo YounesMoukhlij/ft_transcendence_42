@@ -17,7 +17,7 @@ export default  function LeagueTable({ params }: LeaguePageProps) {
  const { league } = use(params); // destructure to get the string
   const { user: currentUser } = useUserStore();
   const [leagueStats, setLeagueStats] = useState();
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const targetleague = league;
   console.log("Hello");
 useEffect(() => {

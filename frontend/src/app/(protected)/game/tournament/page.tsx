@@ -7,13 +7,31 @@ import PingPongGame from '@/components/PingPongGame';
 import GameCustomization from '@/components/GameCustomization';
 import { getWebSocket } from '@/components/globalSocket';
 import { useUserStore } from '@/store/userStore';
-import { FaUser, FaUpload, FaCrown, FaTrophy, FaGamepad, FaSearch, FaCheck, FaTimes as FaReject, FaClock, FaTimes } from 'react-icons/fa';
+import Image from 'next/image';
+import { FaUser, FaUpload, FaCrown, FaTrophy, FaSearch, FaCheck, FaTimes as FaReject, FaClock, FaTimes } from 'react-icons/fa';
 import { IoExpand, IoContract } from 'react-icons/io5';
 import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ServerGameState } from '@/types/game';
+
+// Extended Document interface for vendor-prefixed fullscreen APIs
+interface ExtendedDocument extends Document {
+  webkitFullscreenElement?: Element | null;
+  mozFullScreenElement?: Element | null;
+  msFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void>;
+  mozCancelFullScreen?: () => Promise<void>;
+  msExitFullscreen?: () => Promise<void>;
+}
+
+// Extended Element interface for vendor-prefixed fullscreen APIs
+interface ExtendedElement extends HTMLElement {
+  webkitRequestFullscreen?: () => Promise<void>;
+  mozRequestFullScreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+}
 
 // Move PlayerRegistration outside to prevent re-creation
 interface PlayerRegistrationProps {
@@ -36,7 +54,7 @@ interface RemoteTournament {
   registeredPlayers?: Player[];
   playerCount?: number;
   type?: string;
-  bracket?: any[];
+  bracket?: TournamentMatch[];
   champion?: Player;
 }
 
@@ -65,9 +83,11 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
           <div key={player.id} className="bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-purple-400">
             <div className="flex items-center gap-2 sm:gap-4">
               <div className="relative flex-shrink-0">
-                <img
+                <Image
                   src={player.avatar}
                   alt={`${t('game.player')} ${index + 1}`}
+                  width={64}
+                  height={64}
                   className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-purple-400"
                 />
                 <button className="absolute -bottom-1 -right-1 bg-purple-600 rounded-full p-1 hover:bg-purple-700">
@@ -103,7 +123,7 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
                       player.avatar === avatar ? 'border-purple-400' : 'border-gray-600'
                     }`}
                   >
-                    <img src={avatar} alt="" className="w-full h-full object-cover" />
+                    <Image src={avatar} alt="" width={100} height={100} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -221,14 +241,13 @@ export default function TournamentPage() {
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [pendingJoinRequest, setPendingJoinRequest] = useState<string | null>(null);
   const [friends, setFriends] = useState<Player[]>([]);
-  const [tournamentInvites, setTournamentInvites] = useState<any[]>([]);
   const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
   const [tournamentName, setTournamentName] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [showFriendsListModal, setShowFriendsListModal] = useState(false);
   const [isFindingRandomOpponent, setIsFindingRandomOpponent] = useState(false);
   const [shouldAutoFindRandomOpponent, setShouldAutoFindRandomOpponent] = useState(false);
-  const [shouldShowFriendsModalAfterCreation, setShouldShowFriendsModalAfterCreation] = useState(false);
+  const [, setShouldShowFriendsModalAfterCreation] = useState(false);
   const [showFriendsListExpanded, setShowFriendsListExpanded] = useState(false);
   const [showRandomOpponentExpanded, setShowRandomOpponentExpanded] = useState(false);
   const [tournamentCancelledMessage, setTournamentCancelledMessage] = useState<string | null>(null);
@@ -241,7 +260,7 @@ export default function TournamentPage() {
   }, []);
 
   // Remote tournament game state
-  const [serverGameState, setServerGameState] = useState<any>(null);
+  const [serverGameState, setServerGameState] = useState<ServerGameState | null>(null);
 
   // Log serverGameState changes
   useEffect(() => {
@@ -299,7 +318,7 @@ export default function TournamentPage() {
     };
 
     fetchUser();
-  }, [user?.access_token, setUser, clearUser, router]);
+  }, [user?.access_token, user, setUser, clearUser, router]);
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -312,12 +331,15 @@ export default function TournamentPage() {
             },
           });
           // Map the API response to Player format
-          const mappedFriends: Player[] = (response.data || []).map((friend: any) => ({
-            id: friend.id_user?.toString() || friend.id?.toString() || '',
-            name: friend.username || friend.name || 'Unknown',
-            avatar: friend.profile_img || friend.avatar || defaultAvatars[0],
-            color: '#10B981'
-          }));
+          const mappedFriends: Player[] = (response.data || []).map((friend: unknown) => {
+            const f = friend as { id_user?: string | number; id?: string | number; username?: string; name?: string; profile_img?: string; avatar?: string };
+            return {
+              id: f.id_user?.toString() || f.id?.toString() || '',
+              name: f.username || f.name || 'Unknown',
+              avatar: f.profile_img || f.avatar || defaultAvatars[0],
+              color: '#10B981'
+            };
+          });
           setFriends(mappedFriends);
         } catch (error) {
           console.error('Error fetching friends:', error);
@@ -447,7 +469,7 @@ export default function TournamentPage() {
       // check if they might be in a tournament by looking at URL params or checking backend
       // For now, keep them on setup screen (they can create or join)
     }
-  }, []); // Empty dependency array since we only want this to run once
+  }, [tournamentId, remoteTournament, setGameMode, user?.id_user, tournamentStep]);
 
   // Check on page load if user is already in a remote tournament (e.g., from accepting an invite)
   useEffect(() => {
@@ -501,7 +523,7 @@ export default function TournamentPage() {
       // Reset match active state when not playing
       setIsMatchActive(false);
     }
-  }, [tournamentStep, currentMatchIndex, gameState.tournament?.bracket?.length, isMatchActive]);
+  }, [tournamentStep, currentMatchIndex, gameState.tournament?.bracket?.length, gameState.tournament?.bracket, isMatchActive, router, tournamentType]);
 
   // CRITICAL: Reset opponentLeft when switching to a different match
   // Track the last matchId and round to reset when either changes
@@ -545,6 +567,7 @@ export default function TournamentPage() {
       }, 500);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldAutoFindRandomOpponent, tournamentId, socket, isHost, remoteTournament]);
 
   // Separate useEffect for WebSocket management
@@ -700,14 +723,14 @@ export default function TournamentPage() {
                 // This prevents Match 2 players from starting with Match 1's index
                 const userId = user?.id_user?.toString();
                 if (userId && message.data.bracket) {
-                  const userMatch = message.data.bracket.find((m: any) =>
+                  const userMatch = message.data.bracket.find((m: TournamentMatch) =>
                     m.player1 && m.player2 &&
                     (m.player1.id?.toString() === userId || m.player1.id === parseInt(userId) ||
                      m.player2.id?.toString() === userId || m.player2.id === parseInt(userId)) &&
                     m.round === 1
                   );
                   if (userMatch) {
-                    const matchIndex = message.data.bracket.findIndex((m: any) => m.id === userMatch.id);
+                    const matchIndex = message.data.bracket.findIndex((m: TournamentMatch) => m.id === userMatch.id);
                     if (matchIndex !== -1) {
                       console.log('[Frontend] Setting currentMatchIndex to user\'s actual match:', {
                         matchIndex,
@@ -759,7 +782,7 @@ export default function TournamentPage() {
               const currentBracket = gameState.tournament?.bracket || [];
 
               // Check if any match status changed to 'finished' or 'playing'
-              const hasChanges = updatedBracket.some((updatedMatch: any, index: number) => {
+              const hasChanges = updatedBracket.some((updatedMatch: TournamentMatch, index: number) => {
                 const currentMatch = currentBracket[index];
                 return !currentMatch ||
                        currentMatch.status !== updatedMatch.status ||
@@ -769,7 +792,7 @@ export default function TournamentPage() {
               if (hasChanges) {
                 console.log('[Frontend] Bracket updated - matches finished or final match started', {
                   isMatchActive,
-                  updatedBracket: updatedBracket.map((m: any) => ({
+                  updatedBracket: updatedBracket.map((m: TournamentMatch) => ({
                     id: m.id,
                     round: m.round,
                     status: m.status,
@@ -790,7 +813,7 @@ export default function TournamentPage() {
 
                 // If current match is now finished and we're still playing, update UI
                 if (tournamentStep === 'playing' && currentMatch) {
-                  const updatedMatch = updatedBracket.find((m: any) => m.id === currentMatch.id);
+                  const updatedMatch = updatedBracket.find((m: TournamentMatch) => m.id === currentMatch.id);
                   if (updatedMatch && updatedMatch.status === 'finished' && updatedMatch.winner &&
                       !matchWinner && isMatchActive) {
                     console.log('[Frontend] Match finished via tournamentUpdated - updating UI', {
@@ -807,7 +830,7 @@ export default function TournamentPage() {
                 const userId = user?.id_user?.toString();
                 if (userId) {
                   // PRIORITY: Check final match (Round 2) first - if it's finished, don't process Round 1 matches
-                  const finalMatchFinished = updatedBracket.find((m: any) =>
+                  const finalMatchFinished = updatedBracket.find((m: TournamentMatch) =>
                     m.round === 2 &&
                     m.player1 && m.player2 &&
                     (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
@@ -823,7 +846,7 @@ export default function TournamentPage() {
                     // Don't process Round 1 matches if final match is finished
                   } else {
                     // Final match not finished - check for Round 1 matches
-                  const userMatch = updatedBracket.find((m: any) =>
+                  const userMatch = updatedBracket.find((m: TournamentMatch) =>
                       m.round === 1 &&
                     m.player1 && m.player2 &&
                     (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
@@ -840,7 +863,7 @@ export default function TournamentPage() {
                       if (isUserWinner) {
                         // Current user's Round 1 match finished and user is the winner - but check if final match is ready
                         // Check for both 'playing' and 'pending' status (pending means room creation in progress or failed)
-                        const finalMatch = updatedBracket.find((m: any) => m.round === 2 && (m.status === 'playing' || m.status === 'pending'));
+                        const finalMatch = updatedBracket.find((m: TournamentMatch) => m.round === 2 && (m.status === 'playing' || m.status === 'pending'));
                         if (finalMatch && finalMatch.player1 && finalMatch.player2 && finalMatch.roomCode && finalMatch.status === 'playing') {
                       const isUserInFinal =
                         (finalMatch.player1.id?.toString() === userId || finalMatch.player1.id === parseInt(userId)) ||
@@ -870,7 +893,7 @@ export default function TournamentPage() {
                   } else {
                       // Check if final match (Round 2) is ready and user is in it
                       // NOTE: Do NOT auto-request room creation - players must click "Proceed to Final Match" button
-                      const finalMatch = updatedBracket.find((m: any) => m.round === 2 && (m.status === 'playing' || m.status === 'pending'));
+                      const finalMatch = updatedBracket.find((m: TournamentMatch) => m.round === 2 && (m.status === 'playing' || m.status === 'pending'));
 
                       // If final match has players but no roomCode, the button will appear for Round 1 winners
                       // They must manually click "Proceed to Final Match" to create the room
@@ -908,7 +931,7 @@ export default function TournamentPage() {
                       if (isUserInFinal) {
                         console.log('[Frontend] ✓✓✓ Final match is ready and user is in it, checking if user manually clicked ✓✓✓');
                         // Stop waiting animation only if user manually clicked
-                        const finalMatchIndex = updatedBracket.findIndex((m: any) => m.id === finalMatch.id);
+                        const finalMatchIndex = updatedBracket.findIndex((m: TournamentMatch) => m.id === finalMatch.id);
 
                         // ONLY transition if user manually clicked "Proceed to Final Match"
                         if (finalMatchIndex !== -1 && startFinalMatchManually === true) {
@@ -951,8 +974,8 @@ export default function TournamentPage() {
 
                     // Check if OTHER matches (not current user's) have finished
                     // This allows players to see when other matches finish even while playing
-                    const round1Matches = updatedBracket.filter((m: any) => m.round === 1);
-                    const otherFinishedMatches = round1Matches.filter((m: any) =>
+                    const round1Matches = updatedBracket.filter((m: TournamentMatch) => m.round === 1);
+                    const otherFinishedMatches = round1Matches.filter((m: TournamentMatch) =>
                       m.status === 'finished' &&
                       m.winner &&
                       !(m.player1?.id?.toString() === userId || m.player2?.id?.toString() === userId)
@@ -961,7 +984,7 @@ export default function TournamentPage() {
                     if (otherFinishedMatches.length > 0 && isMatchActive) {
                       // User is actively playing and another match finished
                       // Show a brief notification that other match finished
-                      console.log('[Frontend] Other match(es) finished while user is playing:', otherFinishedMatches.map((m: any) => m.id));
+                      console.log('[Frontend] Other match(es) finished while user is playing:', otherFinishedMatches.map((m: TournamentMatch) => m.id));
 
                       // Find the other match that finished
                       const otherMatch = otherFinishedMatches[0];
@@ -1117,12 +1140,12 @@ export default function TournamentPage() {
 
               // If final match payload arrives but local bracket lacks players, hydrate bracket entry from payload
               if (isFinalMatch) {
-                const finalIdx = bracket.findIndex((m: any) => m.round === 2);
+                const finalIdx = bracket.findIndex((m: TournamentMatch) => m.round === 2);
                 if (finalIdx !== -1) {
                   const finalMatch = bracket[finalIdx];
                   const hasPlayers = !!finalMatch.player1 && !!finalMatch.player2;
                   if (!hasPlayers && message.payload?.player1 && message.payload?.player2) {
-                    const updatedBracket = bracket.map((m: any, idx: number) =>
+                    const updatedBracket = bracket.map((m: TournamentMatch, idx: number) =>
                       idx === finalIdx
                         ? { ...m, player1: message.payload.player1, player2: message.payload.player2 }
                         : m
@@ -1370,11 +1393,11 @@ export default function TournamentPage() {
                 let targetMatch = null;
                 if (receivedRoomCode) {
                   // Priority 1: Find by roomCode (most reliable) - works for both Round 1 and Round 2
-                  targetMatch = bracket.find((m: any) => m.roomCode === receivedRoomCode);
+                  targetMatch = bracket.find((m: TournamentMatch) => m.roomCode === receivedRoomCode);
                 }
                 if (!targetMatch && message.matchId) {
                   // Priority 2: Find by matchId - check both Round 1 and Round 2 (final match)
-                  targetMatch = bracket.find((m: any) => m.id === message.matchId && (m.round === 1 || m.round === 2));
+                  targetMatch = bracket.find((m: TournamentMatch) => m.id === message.matchId && (m.round === 1 || m.round === 2));
                 }
 
                 // Verify the user is actually in this match
@@ -1385,7 +1408,7 @@ export default function TournamentPage() {
 
                   if (isUserInMatch) {
                     // Update currentMatchIndex if it's wrong
-                    const correctMatchIndex = bracket.findIndex((m: any) => m.id === targetMatch.id);
+                    const correctMatchIndex = bracket.findIndex((m: TournamentMatch) => m.id === targetMatch.id);
 
                     // CRITICAL: For final match (Round 2), check manual click BEFORE setting index or transitioning
                     if (targetMatch.round === 2) {
@@ -1428,7 +1451,7 @@ export default function TournamentPage() {
                   console.warn('[Frontend] Cannot verify match for gameState, rejecting:', {
                     receivedMatchId: message.matchId,
                     receivedRoomCode,
-                    bracketMatches: bracket.map((m: any) => ({
+                    bracketMatches: bracket.map((m: TournamentMatch) => ({
                       id: m.id,
                       round: m.round,
                       roomCode: m.roomCode
@@ -1551,7 +1574,7 @@ export default function TournamentPage() {
             // Handle game over message from backend (match finished)
             console.log('[Frontend] Received gameOver message:', message.payload);
             if (tournamentType === 'remote' && tournamentStep === 'playing' && message.payload) {
-              const { winner, finalGameState, finalScore, reason } = message.payload;
+              const { winner, finalGameState, reason } = message.payload;
 
               // Get current match to verify this message is for the current match
               const bracket = gameState.tournament?.bracket || [];
@@ -1798,7 +1821,7 @@ export default function TournamentPage() {
                   setWaitingForOtherWinner(false);
                   setIsReadyForFinalMatch(false);
                   setStartFinalMatchManually(true);
-                  const finalMatchIndex = bracket.findIndex((m: any) => m.id === finalMatch.id);
+                  const finalMatchIndex = bracket.findIndex((m: TournamentMatch) => m.id === finalMatch.id);
                   if (finalMatchIndex !== -1) {
                     // Update bracket with roomCode before transitioning
                     if (message.data.roomCode) {
@@ -1916,15 +1939,15 @@ export default function TournamentPage() {
             // If we're in a tournament, check if our tournament is in the results
             // and update our local state if needed
             if (tournamentId) {
-              const ourTournament = message.data.find((t: any) => t.id === tournamentId);
+              const ourTournament = message.data.find((t: RemoteTournament) => t.id === tournamentId);
               if (ourTournament) {
                 // Update our tournament state with latest data
                 setRemoteTournament(ourTournament);
               }
             } else {
               // Check if we're in any tournament (for invited players who just navigated here)
-              const ourTournament = message.data.find((t: any) =>
-                t.registeredPlayers?.some((p: any) => p.id === user?.id_user?.toString() || p.id === user?.id_user)
+              const ourTournament = message.data.find((t: RemoteTournament) =>
+                t.registeredPlayers?.some((p: Player) => p.id === user?.id_user?.toString() || p.id === user?.id_user)
               );
               if (ourTournament) {
                 // We're in a tournament! Set up the state immediately
@@ -2023,7 +2046,8 @@ export default function TournamentPage() {
             toast.error(message.data.message || t('game.joinRequestError') || 'An error occurred with the join request');
             break;
           case 'tournamentInvite':
-            setTournamentInvites(prev => [...prev, message.data]);
+            // Tournament invites handled by other mechanisms
+            console.log('[Frontend] Tournament invite received:', message.data);
             break;
 
           case 'tournamentInviteDeclined':
@@ -2106,7 +2130,8 @@ export default function TournamentPage() {
         ws.removeEventListener('error', handleError);
         clearInterval(syncInterval);
       };
-  }, [tournamentType, tournamentId, remoteTournament, user?.id_user, socket, isHost, tournamentStep, playerCount, router, setTournament, setPlayers, setCurrentMatchIndex]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tournamentType, tournamentId, remoteTournament, user?.id_user, socket, isHost, tournamentStep, playerCount, router, setTournament, setPlayers, setCurrentMatchIndex, currentMatchIndex, isFindingRandomOpponent, isMatchActive, isReadyForFinalMatch, matchWinner, opponentQuitMessage, serverGameState?.roomCode, shouldAutoFindRandomOpponent, startFinalMatchManually, t, updateTournamentMatch, waitingForOtherWinner]);
 
   // Cleanup sessionStorage on component unmount if user navigates away
   useEffect(() => {
@@ -2142,10 +2167,6 @@ export default function TournamentPage() {
     return match;
   }, [gameState.tournament?.bracket, currentMatchIndex, tournamentStep]);
 
-  const currentPlayers = useMemo(() => {
-    if (!currentMatch?.player1 || !currentMatch?.player2) return [];
-    return [currentMatch.player1, currentMatch.player2];
-  }, [currentMatch]);
 
   const nextMatch = useMemo(() => {
     const bracket = gameState.tournament?.bracket || [];
@@ -2267,7 +2288,7 @@ export default function TournamentPage() {
         setStartFinalMatchManually(true); // Mark that user manually initiated final match
 
         // Check if final match exists and has players (room may or may not be created yet)
-        const finalMatch = bracket.find((m: any) => m.round === 2);
+        const finalMatch = bracket.find((m: TournamentMatch) => m.round === 2);
 
         // Validate final match has all required properties including valid roomCode
         const hasValidRoom = finalMatch?.roomCode &&
@@ -2283,7 +2304,7 @@ export default function TournamentPage() {
           console.log('[Frontend] Final match is ready with room, transitioning to final match');
           setWaitingForOtherWinner(false);
           setIsReadyForFinalMatch(false);
-          const finalMatchIndex = bracket.findIndex((m: any) => m.id === finalMatch.id);
+          const finalMatchIndex = bracket.findIndex((m: TournamentMatch) => m.id === finalMatch.id);
           if (finalMatchIndex !== -1) {
             setCurrentMatchIndex(finalMatchIndex);
             setTournamentStep('playing');
@@ -2358,7 +2379,7 @@ export default function TournamentPage() {
     setStartFinalMatchManually(true);
 
     const bracket = gameState.tournament?.bracket || [];
-    const finalMatch = bracket.find((m: any) => m.round === 2);
+    const finalMatch = bracket.find((m: TournamentMatch) => m.round === 2);
 
     // Validate final match has all required properties including valid roomCode
     const hasValidRoom = finalMatch?.roomCode &&
@@ -2374,7 +2395,7 @@ export default function TournamentPage() {
       console.log('[Frontend] Final match is ready with room, transitioning to final match');
       setWaitingForOtherWinner(false);
       setIsReadyForFinalMatch(false);
-      const finalMatchIndex = bracket.findIndex((m: any) => m.id === finalMatch.id);
+      const finalMatchIndex = bracket.findIndex((m: TournamentMatch) => m.id === finalMatch.id);
       if (finalMatchIndex !== -1) {
         setCurrentMatchIndex(finalMatchIndex);
         setTournamentStep('playing');
@@ -2445,6 +2466,7 @@ export default function TournamentPage() {
       // Remote tournament logic - create as PUBLIC so players can see and join
       createRemoteTournament(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentType, registeredPlayers, playerCount, setTournament, setPlayers, createTournamentBracket]);
 
   // Use useCallback to prevent function recreation
@@ -2561,7 +2583,6 @@ export default function TournamentPage() {
 
     // Check if tournament is complete (all matches finished) - for local tournaments
     if (tournamentType === 'local') {
-      const bracket = gameState.tournament?.bracket || [];
       // Get updated bracket state after the update
       setTimeout(() => {
         const updatedBracket = gameState.tournament?.bracket || [];
@@ -2574,7 +2595,7 @@ export default function TournamentPage() {
         }
       }, 100);
     }
-  }, [currentMatchIndex, updateTournamentMatch, gameState.tournament?.bracket, tournamentType, isLastMatch, socket, tournamentId]);
+  }, [currentMatchIndex, updateTournamentMatch, gameState.tournament?.bracket, tournamentType, isLastMatch, socket, tournamentId, isReadyForFinalMatch, user?.id_user]);
 
   // Effect to advance winner to the next round (for local tournaments)
   useEffect(() => {
@@ -2703,7 +2724,7 @@ export default function TournamentPage() {
 
     // Check if tournament is finished/completed
     const isTournamentFinished = tournament?.status === 'finished' || tournament?.status === 'completed';
-    const finalMatch = bracket.find((m: any) => m.round === 2 && m.player1 && m.player2);
+    const finalMatch = bracket.find((m: TournamentMatch) => m.round === 2 && m.player1 && m.player2);
     const finalMatchFinished = finalMatch && finalMatch.status === 'finished' && finalMatch.winner;
     const hasChampion = tournament?.champion;
 
@@ -2747,37 +2768,40 @@ export default function TournamentPage() {
     if (!container) return;
 
     try {
+      const extendedDocument = document as ExtendedDocument;
+      const extendedContainer = container as ExtendedElement;
+
       if (
         document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
+        extendedDocument.webkitFullscreenElement ||
+        extendedDocument.mozFullScreenElement ||
+        extendedDocument.msFullscreenElement
       ) {
         // Exit fullscreen
         if (document.exitFullscreen) {
           await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen();
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
+        } else if (extendedDocument.webkitExitFullscreen) {
+          await extendedDocument.webkitExitFullscreen();
+        } else if (extendedDocument.mozCancelFullScreen) {
+          await extendedDocument.mozCancelFullScreen();
+        } else if (extendedDocument.msExitFullscreen) {
+          await extendedDocument.msExitFullscreen();
         }
       } else {
         // Enter fullscreen
         if (container.requestFullscreen) {
           await container.requestFullscreen();
-        } else if ((container as any).webkitRequestFullscreen) {
-          await (container as any).webkitRequestFullscreen();
-        } else if ((container as any).mozRequestFullScreen) {
-          await (container as any).mozRequestFullScreen();
-        } else if ((container as any).msRequestFullscreen) {
-          await (container as any).msRequestFullscreen();
+        } else if (extendedContainer.webkitRequestFullscreen) {
+          await extendedContainer.webkitRequestFullscreen();
+        } else if (extendedContainer.mozRequestFullScreen) {
+          await extendedContainer.mozRequestFullScreen();
+        } else if (extendedContainer.msRequestFullscreen) {
+          await extendedContainer.msRequestFullscreen();
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle permission errors gracefully
-      if (error.name === 'NotAllowedError' || error.message?.includes('permission')) {
+      if (error instanceof Error && (error.name === 'NotAllowedError' || error.message?.includes('permission'))) {
         if (process.env.NODE_ENV === 'development') {
           console.warn('[Tournament] Fullscreen permission denied:', error.message);
         }
@@ -2793,11 +2817,12 @@ export default function TournamentPage() {
     if (tournamentStep !== 'playing') return;
 
     const handleFullscreenChange = () => {
+      const extendedDocument = document as ExtendedDocument;
       const isNowFullscreen = !!(
         document.fullscreenElement ||
-          (document as any).webkitFullscreenElement ||
-          (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
+          extendedDocument.webkitFullscreenElement ||
+          extendedDocument.mozFullScreenElement ||
+        extendedDocument.msFullscreenElement
       );
       setIsFullscreen(isNowFullscreen);
     };
@@ -2899,27 +2924,27 @@ export default function TournamentPage() {
     );
 
     if (tournamentType === 'remote' && tournamentStep === 'playing' && isUserInMatch && isMatchActive && socket) {
-      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const handleBeforeUnload = () => {
         if (socket && socket.readyState === WebSocket.OPEN && currentMatch?.roomCode) {
           try {
             socket.send(JSON.stringify({
               type: 'leaveRoom',
               payload: { roomCode: currentMatch.roomCode }
             }));
-          } catch (err) {
+          } catch {
             // Error sending leaveRoom - connection may already be closed
           }
         }
       };
 
-      const handlePageHide = (e: PageTransitionEvent) => {
+      const handlePageHide = () => {
         if (socket && socket.readyState === WebSocket.OPEN && currentMatch?.roomCode) {
           try {
             socket.send(JSON.stringify({
               type: 'leaveRoom',
               payload: { roomCode: currentMatch.roomCode }
             }));
-          } catch (err) {
+          } catch {
             // Error sending leaveRoom - connection may already be closed
           }
         }
@@ -2941,7 +2966,7 @@ export default function TournamentPage() {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       };
     }
-  }, [tournamentType, tournamentStep, isMatchActive, socket, currentMatch?.id, currentMatch?.roomCode, currentMatch?.player1?.id, currentMatch?.player2?.id, tournamentId, user?.id_user]);
+  }, [tournamentType, tournamentStep, isMatchActive, socket, currentMatch, tournamentId, user?.id_user]);
 
   // Auto-fullscreen for tournament matches - FORCE fullscreen for ALL remote tournament matches
   // Use a Map to track fullscreen attempts per match to ensure each match gets fullscreen
@@ -3017,11 +3042,12 @@ export default function TournamentPage() {
       }
 
       // Check if already in fullscreen
+      const extendedDocument = document as ExtendedDocument;
       const isAlreadyFullscreen = !!(
         document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
+        extendedDocument.webkitFullscreenElement ||
+        extendedDocument.mozFullScreenElement ||
+        extendedDocument.msFullscreenElement
       );
 
       if (isAlreadyFullscreen) {
@@ -3062,9 +3088,9 @@ export default function TournamentPage() {
         // Check if already in fullscreen before attempting
         const alreadyFullscreen = !!(
           document.fullscreenElement ||
-          (document as any).webkitFullscreenElement ||
-          (document as any).mozFullScreenElement ||
-          (document as any).msFullscreenElement
+          extendedDocument.webkitFullscreenElement ||
+          extendedDocument.mozFullScreenElement ||
+          extendedDocument.msFullscreenElement
         );
 
         if (alreadyFullscreen) {
@@ -3076,17 +3102,18 @@ export default function TournamentPage() {
 
         try {
           let success = false;
+          const extendedContainer = currentContainer as ExtendedElement;
           if (currentContainer.requestFullscreen) {
             await currentContainer.requestFullscreen();
             success = true;
-          } else if ((currentContainer as any).webkitRequestFullscreen) {
-            await (currentContainer as any).webkitRequestFullscreen();
+          } else if (extendedContainer.webkitRequestFullscreen) {
+            await extendedContainer.webkitRequestFullscreen();
             success = true;
-          } else if ((currentContainer as any).mozRequestFullScreen) {
-            await (currentContainer as any).mozRequestFullScreen();
+          } else if (extendedContainer.mozRequestFullScreen) {
+            await extendedContainer.mozRequestFullScreen();
             success = true;
-          } else if ((currentContainer as any).msRequestFullscreen) {
-            await (currentContainer as any).msRequestFullscreen();
+          } else if (extendedContainer.msRequestFullscreen) {
+            await extendedContainer.msRequestFullscreen();
             success = true;
           }
 
@@ -3104,7 +3131,7 @@ export default function TournamentPage() {
               console.log(`[Tournament] Auto-fullscreen enabled for Match ${matchId || currentMatchIndex} Round ${matchRound} - ALL players (host and non-host)`);
             }
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Only retry if we haven't succeeded and haven't exceeded max attempts
           if (!fullscreenEnabledRef.current.get(matchKey) && attemptNumber < 5 && tournamentType === 'remote' && isMountedRef.current) {
             const delay = attemptNumber * 200; // 200ms, 400ms, 600ms, 800ms
@@ -3124,10 +3151,11 @@ export default function TournamentPage() {
           } else if (!fullscreenEnabledRef.current.get(matchKey)) {
             // After 5 attempts or if component unmounted, silently fail
             if (isMountedRef.current) {
+              const errorMessage = error instanceof Error ? error.message : String(error);
               if (isRound1Match || isFinalMatch) {
-                console.warn(`[Tournament] ${matchLabel}: Auto-fullscreen failed after ${attemptNumber} attempts:`, error.message);
+                console.warn(`[Tournament] ${matchLabel}: Auto-fullscreen failed after ${attemptNumber} attempts:`, errorMessage);
               } else {
-                console.warn(`[Tournament] Auto-fullscreen failed after ${attemptNumber} attempts for Match ${matchId || currentMatchIndex} Round ${matchRound}:`, error.message);
+                console.warn(`[Tournament] Auto-fullscreen failed after ${attemptNumber} attempts for Match ${matchId || currentMatchIndex} Round ${matchRound}:`, errorMessage);
               }
             }
             autoFullscreenAttemptedRef.current.set(matchKey, true); // Mark as attempted to prevent infinite retries
@@ -3158,7 +3186,7 @@ export default function TournamentPage() {
       fullscreenRetryTimersRef.current.forEach(timer => clearTimeout(timer));
       fullscreenRetryTimersRef.current = [];
     };
-  }, [tournamentStep, currentMatchIndex, tournamentType, currentMatch]);
+  }, [tournamentStep, currentMatchIndex, tournamentType, currentMatch, user?.id_user]);
 
   // Auto-start match for remote tournaments when shouldAutoStartMatch is true
   useEffect(() => {
@@ -3274,7 +3302,7 @@ export default function TournamentPage() {
   //   return [currentMatch.player1, currentMatch.player2];
   // }, [tournamentStep, currentMatchIndex, gameState.tournament?.bracket?.length]); // Use bracket length instead of bracket object
 
-  const createRemoteTournament = (isPrivate: boolean, name?: string) => {
+  const createRemoteTournament = useCallback((isPrivate: boolean, name?: string) => {
     // Check if tournament is already created - if so, don't try to create again
     if (remoteTournament && tournamentId) {
       console.log('Tournament already exists:', tournamentId);
@@ -3340,7 +3368,7 @@ export default function TournamentPage() {
       console.error('WebSocket is in an invalid state:', currentSocket.readyState);
       toast.error(t('game.connectionError') || 'Connection error. Please refresh the page.');
     }
-  };
+  }, [remoteTournament, tournamentId, socket, tournamentType, playerCount, user?.username, user?.avatar, tournamentName, t, defaultAvatars]);
 
   // New tournament search functions
   const searchTournaments = () => {
@@ -3376,28 +3404,6 @@ export default function TournamentPage() {
     }
   };
 
-  const requestJoinTournament = (tournamentId: string) => {
-    if (!socket) {
-      toast.error(t('game.cannotRequestJoin') || 'Unable to send join request. Please check your connection.');
-      return;
-    }
-
-    try {
-      socket.send(JSON.stringify({
-        type: 'game',
-        action: 'requestJoinTournament',
-        payload: {
-          tournamentId: tournamentId,
-          playerName: user?.username || 'Player',
-          avatar: user?.avatar || defaultAvatars[1],
-          color: '#10B981'
-        }
-      }));
-    } catch (error) {
-      console.error('Error requesting to join tournament:', error);
-      toast.error(t('game.failedToRequestJoin') || 'Failed to send join request. Please try again.');
-    }
-  };
 
   const approveJoinRequest = (requestId: string) => {
     if (!socket || !tournamentId) return;
@@ -3432,25 +3438,6 @@ export default function TournamentPage() {
     }
   };
 
-  const acceptTournamentInvite = (tournamentId: string) => {
-    if (!socket) {
-      toast.error(t('game.cannotAcceptInvitation') || 'Unable to accept invitation. Please check your connection.');
-      return;
-    }
-
-    try {
-      socket.send(JSON.stringify({
-        type: 'game',
-        action: 'acceptTournamentInvite',
-        payload: {
-          tournamentId,
-        }
-      }));
-    } catch (error) {
-      console.error('Error accepting tournament invitation:', error);
-      toast.error(t('game.failedToAcceptInvitation') || 'Failed to accept invitation. Please try again.');
-    }
-  };
 
   const inviteToTournament = (friendId: string) => {
     if (!socket || !tournamentId) {
@@ -3480,7 +3467,7 @@ export default function TournamentPage() {
     }
   };
 
-  const findRandomOpponent = () => {
+  const findRandomOpponent = useCallback(() => {
     if (!socket || !tournamentId) {
       toast.error(t('game.cannotFindOpponent') || 'Unable to find opponent. Please check your connection.');
       return;
@@ -3512,7 +3499,7 @@ export default function TournamentPage() {
       toast.error(t('game.failedToFindOpponent') || 'Failed to search for opponent. Please try again.');
       setIsFindingRandomOpponent(false);
     }
-  };
+  }, [socket, tournamentId, remoteTournament, playerCount, user?.username, user?.avatar, t, defaultAvatars]);
 
   const cancelTournament = () => {
     if (!socket || !tournamentId || !isHost) {
@@ -3578,36 +3565,6 @@ export default function TournamentPage() {
 
     const getRoundMatches = (round: number) => bracket.filter(m => m.round === round);
 
-    const getNextMatch = () => {
-      return bracket.find((m, index) =>
-        m.status === 'pending' &&
-        m.player1 &&
-        m.player2 &&
-        index !== currentMatchIndex
-      );
-    };
-
-    const playNextMatch = () => {
-      const nextMatch = getNextMatch();
-      if (nextMatch) {
-        const nextIndex = bracket.findIndex(m => m.id === nextMatch.id);
-        setCurrentMatchIndex(nextIndex);
-        setTournamentStep('playing');
-      }
-    };
-
-    // Find the match that the current user is in
-    const getUserMatch = () => {
-      if (!user?.id_user) return null;
-      const userId = user.id_user.toString();
-      return bracket.find(m =>
-        m.player1 && m.player2 &&
-        (m.player1.id?.toString() === userId || m.player2.id?.toString() === userId) &&
-        m.status === 'pending'
-      );
-    };
-
-    const userMatch = getUserMatch();
     // Only consider matches that have players assigned (are playable)
     // A match is "finished" only if it has both players AND status is 'finished' AND has a winner
     const playableMatches = bracket.filter(m => m.player1 && m.player2);
@@ -3658,9 +3615,11 @@ export default function TournamentPage() {
                 <div className="flex flex-col items-center gap-4 mb-8">
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full blur-md"></div>
-                    <img
+                    <Image
                       src={champion.avatar}
                       alt={champion.name}
+                      width={96}
+                      height={96}
                       className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-yellow-400 shadow-xl object-cover"
                     />
                     <div className="absolute -bottom-2 -right-2 bg-yellow-400 rounded-full p-2">
@@ -3700,7 +3659,7 @@ export default function TournamentPage() {
                     }`}>
                       {match.player1 ? (
                         <>
-                          <img src={match.player1.avatar} alt="" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex-shrink-0" />
+                          <Image src={match.player1.avatar} alt="" width={20} height={20} className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex-shrink-0" />
                           <span className="text-white truncate text-xs">{match.player1.name}</span>
                         </>
                       ) : (
@@ -3712,7 +3671,7 @@ export default function TournamentPage() {
                     }`}>
                       {match.player2 ? (
                         <>
-                          <img src={match.player2.avatar} alt="" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex-shrink-0" />
+                          <Image src={match.player2.avatar} alt="" width={20} height={20} className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex-shrink-0" />
                           <span className="text-white truncate text-xs">{match.player2.name}</span>
                         </>
                       ) : (
@@ -4008,9 +3967,11 @@ export default function TournamentPage() {
                     {remoteTournament.registeredPlayers.map((player: Player, index: number) => (
                       <div key={player.id || `player-${index}`} className="bg-gray-800 rounded-lg p-2 border border-purple-400">
                         <div className="flex items-center gap-2">
-                          <img
+                          <Image
                             src={player.avatar || defaultAvatars[index]}
                             alt={player.name}
+                            width={32}
+                            height={32}
                             className="w-8 h-8 rounded-full object-cover border-2 border-purple-400"
                           />
                           <span className="text-white font-semibold text-xs sm:text-sm truncate">{player.name}</span>
@@ -4127,10 +4088,10 @@ export default function TournamentPage() {
                       <div className="space-y-2 max-h-60 overflow-y-auto">
                         {friends.map((friend, index) => (
                           <button
-                            key={(friend as any).id || (friend as any).id_user || `friend-${index}`}
+                            key={(friend as Player).id || (friend as Player).id_user || `friend-${index}`}
                             onClick={() => {
                               if (tournamentId) {
-                                inviteToTournament((friend as any).id || (friend as any).id_user);
+                                inviteToTournament(((friend as Player).id || (friend as Player).id_user)?.toString() || '');
                                 setShowFriendsListExpanded(false);
                               } else {
                                 toast.warning(t('game.pleaseWaitTournamentCreated') || 'Please wait for the tournament to be created');
@@ -4139,9 +4100,11 @@ export default function TournamentPage() {
                             className="w-full flex items-center justify-between bg-gray-700 hover:bg-gray-600 p-2 sm:p-3 rounded-lg transition-all"
                           >
                             <div className="flex items-center gap-2 sm:gap-3">
-                              <img
+                              <Image
                                 src={friend.avatar}
                                 alt={friend.name}
+                                width={40}
+                                height={40}
                                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-purple-400"
                               />
                               <span className="text-white font-semibold text-sm sm:text-base">{friend.name}</span>
@@ -4265,10 +4228,10 @@ export default function TournamentPage() {
                       <div className="space-y-2 max-h-60 overflow-y-auto">
                         {friends.map((friend, index) => (
                           <button
-                            key={(friend as any).id || (friend as any).id_user || `friend-${index}`}
+                            key={(friend as Player).id || (friend as Player).id_user || `friend-${index}`}
                             onClick={() => {
                               if (tournamentId) {
-                                inviteToTournament((friend as any).id || (friend as any).id_user);
+                                inviteToTournament(((friend as Player).id || (friend as Player).id_user)?.toString() || '');
                                 setShowFriendsListExpanded(false);
                               } else {
                                 toast.warning(t('game.pleaseWaitTournamentCreated') || 'Please wait for the tournament to be created');
@@ -4277,9 +4240,11 @@ export default function TournamentPage() {
                             className="w-full flex items-center justify-between bg-gray-700 hover:bg-gray-600 p-2 sm:p-3 rounded-lg transition-all"
                           >
                             <div className="flex items-center gap-2 sm:gap-3">
-                              <img
+                              <Image
                                 src={friend.avatar}
                                 alt={friend.name}
+                                width={40}
+                                height={40}
                                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-purple-400"
                               />
                               <span className="text-white font-semibold text-sm sm:text-base">{friend.name}</span>
@@ -4342,15 +4307,15 @@ export default function TournamentPage() {
               ) : (
                 <div className="flex flex-col gap-2">
                   {friends.map((friend, index) => (
-                    <div key={(friend as any).id || (friend as any).id_user || `friend-${index}`} className="flex items-center justify-between bg-gray-800 p-2 rounded-lg">
+                    <div key={(friend as Player).id || (friend as Player).id_user || `friend-${index}`} className="flex items-center justify-between bg-gray-800 p-2 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <img src={friend.avatar} alt={friend.name} className="w-8 h-8 rounded-full" />
+                        <Image src={friend.avatar} alt={friend.name} width={32} height={32} className="w-8 h-8 rounded-full" />
                         <span className="text-white">{friend.name}</span>
                       </div>
                       <button
                         onClick={() => {
                           if (tournamentId) {
-                            inviteToTournament((friend as any).id || (friend as any).id_user);
+                            inviteToTournament(((friend as Player).id || (friend as Player).id_user)?.toString() || '');
                           } else {
                             alert(t('game.pleaseWaitTournamentCreated'));
                           }
@@ -4506,19 +4471,21 @@ export default function TournamentPage() {
                             <div className="space-y-1 max-h-40 overflow-y-auto">
                               {friends.map((friend, index) => (
                                 <button
-                                  key={(friend as any).id || (friend as any).id_user || `friend-${index}`}
+                                  key={(friend as Player).id || (friend as Player).id_user || `friend-${index}`}
                                   onClick={() => {
                                     if (tournamentId) {
-                                      inviteToTournament(String(friend.id ?? (friend as any).id_user ?? ''));
+                                      inviteToTournament(String(friend.id ?? (friend as Player).id_user ?? ''));
                                       setShowFriendsListExpanded(false);
                                     }
                                   }}
                                   className="w-full flex items-center justify-between bg-gray-700 hover:bg-gray-600 p-2 rounded text-xs"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <img
+                                    <Image
                                       src={friend.avatar}
                                       alt={friend.name}
+                                      width={24}
+                                      height={24}
                                       className="w-6 h-6 rounded-full border border-purple-400"
                                     />
                                     <span className="text-white truncate">{friend.name}</span>
@@ -4562,9 +4529,11 @@ export default function TournamentPage() {
                   {remoteTournament.registeredPlayers.map((player: Player, index: number) => (
                     <div key={player.id || `player-${index}`} className="bg-gray-800 rounded-lg p-2 xs:p-3 border border-purple-400">
                       <div className="flex items-center gap-2 xs:gap-3">
-                        <img
+                        <Image
                           src={player.avatar || defaultAvatars[index]}
                           alt={player.name}
+                          width={48}
+                          height={48}
                           className="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-purple-400 flex-shrink-0"
                         />
                         <div className="min-w-0 flex-1">
@@ -4608,9 +4577,11 @@ export default function TournamentPage() {
                     <div key={request.id} className="bg-yellow-900 bg-opacity-30 rounded-lg p-2 sm:p-3 lg:p-4 border border-yellow-500">
                       <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 sm:gap-3">
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                          <img
+                          <Image
                             src={request.player.avatar}
                             alt={request.player.name}
+                            width={48}
+                            height={48}
                             className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-yellow-400 flex-shrink-0"
                           />
                           <div className="min-w-0">
@@ -4717,15 +4688,15 @@ export default function TournamentPage() {
                   ) : (
                   <div className="flex flex-col gap-2">
                       {friends.map((friend, index) => (
-                        <div key={(friend as any).id || (friend as any).id_user || `friend-${index}`} className="flex items-center justify-between bg-gray-800 p-2 rounded-lg">
+                        <div key={(friend as Player).id || (friend as Player).id_user || `friend-${index}`} className="flex items-center justify-between bg-gray-800 p-2 rounded-lg">
                         <div className="flex items-center gap-2">
-                          <img src={friend.avatar} alt={friend.name} className="w-8 h-8 rounded-full" />
+                          <Image src={friend.avatar} alt={friend.name} width={32} height={32} className="w-8 h-8 rounded-full" />
                             <span className="text-white">{friend.name}</span>
                         </div>
                         <button
                           onClick={() => {
                               if (tournamentId) {
-                                inviteToTournament((friend as any).id || (friend as any).id_user);
+                                inviteToTournament(((friend as Player).id || (friend as Player).id_user)?.toString() || '');
                               } else {
                                 toast.warning(t('game.pleaseWaitTournamentCreated') || 'Please wait for the tournament to be created');
                               }
@@ -4887,9 +4858,6 @@ export default function TournamentPage() {
       );
     }
 
-    const userId = user?.id_user?.toString();
-    const isUserInMatch = currentMatch.player1?.id?.toString() === userId ||
-                         currentMatch.player2?.id?.toString() === userId;
 
     return (
       <div
@@ -4914,18 +4882,22 @@ export default function TournamentPage() {
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-2 sm:px-3 py-1 sm:py-2">
-                <img
+                <Image
                   src={currentMatch.player1.avatar}
                   alt={currentMatch.player1.name}
+                  width={32}
+                  height={32}
                   className="w-6 h-6 sm:w-8 sm:h-8 rounded-full"
                 />
                 <span className="text-white font-semibold text-sm sm:text-base">{currentMatch.player1.name}</span>
               </div>
               <span className="text-purple-300 font-bold text-sm sm:text-base">{t('game.vs')}</span>
               <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-2 sm:px-3 py-1 sm:py-2">
-                <img
+                <Image
                   src={currentMatch.player2.avatar}
                   alt={currentMatch.player2.name}
+                  width={32}
+                  height={32}
                   className="w-6 h-6 sm:w-8 sm:h-8 rounded-full"
                 />
                 <span className="text-white font-semibold text-sm sm:text-base">{currentMatch.player2.name}</span>
@@ -5033,8 +5005,8 @@ export default function TournamentPage() {
             const userId = user?.id_user?.toString();
 
             // Check if user is a winner of any Round 1 match
-            const round1Matches = bracket.filter((m: any) => m.round === 1);
-            const userRound1Match = round1Matches.find((m: any) =>
+            const round1Matches = bracket.filter((m: TournamentMatch) => m.round === 1);
+            const userRound1Match = round1Matches.find((m: TournamentMatch) =>
               m.status === 'finished' &&
               m.winner &&
               m.player1 && m.player2 &&
@@ -5056,8 +5028,7 @@ export default function TournamentPage() {
             if (!isRound1Winner) return null;
 
             // Check if final match is ready (both Round 1 matches finished)
-            const finalMatch = bracket.find((m: any) => m.round === 2);
-            const bothRound1Finished = round1Matches.every((m: any) => m.status === 'finished');
+            const bothRound1Finished = round1Matches.every((m: TournamentMatch) => m.status === 'finished');
 
             return (
               <div className="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50">
@@ -5110,8 +5081,8 @@ export default function TournamentPage() {
             const userId = user?.id_user?.toString();
 
             // Check if user is a winner of any Round 1 match
-            const round1Matches = bracket.filter((m: any) => m.round === 1);
-            const userRound1Match = round1Matches.find((m: any) =>
+            const round1Matches = bracket.filter((m: TournamentMatch) => m.round === 1);
+            const userRound1Match = round1Matches.find((m: TournamentMatch) =>
               m.status === 'finished' &&
               m.winner &&
               m.player1 && m.player2 &&
@@ -5131,7 +5102,7 @@ export default function TournamentPage() {
             );
 
             // Check if final match exists, has players set, but no room created yet
-            const finalMatch = bracket.find((m: any) => m.round === 2);
+            const finalMatch = bracket.find((m: TournamentMatch) => m.round === 2);
             const finalMatchReadyForButton = finalMatch &&
                                            finalMatch.player1 &&
                                            finalMatch.player2 &&
@@ -5208,9 +5179,11 @@ export default function TournamentPage() {
                 <FaTrophy className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400 mx-auto mb-3 sm:mb-4 animate-bounce" />
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">{t('game.matchWinner')}</h3>
                 <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <img
+                  <Image
                     src={matchWinner.avatar}
                     alt={matchWinner.name}
+                    width={48}
+                    height={48}
                     className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-yellow-400"
                   />
 
@@ -5391,9 +5364,11 @@ export default function TournamentPage() {
                 <FaTrophy className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400 mx-auto mb-3 sm:mb-4" />
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">{t('game.matchWinner')}</h3>
                 <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <img
+                  <Image
                     src={matchWinner.avatar}
                     alt={matchWinner.name}
+                    width={48}
+                    height={48}
                     className="w-10 h-10 sm:w-12 sm:h-12 rounded-full"
                   />
                   <span className="text-lg sm:text-xl font-semibold text-white">{matchWinner.name}</span>
@@ -5428,8 +5403,8 @@ export default function TournamentPage() {
                     const userId = user?.id_user?.toString();
 
                     // Check if user is a winner of any Round 1 match
-                    const round1Matches = bracket.filter((m: any) => m.round === 1);
-                    const userRound1Match = round1Matches.find((m: any) =>
+                    const round1Matches = bracket.filter((m: TournamentMatch) => m.round === 1);
+                    const userRound1Match = round1Matches.find((m: TournamentMatch) =>
                       m.status === 'finished' &&
                       m.winner &&
                       m.player1 && m.player2 &&
@@ -5449,7 +5424,7 @@ export default function TournamentPage() {
                     );
 
                     // Check if final match exists, has players set, but no room created yet
-                    const finalMatch = bracket.find((m: any) => m.round === 2);
+                    const finalMatch = bracket.find((m: TournamentMatch) => m.round === 2);
                     const finalMatchReadyForButton = finalMatch &&
                                                    finalMatch.player1 &&
                                                    finalMatch.player2 &&
@@ -5678,10 +5653,10 @@ export default function TournamentPage() {
               </div>
               <div className="h-4 w-px bg-gray-600"></div>
               <div className="flex items-center gap-2">
-                <img src={currentMatch.player1.avatar} alt={currentMatch.player1.name} className="w-6 h-6 rounded-full" />
+                <Image src={currentMatch.player1.avatar} alt={currentMatch.player1.name} width={24} height={24} className="w-6 h-6 rounded-full" />
                 <span className="font-semibold">{currentMatch.player1.name}</span>
                 <span className="mx-2 opacity-50">vs</span>
-                <img src={currentMatch.player2.avatar} alt={currentMatch.player2.name} className="w-6 h-6 rounded-full" />
+                <Image src={currentMatch.player2.avatar} alt={currentMatch.player2.name} width={24} height={24} className="w-6 h-6 rounded-full" />
                 <span className="font-semibold">{currentMatch.player2.name}</span>
               </div>
               <div className="h-4 w-px bg-gray-600"></div>
@@ -5786,9 +5761,11 @@ export default function TournamentPage() {
                 🏆 {t('game.tournamentChampion')} 🏆
               </h1>
               <div className="flex flex-col items-center gap-2 sm:gap-3">
-                <img
+                <Image
                   src={champion.avatar}
                   alt={champion.name}
+                  width={80}
+                  height={80}
                   className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-yellow-300 shadow-lg"
                 />
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
@@ -5831,7 +5808,7 @@ export default function TournamentPage() {
                   {t('game.matchResults')}
                 </h4>
                 <div className="space-y-1.5 sm:space-y-2">
-                  {matchStatistics.map((stat: any, index: number) => (
+                  {matchStatistics.map((stat: { matchNumber: number; round: number; player1: string; player2: string; winner: string }, index: number) => (
                     <div
                       key={index}
                       className="bg-gray-700/50 rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3"
@@ -6055,9 +6032,11 @@ export default function TournamentPage() {
                       <div className="flex flex-col gap-2 xs:gap-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 xs:gap-3 mb-2">
-                            <img
+                            <Image
                               src={tournament.host.avatar}
                               alt={tournament.host.name}
+                              width={32}
+                              height={32}
                               className="w-6 h-6 xs:w-8 xs:h-8 rounded-full flex-shrink-0"
                             />
                             <div className="min-w-0 flex-1">

@@ -1,7 +1,6 @@
 // middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { useUserStore } from './store/userStore'
 
 
 
@@ -19,17 +18,16 @@ export function middleware(request: NextRequest) {
   // console.log('middleware - user:', token);
 
   // ⚠️ IMPORTANT: Replace 'auth_token' with the actual name of your authentication cookie.
-  const isAuthenticated = request.cookies.has('auth_token') 
+  const isAuthenticated = request.cookies.has('auth_token')
   const currentPath = request.nextUrl.pathname
 
   const isProtectedPath = PROTECTED_PATHS.some(path => currentPath.startsWith(path))
-  const isPublicPath = PUBLIC_PATHS.some(path => currentPath.startsWith(path))
 
   // 1. If trying to access a PROTECTED route without a token, redirect to signIn
   if (isProtectedPath && !isAuthenticated) {
     const signInUrl = new URL('/signIn', request.url)
     // Optional: Add a redirect query parameter to return the user after login
-    // signInUrl.searchParams.set('redirect', currentPath) 
+    // signInUrl.searchParams.set('redirect', currentPath)
     return NextResponse.redirect(signInUrl)
   }
 
@@ -37,7 +35,7 @@ export function middleware(request: NextRequest) {
   // if (isPublicPath && isAuthenticated) {
   //   return NextResponse.redirect(new URL('/', request.url))
   // }
-  
+
   return NextResponse.next()
 }
 

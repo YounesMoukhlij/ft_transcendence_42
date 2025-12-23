@@ -65,7 +65,7 @@ export function getBackendURL(): string {
     }
 
     return url;
-  } catch (error) {
+  } catch {
     console.error('Invalid backend URL configuration:', { host: finalHost, port: finalPort });
     // Still return a valid URL even if validation fails
     return `http://${finalHost}:${finalPort}`;
@@ -103,7 +103,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<string |
 export async function makeAuthenticatedRequest<T>(
   requestFn: (token: string) => Promise<T>,
   user: { access_token?: string; refresh_token?: string } | null,
-  setUser: (user: any) => void
+  setUser: (user: { access_token?: string; refresh_token?: string }) => void
 ): Promise<T> {
   if (!user?.access_token) {
     throw new Error('No access token available');
@@ -112,9 +112,9 @@ export async function makeAuthenticatedRequest<T>(
   try {
     // Try the request with current token
     return await requestFn(user.access_token);
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If 401 and we have a refresh token, try to refresh
-    if (error.response?.status === 401 && user?.refresh_token) {
+    if (axios.isAxiosError(error) && error.response?.status === 401 && user?.refresh_token) {
       console.log('Token expired, attempting to refresh...');
 
       const newAccessToken = await refreshAccessToken(user.refresh_token);

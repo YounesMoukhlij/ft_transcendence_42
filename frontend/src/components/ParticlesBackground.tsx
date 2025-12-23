@@ -5,9 +5,9 @@ import { loadSlim } from "@tsparticles/slim";
 
 
 
-const ParticlesBackground = (props) => {
+const ParticlesBackground = () => {
 
-  const [init, setInit] = useState(false);
+  const [_init, setInit] = useState(false);
 
 
   useEffect(() => {

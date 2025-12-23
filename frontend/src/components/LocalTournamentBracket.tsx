@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { TournamentMatch } from './GameContext';
 import { FaTrophy, FaGamepad, FaCheck, FaClock } from 'react-icons/fa';
 import { useTranslation } from '@/contexts/LanguageContext';
@@ -66,7 +67,6 @@ export default function LocalTournamentBracket({
       <div className="flex justify-around items-start gap-8 flex-wrap">
         {rounds.map((round) => {
           const roundMatches = bracket.filter(m => m.round === round);
-          const isCurrentRound = currentMatch?.round === round;
 
           return (
             <div key={round} className="flex-1 min-w-[280px]">
@@ -78,7 +78,7 @@ export default function LocalTournamentBracket({
               </div>
 
               <div className="space-y-4">
-                {roundMatches.map((match, index) => {
+                {roundMatches.map((match) => {
                   const isCurrentMatch = match.id === currentMatch?.id;
                   const isReady = match.status === 'pending' && match.player1 && match.player2 && !match.winner;
                   const isFinished = match.status === 'finished';
@@ -114,9 +114,11 @@ export default function LocalTournamentBracket({
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <img
+                          <Image
                             src={match.player1?.avatar || '/default-avatar.png'}
                             alt={match.player1?.name || t('game.player1')}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded-full border-2 border-blue-400"
                           />
                           <span className="text-white font-semibold flex-1">
@@ -142,9 +144,11 @@ export default function LocalTournamentBracket({
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <img
+                          <Image
                             src={match.player2?.avatar || '/default-avatar.png'}
                             alt={match.player2?.name || t('game.player2')}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded-full border-2 border-blue-400"
                           />
                           <span className="text-white font-semibold flex-1">

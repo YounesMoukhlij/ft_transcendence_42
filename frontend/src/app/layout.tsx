@@ -1,6 +1,6 @@
 // 'use client'; // kandiroha bash ngolo l NextJs had lcomponent ghadi tkhdm f client side w ghadi tcompila f browser --> client component
 
-import ParticlesBackground from "../components/ParticlesBackground";
+// import ParticlesBackground from "../components/ParticlesBackground";
 // import SignInUp from "./Auth/page";
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'

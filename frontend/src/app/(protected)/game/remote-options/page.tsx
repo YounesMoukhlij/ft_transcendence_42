@@ -110,7 +110,7 @@ export default function RemoteOptionsPage() {
                 {t('game.inviteFriend')}
               </h2>
               <p className="text-gray-400 text-sm md:text-base text-center mb-6 max-w-xs">
-                Challenge your friends to a match and show them who's the best
+                Challenge your friends to a match and show them who&apos;s the best
               </p>
 
               {/* Action Indicator */}

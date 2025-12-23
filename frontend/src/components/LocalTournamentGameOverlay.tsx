@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Player } from './GameContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 
@@ -31,9 +32,11 @@ export default function LocalTournamentGameOverlay({
           {/* Player 1 */}
           <div className="flex items-center gap-3 flex-1">
             <div className="relative">
-              <img
+              <Image
                 src={player1.avatar || defaultProfileImg}
                 alt={player1.name}
+                width={64}
+                height={64}
                 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-blue-400 shadow-lg"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = defaultProfileImg;
@@ -59,9 +62,11 @@ export default function LocalTournamentGameOverlay({
           {/* Player 2 */}
           <div className="flex items-center gap-3 flex-1 flex-row-reverse text-right">
             <div className="relative">
-              <img
+              <Image
                 src={player2.avatar || defaultProfileImg}
                 alt={player2.name}
+                width={64}
+                height={64}
                 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-red-400 shadow-lg"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = defaultProfileImg;
@@ -85,12 +90,14 @@ export default function LocalTournamentGameOverlay({
 
   // Fullscreen minimal player info (matches remote 1v1 style)
   return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700 shadow-xl">
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700 shadow-xl">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <img
+          <Image
             src={player1.avatar || defaultProfileImg}
             alt={player1.name}
+            width={32}
+            height={32}
             className="w-8 h-8 rounded-full object-cover border-2 border-blue-400"
             onError={(e) => {
               (e.target as HTMLImageElement).src = defaultProfileImg;
@@ -107,9 +114,11 @@ export default function LocalTournamentGameOverlay({
           <span className="text-white text-xs font-semibold truncate max-w-[100px]">
             {player2.name || 'P2'}
           </span>
-          <img
+          <Image
             src={player2.avatar || defaultProfileImg}
             alt={player2.name}
+            width={32}
+            height={32}
             className="w-8 h-8 rounded-full object-cover border-2 border-red-400"
             onError={(e) => {
               (e.target as HTMLImageElement).src = defaultProfileImg;

@@ -1,13 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline, IoTrophyOutline} from "react-icons/io5";
 import { useTranslation } from '../contexts/LanguageContext';
 
 export default function Sidebar() {
   const { t } = useTranslation();
-  const pathname = usePathname();
   const navItems = [
     { path: '/profile', icon: <IoPersonOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: t('common.profile') },
     { path: '/chat', icon: <IoChatbubbleOutline className=" w-6 h-6 md:w-8 md:h-8  hover:scale-125 transition-all duration-300 text-gray-500 " />, alt: t('common.chat') },

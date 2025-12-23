@@ -9,6 +9,23 @@ interface TicTacToeProps {
   onBack?: () => void;
 }
 
+// Extended Document interface for vendor-prefixed fullscreen APIs
+interface ExtendedDocument extends Document {
+  webkitFullscreenElement?: Element | null;
+  mozFullScreenElement?: Element | null;
+  msFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void>;
+  mozCancelFullScreen?: () => Promise<void>;
+  msExitFullscreen?: () => Promise<void>;
+}
+
+// Extended Element interface for vendor-prefixed fullscreen APIs
+interface ExtendedElement extends HTMLElement {
+  webkitRequestFullscreen?: () => Promise<void>;
+  mozRequestFullScreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+}
+
 const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
   const [currentPlayer, setCurrentPlayer] = useState<Player>('X');
@@ -83,36 +100,39 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
     const container = gameContainerRef.current;
     if (!container) return;
 
+    const extendedDocument = document as ExtendedDocument;
+    const extendedContainer = container as ExtendedElement;
+
     try {
       if (
         document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
+        extendedDocument.webkitFullscreenElement ||
+        extendedDocument.mozFullScreenElement ||
+        extendedDocument.msFullscreenElement
       ) {
         // Exit fullscreen
         if (document.exitFullscreen) {
           await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen();
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
+        } else if (extendedDocument.webkitExitFullscreen) {
+          await extendedDocument.webkitExitFullscreen();
+        } else if (extendedDocument.mozCancelFullScreen) {
+          await extendedDocument.mozCancelFullScreen();
+        } else if (extendedDocument.msExitFullscreen) {
+          await extendedDocument.msExitFullscreen();
         }
       } else {
         // Enter fullscreen
         if (container.requestFullscreen) {
           await container.requestFullscreen();
           container.focus();
-        } else if ((container as any).webkitRequestFullscreen) {
-          await (container as any).webkitRequestFullscreen();
+        } else if (extendedContainer.webkitRequestFullscreen) {
+          await extendedContainer.webkitRequestFullscreen();
           container.focus();
-        } else if ((container as any).mozRequestFullScreen) {
-          await (container as any).mozRequestFullScreen();
+        } else if (extendedContainer.mozRequestFullScreen) {
+          await extendedContainer.mozRequestFullScreen();
           container.focus();
-        } else if ((container as any).msRequestFullscreen) {
-          await (container as any).msRequestFullscreen();
+        } else if (extendedContainer.msRequestFullscreen) {
+          await extendedContainer.msRequestFullscreen();
           container.focus();
         }
       }
@@ -124,11 +144,12 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
   // Fullscreen change handler
   useEffect(() => {
     const handleFullscreenChange = () => {
+      const extendedDocument = document as ExtendedDocument;
       setIsFullscreen(
         !!(document.fullscreenElement ||
-          (document as any).webkitFullscreenElement ||
-          (document as any).mozFullScreenElement ||
-          (document as any).msFullscreenElement)
+          extendedDocument.webkitFullscreenElement ||
+          extendedDocument.mozFullScreenElement ||
+          extendedDocument.msFullscreenElement)
       );
     };
 
@@ -253,7 +274,7 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
               <div className="space-y-3">
                 {winner === 'draw' ? (
                   <div className="inline-block px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full shadow-lg">
-                    <p className="text-2xl md:text-3xl font-bold text-white">It's a Draw! 🤝</p>
+                    <p className="text-2xl md:text-3xl font-bold text-white">It&apos;s a Draw! 🤝</p>
                   </div>
                 ) : (
                   <div className="inline-block px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg animate-pulse">

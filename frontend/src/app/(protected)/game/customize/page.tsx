@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext } from '@/components/GameContext';
+import { useGameContext, GameCustomisation } from '@/components/GameContext';
 import GameCustomization from '@/components/GameCustomization';
 import { useUserStore } from '@/store/userStore';
 import { useTranslation } from '@/contexts/LanguageContext';
@@ -146,7 +146,7 @@ export default function CustomizePage() {
       socket.removeEventListener('error', handleError);
       clearInterval(interval);
     };
-  }, [socket, storeIsConnected]);
+  }, [socket, storeIsConnected, _hasHydrated, connect, gameState.mode, initConnection]);
 
   // Set page title based on game mode
   useEffect(() => {
@@ -374,7 +374,7 @@ export default function CustomizePage() {
         socket.removeEventListener('message', handleMessage);
       };
     }
-  }, [socket, router, gameState.mode]);
+  }, [socket, router, gameState.mode, gameState.roomCode, t]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -405,7 +405,7 @@ export default function CustomizePage() {
     }
   };
 
-  const handleStartGame = (customization: any) => {
+  const handleStartGame = (customization: GameCustomisation) => {
     if (gameState.mode === 'remote') {
       // Get user from state or localStorage
       let currentUser = user;
@@ -526,7 +526,7 @@ export default function CustomizePage() {
             const parsed = JSON.parse(stored);
             hasStoredUser = !!(parsed?.state?.user?.username || parsed?.state?.user?.id_user);
           }
-        } catch (e) {
+        } catch {
           // Ignore parse errors
         }
       }

@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { Player } from './GameContext';
-import { FaUser, FaUpload, FaCrown } from 'react-icons/fa';
+import { FaUser, FaCrown } from 'react-icons/fa';
+import Image from 'next/image';
 import { useTranslation } from '@/contexts/LanguageContext';
 
 interface LocalTournamentPlayerRegistrationProps {
   tempPlayers: Player[];
   defaultAvatars: string[];
-  playerCount: number;
   updatePlayer: (index: number, field: keyof Player, value: string) => void;
   onComplete: () => void;
   onBack: () => void;
@@ -17,7 +17,6 @@ interface LocalTournamentPlayerRegistrationProps {
 export default function LocalTournamentPlayerRegistration({
   tempPlayers,
   defaultAvatars,
-  playerCount,
   updatePlayer,
   onComplete,
   onBack,
@@ -53,9 +52,11 @@ export default function LocalTournamentPlayerRegistration({
             {/* Player Header */}
             <div className="flex items-center gap-3 mb-4">
               <div className="relative flex-shrink-0">
-                <img
+                <Image
                   src={player.avatar}
                   alt={`${t('game.player')} ${index + 1}`}
+                  width={64}
+                  height={64}
                   className="w-16 h-16 rounded-full object-cover border-2 border-blue-400"
                 />
                 {index === 0 && (
@@ -102,9 +103,11 @@ export default function LocalTournamentPlayerRegistration({
                         : 'border-gray-600 hover:border-blue-400'
                     }`}
                   >
-                    <img
+                    <Image
                       src={avatar}
                       alt={`Avatar ${avatarIndex + 1}`}
+                      width={100}
+                      height={100}
                       className="w-full h-full object-cover"
                     />
                   </button>

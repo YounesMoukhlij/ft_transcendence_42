@@ -7,7 +7,6 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/autoplay';
 import Image from 'next/image';
-import styles from './modeswiper.module.css';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from './GameContext';
 import { useTranslation } from '../contexts/LanguageContext';

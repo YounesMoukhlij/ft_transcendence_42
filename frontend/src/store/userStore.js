@@ -66,7 +66,7 @@ export const useUserStore = create(
             console.log('Cleaning up closed/closing socket before reconnecting');
             try {
               existingSocket.close();
-            } catch (e) {
+            } catch {
               // Ignore errors when closing
             }
             set({ socket: null, isConnect: false });

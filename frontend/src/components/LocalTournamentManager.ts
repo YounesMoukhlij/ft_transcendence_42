@@ -48,8 +48,8 @@ export default class LocalTournamentManager {
     bracket.push({
       id: 3,
       round: 2,
-      player1: null as any,
-      player2: null as any,
+      player1: null as Player | null,
+      player2: null as Player | null,
       status: 'pending',
       winner: null,
     });

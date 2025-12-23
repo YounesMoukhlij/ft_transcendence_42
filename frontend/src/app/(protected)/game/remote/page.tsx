@@ -11,6 +11,17 @@ import { useUserStore } from '@/store/userStore';
 import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
 import { useTranslation } from '@/contexts/LanguageContext';
+import { ServerGameState } from '@/types/game';
+import Image from 'next/image';
+
+interface Friend {
+  id_user?: number;
+  id?: number;
+  username?: string;
+  name?: string;
+  profile_img?: string;
+  status?: boolean | number;
+}
 
 
 export default function RemoteGamePage() {
@@ -35,11 +46,11 @@ export default function RemoteGamePage() {
         const [showFriendsDropdown, setShowFriendsDropdown] = useState(false);
         const [showCustomization, setShowCustomization] = useState(false);
         const dropdownRef = useRef<HTMLDivElement>(null);
-        const [serverGameState, setServerGameState] = useState<any | null>(null);
+        const [serverGameState, setServerGameState] = useState<ServerGameState | null>(null);
         const [opponentLeft, setOpponentLeft] = useState(false);
         const [selection, setSelection] = useState<'menu' | 'invite'>('menu');
-        const [friendsList, setFriendsList] = useState<any[]>([]);
-        const [pendingInvitation, setPendingInvitation] = useState<any>(null);
+        const [friendsList, setFriendsList] = useState<Friend[]>([]);
+        const [pendingInvitation, setPendingInvitation] = useState<{ friend: Friend; timestamp: number } | null>(null);
         const { user } = useUserStore();
 
         const findMatch = () => {
@@ -67,7 +78,6 @@ export default function RemoteGamePage() {
         const startMatchmaking = () => {
           setShowCustomization(false);
           const username = (globalStore.getState() as GlobalStoreType).username || '';
-          const userStore = globalStore.getState() as any;
           if (!socket || !username.trim()) {
             setError(t('game.noUsernameFound'));
             return;
@@ -94,7 +104,7 @@ export default function RemoteGamePage() {
         };
 
         // Send direct invitation to a friend
-        const sendInvitationToFriend = (friend: any) => {
+        const sendInvitationToFriend = (friend: Friend) => {
           const username = (globalStore.getState() as GlobalStoreType).username || user?.username || '';
           if (!socket || !username.trim()) {
             setError(t('game.noUsernameFound'));
@@ -162,7 +172,7 @@ export default function RemoteGamePage() {
               if (message.type === 'matchFound') {
                 setIsSearching(false);
                 setRoomCode(message.payload.roomCode);
-                const players = message.payload.players.map((p: any) => ({ name: p.username, avatar: '', color: '' }));
+                const players = message.payload.players.map((p: { username: string }) => ({ name: p.username, avatar: '', color: '' }));
                 setPlayers(players);
                 setGameStatus('playing');
                 setError('');
@@ -182,7 +192,6 @@ export default function RemoteGamePage() {
                 // Received game invitation from friend
                 const inviter = message.payload.from;
                 const roomCode = message.payload.roomCode;
-                const inviterCustomization = message.payload.customization || {};
 
                 const accept = window.confirm(t('game.invitedToPlayGame', { username: inviter.username }));
 
@@ -248,7 +257,7 @@ export default function RemoteGamePage() {
             ws.onclose = null;
             ws.onerror = null;
           };
-        }, [setGameMode, setPlayers, setRoomCode, router, gameState.customisation]);
+        }, [setGameMode, setPlayers, setRoomCode, router, gameState.customisation, socket, t]);
 
         // Fetch friends list
         useEffect(() => {
@@ -541,13 +550,12 @@ export default function RemoteGamePage() {
                           >
                             <div className="flex items-center gap-3">
                               <div className="relative">
-                                <img
+                                <Image
                                   src={friend.profile_img || '/user.png'}
-                                  alt={friend.username || friend.name}
+                                  alt={friend.username || friend.name || 'Friend'}
+                                  width={32}
+                                  height={32}
                                   className="w-8 h-8 rounded-full bg-gray-600 object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = '/user.png';
-                                  }}
                                 />
                                 <div
                                   className={`absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full border border-gray-700 ${

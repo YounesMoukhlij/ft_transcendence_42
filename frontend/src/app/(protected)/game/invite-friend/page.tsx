@@ -1,21 +1,28 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/userStore';
 import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
-import { useGameContext } from '@/components/GameContext';
 import { toast } from 'sonner';
 import { useTranslation } from '@/contexts/LanguageContext';
+
+interface Friend {
+  id_user: number;
+  username?: string;
+  name?: string;
+  profile_img?: string;
+  status?: boolean | number;
+}
 
 export default function InviteFriendPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user, clearUser } = useUserStore();
-  const { gameState, setCustomisation } = useGameContext();
   const { socket } = useUserStore();
-  const [friendsList, setFriendsList] = useState<any[]>([]);
+  const [friendsList, setFriendsList] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sendingInvitation, setSendingInvitation] = useState<number | null>(null); // Track which friend invitation is being sent
@@ -53,7 +60,7 @@ export default function InviteFriendPage() {
         );
         setFriendsList(response.data || []);
         setError(''); // Clear any previous errors on success
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
           if (error.response?.status === 401) {
             // Unauthorized - token is invalid or expired
@@ -103,6 +110,9 @@ export default function InviteFriendPage() {
       console.log('[InviteFriend] No socket available, cannot listen for messages');
       return;
     }
+
+    // Capture the ref value at effect time (for cleanup function)
+    const timeoutMap = declineTimeoutRef.current;
 
     // Log socket state
     console.log('[InviteFriend] Setting up WebSocket listener, socket state:', {
@@ -214,11 +224,11 @@ export default function InviteFriendPage() {
     socket.addEventListener('message', handleMessage);
     return () => {
       socket.removeEventListener('message', handleMessage);
-      // Cleanup any pending timeouts on unmount
-      declineTimeoutRef.current.forEach((timeoutId) => {
+      // Cleanup any pending timeouts on unmount using captured value
+      timeoutMap.forEach((timeoutId) => {
         clearTimeout(timeoutId);
       });
-      declineTimeoutRef.current.clear();
+      timeoutMap.clear();
     };
   }, [socket, t]);
 
@@ -262,7 +272,7 @@ export default function InviteFriendPage() {
   }, []);
 
   // Send game invitation to a friend
-  const sendInvitation = async (friend: any) => {
+  const sendInvitation = async (friend: Friend) => {
     if (!user?.access_token) {
       setError(t('game.mustBeLoggedIn'));
       return;
@@ -312,7 +322,7 @@ export default function InviteFriendPage() {
           return newSet;
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending invitation:', error);
       if (error.response?.status === 401) {
         setError(t('game.mustBeLoggedIn'));
@@ -383,9 +393,11 @@ export default function InviteFriendPage() {
                   >
                     <div className="flex items-center gap-4 flex-1">
                       <div className="relative">
-                        <img
+                        <Image
                           src={friend.profile_img || '/user.png'}
-                          alt={friend.username || friend.name}
+                          alt={friend.username || friend.name || 'Friend'}
+                          width={48}
+                          height={48}
                           className="w-12 h-12 rounded-full bg-gray-600 object-cover border-2 border-gray-500"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = '/user.png';

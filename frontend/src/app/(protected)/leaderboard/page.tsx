@@ -91,7 +91,7 @@ export default function LeaderboardPage() {
         if (!res.ok) throw new Error('Failed to fetch');
         const result = await res.json();
         setData(result);
-      } catch (err) {
+      } catch {
         setError(t('leaderboard.failedToLoad'));
       } finally {
         setLoading(false);

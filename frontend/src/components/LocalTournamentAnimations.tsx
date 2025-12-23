@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Player } from './GameContext';
 import { FaTrophy, FaCrown, FaFire, FaStar } from 'react-icons/fa';
 import { useTranslation } from '@/contexts/LanguageContext';
@@ -17,8 +18,8 @@ export default function LocalTournamentAnimations({
   onBack,
 }: LocalTournamentAnimationsProps) {
   const { t } = useTranslation();
-  const [showConfetti, setShowConfetti] = useState(true);
-  const [showChampion, setShowChampion] = useState(false);
+  const [showConfetti] = useState(true);
+  const [, setShowChampion] = useState(false);
 
   useEffect(() => {
     // Show champion after confetti
@@ -99,9 +100,11 @@ export default function LocalTournamentAnimations({
           <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-yellow-400 to-orange-400 opacity-50"></div>
           <div className="relative bg-gray-900 rounded-3xl p-8 border-4 border-yellow-400 shadow-2xl">
             <div className="flex items-center justify-center gap-4 mb-4">
-              <img
+              <Image
                 src={champion.avatar}
                 alt={champion.name}
+                width={96}
+                height={96}
                 className="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg"
               />
               <FaCrown className="text-yellow-400 text-5xl animate-bounce" />

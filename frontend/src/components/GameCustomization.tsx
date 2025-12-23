@@ -65,7 +65,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           const parsed = JSON.parse(stored);
           return parsed?.state?.user?.access_token || parsed?.state?.user?.token || null;
         }
-      } catch (e) {
+      } catch {
         // Ignore parse errors
       }
     }
@@ -95,13 +95,10 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
   const [paddleColor, setPaddleColor] = useState<string>(getRandomDefaults.paddleColor);
   const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>(getRandomDefaults.aiDifficulty);
 
-  // Always ready since we have defaults pre-selected
-  const isReady = true;
-
   // Create axios instance with token, but only if token exists
   const axiosInstance = useMemo(() => {
     const baseURL = getBackendURL();
-    const headers: any = {};
+    const headers: Record<string, string> = {};
 
     if (token) {
       headers.Authorization = `Bearer ${token}`;

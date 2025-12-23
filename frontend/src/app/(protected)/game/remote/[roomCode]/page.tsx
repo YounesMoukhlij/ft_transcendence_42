@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Image from 'next/image';
 import { useGameContext } from '@/components/GameContext';
 import { useUserStore } from '@/store/userStore';
 import { getWebSocket } from '@/components/globalSocket';
@@ -12,6 +13,23 @@ import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
 
 import { ServerGameState } from '@/types/game';
+
+// Extended Document interface for vendor-prefixed fullscreen APIs
+interface ExtendedDocument extends Document {
+  webkitFullscreenElement?: Element | null;
+  mozFullScreenElement?: Element | null;
+  msFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void>;
+  mozCancelFullScreen?: () => Promise<void>;
+  msExitFullscreen?: () => Promise<void>;
+}
+
+// Extended Element interface for vendor-prefixed fullscreen APIs
+interface ExtendedElement extends HTMLElement {
+  webkitRequestFullscreen?: () => Promise<void>;
+  mozRequestFullScreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+}
 
 const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png';
 
@@ -46,7 +64,7 @@ export default function RemoteGameRoomPage() {
   const [rematchRequested, setRematchRequested] = useState(false);
   const [gameOver, setGameOver] = useState<{
     winner: string;
-    finalScore: any;
+    finalScore: { player1: number; player2: number };
     reason?: string;
     message?: string;
   } | null>(null);
@@ -160,55 +178,57 @@ export default function RemoteGameRoomPage() {
 
   // Toggle fullscreen - defined first so it can be used in other hooks
   const toggleFullscreen = useCallback(async () => {
-    const container = gameContainerRef.current;
+    const container = gameContainerRef.current as ExtendedElement | null;
     if (!container) return;
 
     try {
+      const extDoc = document as ExtendedDocument;
       if (
         document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
+        extDoc.webkitFullscreenElement ||
+        extDoc.mozFullScreenElement ||
+        extDoc.msFullscreenElement
       ) {
         // Exit fullscreen
         if (document.exitFullscreen) {
           await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen();
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
+        } else if (extDoc.webkitExitFullscreen) {
+          await extDoc.webkitExitFullscreen();
+        } else if (extDoc.mozCancelFullScreen) {
+          await extDoc.mozCancelFullScreen();
+        } else if (extDoc.msExitFullscreen) {
+          await extDoc.msExitFullscreen();
         }
       } else {
         // Enter fullscreen
         if (container.requestFullscreen) {
           await container.requestFullscreen();
           container.focus();
-        } else if ((container as any).webkitRequestFullscreen) {
-          await (container as any).webkitRequestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+          await container.webkitRequestFullscreen();
           container.focus();
-        } else if ((container as any).mozRequestFullScreen) {
-          await (container as any).mozRequestFullScreen();
+        } else if (container.mozRequestFullScreen) {
+          await container.mozRequestFullScreen();
           container.focus();
-        } else if ((container as any).msRequestFullscreen) {
-          await (container as any).msRequestFullscreen();
+        } else if (container.msRequestFullscreen) {
+          await container.msRequestFullscreen();
           container.focus();
         }
       }
-    } catch (error) {
-      console.error('Error toggling fullscreen:', error);
+    } catch {
+      console.error('Error toggling fullscreen');
     }
   }, []);
 
   // Fullscreen change handler
   useEffect(() => {
     const handleFullscreenChange = () => {
+      const extDoc = document as ExtendedDocument;
       const isCurrentlyFullscreen = !!(
         document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
+        extDoc.webkitFullscreenElement ||
+        extDoc.mozFullScreenElement ||
+        extDoc.msFullscreenElement
       );
       setIsFullscreen(isCurrentlyFullscreen);
     };
@@ -256,7 +276,7 @@ export default function RemoteGameRoomPage() {
     if (!container) {
       // Container not ready yet, retry after a short delay
       const retryTimer = setTimeout(() => {
-        const retryContainer = gameContainerRef.current;
+        const retryContainer = gameContainerRef.current as ExtendedElement | null;
         if (retryContainer && !autoFullscreenAttemptedRef.current) {
           autoFullscreenAttemptedRef.current = true;
           requestAnimationFrame(async () => {
@@ -264,18 +284,18 @@ export default function RemoteGameRoomPage() {
               if (retryContainer.requestFullscreen) {
                 await retryContainer.requestFullscreen();
                 retryContainer.focus();
-              } else if ((retryContainer as any).webkitRequestFullscreen) {
-                await (retryContainer as any).webkitRequestFullscreen();
+              } else if (retryContainer.webkitRequestFullscreen) {
+                await retryContainer.webkitRequestFullscreen();
                 retryContainer.focus();
-              } else if ((retryContainer as any).mozRequestFullScreen) {
-                await (retryContainer as any).mozRequestFullScreen();
+              } else if (retryContainer.mozRequestFullScreen) {
+                await retryContainer.mozRequestFullScreen();
                 retryContainer.focus();
-              } else if ((retryContainer as any).msRequestFullscreen) {
-                await (retryContainer as any).msRequestFullscreen();
+              } else if (retryContainer.msRequestFullscreen) {
+                await retryContainer.msRequestFullscreen();
                 retryContainer.focus();
               }
-            } catch (error) {
-              console.warn('[RemoteGame] Fullscreen blocked on retry:', error);
+            } catch {
+              console.warn('[RemoteGame] Fullscreen blocked on retry');
             }
           });
         }
@@ -284,11 +304,12 @@ export default function RemoteGameRoomPage() {
     }
 
     // Check if already in fullscreen
+    const extDoc = document as ExtendedDocument;
     const isAlreadyFullscreen = !!(
       document.fullscreenElement ||
-      (document as any).webkitFullscreenElement ||
-      (document as any).mozFullScreenElement ||
-      (document as any).msFullscreenElement
+      extDoc.webkitFullscreenElement ||
+      extDoc.mozFullScreenElement ||
+      extDoc.msFullscreenElement
     );
 
     if (isAlreadyFullscreen) {
@@ -302,22 +323,23 @@ export default function RemoteGameRoomPage() {
     // Trigger fullscreen - using requestAnimationFrame to ensure we're in interaction context
     const timer = setTimeout(() => {
       requestAnimationFrame(async () => {
+        const extContainer = container as ExtendedElement;
         try {
-          if (container.requestFullscreen) {
-            await container.requestFullscreen();
-            container.focus();
-          } else if ((container as any).webkitRequestFullscreen) {
-            await (container as any).webkitRequestFullscreen();
-            container.focus();
-          } else if ((container as any).mozRequestFullScreen) {
-            await (container as any).mozRequestFullScreen();
-            container.focus();
-          } else if ((container as any).msRequestFullscreen) {
-            await (container as any).msRequestFullscreen();
-            container.focus();
+          if (extContainer.requestFullscreen) {
+            await extContainer.requestFullscreen();
+            extContainer.focus();
+          } else if (extContainer.webkitRequestFullscreen) {
+            await extContainer.webkitRequestFullscreen();
+            extContainer.focus();
+          } else if (extContainer.mozRequestFullScreen) {
+            await extContainer.mozRequestFullScreen();
+            extContainer.focus();
+          } else if (extContainer.msRequestFullscreen) {
+            await extContainer.msRequestFullscreen();
+            extContainer.focus();
           }
-        } catch (error) {
-          console.warn('[RemoteGame] Auto-fullscreen not available:', error);
+        } catch {
+          console.warn('[RemoteGame] Auto-fullscreen not available');
           // If fullscreen fails, reset the flag so we can try again when gameState arrives
           autoFullscreenAttemptedRef.current = false;
         }
@@ -336,34 +358,35 @@ export default function RemoteGameRoomPage() {
     gameStartedRef.current = true;
 
     // If we haven't successfully entered fullscreen yet, try again
+    const extDoc = document as ExtendedDocument;
     const isInFullscreen = !!(
       document.fullscreenElement ||
-      (document as any).webkitFullscreenElement ||
-      (document as any).mozFullScreenElement ||
-      (document as any).msFullscreenElement
+      extDoc.webkitFullscreenElement ||
+      extDoc.mozFullScreenElement ||
+      extDoc.msFullscreenElement
     );
 
     if (!isInFullscreen && !autoFullscreenAttemptedRef.current) {
       autoFullscreenAttemptedRef.current = true;
-      const container = gameContainerRef.current;
+      const container = gameContainerRef.current as ExtendedElement | null;
       if (container) {
         requestAnimationFrame(async () => {
           try {
             if (container.requestFullscreen) {
               await container.requestFullscreen();
               container.focus();
-            } else if ((container as any).webkitRequestFullscreen) {
-              await (container as any).webkitRequestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+              await container.webkitRequestFullscreen();
               container.focus();
-            } else if ((container as any).mozRequestFullScreen) {
-              await (container as any).mozRequestFullScreen();
+            } else if (container.mozRequestFullScreen) {
+              await container.mozRequestFullScreen();
               container.focus();
-            } else if ((container as any).msRequestFullscreen) {
-              await (container as any).msRequestFullscreen();
+            } else if (container.msRequestFullscreen) {
+              await container.msRequestFullscreen();
               container.focus();
             }
-          } catch (error) {
-            console.warn('[RemoteGame] Fullscreen backup attempt failed:', error);
+          } catch {
+            console.warn('[RemoteGame] Fullscreen backup attempt failed');
           }
         });
       }
@@ -535,7 +558,7 @@ export default function RemoteGameRoomPage() {
         if (!finalSocket || finalSocket.readyState === WebSocket.CLOSED || finalSocket.readyState === WebSocket.CLOSING) {
           try {
             finalSocket = getWebSocket();
-          } catch (err) {
+          } catch {
             // If still no connection, redirect to game home page
             console.error('WebSocket connection not available, redirecting to game home');
             router.push('/game');
@@ -791,9 +814,11 @@ export default function RemoteGameRoomPage() {
                   {/* Player 1 */}
                   <div className="flex items-center gap-3 flex-1">
                     <div className="relative">
-                      <img
+                      <Image
                         src={player1ProfileImg}
                         alt={player1Username || 'Player 1'}
+                        width={64}
+                        height={64}
                         className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-blue-400 shadow-lg"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = defaultProfileImg;
@@ -821,9 +846,11 @@ export default function RemoteGameRoomPage() {
                   {/* Player 2 */}
                   <div className="flex items-center gap-3 flex-1 flex-row-reverse text-right">
                     <div className="relative">
-                      <img
+                      <Image
                         src={player2ProfileImg}
                         alt={player2Username || 'Player 2'}
+                        width={64}
+                        height={64}
                         className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-red-400 shadow-lg"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = defaultProfileImg;
@@ -851,9 +878,11 @@ export default function RemoteGameRoomPage() {
               <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700 shadow-xl">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <img
+                    <Image
                       src={player1ProfileImg}
                       alt={player1Username || 'Player 1'}
+                      width={32}
+                      height={32}
                       className="w-8 h-8 rounded-full object-cover border-2 border-blue-400"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = defaultProfileImg;
@@ -874,9 +903,11 @@ export default function RemoteGameRoomPage() {
                     <span className="text-white text-xs font-semibold truncate max-w-[100px]">
                       {player2Username || serverGameState?.player2?.username || 'P2'}
                     </span>
-                    <img
+                    <Image
                       src={player2ProfileImg}
                       alt={player2Username || 'Player 2'}
+                      width={32}
+                      height={32}
                       className="w-8 h-8 rounded-full object-cover border-2 border-red-400"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = defaultProfileImg;

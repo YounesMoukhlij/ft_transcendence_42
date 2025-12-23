@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameContext, Player, TournamentMatch } from '@/components/GameContext';
+import { useGameContext, Player } from '@/components/GameContext';
 import PingPongGame from '@/components/PingPongGame';
 import GameCustomization from '@/components/GameCustomization';
 import { useUserStore } from '@/store/userStore';
-import { FaUser, FaUpload, FaCrown, FaTrophy, FaGamepad, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaTrophy } from 'react-icons/fa';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ServerGameState } from '@/types/game';
 import LocalTournamentManager from '@/components/LocalTournamentManager';
@@ -41,10 +41,10 @@ export default function LocalTournamentPage() {
   const [matchWinner, setMatchWinner] = useState<Player | null>(null);
   const [showMatchCompletionModal, setShowMatchCompletionModal] = useState(false);
   const [showTournamentWinnerMessage, setShowTournamentWinnerMessage] = useState(false);
-  const [isMatchActive, setIsMatchActive] = useState(false);
-  const [serverGameState, setServerGameState] = useState<ServerGameState | null>(null);
+  const [, setIsMatchActive] = useState(false);
+  const [, setServerGameState] = useState<ServerGameState | null>(null);
   const [gameScores, setGameScores] = useState({ player1: 0, player2: 0 });
-  const [customization, setCustomization] = useState({
+  const [, setCustomization] = useState({
     ballColor: '#ffffff',
     paddleColor: '#ffffff',
     backgroundColor: '#000000',
@@ -97,7 +97,7 @@ export default function LocalTournamentPage() {
   }, [tempPlayers]);
 
   // Handle customization complete
-  const handleCustomizationComplete = useCallback((customizationData: any) => {
+  const handleCustomizationComplete = useCallback((customizationData: { ballColor: string; paddleColor: string; backgroundColor: string; ballSpeed: number; paddleSize: number }) => {
     setCustomization(customizationData);
     setTournamentStep('bracket');
   }, []);
@@ -155,7 +155,7 @@ export default function LocalTournamentPage() {
   useEffect(() => {
     if (gameState && tournamentStep === 'playing') {
       // Convert gameState to ServerGameState format if needed
-      setServerGameState(gameState as any);
+      setServerGameState(gameState as ServerGameState);
     }
   }, [gameState, tournamentStep]);
 
@@ -278,7 +278,7 @@ export default function LocalTournamentPage() {
                           id: currentMatch.player2.id || `player-2`,
                           id_user: typeof currentMatch.player2.id_user === 'number' ? currentMatch.player2.id_user : undefined
                         }
-                      ] as any}
+                      ] as Player[]}
                       onScoreUpdate={(scores) => setGameScores(scores)}
                       onTournamentMatchEnd={(winner) => {
                         // Convert winner back to GameContext Player format

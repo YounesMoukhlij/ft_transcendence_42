@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import PingPongGame from '@/components/PingPongGame';
@@ -9,6 +10,23 @@ import { IoExpand, IoContract } from 'react-icons/io5';
 import { useUserStore } from '@/store/userStore';
 import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
+
+// Extended Document interface for vendor-prefixed fullscreen APIs
+interface ExtendedDocument extends Document {
+  webkitFullscreenElement?: Element | null;
+  mozFullScreenElement?: Element | null;
+  msFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void>;
+  mozCancelFullScreen?: () => Promise<void>;
+  msExitFullscreen?: () => Promise<void>;
+}
+
+// Extended Element interface for vendor-prefixed fullscreen APIs
+interface ExtendedElement extends HTMLElement {
+  webkitRequestFullscreen?: () => Promise<void>;
+  mozRequestFullScreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+}
 
 const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png';
 
@@ -68,7 +86,7 @@ export default function AIGamePage() {
             setPlayer1ProfileImg(getProfileImageUrl(profileImg));
             profileImagesFetched.current = true;
           }
-        } catch (error) {
+        } catch {
           // Silently fail - use default image
           console.debug('[AIGame] Could not fetch user profile, using default');
         }
@@ -91,12 +109,15 @@ export default function AIGamePage() {
     const container = gameContainerRef.current;
     if (!container) return;
 
+    const extendedDocument = document as ExtendedDocument;
+    const extendedContainer = container as ExtendedElement;
+
     // Check if already in fullscreen
     if (
       document.fullscreenElement ||
-      (document as any).webkitFullscreenElement ||
-      (document as any).mozFullScreenElement ||
-      (document as any).msFullscreenElement
+      extendedDocument.webkitFullscreenElement ||
+      extendedDocument.mozFullScreenElement ||
+      extendedDocument.msFullscreenElement
     ) {
       return; // Already in fullscreen
     }
@@ -107,19 +128,19 @@ export default function AIGamePage() {
         if (container.requestFullscreen) {
           await container.requestFullscreen();
           container.focus();
-        } else if ((container as any).webkitRequestFullscreen) {
-          await (container as any).webkitRequestFullscreen();
+        } else if (extendedContainer.webkitRequestFullscreen) {
+          await extendedContainer.webkitRequestFullscreen();
           container.focus();
-        } else if ((container as any).mozRequestFullScreen) {
-          await (container as any).mozRequestFullScreen();
+        } else if (extendedContainer.mozRequestFullScreen) {
+          await extendedContainer.mozRequestFullScreen();
           container.focus();
-        } else if ((container as any).msRequestFullscreen) {
-          await (container as any).msRequestFullscreen();
+        } else if (extendedContainer.msRequestFullscreen) {
+          await extendedContainer.msRequestFullscreen();
           container.focus();
         }
-      } catch (error) {
+      } catch {
         // User may have denied fullscreen or browser doesn't support it
-        console.log('Auto-fullscreen not available:', error);
+        console.log('Auto-fullscreen not available');
       }
     }, 100);
 
@@ -131,52 +152,56 @@ export default function AIGamePage() {
     const container = gameContainerRef.current;
     if (!container) return;
 
+    const extendedDocument = document as ExtendedDocument;
+    const extendedContainer = container as ExtendedElement;
+
     try {
       if (
         document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
+        extendedDocument.webkitFullscreenElement ||
+        extendedDocument.mozFullScreenElement ||
+        extendedDocument.msFullscreenElement
       ) {
         // Exit fullscreen
         if (document.exitFullscreen) {
           await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen();
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
+        } else if (extendedDocument.webkitExitFullscreen) {
+          await extendedDocument.webkitExitFullscreen();
+        } else if (extendedDocument.mozCancelFullScreen) {
+          await extendedDocument.mozCancelFullScreen();
+        } else if (extendedDocument.msExitFullscreen) {
+          await extendedDocument.msExitFullscreen();
         }
       } else {
         // Enter fullscreen
         if (container.requestFullscreen) {
           await container.requestFullscreen();
           container.focus();
-        } else if ((container as any).webkitRequestFullscreen) {
-          await (container as any).webkitRequestFullscreen();
+        } else if (extendedContainer.webkitRequestFullscreen) {
+          await extendedContainer.webkitRequestFullscreen();
           container.focus();
-        } else if ((container as any).mozRequestFullScreen) {
-          await (container as any).mozRequestFullScreen();
+        } else if (extendedContainer.mozRequestFullScreen) {
+          await extendedContainer.mozRequestFullScreen();
           container.focus();
-        } else if ((container as any).msRequestFullscreen) {
-          await (container as any).msRequestFullscreen();
+        } else if (extendedContainer.msRequestFullscreen) {
+          await extendedContainer.msRequestFullscreen();
           container.focus();
         }
       }
-    } catch (error) {
-      console.error('Error toggling fullscreen:', error);
+    } catch {
+      console.error('Error toggling fullscreen');
     }
   }, []);
 
   // Fullscreen change handler
   useEffect(() => {
     const handleFullscreenChange = () => {
+      const extendedDocument = document as ExtendedDocument;
       const isCurrentlyFullscreen = !!(
         document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
+        extendedDocument.webkitFullscreenElement ||
+        extendedDocument.mozFullScreenElement ||
+        extendedDocument.msFullscreenElement
       );
       setIsFullscreen(isCurrentlyFullscreen);
     };
@@ -242,9 +267,11 @@ export default function AIGamePage() {
               {/* Player 1 (User) */}
               <div className="flex items-center gap-3 flex-1">
                 <div className="relative">
-                  <img
+                  <Image
                     src={player1ProfileImg}
                     alt={player1Name}
+                    width={64}
+                    height={64}
                     className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-blue-400 shadow-lg"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = defaultProfileImg;
@@ -267,9 +294,11 @@ export default function AIGamePage() {
               {/* Player 2 (AI) */}
               <div className="flex items-center gap-3 flex-1 flex-row-reverse text-right">
                 <div className="relative">
-                  <img
+                  <Image
                     src={player2ProfileImg}
                     alt={player2Name}
+                    width={64}
+                    height={64}
                     className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-red-400 shadow-lg"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = defaultProfileImg;
@@ -292,9 +321,11 @@ export default function AIGamePage() {
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700 shadow-xl">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <img
+                <Image
                   src={player1ProfileImg}
                   alt={player1Name}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full object-cover border-2 border-blue-400"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = defaultProfileImg;
@@ -309,9 +340,11 @@ export default function AIGamePage() {
                 <span className="text-white text-xs font-semibold truncate max-w-[100px]">
                   {player2Name}
                 </span>
-                <img
+                <Image
                   src={player2ProfileImg}
                   alt={player2Name}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full object-cover border-2 border-red-400"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = defaultProfileImg;

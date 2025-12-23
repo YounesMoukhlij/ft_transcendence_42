@@ -157,7 +157,7 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
     setError('')
 
     try {
-      const { confirmPassword, ...userData } = formData
+      const { confirmPassword: _confirmPassword, ...userData } = formData
 
       const response = await fetch(`${getBackendURL()}/AddUser`, {
         method: 'POST',
@@ -187,12 +187,12 @@ function SignUpForm({ onToggle }: SignUpFormProps) {
         router.push('/signIn')
       }, 1500)
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error during sign up:', error)
       console.error('Attempted backend URL:', getBackendURL())
 
       // Handle network errors specifically
-      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+      if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
         const errorMessage = 'Request timed out. Please check your connection and try again.'
         setError(errorMessage)
         toast.error(errorMessage)
@@ -385,13 +385,13 @@ function SignInForm({ onToggle }: SignInFormProps) {
             router.push('/')
           }, 1500)
 
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error('Failed to fetch user data:', err)
 
           // Handle network errors specifically
-          if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+          if (err instanceof Error && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
             toast.error('Request timed out. Please check your connection and try again.')
-          } else if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+          } else if (err instanceof Error && (err.message === 'Failed to fetch' || err.name === 'TypeError')) {
             toast.error('Cannot connect to server. Please check your network connection.')
           } else {
             toast.error('Failed to retrieve user information')
@@ -480,13 +480,13 @@ function SignInForm({ onToggle }: SignInFormProps) {
             router.push('/')
           }, 1500)
 
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error('Failed to fetch user data:', err)
 
           // Handle network errors specifically
-          if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+          if (err instanceof Error && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
             toast.error('Request timed out. Please check your connection and try again.')
-          } else if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+          } else if (err instanceof Error && (err.message === 'Failed to fetch' || err.name === 'TypeError')) {
             toast.error('Cannot connect to server. Please check your network connection.')
           } else {
             toast.error('Failed to retrieve user information')
@@ -560,16 +560,16 @@ function SignInForm({ onToggle }: SignInFormProps) {
         router.push('/')
       }, 1000)
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Network error during login:', error)
       console.error('Attempted backend URL:', getBackendURL())
 
       // Handle network errors specifically
-      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+      if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
         const errorMessage = 'Request timed out. Please check your connection and try again.'
         setError(errorMessage)
         toast.error(errorMessage)
-      } else if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      } else if (error instanceof Error && (error.message === 'Failed to fetch' || error.name === 'TypeError')) {
         const backendUrl = getBackendURL()
         const errorMessage = `Cannot connect to server at ${backendUrl}. Please ensure:
 1. The backend is running

@@ -7,15 +7,33 @@ import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettin
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import  {useUserStore}  from '../store/userStore';
 import { useGameContext } from './GameContext';
 import { getBackendURL, makeAuthenticatedRequest } from '../lib/utils';
 import { getWebSocket } from './globalSocket';
+import Image from 'next/image';
 
 import '../app/(protected)/chat/page.css'
-import { removeRequestMeta } from 'next/dist/server/request-meta';
 import { useTranslation } from '../contexts/LanguageContext';
+
+interface NotificationItem {
+  notify_id: number;
+  sender_user: number;
+  sender_username: string;
+  sender_profile_img: string;
+  title: string;
+  expired?: string;
+  timeAgo?: string;
+}
+
+interface SearchResult {
+  id_user: number;
+  username: string;
+  fullname?: string;
+  profile_img?: string;
+  status: number;
+}
 
 export default function Navbar()
 {
@@ -29,15 +47,14 @@ export default function Navbar()
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const dropdownRef = useRef(null);
   const profileIconRef = useRef<HTMLSpanElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const deletedNotificationIdsRef = useRef<Set<number>>(new Set()); // Track locally deleted notification IDs
-  const {connect  , init, clearUser, setUser } = useUserStore();
+  const {connect, clearUser, setUser } = useUserStore();
 
   const setUsername = useUserStore.setState;
   const socket = useUserStore((state) => state.socket);
@@ -49,7 +66,7 @@ export default function Navbar()
 
 
 
-function isTimeValid(item: any) {
+function isTimeValid(item: NotificationItem) {
 
 
   // Check if notification is still valid (not expired)
@@ -100,7 +117,7 @@ function isTimeValid(item: any) {
 
 useEffect(() => {
   setUsername({username: user?.username});
-}, []);
+}, [setUsername, user?.username]);
 
 
 const menuRef = useRef(null);
@@ -109,7 +126,7 @@ const buttonRef = useRef(null);
 
 
 useEffect(() => {
-  const handleClickOutside = (event : any) => {
+  const handleClickOutside = (event: MouseEvent) => {
     if (menuRef.current && !menuRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {
       setNotificationIndex(false);
     }
@@ -134,9 +151,6 @@ useEffect(() => {
 
 
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
 
   async function DelteFriendRequest(notify_id){
     const notificationItem = notificatiion.find(item => item.notify_id == notify_id);
@@ -159,7 +173,7 @@ useEffect(() => {
         removePendingRequests(sender_id);
         toast.success('Deleted');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting friend request:', error);
       // Restore notification on error
       if (notificationItem) {
@@ -176,7 +190,7 @@ useEffect(() => {
     }
   }
 
-  async function AcceptFriendRequest(item : any){
+  async function AcceptFriendRequest(item: NotificationItem){
     try {
       const object = {
         profile_img: item.sender_profile_img,
@@ -202,7 +216,7 @@ useEffect(() => {
         setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
         toast.success('Accepted');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error accepting friend request:', error);
       console.error('Attempted backend URL:', getBackendURL());
 
@@ -272,26 +286,26 @@ useEffect(() => {
   };
 
   // Function to determine friend request button state
-  const getFriendButtonState = (resultUser: any) => {
+  const getFriendButtonState = (resultUser: SearchResult) => {
     // Don't show button for self
     if (resultUser.id_user === user?.id_user) {
       return null;
     }
 
     // Check if already a friend
-    const isFriend = friends?.some((f: any) => f.id_user === resultUser.id_user);
+    const isFriend = friends?.some((f: { id_user: number }) => f.id_user === resultUser.id_user);
     if (isFriend) {
       return { state: 'friend', text: t('navbar.alreadyFriend'), disabled: true };
     }
 
     // Check if request already sent
-    const requestSent = sentRequests?.some((r: any) => r.getter_user === resultUser.id_user);
+    const requestSent = sentRequests?.some((r: { getter_user: number }) => r.getter_user === resultUser.id_user);
     if (requestSent) {
       return { state: 'sent', text: t('navbar.friendRequestSent'), disabled: true };
     }
 
     // Check if there's a pending request from them
-    const hasPendingRequest = pendingRequests?.some((r: any) => r.sender_user === resultUser.id_user);
+    const hasPendingRequest = pendingRequests?.some((r: { sender_user: number }) => r.sender_user === resultUser.id_user);
     if (hasPendingRequest) {
       return { state: 'pending', text: t('navbar.pendingRequest'), disabled: true };
     }
@@ -301,7 +315,7 @@ useEffect(() => {
   };
 
   // Function to send friend request
-  const handleSendFriendRequest = async (resultUser: any, e: React.MouseEvent) => {
+  const handleSendFriendRequest = async (resultUser: SearchResult, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -329,7 +343,7 @@ useEffect(() => {
         });
         toast.success(t('navbar.friendRequestSentSuccess', { username: resultUser.username }));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending friend request:', error);
       toast.error(error.response?.data?.message || t('navbar.friendRequestFailed'));
     }
@@ -393,7 +407,7 @@ useEffect(() => {
       });
 
       addPendingRequestsArray(result.data.filter(object => object.title == "request friend"));
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle network errors and auth errors gracefully
       if (axios.isAxiosError(error)) {
         // Network error (backend unreachable, CORS, etc.)
@@ -693,12 +707,12 @@ useEffect(() => {
         clearTimeout(syncTimeout);
       }
     };
-  }, [socket, router, setGameMode, user?.access_token, addPendingRequestsArray, addPendingRequests, removeSentRequests, addFriend, removeFriend, removePendingRequests, t, syncNotifications]);
+  }, [socket, router, setGameMode, user?.access_token, addPendingRequestsArray, addPendingRequests, removeSentRequests, addFriend, removeFriend, removePendingRequests, t, syncNotifications, connect]);
 
 
 
 
-  async function AcceptGameChallenge(item){
+  async function AcceptGameChallenge(item: NotificationItem){
     console.log('[AcceptGameChallenge] Starting accept process for challenge:', {
       notify_id: item.notify_id,
       sender_user: item.sender_user,
@@ -806,7 +820,7 @@ useEffect(() => {
     }
   }
 
-  async function RejectGameChallenge(item){
+  async function RejectGameChallenge(item: NotificationItem){
     if (!user?.access_token) {
       toast.error('You must be logged in to decline game challenges');
       return;
@@ -860,7 +874,7 @@ useEffect(() => {
       );
 
       toast.info('Game challenge declined');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error declining game challenge:', error);
       // Continue even if deletion fails - notification already removed from UI and sender notified
       // Re-add notification if error occurred
@@ -873,7 +887,7 @@ useEffect(() => {
     }
   }
 
-  async function AcceptTournamentInvite(item: any){
+  async function AcceptTournamentInvite(item: NotificationItem){
     if (!user?.access_token) {
       toast.error('You must be logged in to accept tournament invitations');
       return;
@@ -984,13 +998,13 @@ useEffect(() => {
         sessionStorage.setItem('tournamentStep', 'registration'); // Force waiting screen
         router.push('/game/tournament');
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error accepting tournament invite:', error);
       toast.error(error.response?.data?.message || 'Failed to accept tournament invitation');
     }
   }
 
-  async function RejectTournamentInvite(item: any){
+  async function RejectTournamentInvite(item: NotificationItem){
     if (!user?.access_token) {
       toast.error('You must be logged in to decline tournament invitations');
       return;
@@ -1058,7 +1072,7 @@ useEffect(() => {
       setNotification(prev => prev.filter(n => n.notify_id !== item.notify_id));
 
       toast.info('Tournament invitation declined');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error declining tournament invite:', error);
 
       // Handle specific error cases
@@ -1080,7 +1094,7 @@ useEffect(() => {
 
   // Close mobile menu when clicking outside the list
   useEffect(() => {
-    function handleClickOutside(event: any) {
+    function handleClickOutside(event: MouseEvent) {
       if (
         hamburgerRef.current &&
         !(hamburgerRef.current as HTMLElement).contains(event.target)
@@ -1184,9 +1198,11 @@ useEffect(() => {
                                     }}
                                     className="flex items-center gap-3 flex-1 cursor-pointer"
                                   >
-                                    <img
+                                    <Image
                                       src={result.profile_img || '/profileface.png'}
                                       alt={result.username}
+                                      width={40}
+                                      height={40}
                                       className="w-10 h-10 rounded-full border border-gray-600"
                                     />
                                     <div className="flex-1">
@@ -1257,9 +1273,11 @@ useEffect(() => {
                             key={item.notify_id || index}
                             className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
                           >
-                            <img
+                            <Image
                               src={item.sender_profile_img}
                               alt="profile"
+                              width={48}
+                              height={48}
                               className="w-12 h-12 rounded-full border border-gray-600"
                             />
                             <div className="flex flex-col flex-1">
@@ -1299,9 +1317,11 @@ useEffect(() => {
                             key={item.notify_id || index}
                             className="flex items-center gap-3 p-3 border border-green-700 bg-green-900/20 rounded-xl hover:bg-green-800/30 transition"
                           >
-                            <img
+                            <Image
                               src={item.sender_profile_img}
                               alt="profile"
+                              width={48}
+                              height={48}
                               className="w-12 h-12 rounded-full border border-green-500"
                             />
                             <div className="flex flex-col">
@@ -1322,9 +1342,11 @@ useEffect(() => {
                             key={item.notify_id || index}
                             className="flex items-center gap-3 p-3 border border-purple-700 rounded-xl bg-gradient-to-r from-purple-800 to-purple-900 hover:from-purple-700 transition"
                           >
-                            <img
+                            <Image
                               src={item.sender_profile_img}
                               alt="profile"
+                              width={48}
+                              height={48}
                               className="w-12 h-12 rounded-full border border-purple-600"
                             />
                             <div className="flex flex-col flex-1">
@@ -1365,9 +1387,11 @@ useEffect(() => {
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
-                              <img
+                              <Image
                                 src={item.sender_profile_img}
                                 alt="profile"
+                                width={48}
+                                height={48}
                                 className="w-12 h-12 rounded-full border border-gray-600"
                               />
                               <p className="text-white text-lg ml-3">
@@ -1422,9 +1446,11 @@ useEffect(() => {
                     {user && (
                       <div className="px-4 py-3 border-b border-gray-700">
                         <div className="flex items-center gap-3">
-                          <img
+                          <Image
                             src={user.profile_img || '/profileface.png'}
                             alt={user.username}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded-full border border-gray-600"
                           />
                           <div className="flex-1 min-w-0">
@@ -1601,9 +1627,11 @@ useEffect(() => {
                               key={item.notify_id || index}
                               className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
                             >
-                              <img
+                              <Image
                                 src={item.sender_profile_img}
                                 alt="profile"
+                                width={48}
+                                height={48}
                                 className="w-12 h-12 rounded-full border border-gray-600"
                               />
                               <div className="flex flex-col flex-1">
@@ -1796,9 +1824,11 @@ useEffect(() => {
                   <div className="border-b border-gray-600 pb-4">
                     <h3 className="text-white text-sm font-semibold mb-3">{t('navbar.userInfo') || 'User Info'}</h3>
                     <div className="flex items-center gap-3 p-2 rounded-lg bg-gray-800/50">
-                      <img
+                      <Image
                         src={user.profile_img || '/profileface.png'}
                         alt={user.username}
+                        width={40}
+                        height={40}
                         className="w-10 h-10 rounded-full border border-gray-600"
                       />
                       <div className="flex-1 min-w-0">

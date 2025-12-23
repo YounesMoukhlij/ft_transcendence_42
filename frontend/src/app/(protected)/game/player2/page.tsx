@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import { useUserStore } from '@/store/userStore';
@@ -82,9 +83,11 @@ function Player2Setup() {
           <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm rounded-2xl p-4 border border-blue-500/30 shadow-lg">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <img
+                <Image
                   src={player1.avatar || '/profileface.png'}
                   alt={player1.name}
+                  width={64}
+                  height={64}
                   className="w-16 h-16 rounded-full border-4 border-blue-400 shadow-lg object-cover"
                 />
                 <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-gray-900 flex items-center justify-center">
@@ -163,9 +166,11 @@ function Player2Setup() {
                           : 'border-gray-700 hover:border-gray-600 hover:scale-105'
                       }`}
                     >
-                      <img
+                      <Image
                         src={src}
                         alt={`Avatar ${index + 1}`}
+                        width={100}
+                        height={100}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       {avatar === src && (
@@ -205,9 +210,11 @@ function Player2Setup() {
                   <div className="flex flex-col items-center gap-2 pt-4 border-t border-gray-700/50">
                     <span className="text-gray-400 text-sm font-medium">{t('game.preview')}</span>
                     <div className="relative">
-                      <img
+                      <Image
                         src={avatar}
                         alt="Preview"
+                        width={96}
+                        height={96}
                         className="w-24 h-24 rounded-full border-4 border-blue-500 shadow-lg object-cover"
                       />
                       <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-500 rounded-full border-2 border-gray-900 flex items-center justify-center shadow-lg">

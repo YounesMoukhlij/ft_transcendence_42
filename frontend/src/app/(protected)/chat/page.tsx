@@ -1,7 +1,7 @@
 "use client";
 import axios from 'axios';
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import Image from 'next/image';
 import './page.css'
 import { FaSearch } from "react-icons/fa";
 import { SlOptions } from "react-icons/sl";
@@ -94,7 +94,7 @@ type FreindsListProps = {
 };
 
 const FreindsList = ({friend_id ,  photo, title, message , status, setConversation, setRoom, setimg, SetSelectContact  }: FreindsListProps) => {
-  const { setDboubleBlock, double_block, Setuser_block, user_block , } = useUserStore();
+  const { setDboubleBlock, Setuser_block } = useUserStore();
   const Get_Conversation = async () => {
     setRoom(title);
     setimg(photo);
@@ -110,7 +110,7 @@ const FreindsList = ({friend_id ,  photo, title, message , status, setConversati
     <div onClick={Get_Conversation} className="flex w-full h-full hover:flex hover:cursor-pointer hover:bg-[#515151] hover:backdrop-blur-[10px] hover:rounded-[20px]">
       <div className="flex-col pl-2 pt-4">
         <div className='flex w-12 h-12 sm:w-15 sm:h-15 md:w-16 md:h-16 lg:w-15 lg:h-15 2xl:w-20 2xl:h-20'>
-          <img className="w-12 h-12 sm:w-15 sm:h-15 md:w-16 md:h-16 lg:w-15 lg:h-15 2xl:h-20 2xl:w-20 rounded-[50%]" src={photo} />
+          <Image className="w-12 h-12 sm:w-15 sm:h-15 md:w-16 md:h-16 lg:w-15 lg:h-15 2xl:h-20 2xl:w-20 rounded-[50%]" src={photo} alt={title} width={80} height={80} />
         </div>
         <div className={status ? "test w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 bg-[green] rounded-[50%] " : "test w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 bg-[red] rounded-[50%] "}></div>
       </div>
@@ -237,7 +237,7 @@ export default function ChatPage() {
   const { friends, addFriend, removeFriend, setFriends, updateFriendStatus, updateLastMessage  } = useUserStore();
   const { messages, setMessages, addMessage, room, setRoom, profile_img, setImg } = useUserStore();
   const { setDboubleBlock, double_block, Setuser_block, user_block } = useUserStore();
-  const { connect, socket } = useUserStore();
+  const { socket } = useUserStore();
   const [show, setShow] = useState<boolean>(false);
   const [input, setEmoji] = useState<string>('');
   const [dropmenu, setdropmenu] = useState<boolean>(false);
@@ -247,9 +247,9 @@ export default function ChatPage() {
   const [SelectContact, SetSelectContact] = useState<boolean>(false);
 
 
-  const [InviterData, setInviterData] = useState<InviterData | any >({});
+  const [InviterData, setInviterData] = useState<InviterData | Record<string, unknown>>({});
   const user = useUserStore((state) => state.user);
-  const [isTyping , SETIsTyping] = useState<boolean>(false);
+  const [isTyping] = useState<boolean>(false);
 
 
 
@@ -259,8 +259,8 @@ export default function ChatPage() {
 
 
   useEffect(() => {
-    const handleClickOutside = (event : any) => {
-      if (menuRef.current && !menuRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !(menuRef.current as HTMLElement).contains(event.target as Node) && buttonRef.current && !(buttonRef.current as HTMLElement).contains(event.target as Node)) {
         setShow(false);
         set_chats(false);
       }
@@ -358,7 +358,7 @@ export default function ChatPage() {
       }
     };
     fetchData();
-    }, [user?.username]);
+    }, [user?.username, setFriends]);
 
   function handleEnterKey(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Enter') {
@@ -370,8 +370,7 @@ export default function ChatPage() {
     friend: string,
     setDboubleBlock: (num: number) => void,
     double_block: number,
-    Setuser_block: (user: string) => void,
-    user_block: string
+    Setuser_block: (user: string) => void
   ) {
 
     const id = window.localStorage.getItem('conversationId');
@@ -398,8 +397,7 @@ export default function ChatPage() {
     friend: string,
     setDboubleBlock: (num: number) => void,
     double_block: number,
-    Setuser_block: (user: string) => void,
-    user_block: string
+    Setuser_block: (user: string) => void
   ) {
 
     const friend_id = localStorage.getItem("friend_id");
@@ -480,7 +478,7 @@ export default function ChatPage() {
         headers: {Authorization: `Bearer ${user.access_token}` }
       })
 
-      const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, {
+      await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendMsg`, {
           user:user.username,
           input, id, friend , friend_id
         },{
@@ -588,15 +586,15 @@ export default function ChatPage() {
   function send_game_invite(friend : string){
     try{
         setConfirm(false);
-        const res = axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendGameChallenge` , {
+        axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendGameChallenge` , {
             Friend_id: friend,
           },{
           headers: {
             Authorization: `Bearer ${user.access_token}`
           },
         });
-      }catch(err){
-
+      }catch{
+        // Silently handle errors
       }
   }
 
@@ -640,10 +638,12 @@ export default function ChatPage() {
             <div className="z-50 absolute inset-x-2 top-6 mx-auto max-w-3xl bg-gray-600 border-2 rounded-3xl overflow-hidden shadow-lg p-3 sm:p-4 flex flex-col items-center justify-between">
 
               <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
-                <img
+                <Image
                   className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full mr-3"
-                  src={InviterData.img}
+                  src={InviterData.img as string}
                   alt="Inviter"
+                  width={64}
+                  height={64}
                 />
                 <p className="text-base sm:text-lg md:text-2xl lg:text-3xl text-white text-center sm:text-left">
                   {t('chat.invitedForGame', { username: InviterData.username })}
@@ -668,7 +668,7 @@ export default function ChatPage() {
           {SelectContact && (
             <div className="flex items-center h-[8%] sm:h-[9%] rounded-t-[35px] ml-0.5 bg-[#3a3638] justify-between px-2 sm:px-4">
               <div className="flex h-3/5 self-center">
-                <img  className="rounded-[50%] w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"  src={profile_img || undefined} alt='image'/>
+                {profile_img && <Image className="rounded-[50%] w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" src={profile_img} alt={room || 'Profile'} width={48} height={48} />}
                 <div className='felx felx-col'>
                 <p className="self-center text-[0.8rem] sm:text-[1rem] md:text-[1.2rem] lg:text-[1.5rem] pl-[1rem]">
                   {room}
@@ -688,13 +688,13 @@ export default function ChatPage() {
                       {
                       (double_block === 1 && user_block === user.username) || double_block === 2 ? (
                           <button
-                            className="w-full h-full" onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block) }>
+                            className="w-full h-full" onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block) }>
                             {t('chat.deblock')}
                           </button>
                         ) : (
                           <button
                             className="w-full h-full"
-                            onClick={() => handleBlock(room, setDboubleBlock, double_block, Setuser_block, user_block)}>{t('chat.block')}
+                            onClick={() => handleBlock(room, setDboubleBlock, double_block, Setuser_block)}>{t('chat.block')}
                           </button>
                        )
                       }
@@ -716,7 +716,7 @@ export default function ChatPage() {
                 <h3 className="text-sm sm:text-base lg:text-lg mb-4">
                   {t('chat.selectContact')}
                 </h3>
-                <img className="w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64" src="/animation.gif" alt="animation" />
+                <Image className="w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64" src="/animation.gif" alt="animation" width={256} height={256} />
               </div>
             )}
             { SelectContact && (
@@ -763,7 +763,7 @@ export default function ChatPage() {
                   <div className="flex justify-around w-full h-full items-center px-2">
                     <p className="text-xs sm:text-sm">{t('chat.cannotSendDeblock')}</p>
                     <button
-                      onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block)}
+                      onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block)}
                       className="h-[1.5rem] w-[5rem] sm:h-[2rem] sm:w-[7rem] bg-white text-black rounded-[8px] text-xs sm:text-sm"
                     >
                       {t('chat.deblock')}
@@ -775,7 +775,7 @@ export default function ChatPage() {
                   <div className="flex justify-around w-full h-full items-center px-2">
                     <p className="text-xs sm:text-sm">{t('chat.cannotSendDeblock')}</p>
                     <button
-                      onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block, user_block)}
+                      onClick={() => Deblock(room, setDboubleBlock, double_block, Setuser_block)}
                       className="h-[1.5rem] w-[5rem] sm:h-[2rem] sm:w-[7rem] bg-white text-black rounded-[8px] text-xs sm:text-sm"
                     >
                       {t('chat.deblock')}
