@@ -439,7 +439,7 @@ function SignInForm({ onToggle }) {
             // console.log('-------------->', process.env.NEXT_PUBLIC_BACK_API)
             console.log('Fetching user data with token:', token);
             console.log('Is new user:', isNewUser);
-            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`${("TURBOPACK compile-time value", "http://localhost:4444")}/me`, {
+            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`${("TURBOPACK compile-time value", "http://e1r8p8.1337.ma:4444")}/me`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -532,10 +532,10 @@ function SignInForm({ onToggle }) {
     ]);
     // --- HANDLERS ---
     const handleGoogleAuth = ()=>{
-        window.location.href = `${"TURBOPACK compile-time value", "http://localhost:4444"}/auth/google`;
+        window.location.href = `${"TURBOPACK compile-time value", "http://e1r8p8.1337.ma:4444"}/auth/google`;
     };
     const handle42Auth = ()=>{
-        window.location.href = `${"TURBOPACK compile-time value", "http://localhost:4444"}/auth/42`;
+        window.location.href = `${"TURBOPACK compile-time value", "http://e1r8p8.1337.ma:4444"}/auth/42`;
     };
     const validateForm = ()=>{
         if (!username.trim() || !password) {
@@ -554,7 +554,7 @@ function SignInForm({ onToggle }) {
         setError('');
         try {
             // --- AXIOS REFACTOR: POST Login ---
-            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`${("TURBOPACK compile-time value", "http://localhost:4444")}/login`, {
+            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`${("TURBOPACK compile-time value", "http://e1r8p8.1337.ma:4444")}/login`, {
                 username: username.trim(),
                 password: password
             });
@@ -600,7 +600,7 @@ function SignInForm({ onToggle }) {
         setError('');
         try {
             // --- AXIOS REFACTOR: POST 2FA Verify ---
-            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`${("TURBOPACK compile-time value", "http://localhost:4444")}/2fa/login-verify`, {
+            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`${("TURBOPACK compile-time value", "http://e1r8p8.1337.ma:4444")}/2fa/login-verify`, {
                 userId: parseInt(tempUserId),
                 token: twoFACode
             });
@@ -814,7 +814,7 @@ function SignInForm({ onToggle }) {
                         className: "flex items-start w-full",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
                             className: "text-xs sm:text-sm text-gray-500 hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer",
-                            onClick: ()=>router.push('/forgot-password'),
+                            onClick: ()=>router.push('/forgotPassword'),
                             children: "Forgot your password?"
                         }, void 0, false, {
                             fileName: "[project]/frontend/src/app/(auth)/SignInForm.tsx",
@@ -1085,7 +1085,7 @@ function SignUpForm({ onToggle }) {
         try {
             const { confirmPassword, ...userData } = formData;
             // --- AXIOS REFACTOR: POST Request ---
-            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`${("TURBOPACK compile-time value", "http://localhost:4444")}/AddUser`, {
+            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`${("TURBOPACK compile-time value", "http://e1r8p8.1337.ma:4444")}/AddUser`, {
                 username: userData.username.trim(),
                 email: userData.email.trim(),
                 password: userData.password

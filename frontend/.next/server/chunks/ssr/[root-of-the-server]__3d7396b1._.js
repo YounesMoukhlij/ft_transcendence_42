@@ -105,7 +105,7 @@ const getProfileImageUrl = (currentImg)=>{
         return `${"TURBOPACK compile-time value", "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg"}`;
     }
     if (currentImg && currentImg.startsWith('/uploads/')) {
-        return `${"TURBOPACK compile-time value", "http://localhost:4444"}${currentImg}`;
+        return `${"TURBOPACK compile-time value", "http://e1r8p8.1337.ma:4444"}${currentImg}`;
     }
     return currentImg;
 };
@@ -1112,7 +1112,7 @@ function PerformanceChart({ username }) {
                 return;
             }
             try {
-                const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/getPlayerProgress/${targetUsername}`, {
+                const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "e1r8p8.1337.ma")}:${("TURBOPACK compile-time value", "4444")}/getPlayerProgress/${targetUsername}`, {
                     headers: {
                         Authorization: `Bearer ${currentUser.access_token}`
                     }
@@ -1978,7 +1978,7 @@ function MatchHistoryTable({ username }) {
                 return;
             }
             try {
-                const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/getMatchHistory/${targetUsername}`, {
+                const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "e1r8p8.1337.ma")}:${("TURBOPACK compile-time value", "4444")}/getMatchHistory/${targetUsername}`, {
                     headers: {
                         Authorization: `Bearer ${currentUser.access_token}`
                     }
@@ -2361,7 +2361,7 @@ function StatsOverview({ userStats }) {
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
     const handleAddFriend = async ()=>{
         try {
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/sendRequestFriend`, {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "e1r8p8.1337.ma")}:${("TURBOPACK compile-time value", "4444")}/sendRequestFriend`, {
                 id: userStats.id
             }, {
                 headers: {
@@ -2380,7 +2380,7 @@ function StatsOverview({ userStats }) {
     };
     const handleAcceptFriend = async ()=>{
         try {
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/AddFriend`, {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "e1r8p8.1337.ma")}:${("TURBOPACK compile-time value", "4444")}/AddFriend`, {
                 id: userStats.id
             }, {
                 headers: {
@@ -2404,7 +2404,7 @@ function StatsOverview({ userStats }) {
     const handleUnfriend = async ()=>{
         try {
             //  Get conversation ID
-            const conversation_id = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/getConversationId`, {
+            const conversation_id = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "e1r8p8.1337.ma")}:${("TURBOPACK compile-time value", "4444")}/getConversationId`, {
                 id: userStats.id
             }, {
                 headers: {
@@ -2414,7 +2414,7 @@ function StatsOverview({ userStats }) {
             const conv_id = conversation_id.data.conversation_id;
             console.log("Conversation ID:", conv_id);
             //  Unfriend
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/unfriend`, {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`http://${("TURBOPACK compile-time value", "e1r8p8.1337.ma")}:${("TURBOPACK compile-time value", "4444")}/unfriend`, {
                 // user: currentUser.username,
                 conv_id: conv_id,
                 // friend: userStats.username,
@@ -2436,7 +2436,7 @@ function StatsOverview({ userStats }) {
             //  Reject friend request
             const notify_id = pendingRequests.filter((object)=>object.sender_user == userStats.id)[0].notify_id;
             console.log(notify_id);
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "e1r8p8.1337.ma")}:${("TURBOPACK compile-time value", "4444")}/DeleteFriendRequest`, {
                 params: {
                     id: notify_id
                 },
@@ -2456,7 +2456,7 @@ function StatsOverview({ userStats }) {
             const notify_id = sentRequests.filter((object)=>object.getter_user == userStats.id)[0].notify_id;
             console.log("Here : |", sentRequests);
             console.log("notify id :", notify_id);
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/cancelFriendRequest`, {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`http://${("TURBOPACK compile-time value", "e1r8p8.1337.ma")}:${("TURBOPACK compile-time value", "4444")}/cancelFriendRequest`, {
                 params: {
                     id: notify_id
                 },
@@ -3855,7 +3855,7 @@ function UserProfile() {
         if (!currentUser?.access_token) return;
         const fetchUserData = async ()=>{
             try {
-                const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "localhost")}:${("TURBOPACK compile-time value", "4444")}/getUserStats`, {
+                const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`http://${("TURBOPACK compile-time value", "e1r8p8.1337.ma")}:${("TURBOPACK compile-time value", "4444")}/getUserStats`, {
                     headers: {
                         Authorization: `Bearer ${currentUser.access_token}`
                     }

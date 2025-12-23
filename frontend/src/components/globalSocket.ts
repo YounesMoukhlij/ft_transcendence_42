@@ -18,7 +18,7 @@ const buildWsUrl = () => {
 
   if (typeof window === 'undefined') {
     // Should never happen for client components, but keeps SSR-safe imports.
-    return `ws://localhost:${WS_FALLBACK_PORT}${normalizePath(WS_FALLBACK_PATH)}`;
+    return `ws://e1r8p8.1337.ma:${WS_FALLBACK_PORT}${normalizePath(WS_FALLBACK_PATH)}`;
   }
 
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';

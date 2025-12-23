@@ -25,8 +25,12 @@ export default function Sidebar() {
   const isActive = (path: string) => pathname === path;
 
   const handleLogout = () => {
-    // Add logic here (e.g., delete cookie, redirect)
-    console.log("Logging out...");
+    localStorage.clear();
+    //  clear cookies
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    window.location.href = '/signIn';
   };
 
   return (

@@ -50,7 +50,7 @@ connect: () => {
 
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   
-  const url = `${protocol}://localhost:4444/ws?token=${token}`;
+  const url = `${protocol}://e1r8p8.1337.ma:4444/ws?token=${token}`;
 
   try {
     const ws = new WebSocket(url);

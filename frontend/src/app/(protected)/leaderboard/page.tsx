@@ -3,7 +3,7 @@ import { Trophy, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import {getProfileImageUrl} from '@/lib/utils'
-// const BACK_API = 'http://localhost:4444';
+// const BACK_API = 'http://e1r8p8.1337.ma:4444';
 // const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 
 

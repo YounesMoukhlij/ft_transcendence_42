@@ -28,15 +28,10 @@ const app = fastify({
 
 
   app.register(cors, {
-    origin: [
-    'http://localhost:3000', 
-    'http://localhost:3000',
-    'http://127.0.0.1:3000'
-  ],
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true, // zmoumni for frontend middleware
     allowedHeaders: ["Content-Type", "Authorization"], // zmoumni for frontend middleware
-    // origin: "http://0.0.0.0:3000", // zmoumni for frontend middleware
 
   });
 
@@ -57,27 +52,27 @@ async function startServer() {
     }
 
     console.log('Connecting to Redis...');
-    const redisClient = createClient({
-      url: process.env.REDIS_URL
-    });
+    // const redisClient = createClient({
+    //   url: process.env.REDIS_URL
+    // });
 
-    // 2. Add an error listener to catch connection issues
-    redisClient.on('error', err => app.log.error('Redis Client Error', err));
+    // // 2. Add an error listener to catch connection issues
+    // redisClient.on('error', err => app.log.error('Redis Client Error', err));
 
-    // 3. Connect to the Redis server
-    await redisClient.connect();
-    app.log.info('Successfully connected to Redis.');
+    // // 3. Connect to the Redis server
+    // await redisClient.connect();
+    // app.log.info('Successfully connected to Redis.');
 
-    // 4. Decorate the Fastify instance with the Redis client
-    // This makes it available in all routes via `request.server.redis`
-    app.decorate('redis', redisClient);
+    // // 4. Decorate the Fastify instance with the Redis client
+    // // This makes it available in all routes via `request.server.redis`
+    // app.decorate('redis', redisClient);
 
 
 
 
 
         // --- NEW --- Register fastify-static to serve files from /uploads
-    // This makes http://localhost:4444/uploads/your-image.png accessible
+    // This makes http://e1r8p8.1337.ma:4444/uploads/your-image.png accessible
     app.register(fastifyStatic, {
       root: uploadsDir,
       prefix: '/uploads/', // The URL prefix to access the files
@@ -262,7 +257,7 @@ wss.on("connection", (socket, req) => {
 
 
 
-await app.listen({ port: process.env.PORT, host: '0.0.0.0' });
+await app.listen({ port: process.env.PORT, host: process.env.HOST });
 
   } catch (err) {
     app.log.error(err);

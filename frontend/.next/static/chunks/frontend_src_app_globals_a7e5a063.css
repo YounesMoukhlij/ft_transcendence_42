@@ -243,7 +243,6 @@
     --ease-in-out: cubic-bezier(.4, 0, .2, 1);
     --animate-spin: spin 1s linear infinite;
     --animate-pulse: pulse 2s cubic-bezier(.4, 0, .6, 1) infinite;
-    --animate-bounce: bounce 1s infinite;
     --blur-sm: 8px;
     --blur-md: 12px;
     --blur-xl: 24px;
@@ -899,14 +898,6 @@
 
   .left-\[80\%\] {
     left: 80%;
-  }
-
-  .left-\[90\%\] {
-    left: 90%;
-  }
-
-  .left-\[90\] {
-    left: 90px;
   }
 
   .left-full {
@@ -1602,10 +1593,6 @@
     transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );
   }
 
-  .animate-bounce {
-    animation: var(--animate-bounce);
-  }
-
   .animate-pulse {
     animation: var(--animate-pulse);
   }
@@ -1690,10 +1677,6 @@
 
   .justify-end {
     justify-content: flex-end;
-  }
-
-  .justify-evenly {
-    justify-content: space-evenly;
   }
 
   .justify-start {
@@ -2208,10 +2191,6 @@
     background-color: var(--color-gray-100);
   }
 
-  .bg-gray-200 {
-    background-color: var(--color-gray-200);
-  }
-
   .bg-gray-300 {
     background-color: var(--color-gray-300);
   }
@@ -2238,16 +2217,6 @@
 
   .bg-gray-900 {
     background-color: var(--color-gray-900);
-  }
-
-  .bg-gray-900\/50 {
-    background-color: rgba(16, 24, 40, .5);
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .bg-gray-900\/50 {
-      background-color: color-mix(in oklab, var(--color-gray-900) 50%, transparent);
-    }
   }
 
   .bg-green-400 {
@@ -3306,26 +3275,8 @@
   }
 
   @media (hover: hover) {
-    .group-hover\:text-blue-400:is(:where(.group):hover *) {
-      color: var(--color-blue-400);
-    }
-  }
-
-  @media (hover: hover) {
-    .group-hover\:text-green-400:is(:where(.group):hover *) {
-      color: var(--color-green-400);
-    }
-  }
-
-  @media (hover: hover) {
     .group-hover\:text-white:is(:where(.group):hover *) {
       color: var(--color-white);
-    }
-  }
-
-  @media (hover: hover) {
-    .group-hover\:text-yellow-400:is(:where(.group):hover *) {
-      color: var(--color-yellow-400);
     }
   }
 
@@ -3446,28 +3397,10 @@
   }
 
   @media (hover: hover) {
-    .hover\:scale-110:hover {
-      --tw-scale-x: 110%;
-      --tw-scale-y: 110%;
-      --tw-scale-z: 110%;
-      scale: var(--tw-scale-x) var(--tw-scale-y);
-    }
-  }
-
-  @media (hover: hover) {
     .hover\:scale-120:hover {
       --tw-scale-x: 120%;
       --tw-scale-y: 120%;
       --tw-scale-z: 120%;
-      scale: var(--tw-scale-x) var(--tw-scale-y);
-    }
-  }
-
-  @media (hover: hover) {
-    .hover\:scale-125:hover {
-      --tw-scale-x: 125%;
-      --tw-scale-y: 125%;
-      --tw-scale-z: 125%;
       scale: var(--tw-scale-x) var(--tw-scale-y);
     }
   }
@@ -4996,18 +4929,6 @@ body {
 @keyframes pulse {
   50% {
     opacity: .5;
-  }
-}
-
-@keyframes bounce {
-  0%, 100% {
-    animation-timing-function: cubic-bezier(.8, 0, 1, 1);
-    transform: translateY(-25%);
-  }
-
-  50% {
-    animation-timing-function: cubic-bezier(0, 0, .2, 1);
-    transform: none;
   }
 }
 

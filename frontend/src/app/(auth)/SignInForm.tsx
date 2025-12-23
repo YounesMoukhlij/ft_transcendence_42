@@ -370,7 +370,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
         
         <div className='flex items-start w-full'>
           <h3 className='text-xs sm:text-sm text-gray-500 hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'
-              onClick={() => router.push('/forgot-password')}
+              onClick={() => router.push('/forgotPassword')}
             >
             Forgot your password?
           </h3>

@@ -25,7 +25,7 @@ const getProfileImageUrl = (currentImg)=>{
         return "".concat(("TURBOPACK compile-time value", "https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg"));
     }
     if (currentImg && currentImg.startsWith('/uploads/')) {
-        return "".concat(("TURBOPACK compile-time value", "http://localhost:4444")).concat(currentImg);
+        return "".concat(("TURBOPACK compile-time value", "http://e1r8p8.1337.ma:4444")).concat(currentImg);
     }
     return currentImg;
 };
@@ -1157,7 +1157,7 @@ function PerformanceChart(param) {
                         return;
                     }
                     try {
-                        const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get("http://".concat(("TURBOPACK compile-time value", "localhost"), ":").concat(("TURBOPACK compile-time value", "4444"), "/getPlayerProgress/").concat(targetUsername), {
+                        const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get("http://".concat(("TURBOPACK compile-time value", "e1r8p8.1337.ma"), ":").concat(("TURBOPACK compile-time value", "4444"), "/getPlayerProgress/").concat(targetUsername), {
                             headers: {
                                 Authorization: "Bearer ".concat(currentUser.access_token)
                             }
@@ -2114,7 +2114,7 @@ function MatchHistoryTable(param) {
                         return;
                     }
                     try {
-                        const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get("http://".concat(("TURBOPACK compile-time value", "localhost"), ":").concat(("TURBOPACK compile-time value", "4444"), "/getMatchHistory/").concat(targetUsername), {
+                        const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get("http://".concat(("TURBOPACK compile-time value", "e1r8p8.1337.ma"), ":").concat(("TURBOPACK compile-time value", "4444"), "/getMatchHistory/").concat(targetUsername), {
                             headers: {
                                 Authorization: "Bearer ".concat(currentUser.access_token)
                             }
@@ -2525,7 +2525,7 @@ function StatsOverview(param) {
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"])();
     const handleAddFriend = async ()=>{
         try {
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post("http://".concat(("TURBOPACK compile-time value", "localhost"), ":").concat(("TURBOPACK compile-time value", "4444"), "/sendRequestFriend"), {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post("http://".concat(("TURBOPACK compile-time value", "e1r8p8.1337.ma"), ":").concat(("TURBOPACK compile-time value", "4444"), "/sendRequestFriend"), {
                 id: userStats.id
             }, {
                 headers: {
@@ -2544,7 +2544,7 @@ function StatsOverview(param) {
     };
     const handleAcceptFriend = async ()=>{
         try {
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post("http://".concat(("TURBOPACK compile-time value", "localhost"), ":").concat(("TURBOPACK compile-time value", "4444"), "/AddFriend"), {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post("http://".concat(("TURBOPACK compile-time value", "e1r8p8.1337.ma"), ":").concat(("TURBOPACK compile-time value", "4444"), "/AddFriend"), {
                 id: userStats.id
             }, {
                 headers: {
@@ -2568,7 +2568,7 @@ function StatsOverview(param) {
     const handleUnfriend = async ()=>{
         try {
             //  Get conversation ID
-            const conversation_id = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post("http://".concat(("TURBOPACK compile-time value", "localhost"), ":").concat(("TURBOPACK compile-time value", "4444"), "/getConversationId"), {
+            const conversation_id = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post("http://".concat(("TURBOPACK compile-time value", "e1r8p8.1337.ma"), ":").concat(("TURBOPACK compile-time value", "4444"), "/getConversationId"), {
                 id: userStats.id
             }, {
                 headers: {
@@ -2578,7 +2578,7 @@ function StatsOverview(param) {
             const conv_id = conversation_id.data.conversation_id;
             console.log("Conversation ID:", conv_id);
             //  Unfriend
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post("http://".concat(("TURBOPACK compile-time value", "localhost"), ":").concat(("TURBOPACK compile-time value", "4444"), "/unfriend"), {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post("http://".concat(("TURBOPACK compile-time value", "e1r8p8.1337.ma"), ":").concat(("TURBOPACK compile-time value", "4444"), "/unfriend"), {
                 // user: currentUser.username,
                 conv_id: conv_id,
                 // friend: userStats.username,
@@ -2600,7 +2600,7 @@ function StatsOverview(param) {
             //  Reject friend request
             const notify_id = pendingRequests.filter((object)=>object.sender_user == userStats.id)[0].notify_id;
             console.log(notify_id);
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete("http://".concat(("TURBOPACK compile-time value", "localhost"), ":").concat(("TURBOPACK compile-time value", "4444"), "/DeleteFriendRequest"), {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete("http://".concat(("TURBOPACK compile-time value", "e1r8p8.1337.ma"), ":").concat(("TURBOPACK compile-time value", "4444"), "/DeleteFriendRequest"), {
                 params: {
                     id: notify_id
                 },
@@ -2620,7 +2620,7 @@ function StatsOverview(param) {
             const notify_id = sentRequests.filter((object)=>object.getter_user == userStats.id)[0].notify_id;
             console.log("Here : |", sentRequests);
             console.log("notify id :", notify_id);
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete("http://".concat(("TURBOPACK compile-time value", "localhost"), ":").concat(("TURBOPACK compile-time value", "4444"), "/cancelFriendRequest"), {
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete("http://".concat(("TURBOPACK compile-time value", "e1r8p8.1337.ma"), ":").concat(("TURBOPACK compile-time value", "4444"), "/cancelFriendRequest"), {
                 params: {
                     id: notify_id
                 },
@@ -4083,7 +4083,7 @@ function UserProfile() {
             const fetchUserData = {
                 "UserProfile.useEffect.fetchUserData": async ()=>{
                     try {
-                        const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get("http://".concat(("TURBOPACK compile-time value", "localhost"), ":").concat(("TURBOPACK compile-time value", "4444"), "/getUserStats"), {
+                        const res = await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get("http://".concat(("TURBOPACK compile-time value", "e1r8p8.1337.ma"), ":").concat(("TURBOPACK compile-time value", "4444"), "/getUserStats"), {
                             headers: {
                                 Authorization: "Bearer ".concat(currentUser.access_token)
                             }

@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/frontend/src/app/(protected)/leagues/style.css"],"sourcesContent":[".my_league_table {\n\n  overflow: scroll;\n}\n\n.my_league_table::-webkit-scrollbar {\n  width: 5px;\n  height: 8px;             \n}\n\n.my_league_table::-webkit-scrollbar-track {\n  border-radius: 4px;\n}\n\n.my_league_table::-webkit-scrollbar-thumb {\n  background-color: #888;\n  border-radius: 4px;\n}\n\n/* Hover effect */\n.my_league_table::-webkit-scrollbar-thumb:hover {\n  background-color: var(--sidebar-primary);\n}"],"names":[],"mappings":"AAAA;;;;AAKA;;;;;AAKA;;;;AAIA;;;;;AAMA"}}]
-}
