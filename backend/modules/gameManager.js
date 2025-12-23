@@ -264,9 +264,7 @@ class GameManager {
   handlePaddleMove(playerId, direction) {
     const found = this.findRoomByPlayer(playerId);
     if (!found) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/9b1d855d-3bee-4441-8ea9-22d08d970ff4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'paddle-freeze',hypothesisId:'B2',location:'backend/modules/gameManager.js:handlePaddleMove',message:'Player not found in any room',data:{playerId, direction},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
       console.warn(`[handlePaddleMove] Player ${playerId} not found in any room`);
       return;
     }
@@ -441,16 +439,12 @@ class GameManager {
 
         // Check if sockets are still connected (using updated references)
         if (room.player1.socket.readyState !== 1 || room.player2.socket.readyState !== 1) {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:startGameLoop:disconnectDetected',message:'Disconnect detected in game loop',data:{roomCode,player1ReadyState:room.player1.socket.readyState,player2ReadyState:room.player2.socket.readyState,hasTournamentContext:!!room.tournamentContext,tournamentId:room.tournamentContext?.tournamentId,matchId:room.tournamentContext?.matchId},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
+
 
           // One or both players disconnected - end game with quitter as loser
           clearInterval(interval);
           this.gameLoops.delete(roomCode);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:startGameLoop:gameLoopStopped',message:'Game loop stopped',data:{roomCode,intervalCleared:true,loopDeleted:true},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
+
 
           // Determine who quit and who won
           let winnerId, loserId, winnerUsername, loserUsername;
@@ -507,18 +501,14 @@ class GameManager {
               }
             };
 
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:startGameLoop:beforeSendGameOver',message:'About to send gameOver message from game loop',data:{roomCode,winnerId,winnerUsername,loserUsername,socketReadyState:connectedPlayer.socket?.readyState,hasTournamentContext:!!room.tournamentContext},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
+
 
             const sent = this.sendToPlayer(connectedPlayer.socket, {
               type: 'gameOver',
               payload: gameOverPayload
             });
 
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:startGameLoop:afterSendGameOver',message:'gameOver message sent from game loop',data:{roomCode,winnerId,messageSent:!!sent},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
+
 
             // For tournament matches, also send opponentLeft message to show animation
             if (room.tournamentContext) {
@@ -531,9 +521,7 @@ class GameManager {
               });
             }
           } else {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:startGameLoop:noConnectedPlayerSocket',message:'Cannot send gameOver - no connected player socket',data:{roomCode,hasConnectedPlayer:!!connectedPlayer,hasSocket:!!connectedPlayer?.socket},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
+
           }
 
           // Save game history with quitter as loser
@@ -544,9 +532,7 @@ class GameManager {
 
           // CRITICAL: For tournament matches, automatically report match result
           // This ensures the tournament advances when a player disconnects
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'D',location:'gameManager.js:startGameLoop:checkTournamentContext',message:'Checking tournament context in game loop',data:{roomCode,hasTournamentContext:!!room.tournamentContext,tournamentId:room.tournamentContext?.tournamentId,matchId:room.tournamentContext?.matchId},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
+
 
           if (room.tournamentContext) {
             const tournamentId = room.tournamentContext.tournamentId;
@@ -560,9 +546,7 @@ class GameManager {
               avatar: connectedPlayer.avatar || null
             };
 
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'E',location:'gameManager.js:startGameLoop:beforeHandleMatchResult',message:'About to call handleMatchResult from game loop',data:{tournamentId,matchId,winnerPlayer:{id:winnerPlayer.id,name:winnerPlayer.name,username:winnerPlayer.username,hasAvatar:!!winnerPlayer.avatar},quitter:loserUsername,round:room.tournamentContext.round},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
+
 
             console.log(`[startGameLoop] Tournament match finished due to disconnect - automatically reporting result:`, {
               tournamentId,
@@ -575,9 +559,7 @@ class GameManager {
             // Automatically report match result to tournament system
             try {
               const matchResult = this.handleMatchResult(tournamentId, matchId, winnerPlayer, winnerId);
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:startGameLoop:afterHandleMatchResult',message:'handleMatchResult result from game loop',data:{tournamentId,matchId,hasError:!!matchResult.error,error:matchResult.error,success:matchResult.success},timestamp:Date.now()})}).catch(()=>{});
-              // #endregion
+
 
               if (matchResult.error) {
                 console.error(`[startGameLoop] Failed to report tournament match result:`, matchResult.error);
@@ -585,22 +567,16 @@ class GameManager {
                 console.log(`[startGameLoop] Successfully reported tournament match result for match ${matchId}`);
               }
             } catch (error) {
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:startGameLoop:handleMatchResultException',message:'Exception in handleMatchResult from game loop',data:{tournamentId,matchId,error:error.message,errorStack:error.stack},timestamp:Date.now()})}).catch(()=>{});
-              // #endregion
+
               console.error(`[startGameLoop] Error reporting tournament match result:`, error);
             }
           } else {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'D',location:'gameManager.js:startGameLoop:noTournamentContext',message:'No tournament context in game loop - skipping match result',data:{roomCode},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
+
           }
 
           // Remove room
           this.gameRooms.delete(roomCode);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:startGameLoop:roomDeleted',message:'Room deleted after disconnect',data:{roomCode},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
+
           return;
         }
 
@@ -1010,7 +986,100 @@ class GameManager {
   // Remove player from room (called when player explicitly quits or disconnects)
   removePlayer(roomCode, playerId) {
     const room = this.gameRooms.get(roomCode);
-    if (!room) return;
+    if (!room) {
+
+      // Room not found - this can happen if:
+      // 1. Room was already deleted (opponent already left)
+      // 2. Room never existed (invalid roomCode)
+      // For tournament matches, check if player is in an active match and process it
+
+      // Search through all tournaments to find an active match for this player
+      for (const [tournamentId, tournament] of this.tournaments.entries()) {
+        if (!tournament.bracket) continue;
+
+        // Find active match (status === 'playing') where this player is participating
+        const activeMatch = tournament.bracket.find(m =>
+          m.status === 'playing' &&
+          m.player1 && m.player2 &&
+          (m.player1.id?.toString() === playerId.toString() ||
+           m.player1.id === playerId ||
+           m.player2.id?.toString() === playerId.toString() ||
+           m.player2.id === playerId)
+        );
+
+        if (activeMatch) {
+          // Found an active match for this player
+
+          // Determine winner (opponent) and loser (this player)
+          const isPlayer1 = activeMatch.player1.id?.toString() === playerId.toString() || activeMatch.player1.id === playerId;
+          const winner = isPlayer1 ? activeMatch.player2 : activeMatch.player1;
+          const quitter = isPlayer1 ? activeMatch.player1 : activeMatch.player2;
+
+          // Get winner socket to send gameOver message
+          const winnerSocket = this.usersSocket.get(winner.id?.toString() || winner.id_user?.toString());
+
+          // Send gameOver to winner if socket is available
+          if (winnerSocket && winnerSocket.readyState === 1) {
+            const gameOverPayload = {
+              winner: winner.username || winner.name,
+              winnerId: winner.id || winner.id_user,
+              reason: 'opponentQuit',
+              message: `${quitter.username || quitter.name} quit the game. You win!`,
+              finalScore: {
+                player1: isPlayer1 ? 0 : 10,
+                player2: isPlayer1 ? 10 : 0
+              }
+              // NOTE: Do NOT send finalGameState when room is not found
+              // The frontend should handle opponentQuit without updating game state scores
+              // This prevents premature game completion based on score checks
+            };
+
+            this.sendToPlayer(winnerSocket, {
+              type: 'gameOver',
+              payload: gameOverPayload,
+              matchId: activeMatch.id,
+              round: activeMatch.round
+            });
+
+            // Also send opponentLeft for tournament matches
+            this.sendToPlayer(winnerSocket, {
+              type: 'opponentLeft',
+              data: {
+                message: 'The other player has left the game, you win!',
+                matchId: activeMatch.id
+              },
+              matchId: activeMatch.id
+            });
+          }
+
+          // Process match result
+          const winnerPlayer = {
+            id: winner.id || winner.id_user,
+            name: winner.username || winner.name,
+            username: winner.username || winner.name,
+            avatar: winner.avatar || null
+          };
+
+          try {
+            const matchResult = this.handleMatchResult(tournamentId, activeMatch.id, winnerPlayer, winner.id || winner.id_user);
+
+            if (matchResult.error) {
+              console.error(`[removePlayer] Failed to report tournament match result for active match:`, matchResult.error);
+            } else {
+              console.log(`[removePlayer] Successfully processed active tournament match result for match ${activeMatch.id}`);
+            }
+          } catch (error) {
+            console.error(`[removePlayer] Error reporting tournament match result for active match:`, error);
+          }
+
+          return; // Match processed, exit
+        }
+      }
+
+      // No active match found - room was likely already processed or never existed
+
+      return;
+    }
 
     // Stop game loop
     const loop = this.gameLoops.get(roomCode);
@@ -1034,8 +1103,12 @@ class GameManager {
     }
 
     // Notify opponent that they won because opponent quit
-    // CRITICAL: Always send gameOver message, even if socket seems closed (might be stale reference)
-    if (winner && winner.socket) {
+    // CRITICAL: Get fresh socket reference to handle reconnections
+    // Use usersSocket map to get the most up-to-date socket
+    const freshWinnerSocket = this.usersSocket.get(winner.id.toString());
+    const winnerSocket = (freshWinnerSocket && freshWinnerSocket.readyState === 1) ? freshWinnerSocket : winner.socket;
+
+    if (winner && winnerSocket && winnerSocket.readyState === 1) {
       const gameOverPayload = {
         winner: winner.username,
         winnerId: winner.id,
@@ -1053,22 +1126,14 @@ class GameManager {
         }
       };
 
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:removePlayer:beforeSendGameOver',message:'About to send gameOver message',data:{roomCode,playerId,winnerId:winner.id,winnerUsername:winner.username,socketReadyState:winner.socket?.readyState,hasTournamentContext:!!room.tournamentContext},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-
-      const sent = this.sendToPlayer(winner.socket, {
+      const sent = this.sendToPlayer(winnerSocket, {
         type: 'gameOver',
         payload: gameOverPayload
       });
 
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:removePlayer:afterSendGameOver',message:'gameOver message sent',data:{roomCode,playerId,winnerId:winner.id,messageSent:!!sent},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-
       // For tournament matches, also send opponentLeft message to show animation
       if (room.tournamentContext) {
-        this.sendToPlayer(winner.socket, {
+        this.sendToPlayer(winnerSocket, {
           type: 'opponentLeft',
           data: {
             message: 'The other player has left the game, you win!',
@@ -1077,9 +1142,7 @@ class GameManager {
         });
       }
     } else {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:removePlayer:noWinnerSocket',message:'Cannot send gameOver - no winner socket',data:{roomCode,playerId,hasWinner:!!winner,hasSocket:!!winner?.socket},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+      console.warn(`[removePlayer] Cannot send gameOver - winner socket not available (roomCode: ${roomCode}, winnerId: ${winner?.id})`);
     }
 
     // Save game history with quitter as loser
@@ -1090,9 +1153,7 @@ class GameManager {
 
     // CRITICAL: For tournament matches, automatically report match result
     // This ensures the tournament advances when a player disconnects
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'D',location:'gameManager.js:removePlayer:checkTournamentContext',message:'Checking tournament context',data:{hasTournamentContext:!!room.tournamentContext,tournamentId:room.tournamentContext?.tournamentId,matchId:room.tournamentContext?.matchId,round:room.tournamentContext?.round},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
 
     if (room.tournamentContext) {
       const tournamentId = room.tournamentContext.tournamentId;
@@ -1106,9 +1167,7 @@ class GameManager {
         avatar: winner.avatar || null
       };
 
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'E',location:'gameManager.js:removePlayer:beforeHandleMatchResult',message:'About to call handleMatchResult',data:{tournamentId,matchId,winnerPlayer:{id:winnerPlayer.id,name:winnerPlayer.name,username:winnerPlayer.username,hasAvatar:!!winnerPlayer.avatar},quitter:quitter.username,round:room.tournamentContext.round},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
 
       console.log(`[removePlayer] Tournament match finished due to disconnect - automatically reporting result:`, {
         tournamentId,
@@ -1120,10 +1179,9 @@ class GameManager {
 
       // Automatically report match result to tournament system
       try {
+
         const matchResult = this.handleMatchResult(tournamentId, matchId, winnerPlayer, winner.id);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:removePlayer:afterHandleMatchResult',message:'handleMatchResult result',data:{tournamentId,matchId,hasError:!!matchResult.error,error:matchResult.error,success:matchResult.success},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
+
 
         if (matchResult.error) {
           console.error(`[removePlayer] Failed to report tournament match result:`, matchResult.error);
@@ -1131,22 +1189,16 @@ class GameManager {
           console.log(`[removePlayer] Successfully reported tournament match result for match ${matchId}`);
         }
       } catch (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:removePlayer:handleMatchResultException',message:'Exception in handleMatchResult',data:{tournamentId,matchId,error:error.message,errorStack:error.stack},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
+
         console.error(`[removePlayer] Error reporting tournament match result:`, error);
       }
     } else {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'D',location:'gameManager.js:removePlayer:noTournamentContext',message:'No tournament context - skipping match result',data:{roomCode,playerId},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
     }
 
     // Remove room
     this.gameRooms.delete(roomCode);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:removePlayer:roomDeleted',message:'Room deleted in removePlayer',data:{roomCode,playerId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
   }
 
   // Handle friend invitation
@@ -1519,27 +1571,19 @@ class GameManager {
 
   // Cleanup disconnected players
   handlePlayerDisconnect(playerId) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:handlePlayerDisconnect:entry',message:'Player disconnect started',data:{playerId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
 
     // Remove from matchmaking
     this.removeFromMatchmakingQueue(playerId);
 
     // Remove from any rooms
     const found = this.findRoomByPlayer(playerId);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'A',location:'gameManager.js:handlePlayerDisconnect:afterFindRoom',message:'Room search result',data:{playerId,foundRoom:!!found,roomCode:found?.roomCode,hasTournamentContext:!!found?.room?.tournamentContext,tournamentId:found?.room?.tournamentContext?.tournamentId,matchId:found?.room?.tournamentContext?.matchId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
 
     if (found) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'C',location:'gameManager.js:handlePlayerDisconnect:beforeRemovePlayer',message:'About to call removePlayer',data:{playerId,roomCode:found.roomCode,hasTournamentContext:!!found.room?.tournamentContext},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
       this.removePlayer(found.roomCode, playerId);
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'C',location:'gameManager.js:handlePlayerDisconnect:afterRemovePlayer',message:'removePlayer completed',data:{playerId,roomCode:found.roomCode},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
     }
 
     // Clean up pending invitations
@@ -1557,13 +1601,9 @@ class GameManager {
     }
 
     // Clean up tournament-related data
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'C',location:'gameManager.js:handlePlayerDisconnect:beforeHandleTournamentDisconnect',message:'About to call handleTournamentDisconnect',data:{playerId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
     this.handleTournamentDisconnect(playerId);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'C',location:'gameManager.js:handlePlayerDisconnect:afterHandleTournamentDisconnect',message:'handleTournamentDisconnect completed',data:{playerId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
   }
 
   // ==================== TOURNAMENT MANAGEMENT ====================
@@ -2483,53 +2523,39 @@ class GameManager {
 
   // Handle match result and advance tournament
   handleMatchResult(tournamentId, matchId, winner, reportedByUserId) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:entry',message:'handleMatchResult called',data:{tournamentId,matchId,winnerId:winner?.id,winnerName:winner?.name,reportedByUserId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
 
     const tournament = this.tournaments.get(tournamentId);
     if (!tournament) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:tournamentNotFound',message:'Tournament not found',data:{tournamentId,matchId},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
       return { error: 'Tournament not found' };
     }
 
     const bracket = tournament.bracket;
     if (!bracket) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:bracketNotFound',message:'Bracket not found',data:{tournamentId,matchId},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
       return { error: 'Tournament bracket not found' };
     }
 
     // Find the match
     const match = bracket.find(m => m.id === matchId);
     if (!match) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:matchNotFound',message:'Match not found in bracket',data:{tournamentId,matchId,bracketMatches:bracket.map(m=>({id:m.id,status:m.status}))},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
       return { error: 'Match not found' };
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:matchFound',message:'Match found - checking status',data:{tournamentId,matchId,matchStatus:match.status,hasRoomCode:!!match.roomCode,round:match.round},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
 
     // GUARD: Verify the match is in progress - prevent replaying finished matches
     if (match.status === 'finished') {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:matchAlreadyFinished',message:'Match already finished - rejecting',data:{tournamentId,matchId,matchStatus:match.status},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
       console.log(`[handleMatchResult] Match ${matchId} already finished, rejecting result report`);
       return { error: 'Match already finished' };
     }
 
     // GUARD: Prevent reporting result for matches that haven't started
     if (match.status === 'pending' && !match.roomCode) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:matchNotStarted',message:'Match not started yet - rejecting',data:{tournamentId,matchId,matchStatus:match.status,hasRoomCode:!!match.roomCode},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
       console.log(`[handleMatchResult] Match ${matchId} has not started yet (no room), rejecting result report`);
       return { error: 'Match has not started yet' };
     }
@@ -2538,23 +2564,17 @@ class GameManager {
     const winnerId = (winner.id || winner.id_user).toString();
     const player1Id = match.player1.id.toString();
     const player2Id = match.player2.id.toString();
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:validateWinner',message:'Validating winner',data:{tournamentId,matchId,winnerId,player1Id,player2Id,winnerMatchesPlayer1:player1Id===winnerId,winnerMatchesPlayer2:player2Id===winnerId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
 
     if (player1Id !== winnerId && player2Id !== winnerId) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:winnerValidationFailed',message:'Winner validation failed',data:{tournamentId,matchId,winnerId,player1Id,player2Id},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
       return { error: 'Winner must be one of the match players' };
     }
 
     // Update match with winner
     match.winner = winner;
     match.status = 'finished';
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'B',location:'gameManager.js:handleMatchResult:matchUpdated',message:'Match updated with winner',data:{tournamentId,matchId,winnerName:winner.name||winner.username,matchStatus:match.status},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
 
     console.log(`[handleMatchResult] Match ${matchId} finished. Winner: ${winner.name || winner.username}`);
     console.log(`[handleMatchResult] Match details:`, {
@@ -2585,18 +2605,58 @@ class GameManager {
         const sortedSemis = round1Matches.sort((a, b) => a.id - b.id);
         const semi1 = sortedSemis[0];
         const semi2 = sortedSemis[1];
+
+        // GUARD: Check if final match is already playing or finished
+        if (finalMatch && (finalMatch.status === 'playing' || finalMatch.status === 'finished')) {
+          console.log(`[handleMatchResult] Final match already ${finalMatch.status} for tournament ${tournamentId}, skipping`);
+          return { success: true, bracket };
+        }
+
+        // GUARD: Check if final match is already set up and scheduled (status is 'pending' with players)
+        // This means it was already scheduled by the first Round 1 match to finish
+        if (finalMatch && finalMatch.status === 'pending' && finalMatch.player1 && finalMatch.player2) {
+          // If creatingFinalMatch flag is set, the setTimeout is already scheduled, so skip
+          if (this.creatingFinalMatch.has(tournamentId)) {
+            console.log(`[handleMatchResult] Final match already set up and scheduled for tournament ${tournamentId}, skipping duplicate scheduling`);
+            return { success: true, bracket };
+          }
+
+          // If flag is not set but final match is pending with players, the previous setTimeout might have failed
+          // Re-schedule the final match creation to ensure it happens
+          console.log(`[handleMatchResult] Final match is pending but flag not set - re-scheduling final match creation for tournament ${tournamentId}...`);
+          this.creatingFinalMatch.add(tournamentId);
+          setTimeout(() => {
+            const finalResult = this.createFinalMatchRoom(tournamentId);
+            if (finalResult?.error) {
+              console.error(`[handleMatchResult] Failed to create final match room: ${finalResult.error}`);
+              this.creatingFinalMatch.delete(tournamentId);
+            } else {
+              console.log(`[handleMatchResult] Successfully created final match room for tournament ${tournamentId}`);
+            }
+          }, 4000);
+          return { success: true, bracket };
+        }
+
         if (finalMatch && semi1?.winner && semi2?.winner) {
+          // Mark that we're creating the final match to prevent duplicate scheduling
+          this.creatingFinalMatch.add(tournamentId);
+
           finalMatch.player1 = semi1.winner;
           finalMatch.player2 = semi2.winner;
           finalMatch.status = 'pending';
           finalMatch.winner = null;
 
           // Delay final match start by 4 seconds to sync with frontend winner badge display
-          console.log(`[handleMatchResult] Delaying final match start by 4 seconds...`);
+          console.log(`[handleMatchResult] Delaying final match start by 4 seconds for tournament ${tournamentId}...`);
           setTimeout(() => {
             const finalResult = this.createFinalMatchRoom(tournamentId);
             if (finalResult?.error) {
               console.error(`[handleMatchResult] Failed to create final match room: ${finalResult.error}`);
+              // Remove from creating set on error so it can be retried if needed
+              this.creatingFinalMatch.delete(tournamentId);
+            } else {
+              console.log(`[handleMatchResult] Successfully created final match room for tournament ${tournamentId}`);
+              // Note: creatingFinalMatch flag is cleaned up in createFinalMatchRoom on success
             }
           }, 4000);
         } else {
@@ -2677,6 +2737,8 @@ class GameManager {
     }
 
     if (finalMatch.status === 'playing' && finalMatch.roomCode) {
+      // Clean up the creating flag since final match is already playing
+      this.creatingFinalMatch.delete(tournamentId);
       return { success: true, roomCode: finalMatch.roomCode };
     }
 
@@ -2727,6 +2789,9 @@ class GameManager {
 
     finalMatch.roomCode = roomResult.roomCode;
     finalMatch.status = 'playing';
+
+    // Clean up the creating flag since final match is now successfully created
+    this.creatingFinalMatch.delete(tournamentId);
 
     this.broadcastTournamentUpdate(tournament);
     return { success: true, roomCode: roomResult.roomCode };
@@ -3175,15 +3240,11 @@ class GameManager {
 
   // Handle tournament player disconnect
   handleTournamentDisconnect(playerId) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'C',location:'gameManager.js:handleTournamentDisconnect:entry',message:'handleTournamentDisconnect started',data:{playerId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
 
     // Check if player is in an active match BEFORE removing from tournament
     const foundRoom = this.findRoomByPlayer(playerId);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'C',location:'gameManager.js:handleTournamentDisconnect:checkActiveMatch',message:'Checking for active match',data:{playerId,hasActiveRoom:!!foundRoom,roomCode:foundRoom?.roomCode,hasTournamentContext:!!foundRoom?.room?.tournamentContext,tournamentId:foundRoom?.room?.tournamentContext?.tournamentId,matchId:foundRoom?.room?.tournamentContext?.matchId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+
 
     // Remove from random opponent queue (check all entries)
     for (const [key, entry] of this.randomOpponentQueue.entries()) {

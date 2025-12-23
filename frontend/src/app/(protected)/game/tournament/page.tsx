@@ -257,6 +257,7 @@ export default function TournamentPage() {
     }
   }, [serverGameState, tournamentStep, tournamentType]);
   const [opponentLeft, setOpponentLeft] = useState(false);
+  const [opponentQuitMessage, setOpponentQuitMessage] = useState<string | null>(null);
 
   // Game started animation
   const [showGameStartedAnimation, setShowGameStartedAnimation] = useState(false);
@@ -525,6 +526,7 @@ export default function TournamentPage() {
             roundChanged
           });
           setOpponentLeft(false);
+          setOpponentQuitMessage(null);
         }
 
         lastMatchIdRef.current = currentMatch.id;
@@ -778,6 +780,21 @@ export default function TournamentPage() {
                   console.log('[Frontend] Tournament bracket state updated (isMatchActive:', isMatchActive, ')');
                 }
 
+                // If current match is now finished and we're still playing, update UI
+                if (tournamentStep === 'playing' && currentMatch) {
+                  const updatedMatch = updatedBracket.find((m: any) => m.id === currentMatch.id);
+                  if (updatedMatch && updatedMatch.status === 'finished' && updatedMatch.winner &&
+                      !matchWinner && isMatchActive) {
+                    console.log('[Frontend] Match finished via tournamentUpdated - updating UI', {
+                      matchId: updatedMatch.id,
+                      winner: updatedMatch.winner.name || updatedMatch.winner.username
+                    });
+                    const winnerPlayer = updatedMatch.winner;
+                    // Don't report again, just update UI (backend already processed)
+                    handleGameComplete(winnerPlayer, true); // true = backend already processed
+                  }
+                }
+
                 // Check if current user's match has finished
                 const userId = user?.id_user?.toString();
                 if (userId) {
@@ -1017,6 +1034,7 @@ export default function TournamentPage() {
                 // This must happen BEFORE any other processing to prevent stale state
                 console.log('[Frontend] Detected round 2 (final match) - resetting opponentLeft immediately');
                 setOpponentLeft(false);
+                setOpponentQuitMessage(null);
 
                 const finalIdx = bracket.findIndex(m => m.round === 2);
                 if (finalIdx !== -1 && finalIdx !== currentMatchIndex) {
@@ -1076,6 +1094,7 @@ export default function TournamentPage() {
               if (isFinalMatch) {
                 console.log('[Frontend] Detected final match (round 2) in gameState - resetting opponentLeft immediately');
                 setOpponentLeft(false);
+                setOpponentQuitMessage(null);
               }
 
               // CRITICAL: Reset opponentLeft when receiving gameState for a different match
@@ -1085,6 +1104,7 @@ export default function TournamentPage() {
                   newMatchId: message.matchId
                 });
                 setOpponentLeft(false);
+                setOpponentQuitMessage(null);
               }
 
               // If final match payload arrives but local bracket lacks players, hydrate bracket entry from payload
@@ -1124,6 +1144,7 @@ export default function TournamentPage() {
                     setCurrentMatchIndex(targetIdx);
                     // CRITICAL: Reset opponentLeft when switching to a different match
                     setOpponentLeft(false);
+                    setOpponentQuitMessage(null);
                   }
                   if (receivedRoomCode && targetMatch.roomCode !== receivedRoomCode) {
                     const updatedBracket = bracket.map(m =>
@@ -1534,9 +1555,14 @@ export default function TournamentPage() {
               if (reason === 'opponentQuit' && isForCurrentMatch) {
                 console.log('[Frontend] Setting opponentLeft to true for current match:', {
                   currentMatchId: currentMatch?.id,
-                  messageMatchId: messageMatchId
+                  messageMatchId: messageMatchId,
+                  message: message.payload.message
                 });
                 setOpponentLeft(true);
+                // Store the opponent quit message to display to the user
+                setOpponentQuitMessage(message.payload.message || `${message.payload.winner === currentMatch.player1?.name || message.payload.winner === currentMatch.player1?.username ? currentMatch.player2?.name : currentMatch.player1?.name} quit the game. You win!`);
+                // Stop the game immediately by setting match as inactive
+                setIsMatchActive(false);
               } else if (reason === 'opponentQuit' && !isForCurrentMatch) {
                 console.log('[Frontend] Ignoring opponentQuit - not for current match:', {
                   currentMatchId: currentMatch?.id,
@@ -1566,19 +1592,44 @@ export default function TournamentPage() {
               // Find winner player object from current match (bracket and currentMatch already declared above)
 
               if (currentMatch && winner) {
-                // Determine which player won
-                const winnerPlayer = currentMatch.player1?.name === winner || currentMatch.player1?.username === winner
-                  ? currentMatch.player1
-                  : currentMatch.player2?.name === winner || currentMatch.player2?.username === winner
-                  ? currentMatch.player2
-                  : null;
+                // Use winnerId from payload if available (more reliable)
+                const winnerIdFromPayload = message.payload.winnerId;
+
+                let winnerPlayer = null;
+
+                if (winnerIdFromPayload) {
+                  // Match by ID (most reliable)
+                  const winnerIdStr = winnerIdFromPayload.toString();
+                  if (currentMatch.player1?.id?.toString() === winnerIdStr ||
+                      currentMatch.player1?.id === winnerIdFromPayload) {
+                    winnerPlayer = currentMatch.player1;
+                  } else if (currentMatch.player2?.id?.toString() === winnerIdStr ||
+                             currentMatch.player2?.id === winnerIdFromPayload) {
+                    winnerPlayer = currentMatch.player2;
+                  }
+                }
+
+                // Fallback to name/username matching if ID matching failed
+                if (!winnerPlayer) {
+                  winnerPlayer = currentMatch.player1?.name === winner ||
+                                 currentMatch.player1?.username === winner ||
+                                 currentMatch.player1?.id?.toString() === winner
+                    ? currentMatch.player1
+                    : currentMatch.player2?.name === winner ||
+                      currentMatch.player2?.username === winner ||
+                      currentMatch.player2?.id?.toString() === winner
+                    ? currentMatch.player2
+                    : null;
+                }
 
                 if (winnerPlayer) {
                   console.log('[Frontend] Match finished, winner:', winnerPlayer.name);
+                  // Pass true if backend already processed (opponentQuit scenario)
+                  const backendProcessed = reason === 'opponentQuit';
                   // Call handleGameComplete to show completion modal and report result
-                  handleGameComplete(winnerPlayer);
+                  handleGameComplete(winnerPlayer, backendProcessed);
                 } else {
-                  console.warn('[Frontend] Could not find winner player object for:', winner);
+                  console.warn('[Frontend] Could not find winner player object for:', winner, 'winnerId:', winnerIdFromPayload);
                 }
               } else {
                 console.warn('[Frontend] No current match or winner in gameOver message');
@@ -1602,6 +1653,15 @@ export default function TournamentPage() {
                   messageMatchId: messageMatchId
                 });
                 setOpponentLeft(true);
+                // Stop the game immediately
+                setIsMatchActive(false);
+                // Set a default message if we don't have one from gameOver
+                if (!opponentQuitMessage) {
+                  const opponentName = currentMatch.player1?.id?.toString() === user?.id_user?.toString()
+                    ? currentMatch.player2?.name
+                    : currentMatch.player1?.name;
+                  setOpponentQuitMessage(opponentName ? `${opponentName} quit the game. You win!` : 'The other player has left the game, you win!');
+                }
               } else {
                 console.log('[Frontend] Ignoring opponentLeft - not for current match:', {
                   currentMatchId: currentMatch?.id,
@@ -2057,6 +2117,29 @@ export default function TournamentPage() {
     );
   }, [gameState.tournament?.bracket, currentMatchIndex]);
 
+  // Handle component unmount when navigating via sidebar or navbar (Next.js router)
+  // This sends leaveRoom when user navigates away without page refresh
+  // Covers: sidebar clicks, navbar clicks, and any other Next.js router navigation
+  useEffect(() => {
+    return () => {
+      // Send leaveRoom if user is in an active match when component unmounts
+      // This handles navigation via sidebar/navbar where beforeunload/pagehide don't fire
+      if (tournamentType === 'remote' && tournamentStep === 'playing' && isMatchActive && currentMatch?.roomCode && socket) {
+        if (socket.readyState === WebSocket.OPEN) {
+          try {
+            socket.send(JSON.stringify({
+              type: 'leaveRoom',
+              payload: { roomCode: currentMatch.roomCode }
+            }));
+            console.log('[Frontend] leaveRoom sent on component unmount (sidebar/navbar navigation)');
+          } catch (err) {
+            console.warn('[Frontend] Error sending leaveRoom on unmount:', err);
+          }
+        }
+      }
+    };
+  }, [tournamentType, tournamentStep, isMatchActive, currentMatch?.roomCode, socket]);
+
   const isLastMatch = useMemo(() => {
     const bracket = gameState.tournament?.bracket || [];
     const currentMatch = bracket[currentMatchIndex];
@@ -2326,11 +2409,18 @@ export default function TournamentPage() {
   }, []);
 
   // Handle game completion - improved with better guards to prevent infinite loops
-  const handleGameComplete = useCallback((winner: Player) => {
+  const handleGameComplete = useCallback((winner: Player, backendAlreadyProcessed: boolean = false) => {
     const currentMatch = gameState.tournament?.bracket[currentMatchIndex];
-    if (!currentMatch || currentMatch.status === 'finished' || !winner || !winner.id) {
+
+    // Allow execution even if match is finished (for UI updates)
+    // But skip if we don't have a valid winner
+    if (!currentMatch || !winner || !winner.id) {
       return;
     }
+
+    // If match is already finished, we still want to update UI
+    // but skip duplicate reporting
+    const matchAlreadyFinished = currentMatch.status === 'finished';
 
     // Store the match round for use in modal (in case currentMatch changes)
     setFinishedMatchRound(currentMatch.round);
@@ -2344,8 +2434,8 @@ export default function TournamentPage() {
     // Set match as inactive (finished)
     setIsMatchActive(false);
 
-    // For REMOTE tournaments, send match result to backend
-    if (tournamentType === 'remote' && socket && tournamentId) {
+    // For REMOTE tournaments, only send match result if backend hasn't already processed it
+    if (tournamentType === 'remote' && socket && tournamentId && !backendAlreadyProcessed && !matchAlreadyFinished) {
       console.log('[Frontend] Sending match result to backend:', {
         tournamentId,
         matchId: currentMatch.id,
@@ -2360,16 +2450,23 @@ export default function TournamentPage() {
           winner: winner
         }
       }));
+    } else if (backendAlreadyProcessed || matchAlreadyFinished) {
+      console.log('[Frontend] Skipping match result report - backend already processed or match already finished', {
+        backendAlreadyProcessed,
+        matchAlreadyFinished,
+        matchId: currentMatch.id
+      });
     }
 
     // For LOCAL tournaments, update bracket locally
-    if (tournamentType === 'local') {
+    if (tournamentType === 'local' && !matchAlreadyFinished) {
       updateTournamentMatch(currentMatch.id, {
         winner,
         status: 'finished',
       });
     }
 
+    // Always update UI regardless of match status
     setMatchWinner(winner);
     // REMOVED: No badges or messages for Round 1 winners - they should only see the button
     // Don't show completion modal for Round 1 winners in remote tournaments
@@ -2688,6 +2785,12 @@ export default function TournamentPage() {
     }
 
     if (tournamentType === 'remote' && tournamentStep === 'playing' && serverGameState && currentMatch && !matchWinner && !winnerDetectionRef.current) {
+      // Skip score checking if opponent left or match is not active
+      // These indicate the game ended due to opponent leaving, not reaching winning score
+      if (opponentLeft || !isMatchActive) {
+        return;
+      }
+
       const WINNING_SCORE = 10;
       const p1Score = serverGameState.player1?.score || 0;
       const p2Score = serverGameState.player2?.score || 0;
@@ -2697,7 +2800,9 @@ export default function TournamentPage() {
         player2Score: p2Score,
         matchWinner,
         hasCurrentMatch: !!currentMatch,
-        matchStatus: currentMatch.status
+        matchStatus: currentMatch.status,
+        opponentLeft,
+        isMatchActive
       });
 
       // Only check if match is not already finished
@@ -2721,7 +2826,62 @@ export default function TournamentPage() {
         }
       }
     }
-  }, [serverGameState, tournamentType, tournamentStep, currentMatch, matchWinner, handleGameComplete]);
+  }, [serverGameState, tournamentType, tournamentStep, currentMatch, matchWinner, handleGameComplete, opponentLeft, isMatchActive]);
+
+  // Navigation detection for active matches - must be at top level (before conditional returns)
+  useEffect(() => {
+    const userId = user?.id_user?.toString();
+    const isUserInMatch = currentMatch && userId && (
+      currentMatch.player1?.id?.toString() === userId ||
+      currentMatch.player1?.id === user?.id_user ||
+      currentMatch.player2?.id?.toString() === userId ||
+      currentMatch.player2?.id === user?.id_user
+    );
+
+    if (tournamentType === 'remote' && tournamentStep === 'playing' && isUserInMatch && isMatchActive && socket) {
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        if (socket && socket.readyState === WebSocket.OPEN && currentMatch?.roomCode) {
+          try {
+            socket.send(JSON.stringify({
+              type: 'leaveRoom',
+              payload: { roomCode: currentMatch.roomCode }
+            }));
+          } catch (err) {
+            // Error sending leaveRoom - connection may already be closed
+          }
+        }
+      };
+
+      const handlePageHide = (e: PageTransitionEvent) => {
+        if (socket && socket.readyState === WebSocket.OPEN && currentMatch?.roomCode) {
+          try {
+            socket.send(JSON.stringify({
+              type: 'leaveRoom',
+              payload: { roomCode: currentMatch.roomCode }
+            }));
+          } catch (err) {
+            // Error sending leaveRoom - connection may already be closed
+          }
+        }
+      };
+
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          // Page became hidden - could indicate navigation away
+        }
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('pagehide', handlePageHide);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('pagehide', handlePageHide);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    }
+  }, [tournamentType, tournamentStep, isMatchActive, socket, currentMatch?.id, currentMatch?.roomCode, currentMatch?.player1?.id, currentMatch?.player2?.id, tournamentId, user?.id_user]);
 
   // Auto-fullscreen for tournament matches - FORCE fullscreen for ALL remote tournament matches
   // Use a Map to track fullscreen attempts per match to ensure each match gets fullscreen
@@ -3865,7 +4025,7 @@ export default function TournamentPage() {
                   </div>
                 )}
 
-                {/* Invite Friend - expands inline to show friends list */}
+                {/* REMOVED :: Invite Friend - expands inline to show friends list */}
                 {!showFriendsListExpanded ? (
                   <div></div>
                   // <button
@@ -4734,9 +4894,16 @@ export default function TournamentPage() {
                   <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 animate-pulse">
                     {t('game.youWon') || 'YOU WON!'}
                   </h2>
-                  <p className="text-xl sm:text-2xl md:text-3xl text-yellow-300 mb-6 font-semibold">
-                    {t('game.opponentLeftMessage') || 'The other player has left the game, you win!'}
-                  </p>
+                  {/* Show specific opponent quit message if available */}
+                  {opponentQuitMessage ? (
+                    <p className="text-xl sm:text-2xl md:text-3xl text-yellow-300 mb-6 font-semibold">
+                      {opponentQuitMessage}
+                    </p>
+                  ) : (
+                    <p className="text-xl sm:text-2xl md:text-3xl text-yellow-300 mb-6 font-semibold">
+                      {t('game.opponentLeftMessage') || 'The other player has left the game, you win!'}
+                    </p>
+                  )}
                   <div className="flex items-center justify-center gap-2 text-green-400">
                     <svg className="animate-spin h-6 w-6 sm:h-8 sm:w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
