@@ -3811,7 +3811,10 @@ export default function TournamentPage() {
                   <p className="text-gray-300 text-xs xs:text-sm">{t('game.playersJoinDifferentDevices')}</p>
                 </button>
                 <button
-                  onClick={() => setTournamentType('local')}
+                  onClick={() => {
+                    // Redirect to new local tournament page
+                    router.push('/game/local-tournament');
+                  }}
                   className={`p-2 xs:p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all ${
                     tournamentType === 'local'
                       ? 'border-purple-400 bg-purple-600 bg-opacity-20'

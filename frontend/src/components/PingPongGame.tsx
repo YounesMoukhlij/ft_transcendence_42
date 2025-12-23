@@ -67,6 +67,7 @@ interface PingPongGameProps {
   tournamentPlayers?: Player[];
   onTournamentMatchEnd?: (winner: Player) => void;
   isTournamentFinalMatch?: boolean; // Hide rematch button and game over screen for final match
+  onScoreUpdate?: (scores: { player1: number; player2: number }) => void; // Callback for score updates
 
   // Local/AI game props
   onGameOver?: (winner: string | null) => void;
@@ -340,7 +341,8 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   tournamentPlayers = [],
   onTournamentMatchEnd,
   isTournamentFinalMatch = false,
-  onGameOver
+  onGameOver,
+  onScoreUpdate
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keysPressed = useRef<{ [key: string]: boolean }>({});
@@ -379,7 +381,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
   // Local game state - use gameState.players for local mode, tournamentPlayers for tournament mode
   const localPlayers = tournamentMode ? tournamentPlayers : (gameState.mode === 'local' ? gameState.players : []);
-  const { scores, paddles, ball, updateGameState, resetGameState } = useLocalGameState(localPlayers);
+  // Ensure all players have required id property for useLocalGameState (expects types/game.Player)
+  const localPlayersWithId = localPlayers.map((player, index) => ({
+    ...player,
+    id: player.id || `player-${index + 1}`,
+    id_user: typeof player.id_user === 'number' ? player.id_user : (typeof player.id_user === 'string' ? parseInt(player.id_user, 10) : undefined)
+  })) as Player[];
+  const { scores, paddles, ball, updateGameState, resetGameState } = useLocalGameState(localPlayersWithId);
 
   // Track if we've initialized the game to prevent infinite loops
   const gameInitializedRef = useRef<string | null>(null);
@@ -548,6 +556,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   }, [winner]); // Include winner in dependencies to restart loop when winner changes from non-null to null
 
 
+  // Notify parent of score updates for tournament mode
+  useEffect(() => {
+    if (tournamentMode && onScoreUpdate) {
+      onScoreUpdate(scores);
+    }
+  }, [scores, tournamentMode, onScoreUpdate]);
+
   // Check for winner in local tournament, AI mode, and local mode
   useEffect(() => {
     const isLocalMode = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
@@ -557,10 +572,22 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       if (tournamentMode && onTournamentMatchEnd && localPlayers.length >= 2) {
         if (scores.player1 >= WINNING_SCORE) {
           setWinner(localPlayers[0].name);
-          onTournamentMatchEnd(localPlayers[0]);
+          // Ensure player has required id property for onTournamentMatchEnd (expects types/game.Player)
+          const winnerPlayer: Player = {
+            ...localPlayers[0],
+            id: localPlayers[0].id || `player-1`,
+            id_user: typeof localPlayers[0].id_user === 'number' ? localPlayers[0].id_user : (typeof localPlayers[0].id_user === 'string' ? parseInt(localPlayers[0].id_user, 10) : undefined)
+          };
+          onTournamentMatchEnd(winnerPlayer);
         } else if (scores.player2 >= WINNING_SCORE) {
           setWinner(localPlayers[1].name);
-          onTournamentMatchEnd(localPlayers[1]);
+          // Ensure player has required id property for onTournamentMatchEnd (expects types/game.Player)
+          const winnerPlayer: Player = {
+            ...localPlayers[1],
+            id: localPlayers[1].id || `player-2`,
+            id_user: typeof localPlayers[1].id_user === 'number' ? localPlayers[1].id_user : (typeof localPlayers[1].id_user === 'string' ? parseInt(localPlayers[1].id_user, 10) : undefined)
+          };
+          onTournamentMatchEnd(winnerPlayer);
         }
       } else if (gameState.mode === 'ai') {
         // AI mode - check for winner
