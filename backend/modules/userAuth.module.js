@@ -1,49 +1,19 @@
-// userAuth.module.js
 import bcrypt from 'bcrypt';
 import fetch from 'node-fetch';
 import jwt from 'jsonwebtoken';
 import otplib from 'otplib'; 
-import qrcode from 'qrcode'; 
 import { createClient } from 'redis';
-import emailjs from '@emailjs/nodejs';
-import { SMTPClient } from 'emailjs';
 import nodemailer from 'nodemailer';
 import { text } from 'stream/consumers';
 import fs from 'fs';
-import path from 'path'; 
+import path from 'path';
 import { promisify } from 'util';
 import stream from 'stream';
-import pump from 'pump';
 
 const pipeline = promisify(stream.pipeline);
 
-// --- Environment Variables & Constants ---
-// All sensitive data is now pulled from process.env
-
-const DEFAULT_PROFILE_IMAGE = process.env.DEFAULT_PROFILE_IMAGE;
-const FRONTEND_URL = process.env.FRONTEND_URL;
-const SECRET = process.env.JWT_SECRET; // Used for JWT signing
-
-// Google OAuth Creds
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
-
-// 42 OAuth Creds
-const OAUTH42_UID = process.env.OAUTH42_UID;
-const OAUTH42_SECRET = process.env.OAUTH42_SECRET;
-const OAUTH42_CALLBACK = process.env.OAUTH42_CALLBACK_URL;
-
-// 2FA Configuration
-const ISSUER_NAME = process.env.TWOFA_ISSUER_NAME; 
-
-// Email Configuration
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
-
-// --- Helper Functions ---
-
-export async function me(request, reply) {
+export async function me (request, reply) {
+    console.log("avatar me called");
     const token = request.headers.authorization?.split(' ')[1];
     if (!token) {
         return reply.code(401).send({ success: false, message: "No token provided" });
@@ -55,23 +25,19 @@ export async function me(request, reply) {
         if (!user) {
             return reply.code(401).send({ success: false, message: "Invalid token" });
         }
-        // remove sensitive info from user object
         const { password, ...safeUser } = user;
-        console.log("\n\n\nme function returning user:", safeUser, "\n\n\n\n");
         return reply.code(200).send(safeUser);
     } catch (error) {
         console.error("Error fetching user info:", error);
         return reply.code(500).send({ success: false, message: "Error fetching user info" });
     }
 }
-
-// leaderboard
+//leaderboard
 export async function leaderboard(request, reply) {
     try {
         const page = parseInt(request.query.page) || 1;
         const limit = parseInt(request.query.limit) || 10;
         const offset = (page - 1) * limit;
-
         const leaderboardUsers = request.server.db
             .prepare("SELECT username, profile_img, xp FROM users ORDER BY xp DESC LIMIT ? OFFSET ?")
             .all(limit, offset);
@@ -83,37 +49,25 @@ export async function leaderboard(request, reply) {
     }
 }
 
-// token function generator
 export function generateToken(username, email, id_user) {
-    console.log("generateToken called with:", { username, email, id_user });
     if (!username || !email || !id_user) {
         throw new Error("Username, email, and user ID are required to generate token");
     }
 
     const payload = { username, email, id_user };
-    const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '24h' }); 
-    console.log(" >> Token generated successfully for user:", username, email, id_user);
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+    // console.log(" >> Token generated successfully for user:", username, email, id_user);
     return token;
 }
 
-export function generateRefreshToken(username, email, id_user) {
-    console.log("generateRefreshToken called with:", { username, email, id_user });
-    if (!username || !email || !id_user) {
-        throw new Error("Username, email, and user ID are required to generate refresh token");
-    }
-    const payload = { username, email, id_user };
-    const refreshToken = jwt.sign(payload, process.env.SECRET, { expiresIn: '7d' }); 
-    console.log(" >> Refresh token generated successfully for user:", { username, email, id_user });
-    return refreshToken;
-}
-
+// Helper function to hash passwords
 async function hashPassword(password) {
     const salt = await bcrypt.genSalt(10);
     return await bcrypt.hash(password, salt);
 }
 
 // ====== USER MANAGEMENT ======
-
+// add new user
 export async function AddUser(request, reply) {
     const { username, email, password } = request.body;
 
@@ -139,9 +93,9 @@ export async function AddUser(request, reply) {
         const hashedPassword = await hashPassword(password);
         const query = request.server.db
             .prepare("INSERT INTO users (username, fullname, email, password, profile_img) VALUES (?, ?, ?, ?, ?)");
-        const result = query.run(username, username, email, hashedPassword, DEFAULT_PROFILE_IMAGE);
+        const result = query.run(username, username, email, hashedPassword, process.env.DEFAULT_PROFILE_IMAGE);
 
-        return reply.code(200).send({
+        return reply.code(201).send({
             success: true,
             message: "User created successfully",
             userId: result.lastInsertRowid
@@ -155,7 +109,25 @@ export async function AddUser(request, reply) {
         });
     }
 }
-
+// delete user
+export async function DeleteUserById(request, reply) {
+    const { id } = request.params;
+    try {
+        const result = request.server.db
+            .prepare("DELETE FROM users WHERE id_user = ?")
+            .run(id);
+        if (result.changes === 0) {
+            return reply.code(404).send({ message: "User not found" });
+        }
+        return reply.code(200).send({ message: "User deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        return reply.code(500).send({
+            message: "Error deleting user"
+        });
+    }
+}
+//  settings update user info
 export async function updateUserInfo(request, reply) {
     const id_user = request.user.id_user;
     
@@ -223,7 +195,7 @@ export async function updateUserInfo(request, reply) {
             });
         }
         
-        if (profileImgPath && user.profile_img && user.profile_img !== DEFAULT_PROFILE_IMAGE) {
+        if (profileImgPath && user.profile_img && user.profile_img !== process.env.DEFAULT_PROFILE_IMAGE) {
             const oldPath = path.join(process.cwd(), user.profile_img);
             if (fs.existsSync(oldPath)) {
                 fs.unlink(oldPath, (err) => {
@@ -266,7 +238,7 @@ export async function updateUserInfo(request, reply) {
         });
     }
 }
-
+//  settings update user password
 export async function updateUserPassword(request, reply) {
     const id_user = request.user.id_user;
     if (!id_user) {
@@ -275,8 +247,8 @@ export async function updateUserPassword(request, reply) {
             message: "Missing user ID"
         });
     }
-    console.log("updateUserPassword called with id_user:", id_user);
     const { current_password, new_password } = request.body;
+    // console.log("updateUserPassword called with:", { id_user, current_password, new_password });
     
     if (!current_password || !new_password) {
         return reply.code(400).send({
@@ -324,10 +296,9 @@ export async function updateUserPassword(request, reply) {
         });
     }
 }
-
-// --- update2FA (Handles DISABLING 2FA) ---
+//settings update2FA 
 export async function update2FA(request, reply) {
-    const { twofa } = request.body; // This should be `false` or 0
+    const { twofa } = request.body;
     const id_user = request.user.id_user;
     
     if (typeof id_user === 'undefined' || typeof twofa === 'undefined') {
@@ -340,7 +311,7 @@ export async function update2FA(request, reply) {
     if (twofa) {
         return reply.code(400).send({
             success: false,
-            message: "To enable 2FA, please use the /2fa/generate and /2fa/verify endpoints."
+            message: "Error: To enable 2FA, try the setup flow instead."
         });
     }
 
@@ -356,6 +327,7 @@ export async function update2FA(request, reply) {
             });
         }
 
+        // Set to 0 (false) and clear the secret
         request.server.db
             .prepare("UPDATE users SET twofa_enabled = 0, twoFA_secret = NULL WHERE id_user = ?")
             .run(id_user);
@@ -374,16 +346,14 @@ export async function update2FA(request, reply) {
     }
 }
 
-// ====== 2FA SETUP FLOW ======
-
+// ====== 2FA SETUP ======
+// Generate Secret & OTP URL
 export async function generate2FA(request, reply) {
-    const { id_user, email } = request.user; 
+    const { id_user, email } = request.user;
 
     try {
         const secret = otplib.authenticator.generateSecret();
-        // Uses ISSUER_NAME from env
-        const otpauth = otplib.authenticator.keyuri(email, ISSUER_NAME, secret);
-
+        const otpauth = otplib.authenticator.keyuri(email, process.env.ISSUER_NAME, secret);
         request.server.db
             .prepare("UPDATE users SET twoFA_secret = ? WHERE id_user = ?")
             .run(secret, id_user);
@@ -395,13 +365,13 @@ export async function generate2FA(request, reply) {
         return reply.code(500).send({ success: false, message: "Error generating 2FA secret" });
     }
 }
-
+// Verify Token & Enable 2FA
 export async function verifyAndEnable2FA(request, reply) {
-    const { token } = request.body; 
+    const { token } = request.body; // The 6-digit code
     const { id_user } = request.user;
 
     if (!token) {
-        return reply.code(400).send({ success: false, message: "Token is required." });
+        return reply.code(400).send({ success: false, message: "Code is required." });
     }
 
     try {
@@ -430,13 +400,9 @@ export async function verifyAndEnable2FA(request, reply) {
         return reply.code(500).send({ success: false, message: "Error verifying 2FA token" });
     }
 }
-
-
-// ====== LOGIN / AUTH FLOWS ======
-
+// LOGIN
 export async function login(request, reply) {
     const { username, password } = request.body;
-    console.log("coming data ---------------->" , username , password);
     
     if (!username || !password) {
         return reply.code(400).send({ 
@@ -444,7 +410,6 @@ export async function login(request, reply) {
             message: "Missing required fields" 
         });
     }
-
     try {
         const user = request.server.db
             .prepare("SELECT * FROM users WHERE username = ?")
@@ -474,28 +439,24 @@ export async function login(request, reply) {
         if (user.twoFA_enabled) {
             return reply.code(200).send({
                 success: true,
-                twoFA_required: true, 
+                twoFA_required: true,
                 userId: user.id_user 
             });
         }
-
         const token = generateToken(user.username, user.email, user.id_user);
-        const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         
         const { password: _, twoFA_secret: __, ...userWithoutPassword } = user;
         request.server.db
-            .prepare("UPDATE users SET access_token = ? , refresh_token = ? WHERE id_user = ?")
-            .run(token, refreshToken, user.id_user);
+            .prepare("UPDATE users SET access_token = ?  WHERE id_user = ?")
+            .run(token, user.id_user);
         
         userWithoutPassword.access_token = token;
-        userWithoutPassword.refresh_token = refreshToken;
 
         return reply.code(200).send({ 
             success: true, 
             message: "Login successful",
             user: userWithoutPassword,
             token: token,
-            refreshToken: refreshToken
         });
 
     } catch (error) {
@@ -507,8 +468,9 @@ export async function login(request, reply) {
     }
 }
 
+// Verify 2FA code during LOGIN
 export async function loginVerify2FA(request, reply) {
-    const { userId, token } = request.body;
+    const { userId, token } = request.body; // 6-digit code
 
     if (!userId || !token) {
         return reply.code(400).send({ success: false, message: "User ID and token are required." });
@@ -528,18 +490,15 @@ export async function loginVerify2FA(request, reply) {
         if (!isValid) {
             return reply.code(401).send({ success: false, message: "Invalid 2FA code." });
         }
-
         const accessToken = generateToken(user.username, user.email, user.id_user);
-        const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         
         const { password: _, twoFA_secret: __, ...userWithoutPassword } = user;
         
         request.server.db
-            .prepare("UPDATE users SET access_token = ? , refresh_token = ? WHERE id_user = ?")
-            .run(accessToken, refreshToken, user.id_user);
+            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+            .run(accessToken, user.id_user);
         
         userWithoutPassword.access_token = accessToken;
-        userWithoutPassword.refresh_token = refreshToken;
 
         return reply.code(200).send({ 
             success: true, 
@@ -553,131 +512,17 @@ export async function loginVerify2FA(request, reply) {
     }
 }
 
-
-export async function refreshToken(request, reply) {
-    console.log("refreshToken function called");
-    const { refreshToken } = request.body;
-
-    if (!refreshToken) {
-        return reply.code(401).send({ success: false, message: "Refresh token is required" });
-    }
-
-    try {
-        const decoded = jwt.verify(refreshToken, SECRET);
-        const user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(decoded.id_user);
-
-        if (!user) {
-            return reply.code(401).send({ success: false, message: "Invalid refresh token" });
-        }
-
-        if (user.refresh_token !== refreshToken) {
-            return reply.code(401).send({ success: false, message: "Invalid refresh token" });
-        }
-
-        const newAccessToken = generateToken(user.username, user.email, user.id_user);
-
-        request.server.db
-            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
-            .run(newAccessToken, user.id_user);
-
-        return reply.code(200).send({ success: true, accessToken: newAccessToken });
-
-    } catch (error) {
-        console.error("Error refreshing token:", error.message);
-        return reply.code(401).send({ success: false, message: `Invalid or expired refresh token: ${error.message}` });
-    }
-}
-
-
-// ====== UTILITY FUNCTIONS ======
-export async function getAllUsers(request, reply) {
-    try {
-        const users = request.server.db
-            .prepare("SELECT * FROM users")
-            .all();
-        const safeUsers = users.map(user => {
-            const { password, twoFA_secret, ...safeUser } = user;
-            return safeUser;
-        });
-        return reply.code(200).send(safeUsers);
-    } catch (error) {
-        console.error("Error fetching users:", error);
-        return reply.code(500).send({ 
-            message: "Error fetching users" 
-        });
-    }
-}
-export async function getUserById(request, reply) {
-    const { id } = request.params;
-    try {
-        const user = request.server.db
-            .prepare("SELECT * FROM users WHERE id_user = ?")
-            .get(id);
-        if (!user) {
-            return reply.code(404).send({ message: "User not found" });
-        }
-        const { password, twoFA_secret, ...safeUser } = user;
-        return reply.code(200).send(safeUser);
-    } catch (error) {
-        console.error("Error fetching user:", error);
-        return reply.code(500).send({ 
-            message: "Error fetching user" 
-        });
-    }
-}
-export async function getUserByEmail(request, reply) {
-    const { email } = request.params;
-    try {
-        const user = request.server.db
-            .prepare("SELECT * FROM users WHERE email = ?")
-            .get(email);
-        if (!user) {
-            return reply.code(404).send({ message: "User not found" });
-        }
-        const { password, twoFA_secret, ...safeUser } = user;
-        return reply.code(200).send(safeUser);
-    } catch (error) {
-        console.error("Error fetching user:", error);
-        return reply.code(500).send({ 
-            message: "Error fetching user" 
-        });
-    }
-}
-export async function DeleteUserById(request, reply) {
-    const { id } = request.params;
-    try {
-        const result = request.server.db
-            .prepare("DELETE FROM users WHERE id_user = ?")
-            .run(id);
-        if (result.changes === 0) {
-            return reply.code(404).send({ message: "User not found" });
-        }
-        return reply.code(200).send({ message: "User deleted successfully" });
-    } catch (error) {
-        console.error("Error deleting user:", error);
-        return reply.code(500).send({
-            message: "Error deleting user"
-        });
-    }
-}
-
-
-// ====== PASSWORD RESET (EMAILJS/NODEMAILER) ======
-
-// Initializing Nodemailer with ENV variables
 const transporter = nodemailer.createTransport({
   service: 'gmail', 
   auth: {
-    user: EMAIL_USER, // Pulled from env
-    pass: EMAIL_PASS, // Pulled from env
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS,
   },
 });
-
+// send email with nodemailer of the verification code
 async function sendVerificationCode(userEmail, code) {
-  console.log(`Preparing to send verification code to ${userEmail}`);
-  console.log(`Generated code: ${code}`);
   const mailOptions = {
-    from: `Zmoumni`,
+    from: `ft_transcendence_42 Support`,
     to: userEmail,
     subject: 'Your Verification Code', 
     html  : `   <!DOCTYPE html>
@@ -760,7 +605,6 @@ async function sendVerificationCode(userEmail, code) {
                     <div class="content">
                     <p>Salam Allah Alaykom,</p>
                     <p>We received a request to reset your password for the account:</p>
-                    <img src="https://postimg.cc/8FV14g5K" alt="User Avatar"  style="border-radius: 50%; margin-bottom: 20px;" />
                     <p>Enter the following verification code to proceed. This code is valid for <strong>60 seconds</strong>:</p>
                     <div class="code-box">${code}</div>
                     <p>If you did not request a password reset, please ignore this email.</p>
@@ -771,13 +615,10 @@ async function sendVerificationCode(userEmail, code) {
                     </div>
                 </div>
                 </body>
-                </html>
-` 
+                </html>` 
   };
-
   try {
     let info = await transporter.sendMail(mailOptions);
-    console.log('Message sent: %s', info.messageId);
     return { success: true, message: 'Code sent!' };
   } catch (error) {
     console.error('Error sending email:', error);
@@ -785,6 +626,7 @@ async function sendVerificationCode(userEmail, code) {
   }
 }
 
+// password reset steps
 export async function forgotPassword(request, reply) {
     const { email } = request.body;
     const redis = request.server.redis;
@@ -805,7 +647,6 @@ export async function forgotPassword(request, reply) {
         }
         const user = request.server.db.prepare("SELECT username FROM users WHERE email = ?").get(email);
         if (!user) {
-            console.log(`Password reset attempt for non-existent email: ${email}`);
             return reply.code(200).send(
                 {
                     success: true, 
@@ -814,11 +655,11 @@ export async function forgotPassword(request, reply) {
             );
         }
 
+        
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         await redis.set(`reset:${email}`, code, { EX: 120 });
 
         sendVerificationCode(email, code);
-        
         return reply.code(200).send({ success: true, message: "A verification code has been sent to your email." });
 
     } catch (error) {
@@ -827,6 +668,7 @@ export async function forgotPassword(request, reply) {
     }
 }
 
+// Verify the Code and Create a Temporary Token
 export async function verifyCode(request, reply) {
     const { email, code } = request.body;
     const redis = request.server.redis;
@@ -843,12 +685,11 @@ export async function verifyCode(request, reply) {
             return reply.code(400).send({ success: false, message: "Invalid or expired code." });
         }
         await redis.del(redisKey);
-
         const user = request.server.db.prepare("SELECT id_user, username, email FROM users WHERE email = ?").get(email);
         const resetToken = jwt.sign(
             { id_user: user.id_user, email: user.email, purpose: 'password-reset' },
             SECRET,
-            { expiresIn: '5m' } 
+            { expiresIn: '5m' }
         );
 
         return reply.code(200).send({ success: true, message: "Code verified.", resetToken: resetToken });
@@ -859,6 +700,7 @@ export async function verifyCode(request, reply) {
     }
 }
 
+// Reset the Password Using the generated 5 min Token
 export async function resetPasswordWithToken(request, reply) {
     const { resetToken, newPassword } = request.body;
 
@@ -867,7 +709,7 @@ export async function resetPasswordWithToken(request, reply) {
     }
 
     try {
-        const decoded = jwt.verify(resetToken, SECRET);
+        const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
 
         if (decoded.purpose !== 'password-reset') {
             return reply.code(401).send({ success: false, message: "Invalid token purpose." });
@@ -895,9 +737,8 @@ export async function resetPasswordWithToken(request, reply) {
 }
 
 // ====== GOOGLE OAUTH ======
-
 export async function InitiateGoogleAuth(request, reply) {
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&scope=openid%20email%20profile`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}&response_type=code&scope=openid%20email%20profile`;
     
     return reply.redirect(googleAuthUrl);
 }
@@ -906,18 +747,17 @@ export async function GoogleAuth(request, reply) {
     const { code } = request.query;
    
     if (!code) {
-        return reply.redirect(`${FRONTEND_URL}/signIn?error=no_code`);
+        return reply.redirect(`${process.env.FRONTEND_URL}/signIn?error=no_code`);
     }
-
     try {
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 code,
-                client_id: GOOGLE_CLIENT_ID,
-                client_secret: GOOGLE_CLIENT_SECRET,
-                redirect_uri: GOOGLE_REDIRECT_URI,
+                client_id: process.env.GOOGLE_CLIENT_ID,
+                client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                redirect_uri: process.env.GOOGLE_REDIRECT_URI,
                 grant_type: 'authorization_code',
             }),
         });
@@ -938,46 +778,43 @@ export async function GoogleAuth(request, reply) {
         let isNewUser = false;
 
         if (user) {
+            // Existing user
             userId = user.id_user;
         } else {
-            console.log("New Google user, creating account");
+            // New user
             const insertQuery = request.server.db
                 .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method) VALUES (?, ?, ?, ?, ?)");
             const result = insertQuery.run(
                 googleUser.name.split(" ")[0] + Math.floor(Math.random() * 1000),
                 googleUser.name,
-                googleUser.email, 
+                googleUser.email,
                 googleUser.picture.replace('=s96-c', '=s600-c'),
                 1,
             );
             userId = result.lastInsertRowid;
             isNewUser = true;
-
             user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(userId);
         }
     
         if (user.twoFA_enabled) {
-            return reply.redirect(`${FRONTEND_URL}/signIn?2fa_required=true&userId=${userId}`);
+            return reply.redirect(`${process.env.FRONTEND_URL}/signIn?2fa_required=true&userId=${userId}`);
         }
-
         const token = generateToken(user.username, user.email, user.id_user);
-        const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         request.server.db
-            .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
-            .run(token, refreshToken, userId);
+            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+            .run(token, userId);
 
-        return reply.redirect(`${FRONTEND_URL}/signIn?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}&token=${token}`);
+        return reply.redirect(`${process.env.FRONTEND_URL}/signIn?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}&token=${token}`);
 
     } catch (error) {
         console.error('Google auth failed:', error);
-        return reply.redirect(`${FRONTEND_URL}/signIn?error=auth_failed`);
+        return reply.redirect(`${process.env.FRONTEND_URL}/signIn?error=auth_failed`);
     }
 }
 
 // ====== 42 OAUTH ======
-
 export async function Initiate42Auth(request, reply) {
-    const authUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${OAUTH42_UID}&redirect_uri=${OAUTH42_CALLBACK}&response_type=code`;
+    const authUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${process.env.OAUTH42_UID}&redirect_uri=${process.env.OAUTH42_CALLBACK_URL}&response_type=code`;
     return reply.redirect(authUrl);
 }
 
@@ -985,20 +822,19 @@ export async function FortyTwoAuth(request, reply) {
     const { code } = request.query;
     
     if (!code) {
-        return reply.redirect(`${FRONTEND_URL}/signIn?error=no_code`);
+        return reply.redirect(`${process.env.FRONTEND_URL}/signIn?error=no_code`);
     }
 
     try {
-        console.log("42 Auth code:", code);
         const tokenResponse = await fetch('https://api.intra.42.fr/oauth/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 grant_type: 'authorization_code',
-                client_id: OAUTH42_UID,
-                client_secret: OAUTH42_SECRET,
+                client_id: process.env.OAUTH42_UID,
+                client_secret: process.env.OAUTH42_SECRET,
                 code,
-                redirect_uri: OAUTH42_CALLBACK,
+                redirect_uri: process.env.OAUTH42_CALLBACK_URL,
             }),
         });
         const tokenData = await tokenResponse.json();
@@ -1010,6 +846,7 @@ export async function FortyTwoAuth(request, reply) {
         });
         const fortyTwoUser = await userResponse.json();
 
+        // Check if user already exists
         let user = request.server.db
             .prepare("SELECT * FROM users WHERE email = ?")
             .get(fortyTwoUser.email);
@@ -1018,8 +855,10 @@ export async function FortyTwoAuth(request, reply) {
         let isNewUser = false;
 
         if (user) {
+            // User exists
             userId = user.id_user;
         } else {
+            // New user
             const insertQuery = request.server.db
                 .prepare("INSERT INTO users (username, fullname, email, profile_img, auth_method) VALUES (?, ?, ?, ?, ?)");
             const result = insertQuery.run(
@@ -1031,24 +870,22 @@ export async function FortyTwoAuth(request, reply) {
             );
             userId = result.lastInsertRowid;
             isNewUser = true;
-
             user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(userId);
         }
 
         if (user.twoFA_enabled) {
-            return reply.redirect(`${FRONTEND_URL}/signIn?2fa_required=true&userId=${userId}`);
+            return reply.redirect(`${process.env.FRONTEND_URL}/signIn?2fa_required=true&userId=${userId}`);
         }
 
         const token = generateToken(user.username, user.email, user.id_user);
-        const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
         request.server.db
-            .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
-            .run(token, refreshToken, userId);
+            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+            .run(token, userId);
 
-        return reply.redirect(`${FRONTEND_URL}/signIn/?42Auth=success&userId=${userId}&isNewUser=${isNewUser}&token=${token}`);
+        return reply.redirect(`${process.env.FRONTEND_URL}/signIn/?42Auth=success&userId=${userId}&isNewUser=${isNewUser}&token=${token}`);
 
     } catch (error) {
         console.error('42 auth failed:', error);
-        return reply.redirect(`${FRONTEND_URL}/signIn?error=auth_failed`);
+        return reply.redirect(`${process.env.FRONTEND_URL}/signIn?error=auth_failed`);
     }
 }
