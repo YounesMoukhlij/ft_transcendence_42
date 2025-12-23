@@ -116,7 +116,16 @@ export default class LocalTournamentManager {
    */
   getNextMatchIndex(currentIndex: number): number {
     // Find the next match that has both players and is ready to play
-    for (let i = 0; i < this.bracket.length; i++) {
+    // Start searching from currentIndex + 1 to avoid returning the same match
+    for (let i = currentIndex + 1; i < this.bracket.length; i++) {
+      const match = this.bracket[i];
+      if (match.status === 'pending' && match.player1 && match.player2 && !match.winner) {
+        return i;
+      }
+    }
+    // If no match found after currentIndex, search from the beginning
+    // This handles the case where we need to go back to an earlier match
+    for (let i = 0; i <= currentIndex; i++) {
       const match = this.bracket[i];
       if (match.status === 'pending' && match.player1 && match.player2 && !match.winner) {
         return i;
