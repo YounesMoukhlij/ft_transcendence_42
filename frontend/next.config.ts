@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
         hostname: 'cdn-icons-png.flaticon.com',
       },
       {
+        protocol: 'https',
+        hostname: 'i.pravatar.cc',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
       },
