@@ -983,6 +983,9 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
 
       // Ensure final match room exists (can be triggered by Round 1 winners)
       if (action === 'ensureFinalMatchRoom') {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'gameWebSocketHandler.js:985',message:'ensureFinalMatchRoom called',data:{userId,tournamentId:payload.tournamentId},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'L'})}).catch(()=>{});
+        // #endregion
         const tournamentId = payload.tournamentId;
 
         if (!tournamentId) {
@@ -1089,8 +1092,15 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
 
         // If both players are ready, create the final match room
         if (readySet.size === 2) {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'gameWebSocketHandler.js:1091',message:'Both players ready - creating final match room',data:{tournamentId,readyPlayers:Array.from(readySet)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'M'})}).catch(()=>{});
+          // #endregion
           console.log(`[ensureFinalMatchRoom] Both players ready! Creating final match room...`);
           const result = gameManager.createFinalMatchRoom(tournamentId);
+
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'gameWebSocketHandler.js:1094',message:'Final match room creation result',data:{tournamentId,success:!result.error,roomCode:result.roomCode,error:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'N'})}).catch(()=>{});
+          // #endregion
 
           if (result.error) {
             // Clear readiness on error
