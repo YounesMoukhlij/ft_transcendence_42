@@ -556,21 +556,12 @@ export default function TournamentPage() {
     const handleMessage = (event: MessageEvent) => {
         const message = JSON.parse(event.data);
 
-        // #region agent log
-        if (message.type === 'matchFound' || message.type === 'finalMatchRoomEnsured' || message.type === 'ensureFinalMatchRoom') {
-          fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:558',message:'Received message in tournament page',data:{userId:user?.id_user?.toString(),messageType:message.type,roomCode:message.payload?.roomCode,tournamentId},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'V'})}).catch(()=>{});
-        }
-        // #endregion
-
         switch (message.type) {
           case 'matchFound':
             // For tournament matches, ignore matchFound - players stay on tournament page
             // The tournament page handles match transitions via tournamentUpdated messages
             if (tournamentType === 'remote' && tournamentId) {
               console.log('[Frontend] Ignoring matchFound for tournament match - staying on tournament page');
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:565',message:'Ignoring matchFound for tournament',data:{userId:user?.id_user?.toString(),roomCode:message.payload?.roomCode,tournamentId},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'W'})}).catch(()=>{});
-              // #endregion
               return; // Don't navigate away - stay on tournament page
             }
             break;
@@ -634,10 +625,6 @@ export default function TournamentPage() {
             break;
 
           case 'tournamentUpdated':
-            // #region agent log
-            const userId = user?.id_user?.toString();
-            fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:619',message:'Received tournamentUpdated message',data:{userId,tournamentId:message.data?.id,status:message.data?.status,hasBracket:!!message.data?.bracket,bracketLength:message.data?.bracket?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'J'})}).catch(()=>{});
-            // #endregion
             console.log('[Frontend] Received tournamentUpdated message:', {
               status: message.data?.status,
               hasBracket: !!message.data?.bracket,
@@ -1793,9 +1780,6 @@ export default function TournamentPage() {
 
           case 'finalMatchRoomEnsured':
             // Final match room has been created - both players are ready
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:1777',message:'Received finalMatchRoomEnsured',data:{userId:user?.id_user?.toString(),tournamentId:message.data.tournamentId,roomCode:message.data.roomCode},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'T'})}).catch(()=>{});
-            // #endregion
             console.log('[Frontend] Received finalMatchRoomEnsured - both players ready, room created:', message.data);
             if (tournamentType === 'remote' && message.data.roomCode) {
               const bracket = gameState.tournament?.bracket || [];
@@ -1808,9 +1792,6 @@ export default function TournamentPage() {
 
                 // Both players are ready, transition to final match
                 if (isPlayer1 || isPlayer2) {
-                  // #region agent log
-                  fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:1793',message:'Transitioning to final match',data:{userId:user?.id_user?.toString(),tournamentId:message.data.tournamentId,roomCode:message.data.roomCode,finalMatchIndex:bracket.findIndex((m: any) => m.id === finalMatch.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'X'})}).catch(()=>{});
-                  // #endregion
                   console.log('[Frontend] Both players ready - transitioning to final match');
                   // Set transition flag to prevent leaveRoom from being sent
                   isTransitioningRef.current = true;
@@ -1837,9 +1818,6 @@ export default function TournamentPage() {
                     setTimeout(() => {
                       isTransitioningRef.current = false;
                     }, 3000);
-                    // #region agent log
-                    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:1808',message:'Final match transition complete',data:{userId:user?.id_user?.toString(),finalMatchIndex,roomCode:message.data.roomCode},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'Y'})}).catch(()=>{});
-                    // #endregion
                   }
                 }
               }
@@ -2205,9 +2183,6 @@ export default function TournamentPage() {
       // This handles navigation via sidebar/navbar where beforeunload/pagehide don't fire
       // CRITICAL: Don't send leaveRoom if we're transitioning between matches in the same tournament
       if (tournamentType === 'remote' && tournamentStep === 'playing' && isMatchActive && currentMatch?.roomCode && socket && !isTransitioningRef.current) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:2182',message:'Component unmounting - sending leaveRoom',data:{userId:user?.id_user?.toString(),tournamentId,roomCode:currentMatch.roomCode,matchRound:currentMatch.round,isTransitioning:isTransitioningRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'AG'})}).catch(()=>{});
-        // #endregion
         if (socket.readyState === WebSocket.OPEN) {
           try {
             socket.send(JSON.stringify({
@@ -2220,9 +2195,6 @@ export default function TournamentPage() {
           }
         }
       } else if (tournamentType === 'remote' && tournamentStep === 'playing' && isMatchActive && currentMatch?.roomCode && isTransitioningRef.current) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:2200',message:'Skipping leaveRoom - transitioning between matches',data:{userId:user?.id_user?.toString(),tournamentId,oldRoomCode:previousRoomCodeRef.current,newRoomCode:currentMatch.roomCode},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'AH'})}).catch(()=>{});
-        // #endregion
         console.log('[Frontend] Skipping leaveRoom - transitioning between matches in same tournament');
       }
     };
@@ -2375,9 +2347,6 @@ export default function TournamentPage() {
 
   // Consolidated handler for "Proceed to Final Match" button
   const handleProceedToFinalMatch = useCallback((source: string = 'unknown') => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:2311',message:'handleProceedToFinalMatch called',data:{userId:user?.id_user?.toString(),tournamentId,source,waitingForOtherWinner},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'O'})}).catch(()=>{});
-    // #endregion
     if (waitingForOtherWinner) {
       // Already clicked, do nothing
       return;
@@ -2434,9 +2403,6 @@ export default function TournamentPage() {
 
       // Ask backend to ensure / create final match room
       if (socket && tournamentId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:2368',message:'Sending ensureFinalMatchRoom request',data:{userId:user?.id_user?.toString(),tournamentId,socketReady:socket.readyState},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'P'})}).catch(()=>{});
-        // #endregion
         socket.send(JSON.stringify({
           type: 'game',
           action: 'ensureFinalMatchRoom',
@@ -2524,10 +2490,6 @@ export default function TournamentPage() {
     const isLoser = userId && currentMatch.player1 && currentMatch.player2 &&
                     (currentMatch.player1.id?.toString() === userId || currentMatch.player2.id?.toString() === userId) &&
                     winner.id?.toString() !== userId;
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/454c8297-c733-4e31-9d74-5d9e2755052e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tournament/page.tsx:2430',message:'Game complete - checking if user is loser',data:{userId,tournamentId,matchId:currentMatch.id,round:currentMatch.round,isLoser,winnerId:winner.id?.toString()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'K'})}).catch(()=>{});
-    // #endregion
 
     // Set match as inactive (finished)
     setIsMatchActive(false);
