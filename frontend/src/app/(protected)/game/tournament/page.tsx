@@ -1728,21 +1728,15 @@ export default function TournamentPage() {
               // Redirect all players to game lobby after showing tournament completion (10 seconds)
               setTimeout(() => {
                 console.log('[Frontend] Redirecting all players to game lobby after tournament completion');
-                // Leave tournament for all players
+                // Leave tournament for all players - do NOT send cancelTournament as tournament is already completed
                 if (socket && tournamentId) {
-                  if (isHost) {
-                    socket.send(JSON.stringify({
-                      type: 'game',
-                      action: 'cancelTournament',
-                      payload: { tournamentId }
-                    }));
-                  } else {
-                    socket.send(JSON.stringify({
-                      type: 'game',
-                      action: 'leaveTournament',
-                      payload: { tournamentId }
-                    }));
-                  }
+                  // For both host and non-host players, just send leaveTournament
+                  // Tournament is already finished on backend, so no need to cancel
+                  socket.send(JSON.stringify({
+                    type: 'game',
+                    action: 'leaveTournament',
+                    payload: { tournamentId }
+                  }));
                 }
                 // Redirect to game lobby
                 router.push('/game');
