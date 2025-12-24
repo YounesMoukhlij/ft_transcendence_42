@@ -11,6 +11,8 @@ import { useUserStore } from '../store/userStore';
 import '../app/(protected)/chat/page.css';
 import {friendRequestType} from '@/app/(protected)/chat/types';
 import Logo from '../components/Logo';
+import { getProfileImageUrl } from '@/lib/utils';
+
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -279,7 +281,7 @@ export default function Navbar() {
                               className="flex items-center gap-3 p-4 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-black hover:from-gray-800 transition"
                             >
                               <img
-                                src={item.sender_profile_img}
+                                src={getProfileImageUrl(item.sender_profile_img)}
                                 alt="profile"
                                 className="w-12 h-12 rounded-full border-2 border-gray-600 object-cover"
                               />
@@ -320,7 +322,7 @@ export default function Navbar() {
                               className="flex items-center gap-3 p-4 border-b border-gray-800 bg-green-900/20 hover:bg-green-800/30 transition"
                             >
                               <img
-                                src={item.sender_profile_img}
+                                src={getProfileImageUrl(item.sender_profile_img)}
                                 alt="profile"
                                 className="w-12 h-12 rounded-full border-2 border-green-500 object-cover"
                               />
@@ -344,7 +346,7 @@ export default function Navbar() {
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
                                 <img
-                                  src={item.sender_profile_img}
+                                  src={getProfileImageUrl(item.sender_profile_img)}
                                   alt="profile"
                                   className="w-12 h-12 rounded-full border-2 border-gray-600 object-cover"
                                 />

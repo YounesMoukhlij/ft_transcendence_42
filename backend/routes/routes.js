@@ -1,8 +1,8 @@
-import {getConversationId  ,changeusersettings, getMsgs , IsOnline , blockFunction ,DeblockFunction , unfriend , pinned} from '../modules/user.module.js';
+import {changeusersettings, getMsgs , IsOnline , blockFunction ,DeblockFunction , unfriend , pinned} from '../modules/user.module.js';
 import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests , DeleteNotification } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
-    DeleteUserById,
+    DeleteAccount,
     forgotPassword,
     verifyCode,
     resetPasswordWithToken,
@@ -62,7 +62,7 @@ export default async function routes(fastify, options) {
     // fastify.get('/getAllUsers', getAllUsers);
     // fastify.get('/getUserById/:id', getUserById);
     // fastify.get('/getUserByEmail/:email', getUserByEmail);
-    fastify.delete('/DeleteUserById/:id', DeleteUserById);
+    fastify.delete('/DeleteAccount', DeleteAccount);
     fastify.post('/sendGameChallenge' , sendGameChallenge);
     fastify.post('/startGame' , AcceptGameChallenge);
     fastify.post('/NotificationSeen' , NotificationSeen);
@@ -72,7 +72,7 @@ export default async function routes(fastify, options) {
 
     fastify.get('/leaderboard', leaderboard);
 
-    fastify.get('/getConversationId', getConversationId);
+    // fastify.get('/getConversationId', getConversationId);
     fastify.get('/GetFriends' , GetFriends);
     fastify.get('/getMsgs' , getMsgs);
     // fastify.post('/sendMsg' , sendMsg);

@@ -110,16 +110,62 @@ export async function AddUser(request, reply) {
     }
 }
 // delete user
-export async function DeleteUserById(request, reply) {
-    const { id } = request.params;
+export async function DeleteAccount(request, reply) {
+    const userId = request.user.id_user;
+    const db = request.server.db;
+
     try {
-        const result = request.server.db
-            .prepare("DELETE FROM users WHERE id_user = ?")
-            .run(id);
-        if (result.changes === 0) {
-            return reply.code(404).send({ message: "User not found" });
-        }
-        return reply.code(200).send({ message: "User deleted successfully" });
+        const tx = db.transaction(() => {
+
+            db.prepare(`
+                DELETE FROM friends 
+                WHERE user_id = ? OR friend_id = ?
+            `).run(userId, userId);
+
+            db.prepare(`
+                DELETE FROM friend_requests
+                WHERE sender_id = ? OR receiver_id = ?
+            `).run(userId, userId);
+
+            db.prepare(`
+                DELETE FROM game_history
+                WHERE user_win = ? OR user_lose = ?
+            `).run(userId, userId);
+
+            db.prepare(`
+                DELETE FROM message
+                WHERE sender = ?
+            `).run(userId);
+
+            db.prepare(`
+                DELETE FROM notification
+                WHERE getter_user = ? OR sender_user = ?
+            `).run(userId, userId);
+
+            db.prepare(`
+                DELETE FROM room
+                WHERE blockedByUser1 = ?
+                   OR blockedByUser2 = ?
+                   OR pinnedUser1 = ?
+                   OR pinnedUser2 = ?
+                   OR lastMessageSender = ?
+            `).run(userId, userId, userId, userId, userId);
+
+            const result = db.prepare(`
+                DELETE FROM users WHERE id_user = ?
+            `).run(userId);
+
+            if (result.changes === 0) {
+                throw new Error("User not found");
+            }
+        });
+
+        tx();
+
+        return reply.code(200).send({
+            message: "User and all related data deleted successfully"
+        });
+
     } catch (error) {
         console.error("Error deleting user:", error);
         return reply.code(500).send({
@@ -127,6 +173,8 @@ export async function DeleteUserById(request, reply) {
         });
     }
 }
+
+
 //  settings update user info
 export async function updateUserInfo(request, reply) {
     const id_user = request.user.id_user;

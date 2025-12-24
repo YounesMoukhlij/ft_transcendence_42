@@ -155,7 +155,6 @@ export default function Messages(){
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    console.log(messages);
   }, [messages]);
 
     async function getMsgFunction(id : number)
@@ -211,7 +210,6 @@ export default function Messages(){
       created_at: getFormattedDate(),
       isSeen: false
     };
-    console.log(object);
     addMessage(object);
 
       const updateLastMessageObject = {
@@ -298,8 +296,8 @@ export default function Messages(){
                         <div className="sm:hidden w-[2rem] flex items-center p-1.5">
                             <GiHamburgerMenu onClick={smallListFriendShow} size={20} className="text-white"/>
                         </div>
-                        <div className="w-[80%] flex items-center gap-3.5 p-3 flex-1">
-                            <img className="min-w-[4rem] w-[25%] lg:w-[10%] xl:w-[10%] 2xl:w-[7%] rounded-[50%] border-2 border-gray-700" src={getProfileImageUrl(friend?.profile_img)}/>
+                        <div className="w-[80%] h-full flex items-center gap-3.5 p-3 flex-1 ">
+                            <img className="min-h-[60%] max-h-[180%] lg:h-[100%] xl:h-[120%] 2xl:h-[180%] rounded-[50%] border-2 border-gray-700" src={getProfileImageUrl(friend?.profile_img)}/>
                             <div className="flex flex-col">
                                 <h1 className="text-xl sm:text-2xl md:text-3xl text-white">{friend?.username}</h1>
                                 {

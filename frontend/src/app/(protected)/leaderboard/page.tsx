@@ -60,11 +60,9 @@ const LeaderboardItem = ({ player, rank }: { player: any, rank: number }) => (
 
 // --- The main async Page Component ---
 // Next.js App Router pages receive 'searchParams' as a prop
-export default async function LeaderboardPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+export default async function LeaderboardPage({ searchParams }) {
+  // page logic here
+
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
 

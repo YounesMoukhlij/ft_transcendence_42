@@ -15,6 +15,7 @@ import { RankBanner } from "./rank-banner"
 import { useCountUp, formatDuration } from "../hooks/useCountUp"
 import { User } from "@/types/user"
 import {getProfileImageUrl} from '@/lib/utils'
+import { useUserStore } from "@/store/userStore"
 
 
 
@@ -30,7 +31,8 @@ export  function Profile({user} : ProfileProps)  {
 const [overviewV, setOverviewV] = useState(true);
 const [matchHistoryV, setMatchHistoryV] = useState(false);
 const [AnalyticsV, setAnalyticsV] = useState(false);
-const [activeTab, setActiveTab] = useState("overview")
+const [activeTab, setActiveTab] = useState("overview");
+const {friends} = useUserStore();
 
 
 
@@ -47,6 +49,7 @@ const getRank = (): "gold" | "silver" | "bronze" => {
   avatar: getProfileImageUrl(user.avatar),
   rankType: getRank(),
   experience: user.xp,
+  conversationId: friends?.filter(item => item.id_user == user.id)[0]?.conversation_id || -1,
   expForLevel: 1000,
 
   totalMatches: user.totalMatches,

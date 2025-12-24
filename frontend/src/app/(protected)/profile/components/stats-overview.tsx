@@ -19,6 +19,7 @@ interface UserStats {
   currentStreak: number
   bestStreak: number
   averageScore: number
+  conversationId: number,
 }
 
 interface StatsOverviewProps {
@@ -141,7 +142,6 @@ const handleAcceptFriend = async () => {
         status : "accepted",
       });
     }
-    console.log("Friend request accepted + zustand updated");
   } catch (err) {
     console.log(err);
   }
@@ -154,24 +154,24 @@ const handleUnfriend = async () =>
 {
    try {
       //  Get conversation ID
-      const conversation_id = await api.post(
-        `/getConversationId`,
-        { id: userStats.id },
-        {
-          headers: {
-            Authorization: `Bearer ${currentUser?.access_token}`,
-          },
-        }
-      );
+      // const conversation_id = await api.get(
+      //   `/getConversationId`,
+      //   { id: userStats.id },
+      //     headers: {
+      //       Authorization: `Bearer ${currentUser?.access_token}`,
+      //     },
+      // );
 
-      const conv_id : number = conversation_id.data.conversation_id;
+      // const conv_id : number = conversation_id.data.conversation_id;
 
       //  Unfriend
+
+      console.log(userStats);
      const res =  await api.post(
         `/unfriend`,
         {
           // user: currentUser.username,
-          conv_id : conv_id,
+          conv_id : userStats.conversationId,
           // friend: userStats.username,
           friend_id: userStats.id,
         },{

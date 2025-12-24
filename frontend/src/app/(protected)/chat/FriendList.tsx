@@ -267,7 +267,6 @@ export default function FriendList( )
     setSetting(!setting);
   }
 
-  console.log("freind list " , friends);
 
 
   useEffect(() => {
@@ -279,7 +278,6 @@ export default function FriendList( )
           }
         });
 
-        console.log("here======> " , res.data);
         setFriends(res.data);
       } catch (err) {
         console.log(err);

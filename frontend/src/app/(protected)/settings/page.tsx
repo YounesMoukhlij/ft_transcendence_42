@@ -17,7 +17,6 @@ import Loading from '@/components/Loading/page'
 
 const ProfileSettingsPage = () => {
   const {user} = useUserStore();
-  console.log("=====>", user);
   const setUser = useUserStore((state) => state.setUser)
   const hasHydrated = useUserStore((state) => state._hasHydrated)
   
@@ -157,7 +156,6 @@ const ProfileSettingsPage = () => {
       const response = await api.post(`${process.env.NEXT_PUBLIC_BACK_API}/updateUserInfo`, dataToSave, {
         headers: { Authorization: `Bearer ${user.access_token}` },
       })
-      console.log('Profile update response:', response)
       const data = response.data
       if (!data.success) {
         toast.error(data.message || 'Failed to update profile')
@@ -342,7 +340,7 @@ const ProfileSettingsPage = () => {
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     try {
-      const response = await axios.delete(`${process.env.NEXT_PUBLIC_BACK_API}/DeleteUserById/${user.id_user}`, {
+      const response = await axios.delete(`${process.env.NEXT_PUBLIC_BACK_API}/DeleteAccount`, {
         headers: { Authorization: `Bearer ${user.access_token}` }
       })
       toast.success('Account deleted successfully!')

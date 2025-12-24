@@ -8,6 +8,7 @@ export interface User
   fullname: string,
   avatar: string,
   xp: number,
+  conversationId: number,
   // rank: string,
   // rankType: string,
   // expForLevel: number,

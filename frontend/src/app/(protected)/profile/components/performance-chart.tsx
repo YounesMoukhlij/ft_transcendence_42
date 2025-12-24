@@ -34,7 +34,6 @@ export function PerformanceChart({username }: PerformanceChartProps) {
   useEffect(() => {
     const fetchPlayerProgressData = async () => {
       if (!currentUser?.access_token) {
-        console.log("You must be logged in to view profiles");
         return;
       }
       if (!targetUsername) {
@@ -52,7 +51,6 @@ export function PerformanceChart({username }: PerformanceChartProps) {
         setPerformanceData(res.data);
       } catch (err) {
         console.error(err);
-        console.log(`Failed to load profile for ${targetUsername}`);
       }
     };
 

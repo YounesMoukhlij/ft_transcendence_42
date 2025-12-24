@@ -194,4 +194,4 @@ const ProfileTab = ({
   )
 }
 
-export default ProfileTab
+export default ProfileTab;
