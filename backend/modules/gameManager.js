@@ -6,8 +6,8 @@ const PADDLE_WIDTH = 16;
 const PADDLE_HEIGHT = 100;
 const BALL_RADIUS = 10;
 const PADDLE_SPEED = 12; // Increased from 8 for faster gameplay
-const BALL_SPEED = 4.5; // Reduced for slower, softer ball movement in remote game (was 6)
-const WINNING_SCORE = 10;
+const BALL_SPEED = 5; // Restored to original for faster, more exciting gameplay
+const WINNING_SCORE = 5;
 
 class GameManager {
   constructor(db, usersSocket) {
@@ -442,19 +442,19 @@ class GameManager {
         // Handle null sockets (player left but guard blocked processing)
         const p1SocketValid = room.player1.socket && room.player1.socket.readyState === 1;
         const p2SocketValid = room.player2.socket && room.player2.socket.readyState === 1;
-        if (!p1SocketValid || !p2SocketValid) {
-          // One or both players disconnected - check if we should end the game
-          // CRITICAL: For tournament matches, respect MIN_ROOM_AGE to prevent premature game ending
-          if (room.tournamentContext) {
-            const roomAge = Date.now() - (room.createdAt || room.startTime || 0);
-            const MIN_ROOM_AGE = 10000; // 10 seconds
-            if (roomAge < MIN_ROOM_AGE) {
-              // Room is too new - don't end the game yet, let it continue until minimum time has passed
-              // This prevents the game from pausing when a player leaves too soon
-              return; // Continue game loop, don't end game yet
-            }
-          }
 
+        // CRITICAL FIX: For tournament matches in MIN_ROOM_AGE period, skip disconnect check entirely
+        // This prevents premature game termination during initial room setup
+        let shouldCheckDisconnect = true;
+        if (room.tournamentContext) {
+          const roomAge = Date.now() - (room.gameStartedAt || room.createdAt || room.startTime || 0);
+          const MIN_ROOM_AGE = 10000; // 10 seconds
+          if (roomAge < MIN_ROOM_AGE) {
+            shouldCheckDisconnect = false;
+          }
+        }
+
+        if (shouldCheckDisconnect && (!p1SocketValid || !p2SocketValid)) {
           // One or both players disconnected - end game with quitter as loser
           clearInterval(interval);
           this.gameLoops.delete(roomCode);
@@ -594,7 +594,7 @@ class GameManager {
           return;
         }
 
-        // Update paddles
+        // Update paddles - ALWAYS update regardless of disconnect checks
         this.updatePaddles(room);
 
         // Track leading time

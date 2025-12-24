@@ -688,7 +688,9 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const scoresRef = useRef(scores);
   const gameStateRef = useRef(gameState);
   const userRef = useRef(user);
-  useEffect(() => { serverGameStateDrawRef.current = serverGameState; }, [serverGameState]);
+  useEffect(() => {
+    serverGameStateDrawRef.current = serverGameState;
+  }, [serverGameState]);
   useEffect(() => { paddlesRef.current = paddles; }, [paddles]);
   useEffect(() => { ballRef.current = ball; }, [ball]);
   useEffect(() => { scoresRef.current = scores; }, [scores]);
