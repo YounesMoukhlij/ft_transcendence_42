@@ -15,6 +15,7 @@ interface UserProfileProps {
 
 export default function UserProfile({ params }: UserProfileProps) {
   const { username } = use(params);
+
   const { user: currentUser, addSentRequestsArray, setFriends } = useUserStore();
   const router = useRouter();
 
@@ -35,6 +36,7 @@ export default function UserProfile({ params }: UserProfileProps) {
         });
         if (!active) return;
         setProfile(res.data);
+        
       } catch (err) {
         console.error("Error loading profile:", err);
         if ((err as any).response?.status === 404) {
@@ -77,7 +79,7 @@ export default function UserProfile({ params }: UserProfileProps) {
 
   // --- RENDER PROTECTION ---
 
-  if (!currentUser || loading) return <Loading />; // waiting for user or data
+  // if (!currentUser || loading) return <Loading />; // waiting for user or data
   if (!profile) return <Loading />; // safety fallback while axios resolves
 
   return <Profile user={profile} />;

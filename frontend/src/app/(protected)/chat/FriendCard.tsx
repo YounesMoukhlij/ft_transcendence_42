@@ -111,7 +111,7 @@ export default function FriendCard() {
     <div className="w-full h-full flex">
       <div className="w-full p-6 rounded-2xl bg-gray-900 shadow-2xl flex flex-col items-center gap-5">
         
-        {/* Profile Image */}
+
         <div className="relative">
           <img 
             src={getProfileImageUrl(friend.profile_img)} 
@@ -124,12 +124,12 @@ export default function FriendCard() {
           />
         </div>
 
-        {/* User Info */}
+
         <div className="text-center w-full">
           <h1 className="text-2xl font-bold text-white mb-1">{friend.username}</h1>
           <h2 className="text-sm text-gray-400 mb-3">{friend.fullname}</h2>
           
-          {/* Status */}
+
           <div className="flex items-center justify-center gap-2 bg-gray-800 rounded-lg px-4 py-2">
             <span className={`w-2 h-2 rounded-full ${friend.status ? 'bg-green-500' : 'bg-gray-600'}`}></span>
             {!friend.status ? (

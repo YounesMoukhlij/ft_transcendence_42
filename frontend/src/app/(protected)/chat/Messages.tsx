@@ -40,7 +40,7 @@ function MessageDateComponent({ date }: { date: string }) {
 
 export default function Messages(){
   const searchParams = useSearchParams();
-  const messages =useUserStore((state) => state.messages);
+  const messages = useUserStore((state) => state.messages);
 
   const {socket ,contactId ,setContactId, updatePinStatus, friends ,addMessage  , user ,  setMessages ,  updateLastMessage } = useUserStore();
   const [friend , SetFriend] = useState(null);
@@ -248,7 +248,6 @@ export default function Messages(){
   }
 
     return (
-        // MAIN CONTAINER - Added max-h-screen to limit to 100vh
         <div className="w-full max-h-screen h-full flex flex-col gap-3.5 relative overflow-hidden">
           {showMore && contactId !== -1 && 
           <div ref={menuRef} className="absolute top-17 right-12 z-50 bg-gray-900 text-white rounded-xl shadow-2xl border border-gray-700 p-1 flex flex-col animate-fadeIn">
@@ -292,9 +291,9 @@ export default function Messages(){
           </div>
           }
 
-            {/* HEADER - Fixed height */}
+
             <div className="flex-shrink-0 p-5 h-28 bg-black border border-gray-800 rounded-xl shadow-lg">
-                {contactId > -1 && 
+                {friend && contactId > -1 && 
                     <div className="w-full h-full flex justify-between">
                         <div className="sm:hidden w-[2rem] flex items-center p-1.5">
                             <GiHamburgerMenu onClick={smallListFriendShow} size={20} className="text-white"/>
@@ -324,7 +323,6 @@ export default function Messages(){
                 }
             </div>
 
-            {/* CHAT CONTAINER - Takes remaining space with min-h-0 */}
             <div className="flex-1 relative rounded-2xl flex flex-col overflow-hidden min-h-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                     {SmallFriendList && 
                         <div onClick={()=> SetSmallFriendList(false)} className="sm:hidden z-30 absolute bg-black w-full h-full">
@@ -332,11 +330,10 @@ export default function Messages(){
                         </div>
                     }
 
-                    {/* CHAT BODY - Scrollable message area */}
                     <div className="chat-body flex-1 flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar min-h-0">
                         <div className="flex justify-center">
                             {
-                                contactId > -1 &&
+                               friend &&  contactId > -1 &&
                                 <div className="flex w-[90%] sm:w-[80%] lg:w-[25rem] bg-gray-800 mt-2 sm:mt-4 p-3 sm:p-4 rounded-[10px] border border-gray-700">
                                     <p className="text-center text-gray-300 text-sm">
                                         The messages are end to end encrypted. Only people in this chat can read this conversation, so enjoy with your friend.
@@ -345,7 +342,7 @@ export default function Messages(){
                             }
                         </div>
                         {
-                          contactId > -1 &&
+                         friend &&  contactId > -1 &&
                           <div className="">
                           {
                             messages.filter(item => item.conv_id == friends.find(item => item.id_user === contactId).conversation_id).map((item, index) => {
@@ -379,10 +376,10 @@ export default function Messages(){
                         }
                     </div>
 
-                    {/* INPUT SECTION - Fixed at bottom */}
+
                     <div className="flex-shrink-0">
                       {
-                        contactId > -1 && (
+                        friend &&  contactId > -1 && (
                           <>
                             {
                               friend.blockedByUser1 === user.id_user || friend.blockedByUser2 === user.id_user  ? (

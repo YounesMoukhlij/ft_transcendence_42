@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 23, "column": 0}, "map": {"version":3,"sources":["file:///Users/mac/Desktop/ft_transcendence_42/frontend/src/app/%28auth%29/signIn/page.tsx"],"sourcesContent":["import React from 'react'\nimport AuthLayout from '../layout'\n\nexport default function SignInPage() {\n  return <AuthLayout />\n}\n\n"],"names":[],"mappings":";;;;;AACA;;;AAEe,SAAS;IACtB,qBAAO,0PAAC,wJAAU;;;;;AACpB","debugId":null}}]
+}

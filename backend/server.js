@@ -175,7 +175,7 @@ wss.on("connection", (socket, req) => {
 
   const allowQuery = db.prepare('SELECT status_share FROM users WHERE id_user = ?');
   const result = allowQuery.get(userId);  
-  if (result.status_share) {
+  if (result?.status_share) {
     statusSahre(userId, 1);
     db.prepare('UPDATE users SET status = ? WHERE id_user = ?').run(1, userId);
   } else {
