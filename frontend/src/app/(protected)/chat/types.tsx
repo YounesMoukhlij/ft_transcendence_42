@@ -21,3 +21,33 @@ export interface Message{
   created_at: string;
   isSeen: boolean;
 }
+
+export interface friendType{
+  bio  : string;
+  blockedByUser1  : number;
+  blockedByUser2  : number;
+  conversation_id  : number;
+  fullname  : string;
+  id_user  : number;
+  lastMessage  : string;
+  lastMessageSender  : number;
+  lastMessageTime  : string;
+  lastseen : string;
+  pinnedDateUser1 : string;
+  pinnedDateUser2 : string;
+  pinnedUser1 : number;
+  pinnedUser2 : number;
+  profile_img : string;
+  status : boolean;
+  username : string;
+  xp : number;
+}
+
+export interface friendRequestType{
+  expired: string;
+  notify_id:number;
+  sender_profile_img:string;
+  sender_user:number;
+  sender_username:string;
+  title:string;
+}

@@ -12,7 +12,7 @@ export default function ChatPage() {
   
   const [openSetting , setOpenSetting] = useState<boolean>(false);
   return (
-    <div className=' w-full h-full  flex gap-3.5 justify-center'>
+    <div className=' w-full h-full  flex gap-3.5 justify-center '>
       <div className='hidden md:w-[35%] lg:w-[30%]  xl:w-[20%] sm:flex flex-col gap-3.5  '>
         <FriendList/>
       </div>

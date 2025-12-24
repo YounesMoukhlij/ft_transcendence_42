@@ -6,584 +6,414 @@ import { GiPingPongBat } from 'react-icons/gi';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
 import Link from 'next/link';
 import axios from 'axios';
-import { Toaster, toast } from 'sonner';
-import  {useUserStore}  from '../store/userStore';
+import {  toast } from 'sonner';
+import { useUserStore } from '../store/userStore';
+import '../app/(protected)/chat/page.css';
+import {friendRequestType} from '@/app/(protected)/chat/types';
+import Logo from '../components/Logo';
 
-import '../app/(protected)/chat/page.css'
-import { removeRequestMeta } from 'next/dist/server/request-meta';
-
-export default function Navbar()
-{
-  const [isOpen, setIsOpen] = useState(false);
+export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationIndex, setNotificationIndex] = useState(false);
   const [notificatiion, setNotification] = useState([]);
-  const dropdownRef = useRef(null);
-  const profileIconRef = useRef<HTMLSpanElement>(null);
-  const hamburgerRef = useRef<HTMLDivElement>(null);
-  const {connect  , init } = useUserStore();
+  const [unseenCount, SetunseenCount] = useState(0);
   
+  const notificationRef = useRef(null);
+  const buttonRef = useRef(null);
+  const hamburgerRef = useRef<HTMLDivElement>(null);
+  
+  const { connect} = useUserStore();
   const setUsername = useUserStore.setState;
   const socket = useUserStore((state) => state.socket);
-  const {addFriend, removeFriend ,friends , addPendingRequests, addPendingRequestsArray, removePendingRequests, removeSentRequests} = useUserStore();
-
-  
-  
+  const { addFriend, removeFriend, friends, addPendingRequests, addPendingRequestsArray, removePendingRequests, removeSentRequests } = useUserStore();
   const user = useUserStore((state) => state.user);
 
+  function isTimeValid(item : any) {
 
+    const targetTimeString = item.expired;
+    const [datePart, timePart] = targetTimeString.split(' ');
+    const [yy, mm, dd] = datePart.split('-').map(Number);
+    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+    const fullYear = 2000 + yy;
+    const targetTime = new Date(fullYear, mm - 1, dd, hours, minutes, seconds);
+    const now = new Date();
+    const diffSeconds = (now - targetTime) / 1000;
 
-function isTimeValid(item: any) {
+    if (diffSeconds <= 15) {
+      setTimeout(() => {
+        const newExpired = ((d => (
+          d.setFullYear(d.getFullYear() - 1),
+          `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getFullYear()).slice(-2)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`
+        ))(
+          new Date(item.expired.replace(/(\d+)-(\d+)-(\d+)/, "20$3-$2-$1"))
+        ));
 
-
-  const targetTimeString = item.expired;
-  const [datePart, timePart] = targetTimeString.split(' ');
-  const [yy, mm, dd] = datePart.split('-').map(Number);
-  const [hours, minutes, seconds] = timePart.split(':').map(Number);
-
-  const fullYear = 2000 + yy;
-
-  const targetTime = new Date(fullYear, mm - 1, dd, hours, minutes, seconds);
-  const now = new Date();
-
-  const diffSeconds = (now - targetTime) / 1000;
-
-
-  if (diffSeconds <= 15) {
-
-  setTimeout(() => {
-    const newExpired = ((d => (
-      d.setFullYear(d.getFullYear() - 1),
-      `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getFullYear()).slice(-2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`
-      ))(
-        new Date(item.expired.replace(/(\d+)-(\d+)-(\d+)/, "20$3-$2-$1"))
-      ));
-
-     setNotification(prev =>
-        prev.map(it => it.id === item.id ? { ...it, expired: newExpired } : it)
-      );
-     return false;
-    }, diffSeconds * 10000);
+        setNotification(prev =>
+          prev.map(it => it.id === item.id ? { ...it, expired: newExpired } : it)
+        );
+        return false;
+      }, diffSeconds * 10000);
+    }
+    return diffSeconds <= 15;
   }
-  return diffSeconds <= 15;
-}
 
+  useEffect(() => {
+    setUsername({ username: user?.username });
+  }, []);
 
-useEffect(() => {
-  setUsername({username: user?.username});
-}, []);
+ useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as Node;
 
+    if (
+      notificationRef.current &&
+      !notificationRef.current.contains(target) &&
+      buttonRef.current &&
+      !buttonRef.current.contains(target)
+    ) {
+      setNotificationIndex(false);
+    }
 
-const menuRef = useRef(null);
-const buttonRef = useRef(null);
-
-
-
-useEffect(() => {
-  const handleClickOutside = (event : any) => {
-    if (menuRef.current && !menuRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {
-      setNotificationIndex(false); 
+    if (
+      hamburgerRef.current &&
+      !hamburgerRef.current.contains(target)
+    ) {
+      setMobileMenuOpen(false);
     }
   };
+
   document.addEventListener("mousedown", handleClickOutside);
 
-  return () => document.removeEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
 }, []);
 
 
-
-
-
-
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
-  
-  async function DelteFriendRequest(notify_id){
+  async function DelteFriendRequest(notify_id) {
     toast.error('Deleted');
     const sender_id = notificatiion.filter(item => item.notify_id == notify_id)[0].sender_user;
-    console.log("sender id: ", sender_id);
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
-    const res =  await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest` , {
-      params:{
-        id: notify_id,
-      },
-      headers: {
-        Authorization: `Bearer ${user.access_token}`
-      }
+    const res = await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest`, {
+      params: { id: notify_id },
+      headers: { Authorization: `Bearer ${user.access_token}` }
     });
-    if (res.status == 200)
-    {
+    if (res.status == 200) {
       removePendingRequests(sender_id);
     }
   }
 
-  async function AcceptFriendRequest(item : any){
-
-
- 
-    const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`,{
-      id: item.sender_user ,
-    },{
-      headers: {
-        Authorization: `Bearer ${user.access_token}`
+  async function AcceptFriendRequest(item: friendRequestType) {
+    const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`, {
+      id: item.sender_user,
+    }, {
+      headers: { Authorization: `Bearer ${user.access_token}` }
+    });
+    if (res.status === 200) {
+      const object = {
+        profile_img: item.sender_profile_img,
+        username: item.sender_username,
+        id_user: item.sender_user,
+        conversation_id: res.data.lastInsertRowid,
+        status: 0,
       }
+      removePendingRequests(item.sender_user);
+      addFriend(object);
     }
-  );
-  if (res.status === 200)
-  {
-    console.log("-----------------------------> yarbi ",res.data);
-    const object = {
-      profile_img: item.sender_profile_img,
-      username: item.sender_username,
-      id_user: item.sender_user,
-      conversation_id: res.data.lastInsertRowid,
-      status:0,
-    }
-
-
-    
-    removePendingRequests(item.sender_user); 
-    addFriend(object);
-  } 
-  
-  setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
-
-  };
-
-
-
-
-
-  function showNotification(){
-    setNotificationIndex(!notificationIndex);
-    SetunseenCount(0);
-    // setTimeout(() => {
-    //   setNotificationIndex(false);
-    // }, 5000);
-
-    try{
-      axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/NotificationSeen`,
-      {},
-      {
-        headers:{
-          Authorization: `Bearer ${user.access_token}`
-        }
-      }
-    );
-    }catch(err){
-
-    }
+    setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
   }
 
-
+  function showNotification() {
+    setNotificationIndex(!notificationIndex);
+    SetunseenCount(0);
+    try {
+      axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/NotificationSeen`,
+        {},
+        { headers: { Authorization: `Bearer ${user.access_token}` } }
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-
   useEffect(() => {
-
-    if (!user)
-        return ;
+    if (!user) return;
     async function get_notify() {
       try {
         const result = await axios.get(
           `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetNotification`,
-          {
-            headers:{
-              Authorization: `Bearer ${user.access_token}`,
-            }
-          }
+          { headers: { Authorization: `Bearer ${user.access_token}` } }
         );
         setNotification(result.data.reverse());
         addPendingRequestsArray(result.data.filter(object => object.title == "request friend"));
-
-
       } catch (error) {
         console.error('Failed to fetch notifications', error);
       }
     }
     get_notify();
-
-  }, [user , friends]);
-
-  useEffect( () => {
-    connect();
-  }, [user?.id_user])
-
-  const [unseenCount , SetunseenCount] = useState(0);
-
-  useEffect(()=>{
-    SetunseenCount (notificatiion.filter(n => !n.is_seen).length);
-  },[notificatiion])
+  }, [user, friends]);
 
   useEffect(() => {
+    connect();
+  }, [user?.id_user]);
 
+  useEffect(() => {
+    SetunseenCount(notificatiion.filter(n => !n.is_seen).length);
+  }, [notificatiion]);
+
+  useEffect(() => {
     if (!socket) return;
-  
     const handleNotify = (event: MessageEvent) => {
       const { type, data } = JSON.parse(event.data);
       if (type === "notify") {
-        console.log("Notification data: ", data);
-        if (data.title == "request friend")
-        {
-          console.log("Notification data: ", data);
+        if (data.title == "request friend") {
           addPendingRequests({
             sender_user: data.sender_user,
             sender_username: data.sender_username,
-            notify_id : data.notify_id,
+            notify_id: data.notify_id,
           });
-        }
-        else if (data.title == "friend request accepted")
-        {
+        } else if (data.title == "friend request accepted") {
           removeSentRequests(data.sender_user);
-          addFriend({
-            id_user : data.sender_user,
-          });
+          addFriend({ id_user: data.sender_user });
         }
-        
-        setNotification(prev => [{ 
+        setNotification(prev => [{
           sender_user: data.sender_user,
           title: data.title,
           sender_username: data.sender_username,
           sender_profile_img: data.sender_profile_img,
-          notify_id: data.notify_id, 
+          notify_id: data.notify_id,
           expired: data.expired
-         },
-        ...prev
-      ]);
-      }
-      else if (type == "unfriend")
-      {
+        }, ...prev]);
+      } else if (type == "unfriend") {
         removeFriend(data.id_user);
-      }
-      else if (type == "rejected")
-      {
+      } else if (type == "rejected") {
         removeSentRequests(data.getter_user);
-      }
-      else if (type == "canceled request")
-      {
+      } else if (type == "canceled request") {
         removePendingRequests(data.sender_user);
       }
     };
-  
     socket.addEventListener("message", handleNotify);
-  
     return () => {
       socket.removeEventListener("message", handleNotify);
     };
   }, [socket]);
-  
 
-
-
-  async function  AcceptGameChallenge(item){
-    const res = await  axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteNotification`,
+  async function AcceptGameChallenge(item) {
+    const res = await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteNotification`,
       {
-        params: {id: item.notify_id},
-        headers:{
-          Authorization: `Bearer ${user.access_token}`
-        }
+        params: { id: item.notify_id },
+        headers: { Authorization: `Bearer ${user.access_token}` }
       }
     );
     if (res.status == 200)
       setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
   }
 
-  function RejectGameChallenge(item ){
+  function RejectGameChallenge(item) {
     setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
-
   }
 
-  // Close mobile menu when clicking outside the list
-  useEffect(() => {
-    function handleClickOutside(event: any) {
-      if (
-        hamburgerRef.current &&
-        !(hamburgerRef.current as HTMLElement).contains(event.target)
-      ) {
-        setMobileMenuOpen(false);
-      }
-    }
-    if (mobileMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [mobileMenuOpen]);
-
   const sidebarItems = [
-    { path: '/game', icon: <IoGameControllerOutline className="text-white text-2xl" />, alt: 'Game' },
-    { path: '/chat', icon: <IoChatbubbleOutline className="text-white text-2xl" />, alt: 'Chat' },
-    { path: '/profile', icon: <IoPersonOutline className="text-white text-2xl" />, alt: 'Profile' },
-    { path: '/settings', icon: <IoSettingsOutline className="text-white text-2xl" />, alt: 'Settings' },
+    { path: '/game', icon: <IoGameControllerOutline className="text-xl" />, alt: 'Game' },
+    { path: '/chat', icon: <IoChatbubbleOutline className="text-xl" />, alt: 'Chat' },
+    { path: '/profile', icon: <IoPersonOutline className="text-xl" />, alt: 'Profile' },
+    { path: '/settings', icon: <IoSettingsOutline className="text-xl" />, alt: 'Settings' },
   ];
 
   return (
     <>
-      <style jsx>{`
-        @keyframes slideInFromTop {
-          0% {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-
-      <nav className="m-2 md:m-[10px] p-2 md:p-3 z-50 h-[4vh] bg-transparent ">
-        <div className="flex justify-between items-center">
-          <div className="flex flex-row items-center gap-1 md:gap-2">
-            {/* <GiPingPongBat
-              className="text-white w-15 h-15  cursor-pointer animate-spin"
-              style={{
-                animation: 'spin 6s linear infinite'
-              }}
-            /> */}
-          </div>
-
-          {/* Desktop Right Section */}
-          <div className="hidden md:flex flex-row items-center justify-center gap-2 md:gap-5">
-            <div className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
-              <IoSearchOutline className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400" />
-            </div>
-          {notificationIndex && (
-    <div  ref={menuRef} className=" testt z-50 absolute flex flex-col top-22 right-30 h-52 w-96 rounded-2xl bg-black text-white border-2 overflow-y-scroll gap-2 p-2 ">
-    {notificatiion.length === 0 ? (
-      <div className="text-center text-gray-400 py-6 text-lg font-medium">
-        No notifications
-      </div>
-    ) : (
-      [...notificatiion]
-        .map((item, index) => {
-          if (item.title === "game challenge") {
-            return (
-              <div
-                key={index}
-                className="flex items-center gap-3 p-3 border border-gray-700 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 transition"
-              >
-                <img
-                  src={item.sender_profile_img}
-                  alt="profile"
-                  className="w-12 h-12 rounded-full border border-gray-600"
-                />
-                <div className="flex flex-col flex-1">
-                  <p className="text-lg font-semibold text-white">
-                    {item.sender_username}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    invited you to a{" "}
-                    <span className="text-blue-400 font-medium">1 vs 1 game</span>
-                  </p>
-                </div>
-                {isTimeValid(item) ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => AcceptGameChallenge(item)}
-                      className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() => RejectGameChallenge(item)}
-                      className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold"
-                    >
-                      Decline
-                    </button>
-                  </div>
-                ) : (
-                  <div className='flex justify-center '><p>expired</p></div>
-                )}
-                </div>
-            );
-          }
-
-          if (item.title === "friend request accepted") {
-            return (
-              <div
-                key={index}
-                className="flex items-center gap-3 p-3 border border-green-700 bg-green-900/20 rounded-xl hover:bg-green-800/30 transition"
-              >
-                <img
-                  src={item.sender_profile_img}
-                  alt="profile"
-                  className="w-12 h-12 rounded-full border border-green-500"
-                />
-                <div className="flex flex-col">
-                  <p className="text-white text-lg font-medium">
-                    {item.sender_username}
-                  </p>
-                  <p className="text-green-400 text-sm">
-                    accepted your friend request 
-                  </p>
-                </div>
-              </div>
-            );
-          }
-
-          return (
-            <div
-              key={index}
-              className="flex flex-col border-t border-gray-700 py-3 px-2 bg-black/40 hover:bg-black/60 rounded-xl transition"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <img
-                    src={item.sender_profile_img}
-                    alt="profile"
-                    className="w-12 h-12 rounded-full border border-gray-600"
-                  />
-                  <p className="text-white text-lg ml-3">
-                    {item.sender_username}
-                  </p>
-                </div>
-                <p className="text-gray-400 text-sm">
-                  {item.timeAgo || "1d"}
-                </p>
-              </div>
-
-              <div className="flex justify-between mt-3">
-                <button
-                  onClick={() => AcceptFriendRequest(item)}
-                  className="w-[48%] bg-green-600 hover:bg-green-500 text-white py-1.5 rounded-lg border border-green-400"
-                >
-                  Confirm
-                </button>
-                <button
-                  onClick={() => DelteFriendRequest(item.notify_id)}
-                  className="w-[48%] bg-gray-100 hover:bg-gray-200 text-black py-1.5 rounded-lg border border-white"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          );
-        })
-    )}
-  </div>
-)}
-
-          <div ref={buttonRef} className="relative border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400">
-              <IoNotificationsOutline  onClick={showNotification} className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8 cursor-pointer hover:scale-125 transition-all duration-400" />
-              <div className='absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'><p>{unseenCount}</p></div>
-            </div>
-            <div className="relative  border-2 border-white rounded-2xl p-2 bg-black cursor-pointer hover:scale-90 transition-all duration-400" ref={dropdownRef}>
-              <span ref={profileIconRef}>
-                <IoPersonCircleOutline
-                  className="text-white h-5 w-5 md:w-6 md:h-6 lg:w-8 lg:h-8  cursor-pointer hover:scale-125 transition-all duration-400"
-                  style={{ cursor: 'pointer' }}
-                />
-              </span>
-            </div>
-          </div>
-
-          {/* Mobile Hamburger Menu */}
-          <div className="md:hidden relative" ref={hamburgerRef}>
-            <button
-              onClick={toggleMobileMenu}
-              className="relative  p-3 bg-black cursor-pointer hover:scale-125 transition-all duration-400"
-            >
-              {mobileMenuOpen ? (
-                <IoCloseOutline className="text-white h-8 w-8" />
-              ) : (
-                <IoMenuOutline className="text-white h-9 w-9" />
-              )}
-            </button>
-
-            {/* Mobile Menu Dropdown */}
-            <div
-              className={`absolute right-0 top-full mt-2 w-64 bg-black border-2 border-white rounded-lg p-4 z-50 transition-all duration-300 ease-in-out transform ${
-                mobileMenuOpen
-                  ? 'opacity-100 translate-y-0 scale-100'
-                  : 'opacity-0 -translate-y-2 scale-95 pointer-events-none'
-              }`}
-            >
-              <div className="flex flex-col gap-4">
-                {/* Sidebar Items */}
-                <div className="border-b border-gray-600 pb-4">
-                  <h3 className="text-white text-sm font-semibold mb-3">Navigation</h3>
-                  <div className="flex flex-col gap-3">
-                    {sidebarItems.map((item, index) => (
-                      <Link href={item.path} key={item.path} onClick={() => setMobileMenuOpen(false)}>
-                        <div
-                          className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 ${
-                            mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
-                          }`}
-                          style={{
-                            animationDelay: `${index * 100}ms`
-                          }}
-                        >
-                          {item.icon}
-                          <span className="text-white">{item.alt}</span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Navbar Right Section Items */}
-                <div>
-                  <h3 className="text-white text-sm font-semibold mb-3">Actions</h3>
-                  <div className="flex flex-col gap-3">
-                    <div
-                      className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 cursor-pointer ${
-                        mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
-                      }`}
-                      style={{
-                        animationDelay: '500ms'
-                      }}
-                    >
-                      <IoPersonCircleOutline className="text-white text-xl" />
-                      <span className="text-white">Profile</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 cursor-pointer ${
-                        mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
-                      }`}
-                      style={{
-                        animationDelay: '600ms'
-                      }}
-                    >
-                      <IoSearchOutline className="text-white text-xl" />
-                      <span className="text-white">Search</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 cursor-pointer ${
-                        mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
-                      }`}
-                      style={{
-                        animationDelay: '700ms'
-                      }}
-                    >
-                      <IoNotificationsOutline   className="text-white text-xl " />
-                      <span className="text-white">Notifications</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 cursor-pointer ${
-                        mobileMenuOpen ? 'animate-[slideInFromTop_0.3s_ease-out_forwards]' : ''
-                      }`}
-                      style={{
-                        animationDelay: '800ms'
-                      }}
-                    >
-                      <IoLogOutOutline className="text-white text-xl" />
-                      <span className="text-white">Logout</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Fixed Top Container */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center w-full pt-4 px-2 h-24">
+        {/* Inner Container - Matches Sidebar Style */}
+      <div className="w-full max-w-[98%] md:max-w-[96%] h-full border border-gray-800 bg-black rounded-3xl px-6 flex justify-between items-center shadow-2xl relative">
+        
+        {/* Left: Logo */}
+        <div className="flex items-center">
+             <Logo /> 
         </div>
-      </nav>
+
+          {/* Right: Desktop Actions */}
+          <div className="hidden md:flex items-center gap-4">
+            {/* Search */}
+           <div className="border border-gray-700 rounded-full p-2.5 bg-black hover:bg-white hover:border-white group cursor-pointer transition-all duration-300">
+            <IoSearchOutline className="text-gray-400 w-5 h-5 group-hover:text-black transition-colors" />
+          </div>
+
+            {/* Notifications */}
+
+            <div className="relative" ref={buttonRef}>
+            <div 
+              onClick={showNotification}
+              className="border border-gray-700 rounded-full p-2.5 bg-black hover:bg-white hover:border-white group cursor-pointer transition-all duration-300 relative"
+            >
+              <IoNotificationsOutline className="text-gray-400 w-5 h-5 group-hover:text-black transition-colors" />
+              {notificatiion.length > 0 && (
+                <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-red-500 border border-black transform translate-x-1/4 -translate-y-1/4 animate-pulse"></span>
+              )}
+            </div>
+
+              {/* Notification Dropdown */}
+              {notificationIndex && (
+                <div
+                  ref={notificationRef}
+                  className="absolute right-0 top-full mt-4 w-96 max-h-[500px] bg-black border-2 border-gray-500 rounded-2xl overflow-hidden shadow-2xl z-50"
+                >
+                  <div className="p-3 border-b border-gray-700 font-semibold text-white bg-gray-900/50">
+                    Notifications
+                  </div>
+                  <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
+                    {notificatiion.length === 0 ? (
+                      <div className="text-center text-gray-400 py-8 text-sm">
+                        No notifications
+                      </div>
+                    ) : (
+                      notificatiion.map((item, index) => {
+                        if (item.title === "game challenge") {
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-3 p-4 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-black hover:from-gray-800 transition"
+                            >
+                              <img
+                                src={item.sender_profile_img}
+                                alt="profile"
+                                className="w-12 h-12 rounded-full border-2 border-gray-600 object-cover"
+                              />
+                              <div className="flex flex-col flex-1">
+                                <p className="text-white font-semibold">
+                                  {item.sender_username}
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  invited you to a <span className="text-blue-400 font-medium">1 vs 1 game</span>
+                                </p>
+                              </div>
+                              {isTimeValid(item) ? (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => AcceptGameChallenge(item)}
+                                    className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => RejectGameChallenge(item)}
+                                    className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+                                  >
+                                    Decline
+                                  </button>
+                                </div>
+                              ) : (
+                                <p className="text-gray-500 text-sm">expired</p>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        if (item.title === "friend request accepted") {
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-3 p-4 border-b border-gray-800 bg-green-900/20 hover:bg-green-800/30 transition"
+                            >
+                              <img
+                                src={item.sender_profile_img}
+                                alt="profile"
+                                className="w-12 h-12 rounded-full border-2 border-green-500 object-cover"
+                              />
+                              <div className="flex flex-col">
+                                <p className="text-white font-semibold">
+                                  {item.sender_username}
+                                </p>
+                                <p className="text-green-400 text-sm">
+                                  accepted your friend request
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={index}
+                            className="flex flex-col p-4 border-b border-gray-800 hover:bg-gray-900/50 transition"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={item.sender_profile_img}
+                                  alt="profile"
+                                  className="w-12 h-12 rounded-full border-2 border-gray-600 object-cover"
+                                />
+                                <p className="text-white font-semibold">
+                                  {item.sender_username}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => AcceptFriendRequest(item)}
+                                className="flex-1 bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg font-medium transition"
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                onClick={() => DelteFriendRequest(item.notify_id)}
+                                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium transition"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Profile */}
+           <Link href="/profile">
+             <div className="border border-gray-700 rounded-full p-2.5 bg-black hover:bg-white hover:border-white group cursor-pointer transition-all duration-300">
+              <IoPersonCircleOutline className="text-gray-400 w-5 h-5 group-hover:text-black transition-colors" />
+            </div>
+          </Link>
+        </div>
+
+        {/* Right: Mobile Hamburger */}
+        <div className="md:hidden relative" ref={hamburgerRef}>
+          <button onClick={toggleMobileMenu} className="p-2 text-white hover:bg-gray-800 rounded-full transition-colors">
+            {mobileMenuOpen ? <IoCloseOutline className="w-7 h-7" /> : <IoMenuOutline className="w-7 h-7" />}
+          </button>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="absolute right-0 top-full mt-4 w-64 bg-black border border-gray-800 rounded-2xl shadow-2xl p-4 flex flex-col gap-4 z-50">
+              <div>
+                <h3 className="text-gray-500 text-xs uppercase font-bold mb-2 px-2">Menu</h3>
+                {sidebarItems.map((item) => (
+                  <Link key={item.path} href={item.path} onClick={() => setMobileMenuOpen(false)}>
+                    <div className="flex items-center gap-3 p-3 rounded-xl text-gray-300 hover:bg-white hover:text-black transition-colors">
+                      <span className="text-xl">{item.icon}</span>
+                      <span className="font-medium">{item.alt}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <div className="h-px bg-gray-800 w-full"></div>
+              <div className="flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-red-600 hover:text-white transition-colors cursor-pointer">
+                 <IoLogOutOutline className="text-xl" />
+                 <span className="font-medium">Logout</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </nav>
     </>
   );
 }

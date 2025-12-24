@@ -1,0 +1,88 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useUserStore } from "@/store/userStore";
+import { useRouter } from "next/navigation";
+import { ToastContainer } from "react-toastify";
+
+export default function ProtectedClient({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+
+  const {
+    user, friends, updateSeenMessage, contactId, socket, addMessage,
+    updateLastMessage, removeFriend, updateFriendStatus, Set_Display_game_invite,
+    socketBlockState, setInviterData, addFriend, updateTypingStatus
+  } = useUserStore();
+
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+
+  const playSound = () => {
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  };
+
+  useEffect(() => {
+    const a = new Audio("/sound/message.mp3");
+    setAudio(a);
+
+    const unlock = () => {
+      a.play().catch(() => {});
+      a.pause();
+      a.currentTime = 0;
+      window.removeEventListener("click", unlock);
+    };
+
+    window.addEventListener("click", unlock);
+    return () => window.removeEventListener("click", unlock);
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.onmessage = (event) => {
+      const { type, data } = JSON.parse(event.data);
+
+      if (type === "message") {
+        if (user.sound_notification) playSound();
+        addMessage(data);
+
+        updateLastMessage(
+          {
+            lastMessage: data.message,
+            sender: data.sender_user_id,
+            lastMessageTime: new Date().toISOString(),
+          },
+          data.sender_user_id
+        );
+      }
+
+      if (type === "start_game") router.push("/game");
+      if (type === "block") socketBlockState(data.blockedByUser1, data.blockedByUser2, data.id);
+      if (type === "unfriend") removeFriend(data.id_user);
+      if (type === "status") updateFriendStatus(data.status, data.friend);
+      if (type === "game_invite") {
+        Set_Display_game_invite(true);
+        setInviterData(data);
+        setTimeout(() => Set_Display_game_invite(false), 5000);
+      }
+      if (type === "test") addFriend(data);
+      if (type === "isTyping") {
+        updateTypingStatus(1, data.friendId);
+        setTimeout(() => updateTypingStatus(0, data.friendId), 2000);
+      }
+      if (type === "seen") updateSeenMessage(data.conv_id);
+    };
+  }, [socket, user?.sound_notification, contactId]);
+
+  return (
+    <>
+      {children}
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </>
+  );
+}

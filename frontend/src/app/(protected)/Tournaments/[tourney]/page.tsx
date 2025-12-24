@@ -4,7 +4,8 @@ import "@/app/(protected)/Tournaments/[tourney]/style.css"
 import { useParams } from 'next/navigation';
 import { useUserStore } from "@/store/userStore";
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
+import Loading from '@/components/Loading/page';
 
 
 type Match = {
@@ -82,42 +83,49 @@ const MatchConnector = ({
 };
 
 export default function TournamentBracket() {
-
-  const [tournamentData, setTournamentData] = useState<Match[] |null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [tournamentData, setTournamentData] = useState<Match[] | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const { user: currentUser } = useUserStore();
   const params = useParams();
   const tournament_id = params.tourney;
   const router = useRouter();
 
   useEffect(() => {
-    const fetchTournamentBracket = async () => {
-      if (!currentUser?.access_token) {
-        setError("You must be logged in to view profiles");
-        return;
-      }
-      if (!tournament_id) {
-        setError("tournament id is missing");
-        return;
-      }
+    if (!currentUser?.access_token) return;
+    if (!tournament_id) return;
 
+    let active = true;
+    setLoading(true);
+
+    const fetchTournamentBracket = async () => {
       try {
-        const res = await axios.get<Match[]>(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getTournamentBracket/${tournament_id}`,
+        const res = await api.get<Match[]>(
+          `/getTournamentBracket/${tournament_id}`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }
         );
+        if (!active) return;
         setTournamentData(res.data);
-        console.log(res.data);
       } catch (err) {
-        console.error(err);
-        setError(`Failed to load the tourrnament:  ${tournament_id}`);
+        console.error("Error loading tournament:", err);
+        if ((err as any).response?.status === 404) {
+          router.replace('/not-found');
+          return;
+        }
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchTournamentBracket();
+    return () => {
+      active = false;
+    };
   }, [tournament_id, currentUser]);
+
+  if (!currentUser || loading) return <Loading />;
+  if (!tournamentData) return <Loading />;
 
   return (
     <div className="min-h-[90vh] mt-4 flex bg-slate-950 text-white font-sans  flex-col md:flex-row lg:flex-row ">

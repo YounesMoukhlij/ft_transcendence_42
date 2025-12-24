@@ -2,22 +2,24 @@
 'use client'
 import React from 'react'
 import { Camera, Globe, ChevronDown } from 'lucide-react'
-import { User } from '@/store/userStore'
+import {getProfileImageUrl} from "@/lib/utils"
+
 
 interface ProfileTabProps {
-  user: User
+  user: any
   formData: any 
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
   languages: { id: string; label: string; flag: string }[]
-  isPasswordAuth: boolean
-  handleImageClick: () => void
-  getProfileImageUrl: () => string
+  isPasswordAuth: boolean;
+  handleImageClick: () => void;
   fileInputRef: React.RefObject<HTMLInputElement>
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   handleSaveProfile: () => void
   isLoading: boolean
   setIsDeleteDialogOpen: (isOpen: boolean) => void
+  previewImage: string | null
 }
+
 
 const ProfileTab = ({
   user,
@@ -26,12 +28,12 @@ const ProfileTab = ({
   languages,
   isPasswordAuth,
   handleImageClick,
-  getProfileImageUrl,
   fileInputRef,
   handleImageChange,
   handleSaveProfile,
   isLoading,
-  setIsDeleteDialogOpen
+  setIsDeleteDialogOpen,
+  previewImage
 }: ProfileTabProps) => {
   return (
     <>
@@ -42,7 +44,7 @@ const ProfileTab = ({
           className="relative cursor-pointer group"
         >
           <img
-            src={getProfileImageUrl()}
+            src={previewImage || getProfileImageUrl(user.profile_img)}
             alt="Profile"
             className="w-32 h-32 sm:w-36 sm:h-36 rounded-full border-2 border-gray-500 object-cover group-hover:brightness-75 transition"
           />

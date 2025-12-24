@@ -33,7 +33,9 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
   // --- Helper: Fetch User Data (Shared by OAuth flows) ---
   const fetchUserData = async (token: string, isNewUser: string | null) => {
     try {
-      // --- AXIOS REFACTOR: GET Request with Bearer Token ---
+      // console.log('-------------->', process.env.NEXT_PUBLIC_BACK_API)
+      console.log('Fetching user data with token:', token)
+      console.log('Is new user:', isNewUser)
       const response = await axios.get(`${process.env.NEXT_PUBLIC_BACK_API}/me`, {
         headers: {
           'Authorization': `Bearer ${token}`

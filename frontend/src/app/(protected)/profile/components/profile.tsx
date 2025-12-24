@@ -6,7 +6,7 @@ import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import { Progress } from "./ui/progress"
-import { Target, TrendingUp, Calendar, Award, BarChart3, Activity, Clock, Zap, Star, Trophy } from "lucide-react"
+import { Target, TrendingUp, Calendar, Award, BarChart3, Activity, Clock, Trophy } from "lucide-react"
 import { PerformanceChart } from "./performance-chart"
 import { MatchHistoryTable } from "./match-history-table"
 import { StatsOverview } from "./stats-overview"
@@ -70,7 +70,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
 
 
   return (
-    <div className="min-h-screen ">
+    <div className="">
       <div className="container mx-auto ">
         <div className="mb-8">
           <PlayerBanner userStats={userStats} />
