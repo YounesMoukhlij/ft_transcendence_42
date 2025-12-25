@@ -278,7 +278,7 @@ const handleCancelFriendRequest = async () => {
              <Button 
              variant="default" 
              className="mt-2"
-             onClick={() => router.push(`/chat`)}
+             onClick={() => router.push(`/chat?friend=${userStats.id}`)} // http://localhost:3000/chat?friend=5
              >
               message
             </Button>
