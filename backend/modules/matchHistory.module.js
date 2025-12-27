@@ -25,7 +25,7 @@ export async function getMatchHistory(request, reply) {
         (select username from users where id_user=user_lose) as loser,
         (select profile_img from users where id_user=user_win) as winner_img,
         (select profile_img from users where id_user=user_lose) as loser_img,
-        win_score, lose_score, game_date, duration, 
+        win_score, lose_score, game_date, duration, type,
         longest_rally, average_rally, ball_max_speed,
         touches_win, max_points_streak_win, max_leading_time_win,
         touches_lose, max_points_streak_lose, max_leading_time_lose

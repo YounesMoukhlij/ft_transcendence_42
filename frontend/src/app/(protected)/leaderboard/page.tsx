@@ -1,9 +1,16 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Trophy, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import {getProfileImageUrl} from '@/lib/utils'
-// const BACK_API = 'http://e1r8p8.1337.ma:4444';
+
+interface Player {
+  username: string;
+  profile_img: string;
+  xp: number;
+}
+// const BACK_API = 'http://localhost:4444';
 // const defaultProfileImg = 'https://cdn.intra.42.fr/users/9ae5b3303aaceb68d7a6e580c60545a4/yzoullik.jpg';
 
 
@@ -33,16 +40,18 @@ async function getLeaderboardData(token: string, page: number) {
   return res.json();
 }
 
-const LeaderboardItem = ({ player, rank }: { player: any, rank: number }) => (
+const LeaderboardItem = ({ player, rank }: { player: Player, rank: number }) => (
   <Link href={`/profile/${player.username}`} className="block">
     <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-900 transition-colors">
       <div className="flex items-center gap-4">
         <div className={`font-semibold text-lg w-8 ${rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-400' : rank === 3 ? 'text-yellow-800' : 'text-gray-400'}`}>
           #{rank}
         </div>
-        <img
+        <Image
           src={getProfileImageUrl(player.profile_img)}
           alt={player.username}
+          width={48}
+          height={48}
           className={`w-12 h-12 rounded-full object-cover border-2 border-gray-600 ${rank === 1 ? 'border-yellow-400' : rank === 2 ? 'border-gray-400' : rank === 3 ? 'border-yellow-800' : ''}`}
         />
         <div>
@@ -60,11 +69,9 @@ const LeaderboardItem = ({ player, rank }: { player: any, rank: number }) => (
 
 // --- The main async Page Component ---
 // Next.js App Router pages receive 'searchParams' as a prop
-export default async function LeaderboardPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+export default async function LeaderboardPage({ searchParams }) {
+  // page logic here
+
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
 
@@ -89,7 +96,7 @@ export default async function LeaderboardPage({
     if (data === null) {
       redirect('/signIn');
     }
-  } catch (err: any) {
+  } catch (err) {
     if (err.message === 'NEXT_REDIRECT') {
       throw err;
     }
@@ -112,7 +119,7 @@ export default async function LeaderboardPage({
             Leaderboard
           </h1>
           <p className="text-gray-500 text-sm sm:text-base">
-            See who's on top of the game
+            See who is on top of the game
           </p>
         </div>
 
@@ -132,7 +139,7 @@ export default async function LeaderboardPage({
 
           {!error && leaderboard.length > 0 && (
             <div className='gap-2'>
-              {leaderboard.map((player: any, index: number) => (
+              {leaderboard.map((player: Player, index: number) => (
                 <LeaderboardItem
                   key={player.username}
                   player={player}

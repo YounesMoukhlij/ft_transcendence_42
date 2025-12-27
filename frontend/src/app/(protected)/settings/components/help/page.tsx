@@ -20,8 +20,8 @@ const HelpTab = () => {
             <div>
               <p className="font-medium text-white mb-2">How do I reset my password?</p>
               <p className="text-gray-400 text-sm">
-                Go to the Security tab and use the password reset form. You'll need to provide your current password and set a new one.
-              </p>
+                Go to the Security tab and use the password reset form. You will need to provide your current password and set a new one.
+              </p> 
             </div>
             <div>
               <p className="font-medium text-white mb-2">What is Two-Factor Authentication?</p>

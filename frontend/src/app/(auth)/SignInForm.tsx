@@ -34,8 +34,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
   const fetchUserData = async (token: string, isNewUser: string | null) => {
     try {
       // console.log('-------------->', process.env.NEXT_PUBLIC_BACK_API)
-      console.log('Fetching user data with token:', token)
-      console.log('Is new user:', isNewUser)
       const response = await axios.get(`${process.env.NEXT_PUBLIC_BACK_API}/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -196,7 +194,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
         router.push('/')
       }
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Network error during login:', error)
       const errorMessage = error.response?.data?.message || 'Login failed. Please try again.'
       setError(errorMessage)
@@ -244,7 +242,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
       setError('');
       router.push('/')
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Network error during 2FA login:', error);
       const errorMessage = error.response?.data?.message || 'Invalid 2FA code. Please try again.';
       setError(errorMessage);
@@ -370,7 +368,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
         
         <div className='flex items-start w-full'>
           <h3 className='text-xs sm:text-sm text-gray-500 hover:text-blue-400 transition-colors duration-300 ease-in-out cursor-pointer'
-              onClick={() => router.push('/forgotPassword')}
+              onClick={() => router.push('/forgot-password')}
             >
             Forgot your password?
           </h3>

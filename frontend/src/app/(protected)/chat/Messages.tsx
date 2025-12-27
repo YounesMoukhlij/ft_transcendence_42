@@ -25,23 +25,22 @@ import { faThumbtackSlash } from '@fortawesome/free-solid-svg-icons';
 import {useFriendActions} from './FriendCard'
 import { FaUserMinus } from "react-icons/fa"; 
 import { useDeblock } from './FriendCard';
+import {getProfileImageUrl} from "@/lib/utils"
 
 function MessageDateComponent({ date }: { date: string }) {
   const currentDate = date?.split(' ')[0];
   return (
     <div className="flex items-center justify-center my-2">
-      <div className="flex-grow border-t border-gray-300" />
-      <span className="mx-3 text-xs text-gray-500">{currentDate}</span>
-      <div className="flex-grow border-t border-gray-300" />
+      <div className="flex-grow border-t border-gray-600" />
+      <span className="mx-3 text-xs text-gray-400">{currentDate}</span>
+      <div className="flex-grow border-t border-gray-600" />
     </div>
   );
 }
 
-
-
 export default function Messages(){
   const searchParams = useSearchParams();
-  const messages =useUserStore((state) => state.messages);
+  const messages = useUserStore((state) => state.messages);
 
   const {socket ,contactId ,setContactId, updatePinStatus, friends ,addMessage  , user ,  setMessages ,  updateLastMessage } = useUserStore();
   const [friend , SetFriend] = useState(null);
@@ -65,10 +64,8 @@ export default function Messages(){
     }
   },[input , socket]);
 
-
-
    useEffect(() => {
-    const handleClickOutside = (event : any) => {
+    const handleClickOutside = (event :MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {
         setShow(false);
         setshowMore(false);
@@ -82,7 +79,6 @@ export default function Messages(){
   const [disabled, setDisabled] = useState(false);
 
   async function handleClick(friend) {
-
     setDisabled(true);
     if (friend.isPinned)
     {
@@ -101,7 +97,7 @@ export default function Messages(){
       }
     }
     try{
-     const res = await axios.post(
+      await axios.post(
       `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/pinned`,{},
     {
       params: {
@@ -114,10 +110,12 @@ export default function Messages(){
     }
 );
 
-    }catch(err){}
+    }catch(err){
+    console.log(err);
+
+    }
     setTimeout(() => setDisabled(false), 2000);
   }
-
 
   useEffect(() => {
     const friendId = Number(searchParams.get("friend"));
@@ -136,9 +134,6 @@ export default function Messages(){
     }
 
   }, [searchParams, friends]);
-
-
-
 
   useEffect(() =>{
     if (!socket)
@@ -160,7 +155,6 @@ export default function Messages(){
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    console.log(messages);
   }, [messages]);
 
     async function getMsgFunction(id : number)
@@ -192,7 +186,6 @@ export default function Messages(){
           getMsgFunction(id);
     },[contactId])
 
-
   const handleSend = async () => {
     if (input.trim().length == 0){
       setInput('');
@@ -217,7 +210,6 @@ export default function Messages(){
       created_at: getFormattedDate(),
       isSeen: false
     };
-    console.log(object);
     addMessage(object);
 
       const updateLastMessageObject = {
@@ -234,7 +226,6 @@ export default function Messages(){
     setInput('');
   }
 
-
   function handleEnterKey(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Enter') {
       handleSend();
@@ -243,8 +234,6 @@ export default function Messages(){
   function handleShowMore(){
     setshowMore(!showMore);
   }
-
-
 
   function handle_Emojis(setShow: React.Dispatch<React.SetStateAction<boolean>>, show: boolean) {
       setShow(!show)
@@ -257,9 +246,9 @@ export default function Messages(){
   }
 
     return (
-        <div className="w-full h-full rounded-2xl flex flex-col gap-3.5 relative">
+        <div className="w-full max-h-screen h-full flex flex-col gap-3.5 relative overflow-hidden">
           {showMore && contactId !== -1 && 
-          <div ref={menuRef} className="absolute top-17 right-12 z-50  bg-gray-900 text-white rounded-xl shadow-lg border border-gray-700  p-1 flex flex-col  animate-fadeIn">
+          <div ref={menuRef} className="absolute top-17 right-12 z-50 bg-gray-900 text-white rounded-xl shadow-2xl border border-gray-700 p-1 flex flex-col animate-fadeIn">
             <div>
               {friend.blockedByUser1 !== user.id_user && friend.blockedByUser2 !== user.id_user ? (
                 <button onClick={()=>handleBlock(friend)} className="w-full text-left px-2 py-2 flex items-center gap-1 hover:bg-gray-800 rounded-lg transition-colors duration-150">
@@ -285,93 +274,94 @@ export default function Messages(){
             </div>
             <div className="">
               {!friend.isPinned && 
-                <button onClick={()=> handleClick(friend)} disabled={disabled} className={`px-2 py-2 rounded flex items-center gap-1 w-full hover:hover:bg-gray-800 ${disabled ? "opacity-50 cursor-not-allowed" : "hover:cursor-pointer"}`}>
+                <button onClick={()=> handleClick(friend)} disabled={disabled} className={`px-2 py-2 rounded flex items-center gap-1 w-full hover:bg-gray-800 ${disabled ? "opacity-50 cursor-not-allowed" : "hover:cursor-pointer"}`}>
                   <FontAwesomeIcon icon={faThumbtack} className="text-white" />
-                  <h1 className="text-center ">pin</h1>
+                  <h1 className="text-center">pin</h1>
                 </button>
               }
               {friend.isPinned && 
-                <button onClick={()=>handleClick(friend)} disabled={disabled} className={`px-2 py-2 rounded flex items-center gap-1 w-full hover:hover:bg-gray-800 ${disabled ? "opacity-50 cursor-not-allowed" : "hover:cursor-pointer"}`}>
-                  <FontAwesomeIcon  icon={faThumbtackSlash} className="text-white " />
-                  <h1 className="text-center ">unpin</h1>
+                <button onClick={()=>handleClick(friend)} disabled={disabled} className={`px-2 py-2 rounded flex items-center gap-1 w-full hover:bg-gray-800 ${disabled ? "opacity-50 cursor-not-allowed" : "hover:cursor-pointer"}`}>
+                  <FontAwesomeIcon  icon={faThumbtackSlash} className="text-white" />
+                  <h1 className="text-center">unpin</h1>
                 </button>
               }
             </div>
           </div>
           }
 
-            <div className="p-5   max-h-32  min-h-28 overflow-hidden backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl shadow-lg">
-                {contactId > -1 && 
-                    <div className="w-full h-full flex justify-between ">
-                        <div className="sm:hidden  w-[2rem] flex items-center p-1.5">
-                            <GiHamburgerMenu onClick={smallListFriendShow} size={20}/>
+
+            <div className="flex-shrink-0 p-5 h-28 bg-black border border-gray-800 rounded-xl shadow-lg">
+                {friend && contactId > -1 && 
+                    <div className="w-full h-full flex justify-between">
+                        <div className="sm:hidden w-[2rem] flex items-center p-1.5">
+                            <GiHamburgerMenu onClick={smallListFriendShow} size={20} className="text-white"/>
                         </div>
-                        <div className="w-[80%] flex items-center gap-3.5 p-3 flex-1 ">
-                            <img className="min-w-[4rem] w-[25%] lg:w-[10%] xl:w-[10%] 2xl:w-[7%] rounded-[50%] " src={friend?.profile_img}/>
+                        <div className="w-[80%] h-full flex items-center gap-3.5 p-3 flex-1 ">
+                            <img className="min-h-[60%] max-h-[180%] lg:h-[100%] xl:h-[120%] 2xl:h-[180%] rounded-[50%] border-2 border-gray-700" src={getProfileImageUrl(friend?.profile_img)}/>
                             <div className="flex flex-col">
-                                <h1 className="text-xl sm:text-2xl md:text-3xl ">{friend?.username}</h1>
+                                <h1 className="text-xl sm:text-2xl md:text-3xl text-white">{friend?.username}</h1>
                                 {
                                     friend?.isTyping ? (
-                                      <h1 className="text-green-400">Typing...</h1>
+                                      <h1 className="text-gray-400">Typing...</h1>
                                     ):
                                     friend.status ?(
-                                        <h1 className="text-green-400">Online</h1>
+                                        <h1 className="text-gray-400">Online</h1>
                                     ):(
-                                        <h1 className="text-white">Last seen at: {formatMessageTime(friend?.lastseen)}</h1>
+                                        <h1 className="text-gray-500">Last seen at: {formatMessageTime(friend?.lastseen)}</h1>
                                     )
                                 }
                             </div>
                         </div>
-                        <div  className="w-[6%] flex justify-center items-center ">
+                        <div className="w-[6%] flex justify-center items-center">
                           <button onClick={handleShowMore} ref={buttonRef}>
-                            <RiMore2Fill  className="hover:cursor-pointer"  size={20}/>
+                            <RiMore2Fill className="hover:cursor-pointer text-white" size={20}/>
                           </button>
                         </div>
                     </div>
                 }
-                </div>
-                <div className="relative h-full rounded-2xl  flex flex-col overflow-hidden inset-shadow-sm inset-shadow-white justify-between"
-                  style={{ backgroundImage: "url('https://cdn2.f-cdn.com/contestentries/2046262/58571795/61f00c583e000_thumb900.jpg')" }}>
+            </div>
+
+            <div className="flex-1 relative rounded-2xl flex flex-col overflow-hidden min-h-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                     {SmallFriendList && 
-                        <div onClick={()=> SetSmallFriendList(false)} className="sm:hidden z-30  absolute bg-black w-full h-full">
+                        <div onClick={()=> SetSmallFriendList(false)} className="sm:hidden z-30 absolute bg-black w-full h-full">
                             <FriendList />
                         </div>
                     }
 
-                    <div className="chat-body h-[90%] flex flex-col overflow-scroll no-scrollbar ">
+                    <div className="chat-body flex-1 flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar min-h-0">
                         <div className="flex justify-center">
                             {
-                                contactId > -1 &&
-                                <div className="flex w-[90%] sm:w-[80%] lg:w-[25rem] bg-[rgb(168,147,104)]  mt-2 sm:mt-4 p-3 sm:p-4 rounded-[10px] ">
-                                    <p className="text-center">
+                               friend &&  contactId > -1 &&
+                                <div className="flex w-[90%] sm:w-[80%] lg:w-[25rem] bg-gray-800 mt-2 sm:mt-4 p-3 sm:p-4 rounded-[10px] border border-gray-700">
+                                    <p className="text-center text-gray-300 text-sm">
                                         The messages are end to end encrypted. Only people in this chat can read this conversation, so enjoy with your friend.
                                     </p>
                                 </div>
                             }
                         </div>
                         {
-                          contactId > -1 &&
-                          <div className="" >
+                         friend &&  contactId > -1 &&
+                          <div className="">
                           {
                             messages.filter(item => item.conv_id == friends.find(item => item.id_user === contactId).conversation_id).map((item, index) => {
                               const currentDate = item.created_at.split(' ')[0];
                               const prevDate = index > 0 ? messages[index - 1].created_at.split(' ')[0] : null;
                               return (
-                                <div key={index} className="flex flex-col  m-1.5">
+                                <div key={index} className="flex flex-col m-1.5">
                                 {currentDate !== prevDate && <MessageDateComponent date={item.created_at} />}
                                 <div className={`flex ${item.sender === user.id_user ? 'justify-end' : 'justify-start'} mb-2`}>
                                   <div
-                                    className={`p-2 sm:p-3 rounded-lg flex flex-col  ${item.sender === user.id_user ? 'bg-[#2E372E] text-white rounded-br-none' : 'bg-[#B0C4DE] text-black rounded-bl-none'}`}
+                                    className={`p-2 sm:p-3 rounded-lg flex flex-col ${item.sender === user.id_user ? 'bg-gray-800 text-white rounded-br-none border border-gray-700' : 'bg-gray-300 text-black rounded-bl-none'}`}
                                     style={{ maxWidth: '85%', minWidth: '100px' }}
                                     >
                                     <p className="break-words text-xs sm:text-sm lg:text-base">{item.message}</p>
                                     <div className="flex justify-between items-center mt-1 sm:mt-2 text-xs">
-                                      <span className="whitespace-nowrap">
+                                      <span className="whitespace-nowrap text-gray-400">
                                         {new Date(item.created_at).toTimeString().slice(0, 5)}
                                       </span>
                                       {item.sender === user.id_user && (
                                         <div className="ml-2">
-                                          {item.isSeen ? <FaCheckDouble color="blue"/> : <FaCheck />}
+                                          {item.isSeen ? <FaCheckDouble className="text-gray-400"/> : <FaCheck className="text-gray-500"/>}
                                         </div>
                                       )}
                                     </div>
@@ -383,32 +373,34 @@ export default function Messages(){
                           </div>
                         }
                     </div>
-                    <div>
+
+
+                    <div className="flex-shrink-0">
                       {
-                        contactId > -1 && (
+                        friend &&  contactId > -1 && (
                           <>
                             {
                               friend.blockedByUser1 === user.id_user || friend.blockedByUser2 === user.id_user  ? (
-                              <div className="flex items-center p-3.5 justify-between bg-[#1B1B1B]   ">
+                              <div className="flex items-center p-3.5 justify-between bg-black border-t border-gray-800">
                                 <div className="flex justify-around w-full h-full items-center px-2">
-                                  <p className="text-xs sm:text-sm">
-                                    You can't send to this contact. Please deblock first.
+                                  <p className="text-xs sm:text-sm text-gray-400">
+                                    You can t send to this contact. Please deblock first.
                                   </p>
                                 </div>
                               </div>
                             ) :  friend.blockedByUser1 === friend.id_user || friend.blockedByUser2 ===  friend.id_user ? (
-                              <div className="flex items-center p-3.5 justify-between bg-[#1B1B1B]">
-                                <div className="flex justify-around w-full h-full items-center px-2 ">
-                                  <p className="text-xs sm:text-sm">
-                                    Sorry, you can't send message to this contact
+                              <div className="flex items-center p-3.5 justify-between bg-black border-t border-gray-800">
+                                <div className="flex justify-around w-full h-full items-center px-2">
+                                  <p className="text-xs sm:text-sm text-gray-400">
+                                    Sorry, you can t send message to this contact
                                   </p>
                                 </div>
                               </div>
                             ) : (
-                              <div className="w-full flex justify-around items-center p-2.5">
+                              <div className="w-full flex justify-around items-center p-2.5 bg-black border-t border-gray-800">
                                 <div className="relative">
                                   <button ref={buttonRef} onClick={() => handle_Emojis(setShow, show)}>
-                                    <BsEmojiSmile className="w-8 h-8 lg:w-8 lg:h-8" />
+                                    <BsEmojiSmile className="w-8 h-8 lg:w-8 lg:h-8 text-gray-400 hover:text-white transition-colors" />
                                   </button>
                                   {show && (
                                     <div
@@ -422,7 +414,7 @@ export default function Messages(){
 
                                 <div className="mx-2 w-[80%] overflow-hidden">
                                   <input
-                                    className="w-full h-10 sm:h-10 lg:h-12 bg-white p-2 sm:p-4 rounded-[20px] sm:rounded-[50px] outline-none text-xs sm:text-sm lg:text-base text-black"
+                                    className="w-full h-10 sm:h-10 lg:h-12 bg-gray-800 text-white border border-gray-700 p-2 sm:p-4 rounded-[20px] sm:rounded-[50px] outline-none focus:border-gray-600 text-xs sm:text-sm lg:text-base placeholder-gray-500"
                                     placeholder="Write a Message"
                                     onKeyDown={handleEnterKey}
                                     value={input}
@@ -432,12 +424,12 @@ export default function Messages(){
 
                                 <div className="mr-2 sm:mr-4">
                                   <button>
-                                    <IoGameController className="w-8 h-8 lg:w-8 lg:h-8" />
+                                    <IoGameController className="w-8 h-8 lg:w-8 lg:h-8 text-gray-400 hover:text-white transition-colors" />
                                   </button>
                                 </div>
 
                                 <div onClick={handleSend} className="mr-2 sm:mr-4">
-                                  <IoSend className="w-8 h-8 lg:w-8 lg:h-8 cursor-pointer" />
+                                  <IoSend className="w-8 h-8 lg:w-8 lg:h-8 cursor-pointer text-gray-400 hover:text-white transition-colors" />
                                 </div>
                               </div>
                             )}

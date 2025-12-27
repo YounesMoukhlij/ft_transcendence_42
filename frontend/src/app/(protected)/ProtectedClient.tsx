@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useUserStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
 import { ToastContainer } from "react-toastify";
+import { useGameContext } from "@/components/GameContext";
 
 export default function ProtectedClient({
   children,
@@ -11,9 +12,10 @@ export default function ProtectedClient({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { setGameMode } = useGameContext();
 
   const {
-    user, friends, updateSeenMessage, contactId, socket, addMessage,
+    user, updateSeenMessage, contactId, socket, addMessage,
     updateLastMessage, removeFriend, updateFriendStatus, Set_Display_game_invite,
     socketBlockState, setInviterData, addFriend, updateTypingStatus
   } = useUserStore();
@@ -61,7 +63,15 @@ export default function ProtectedClient({
         );
       }
 
-      if (type === "start_game") router.push("/game");
+      if (type === "start_game" || type === "game_challenge_accepted") {
+        const challengeId = data?.challengeId;
+        if (challengeId && typeof window !== "undefined") {
+          localStorage.setItem("pendingChallengeId", String(challengeId));
+        }
+
+        setGameMode("remote");
+        router.push("/game/customize");
+      }
       if (type === "block") socketBlockState(data.blockedByUser1, data.blockedByUser2, data.id);
       if (type === "unfriend") removeFriend(data.id_user);
       if (type === "status") updateFriendStatus(data.status, data.friend);
@@ -77,7 +87,7 @@ export default function ProtectedClient({
       }
       if (type === "seen") updateSeenMessage(data.conv_id);
     };
-  }, [socket, user?.sound_notification, contactId]);
+  }, [socket, user?.sound_notification, contactId, router, setGameMode]);
 
   return (
     <>

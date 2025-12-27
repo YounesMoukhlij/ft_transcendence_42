@@ -83,10 +83,10 @@ export default function SignUpForm({ onToggle }: SignUpFormProps) {
     setError('')
 
     try {
-      const { confirmPassword, ...userData } = formData
+      const {...userData } = formData
       
       // --- AXIOS REFACTOR: POST Request ---
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/AddUser`, {
+     await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/AddUser`, {
         username: userData.username.trim(),
         email: userData.email.trim(),
         password: userData.password
@@ -100,7 +100,7 @@ export default function SignUpForm({ onToggle }: SignUpFormProps) {
       onToggle()
       router.push('/signIn')
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error during sign up:', error)
       
       // --- AXIOS ERROR HANDLING ---

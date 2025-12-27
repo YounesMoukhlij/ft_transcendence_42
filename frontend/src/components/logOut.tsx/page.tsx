@@ -2,7 +2,6 @@ import React from 'react'
 
 const page = () => {
     const handlelogout=()=>{
-        console.log("logout")
         alert("logout")
         // clear local storage
         localStorage.clear();

@@ -24,7 +24,6 @@ export function IllustrationChart({ data }: ChartProps) {
     if (!ref.current) return;
     const observer = new ResizeObserver(([entry]) => {
       const {width, height} = entry.contentRect;
-      console.log("width: " + width + "\nheight: " + height);
       setSize({width, height});
     });
     observer.observe(ref.current);

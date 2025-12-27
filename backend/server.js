@@ -13,6 +13,8 @@ import { createClient } from 'redis';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import fastifyJwt from '@fastify/jwt';
+import GameManager from './modules/gameManager.js';
+import { setupWebSocketServer } from './modules/websocketHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,19 +29,46 @@ const app = fastify({
 });
 
 
-  app.register(cors, {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true, // zmoumni for frontend middleware
-    allowedHeaders: ["Content-Type", "Authorization"], // zmoumni for frontend middleware
+const isProd = process.env.NODE_ENV === 'production';
+const corsAllowlist = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
 
-  });
+app.register(cors, {
+  origin: (origin, cb) => {
+    // Allow non-browser clients (no Origin header)
+    if (!origin) return cb(null, true);
+
+    if (!isProd) {
+      // Dev/LAN: reflect the Origin so credentials work
+      return cb(null, true);
+    }
+
+    // Prod: restrict to explicit allowlist if provided
+    if (corsAllowlist.length === 0) {
+      return cb(new Error('CORS blocked: no origins configured'), false);
+    }
+
+    if (corsAllowlist.includes(origin)) {
+      return cb(null, true);
+    }
+
+    return cb(new Error('CORS blocked'), false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+});
 
 const db = new Database('Database.db');
 app.decorate('db', db);
-    const wss = new WebSocketServer({ server: app.server, path: '/ws' });
-    const users_socket = new Map();
-    app.decorate('users_socket', users_socket);
+  const users_socket = new Map();
+  app.decorate('users_socket', users_socket);
+
+// Initialize Game Manager (used by game/tournament WS handlers)
+const gameManager = new GameManager(db, users_socket);
+app.decorate('gameManager', gameManager);
 
 app.register(fastifyJwt, { secret: process.env.SECRET});
 
@@ -51,20 +80,20 @@ async function startServer() {
       app.log.info('Uploads directory created at:', uploadsDir);
     }
 
-    console.log('Connecting to Redis...');
+    // console.log('Connecting to Redis...');
     // const redisClient = createClient({
     //   url: process.env.REDIS_URL
     // });
 
-    // // 2. Add an error listener to catch connection issues
+    // 2. Add an error listener to catch connection issues
     // redisClient.on('error', err => app.log.error('Redis Client Error', err));
 
-    // // 3. Connect to the Redis server
+    // 3. Connect to the Redis server
     // await redisClient.connect();
     // app.log.info('Successfully connected to Redis.');
 
-    // // 4. Decorate the Fastify instance with the Redis client
-    // // This makes it available in all routes via `request.server.redis`
+    // 4. Decorate the Fastify instance with the Redis client
+    // This makes it available in all routes via `request.server.redis`
     // app.decorate('redis', redisClient);
 
 
@@ -72,7 +101,7 @@ async function startServer() {
 
 
         // --- NEW --- Register fastify-static to serve files from /uploads
-    // This makes http://e1r8p8.1337.ma:4444/uploads/your-image.png accessible
+    // This makes http://localhost:4444/uploads/your-image.png accessible
     app.register(fastifyStatic, {
       root: uploadsDir,
       prefix: '/uploads/', // The URL prefix to access the files
@@ -110,6 +139,25 @@ async function startServer() {
       app.log.info('Database initialized');
     }
 
+    // Ensure game_settings exists (safe for existing DBs)
+    try {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS game_settings (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          userId INTEGER NOT NULL UNIQUE,
+          tableBg TEXT,
+          ballColor TEXT,
+          paddleColor TEXT,
+          aiDifficulty TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (userId) REFERENCES users(id_user)
+        );
+      `);
+    } catch (e) {
+      app.log.error(e);
+    }
+
   function statusSahre(id  , mode){
     const allowQuery = db.prepare('SELECT status_share FROM users WHERE id_user = ?');
     const result = allowQuery.get(id);  
@@ -143,121 +191,19 @@ async function startServer() {
 
 
 
+const port = Number(process.env.PORT || 4444);
+await app.listen({ port, host: '0.0.0.0' });
 
-wss.on("connection", (socket, req) => {
-  
-  const params = new URLSearchParams(req.url.replace("/ws?", ""));
-  const token = params.get("token");
-  
-  if (!token) {
-    console.log("No token provided. Closing connection.");
-    socket.close();
-    return;
-  }
-  
-  let user;
-  try {
-    user = jwt.verify(token, process.env.SECRET);
-  } catch (err) {
-    socket.close();
-    return;
-  }
+// WebSocket server (supports both /ws?token=... and first-message userId)
+const wss = new WebSocketServer({ server: app.server, path: '/ws' });
+setupWebSocketServer(wss, db, users_socket, gameManager);
 
-
-  const userId = String(user.id_user);
-  socket.userId = userId;
-  users_socket.set(userId, socket); 
-
-  const allowQuery = db.prepare('SELECT status_share FROM users WHERE id_user = ?');
-  const result = allowQuery.get(userId);  
-  if (result.status_share) {
-    statusSahre(userId, 1);
-    db.prepare('UPDATE users SET status = ? WHERE id_user = ?').run(1, userId);
-  } else {
-    statusSahre(userId, 0);
-    db.prepare('UPDATE users SET status = ? WHERE id_user = ?').run(0, userId);
-  }
-
-  socket.on("message", (raw) => {
-    const str = raw.toString().trim();
-    let data;
-
-    try {
-      data = JSON.parse(str);
-    } catch {
-      console.log("Received raw message:", str);
-      return;
-    }
-
-    if (data.type === "istyping") {
-      const socketFriend = users_socket.get(String(data.friend));
-      if (socketFriend){
-        socketFriend.send(JSON.stringify({
-          type: "isTyping",
-          data: { friendId: socket.userId }
-        }));
-      }
-      return;
-    }
-
-    if (data.type === "isSeen") {
-      const socketFriend = users_socket.get(String(data.contactId));
-
-      const q = db.prepare('SELECT read_receipts FROM users WHERE id_user = ?');
-      const result = q.get(socket.userId);
-
-      if (result.read_receipts){
-        db.prepare(`UPDATE message SET isSeen = 1 WHERE conv_id = ? AND sender = ? AND isSeen = 0`)
-        .run(data.convId, data.contactId);
-  
-        if (socketFriend){
-          socketFriend.send(JSON.stringify({
-            type: "seen",
-            data: { seen: true, conv_id: data.convId}
-          }));
-        }
-      }
-
-      return;
-    }
-
-    if (data.type === "message") {
-      const socketFriend = users_socket.get(String(data.contactId));
-
-      db.prepare("INSERT INTO message (conv_id, message, sender, isSeen) VALUES (?, ?, ?, ?)")
-        .run(data.conversation_id, data.input, socket.userId, 0);
-
-      db.prepare(`UPDATE room SET lastMessage = ?, lastMessageTime = CURRENT_TIMESTAMP, lastMessageSender = ? WHERE conversation_id = ?`)
-        .run(data.input, socket.userId, data.conversation_id);
-
-      if (socketFriend){
-        socketFriend.send(JSON.stringify({
-          type: "message",
-          data: {
-            message: data.input,
-            conv_id: data.conversation_id,
-            sender_user_id: socket.userId
-          }
-        }));
-      }
-      return;
-    }
-  });
-
-
-  socket.on("close", () => {
-    console.log("Client disconnected:", userId);
-    users_socket.delete(userId);
-    statusSahre(userId, 0);
-    db.prepare('UPDATE users SET status = ? WHERE id_user = ?').run(0, userId);
-  });
-
-});
-
-
-
-
-await app.listen({ port: process.env.PORT, host: process.env.HOST });
+// Start periodic game-related tasks
+try {
+  gameManager.startPeriodicTasks();
+} catch (e) {
+  app.log.error(e);
+}
 
   } catch (err) {
     app.log.error(err);

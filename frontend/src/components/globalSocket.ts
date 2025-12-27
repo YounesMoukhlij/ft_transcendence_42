@@ -18,14 +18,27 @@ const buildWsUrl = () => {
 
   if (typeof window === 'undefined') {
     // Should never happen for client components, but keeps SSR-safe imports.
-    return `ws://e1r8p8.1337.ma:${WS_FALLBACK_PORT}${normalizePath(WS_FALLBACK_PATH)}`;
+    return `ws://localhost:${WS_FALLBACK_PORT}${normalizePath(WS_FALLBACK_PATH)}`;
   }
 
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  const host = process.env.NEXT_PUBLIC_BACKEND_IP || window.location.hostname;
-  const port = process.env.NEXT_PUBLIC_BACKEND_PORT || WS_FALLBACK_PORT;
 
-  const portSegment = port ? `:${port}` : '';
+  // Smart host detection: use env var if set and not localhost, otherwise use current hostname
+  // This ensures network access works automatically (matches getBackendURL() logic)
+  const envHost = process.env.NEXT_PUBLIC_BACKEND_IP || process.env.NEXT_PUBLIC_BACKENDIP;
+  const envPort = process.env.NEXT_PUBLIC_BACKEND_PORT || process.env.NEXT_PUBLIC_BACKENDPORT || WS_FALLBACK_PORT;
+
+  let host;
+  if (envHost && envHost.trim() !== '' && envHost !== 'localhost' && envHost !== '127.0.0.1') {
+    // Use env var if explicitly set to non-localhost
+    host = envHost;
+  } else {
+    // Use current hostname (runtime detection) - works for network access
+    // e.g., if frontend is at http://192.168.1.100:3000, WS will be at ws://192.168.1.100:4444/ws
+    host = window.location.hostname;
+  }
+
+  const portSegment = envPort ? `:${envPort}` : '';
   return `${protocol}://${host}${portSegment}${normalizePath(WS_FALLBACK_PATH)}`;
 };
 

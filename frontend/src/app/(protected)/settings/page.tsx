@@ -10,14 +10,13 @@ import api from '@/lib/api'
 // Helper components
 import DeleteConfirmationDialog from './components/DeleteConfirmationDialog'
 import TwoFAModal from './components/TwoFAModal'
-import ProfileTab from './components/profile/page'
-import SecurityTab from './components/security/page'
+import ProfileTab from './components/profile/ProfileTab'
+import SecurityTab from './components/security/SecurityTab'
 import HelpTab from './components/help/page'
 import Loading from '@/components/Loading/page'
 
 const ProfileSettingsPage = () => {
   const {user} = useUserStore();
-  console.log("=====>", user);
   const setUser = useUserStore((state) => state.setUser)
   const hasHydrated = useUserStore((state) => state._hasHydrated)
   
@@ -157,7 +156,6 @@ const ProfileSettingsPage = () => {
       const response = await api.post(`${process.env.NEXT_PUBLIC_BACK_API}/updateUserInfo`, dataToSave, {
         headers: { Authorization: `Bearer ${user.access_token}` },
       })
-      console.log('Profile update response:', response)
       const data = response.data
       if (!data.success) {
         toast.error(data.message || 'Failed to update profile')
@@ -173,7 +171,7 @@ const ProfileSettingsPage = () => {
       setPreviewImage(null)
       setImageFile(null)
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Profile update error:', error)
       const msg = error.response?.data?.message || 'An unexpected error occurred while updating profile.'
       toast.error(msg)
@@ -242,7 +240,7 @@ const ProfileSettingsPage = () => {
       } else {
         toast.error('No new password entered. Skipping password update.')
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Security update error:', error)
       const msg = error.response?.data?.message || 'An unexpected error occurred while updating security settings'
       toast.error(msg)
@@ -272,7 +270,7 @@ const ProfileSettingsPage = () => {
           setUser({ ...user, twoFA_enabled: false, twoFA_secret: null })
           toast.success('Two-Factor Authentication disabled.')
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('2FA disable error:', error)
         const msg = error.response?.data?.message || 'An error occurred while disabling 2FA.'
         toast.error(msg)
@@ -297,7 +295,7 @@ const ProfileSettingsPage = () => {
           setVerificationCode('')
           setShow2FAModal(true)
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('2FA generate error:', error)
         const msg = error.response?.data?.message || 'An error occurred while setting up 2FA.'
         toast.error(msg)
@@ -329,7 +327,7 @@ const ProfileSettingsPage = () => {
         setVerificationCode('')
         setOtpAuthUrl('')
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('2FA verification error:', error)
       const msg = error.response?.data?.message || 'An error occurred during verification.'
       toast.error(msg)
@@ -342,14 +340,14 @@ const ProfileSettingsPage = () => {
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     try {
-      const response = await axios.delete(`${process.env.NEXT_PUBLIC_BACK_API}/DeleteUserById/${user.id_user}`, {
+     await axios.delete(`${process.env.NEXT_PUBLIC_BACK_API}/DeleteAccount`, {
         headers: { Authorization: `Bearer ${user.access_token}` }
       })
       toast.success('Account deleted successfully!')
       setUser(null)
       setIsDeleteDialogOpen(false)
       router.push('/signIn')
-    } catch (error: any) {
+    } catch (error) {
       console.error('Account deletion error:', error)
       const msg = error.response?.data?.message || 'An unexpected error occurred while deleting the account'
       toast.error(msg)

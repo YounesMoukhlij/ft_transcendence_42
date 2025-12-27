@@ -15,6 +15,23 @@ import {ParseIdSchema} from './moduleSchema.js'
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+// Expiration time helper (keeps YY-MM-DD format for frontend compatibility)
+function ft_getExpiredTime(minutesFromNow = 1.5) {
+  const now = new Date();
+  const expired = new Date(now.getTime() + minutesFromNow * 60 * 1000);
+
+  const pad = (n) => n.toString().padStart(2, '0');
+
+  const year = expired.getFullYear().toString().slice(-2);
+  const month = pad(expired.getMonth() + 1);
+  const day = pad(expired.getDate());
+  const hours = pad(expired.getHours());
+  const minutes = pad(expired.getMinutes());
+  const seconds = pad(expired.getSeconds());
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 
 
 export async function GetNotification(request, reply) {
@@ -22,7 +39,47 @@ export async function GetNotification(request, reply) {
     const query = request.server.db.prepare(` SELECT n.*, u.username AS sender_username, u.profile_img AS sender_profile_img FROM notification n JOIN users u ON n.sender_user = u.id_user WHERE n.getter_user = ?`);
     const notifications = query.all(request.user.id_user);
 
-    return reply.send(notifications);
+    // Filter out expired notifications (supports YY-MM-DD and YYYY-MM-DD)
+    const now = new Date();
+    const validNotifications = notifications.filter((notif) => {
+      if (!notif.expired) return true;
+      try {
+        let expiredStr = notif.expired;
+        if (expiredStr && expiredStr.match(/^\d{2}-\d{2}-\d{2}/)) {
+          const parts = expiredStr.split(' ');
+          const datePart = parts[0].split('-');
+          if (datePart[0].length === 2) {
+            datePart[0] = '20' + datePart[0];
+            expiredStr = datePart.join('-') + ' ' + (parts[1] || '00:00:00');
+          }
+        }
+        const expiredDate = new Date(expiredStr.replace(' ', 'T') + 'Z');
+        return expiredDate > now;
+      } catch {
+        return true;
+      }
+    });
+
+    // Extract tournamentId for tournament invites (if notifyBody is JSON)
+    const processed = validNotifications.map((notif) => {
+      if (notif.title === 'tournament invite' && notif.notifyBody) {
+        try {
+          const parsed = JSON.parse(notif.notifyBody);
+          if (parsed?.tournamentId) {
+            return {
+              ...notif,
+              tournamentId: parsed.tournamentId,
+              notifyBody: parsed.message || notif.notifyBody
+            };
+          }
+        } catch {
+          // ignore
+        }
+      }
+      return notif;
+    });
+
+    return reply.send(processed);
 
   } catch (err) {
     reply.code(500).send("internal server error");
@@ -253,6 +310,13 @@ export async function GetFriends(request, reply) {
 
     const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
 
+    // Update status based on real-time socket connections (more accurate than DB)
+    const usersSocket = request.server.users_socket;
+    for (const friend of friendDetails) {
+      const friendSocket = usersSocket.get(friend.id_user.toString());
+      friend.status = friendSocket && friendSocket.readyState === 1 ? 1 : 0;
+    }
+
     const conversationStmt = db.prepare(`
       SELECT conversation_id, lastMessage, lastMessageSender, lastMessageTime , pinnedUser1,pinnedUser2,blockedByUser1 , blockedByUser2 ,pinnedDateUser1, pinnedDateUser2
       FROM room
@@ -309,20 +373,21 @@ export function NotificationSeen(request , reply){
 
 
 export  function sendGameChallenge(request , reply){
-  const result = ParseIdSchema.safeParse(request.body);
-  if (!result.success)
-    reply.code(400).send("missing params");
-  const {id} = result.data;
+  // Support both {Friend_id} (game mate) and {id} (older)
+  const id = request.body?.Friend_id ?? request.body?.id;
+  if (!id) return reply.code(400).send("missing params");
   
   try{
     const title = "game challenge";
     const query = request.server.db.prepare('SELECT profile_img FROM users where id_user = ?');
     const result = query.get(request.user.id_user);
-    
-    const ExpiredTime =  ft_getTime();
+
+    // 1.5 minutes in the future (YY-MM-DD format)
+    const ExpiredTime = ft_getExpiredTime(1.5);
     const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody , expired) VALUES (?, ?, ?, ? , ?)`);
-    
-    insertQuery.run(id, title, request.user.id_user, "game challenge" , ExpiredTime);
+
+    const insertResult = insertQuery.run(id, title, request.user.id_user, "game challenge" , ExpiredTime);
+    const notify_id = insertResult.lastInsertRowid;
     
     
     const socket = request.server.users_socket.get(id.toString());
@@ -354,7 +419,7 @@ export  function sendGameChallenge(request , reply){
         sender_username: request.user.username,
         title: title,
         sender_profile_img: result.profile_img,
-        notify_id: res.notify_id,
+        notify_id: notify_id,
         expired: ExpiredTime
       };
 
@@ -375,27 +440,70 @@ export  function sendGameChallenge(request , reply){
 
 
 export function AcceptGameChallenge(request , reply){
-  const result = ParseIdSchema.safeParse(request.body);
-  if (!result.success)
-    return reply.code(400).send("missing params");
+  // Support both {Friend_id} and {id}
+  const inviterId = request.body?.Friend_id ?? request.body?.id;
+  if (!inviterId) return reply.code(400).send("missing params");
 
-  const {id} = request.body;
+  try {
+    const acceptorId = request.user.id_user;
 
-  try{
+    const inviterSocket = request.server.users_socket.get(inviterId.toString());
+    const acceptorSocket = request.server.users_socket.get(acceptorId.toString());
 
-    const socket = request.server.users_socket.get(id.toString());
-    if (socket){
-      const object  = {
-      };
-      
-      socket.send(JSON.stringify({
-        type: "start_game",
-        data: object
+    const getUserStmt = request.server.db.prepare('SELECT username, id_user FROM users WHERE id_user = ?');
+    const acceptor = getUserStmt.get(acceptorId);
+
+    if (!acceptor) {
+      return reply.code(404).send({ error: 'User not found' });
+    }
+
+    // Create challengeId and store it for game matchmaking
+    const challengeId = `${inviterId}_${acceptorId}`;
+    if (request.server.gameManager) {
+      request.server.gameManager.acceptedChallenges.set(challengeId, {
+        inviterId: inviterId,
+        acceptorId: acceptorId,
+        inviterUsername: null,
+        acceptorUsername: acceptor.username,
+        inviterReady: false,
+        acceptorReady: false,
+        inviterCustomization: null,
+        acceptorCustomization: null,
+        timestamp: Date.now()
+      });
+    } else {
+      return reply.code(500).send({ error: 'Game service unavailable' });
+    }
+
+    // Notify inviter (if online)
+    if (inviterSocket) {
+      inviterSocket.send(JSON.stringify({
+        type: 'game_challenge_accepted',
+        data: {
+          acceptedBy: acceptor.id_user,
+          acceptedByUsername: acceptor.username,
+          challengeId: challengeId,
+          message: 'Game challenge accepted! Starting game...'
+        }
       }));
     }
-    return reply.send(true);
-  }catch(err){
-    return reply.code(500).send(false);
+
+    // Notify acceptor to start (if online)
+    if (acceptorSocket) {
+      acceptorSocket.send(JSON.stringify({
+        type: 'start_game',
+        data: {
+          friendId: inviterId,
+          challengeId: challengeId,
+          message: 'Game challenge accepted! Starting game...'
+        }
+      }));
+    }
+
+    return reply.send({ success: true, challengeId });
+  } catch (err) {
+    console.error('Error accepting game challenge:', err);
+    return reply.code(500).send({ error: 'Failed to accept challenge' });
   }
 
 }
@@ -416,10 +524,42 @@ export function GetSentRequests(request , reply){
 
 export function DeleteNotification(request , reply){
 
-  const notifyId = request.query.notifyId;
-  try{
-    reply.code(200).send(true);
-  }catch(err){
-    reply.code(500).send(false);
+  const notifyId = request.query.notifyId ?? request.query.id;
+  if (!notifyId) {
+    return reply.code(400).send({ error: "Missing notifyId" });
+  }
+
+  try {
+    const getNotifyStmt = request.server.db.prepare('SELECT getter_user, sender_user, title FROM notification WHERE notify_id = ?');
+    const notification = getNotifyStmt.get(notifyId);
+
+    if (!notification) {
+      return reply.code(404).send({ error: 'Notification not found' });
+    }
+
+    const deleteStmt = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ? AND getter_user = ?');
+    const result = deleteStmt.run(notifyId, request.user.id_user);
+
+    if (result.changes === 0) {
+      return reply.code(404).send({ error: 'Notification not found or not authorized' });
+    }
+
+    // Notify sender for game challenges (optional but useful)
+    const senderSocket = request.server.users_socket.get(notification.sender_user?.toString?.() ?? String(notification.sender_user));
+    if (senderSocket && notification.title === 'game challenge') {
+      senderSocket.send(JSON.stringify({
+        type: 'notification_deleted',
+        data: {
+          notify_id: notifyId,
+          deletedBy: request.user.id_user,
+          title: notification.title
+        }
+      }));
+    }
+
+    return reply.code(200).send({ success: true });
+  } catch (err) {
+    console.error('Error deleting notification:', err);
+    return reply.code(500).send({ error: 'Internal server error' });
   }
 }

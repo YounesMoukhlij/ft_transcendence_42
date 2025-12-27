@@ -110,16 +110,62 @@ export async function AddUser(request, reply) {
     }
 }
 // delete user
-export async function DeleteUserById(request, reply) {
-    const { id } = request.params;
+export async function DeleteAccount(request, reply) {
+    const userId = request.user.id_user;
+    const db = request.server.db;
+
     try {
-        const result = request.server.db
-            .prepare("DELETE FROM users WHERE id_user = ?")
-            .run(id);
-        if (result.changes === 0) {
-            return reply.code(404).send({ message: "User not found" });
-        }
-        return reply.code(200).send({ message: "User deleted successfully" });
+        const tx = db.transaction(() => {
+
+            db.prepare(`
+                DELETE FROM friends 
+                WHERE user_id = ? OR friend_id = ?
+            `).run(userId, userId);
+
+            db.prepare(`
+                DELETE FROM friend_requests
+                WHERE sender_id = ? OR receiver_id = ?
+            `).run(userId, userId);
+
+            db.prepare(`
+                DELETE FROM game_history
+                WHERE user_win = ? OR user_lose = ?
+            `).run(userId, userId);
+
+            db.prepare(`
+                DELETE FROM message
+                WHERE sender = ?
+            `).run(userId);
+
+            db.prepare(`
+                DELETE FROM notification
+                WHERE getter_user = ? OR sender_user = ?
+            `).run(userId, userId);
+
+            db.prepare(`
+                DELETE FROM room
+                WHERE blockedByUser1 = ?
+                   OR blockedByUser2 = ?
+                   OR pinnedUser1 = ?
+                   OR pinnedUser2 = ?
+                   OR lastMessageSender = ?
+            `).run(userId, userId, userId, userId, userId);
+
+            const result = db.prepare(`
+                DELETE FROM users WHERE id_user = ?
+            `).run(userId);
+
+            if (result.changes === 0) {
+                throw new Error("User not found");
+            }
+        });
+
+        tx();
+
+        return reply.code(200).send({
+            message: "User and all related data deleted successfully"
+        });
+
     } catch (error) {
         console.error("Error deleting user:", error);
         return reply.code(500).send({
@@ -127,6 +173,8 @@ export async function DeleteUserById(request, reply) {
         });
     }
 }
+
+
 //  settings update user info
 export async function updateUserInfo(request, reply) {
     const id_user = request.user.id_user;
@@ -887,5 +935,36 @@ export async function FortyTwoAuth(request, reply) {
     } catch (error) {
         console.error('42 auth failed:', error);
         return reply.redirect(`${process.env.FRONTEND_URL}/signIn?error=auth_failed`);
+    }
+}
+
+// Search users by username/fullname
+export async function searchUsers(request, reply) {
+    const { query } = request.query;
+
+    if (!query || query.trim().length === 0) {
+        return reply.code(400).send({ message: "Search query is required" });
+    }
+
+    try {
+        const searchQuery = `%${query.trim()}%`;
+        const users = request.server.db
+            .prepare(
+                "SELECT id_user, username, fullname, profile_img, xp, status FROM users WHERE (username LIKE ? OR fullname LIKE ?) LIMIT 20"
+            )
+            .all(searchQuery, searchQuery);
+
+        const usersSocket = request.server.users_socket;
+        const safeUsers = users.map((u) => {
+            const safeUser = { ...u };
+            const sock = usersSocket.get(String(u.id_user));
+            safeUser.status = sock && sock.readyState === 1 ? 1 : 0;
+            return safeUser;
+        });
+
+        return reply.code(200).send(safeUsers);
+    } catch (error) {
+        console.error("Error searching users:", error);
+        return reply.code(500).send({ message: "Error searching users" });
     }
 }

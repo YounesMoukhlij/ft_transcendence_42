@@ -1,38 +1,39 @@
 import {ParseIdSchema , sendMsgSchema ,usersettings , BlockSchema , PinnedSchema} from "./moduleSchema.js";
 
 
-export async function getConversationId(request, reply) {
+// export async function getConversationId(request, reply) {
 
-const result = ParseIdSchema.safeParse(request.query);
+// const result = ParseIdSchema.safeParse(request.query);
 
-  if (!result.success) {
-    return reply.code(400).send("missing params");
-  }
-  const { id } = result.data;
+//   if (!result.success) {
+//     return reply.code(400).send("missing params");
+//   }
+//   const { id } = result.data;
+//   console
 
-  const caseOne = id + "," + request.user.id_user;
-  const caseTwo = request.user.id_user + "," + id;
+//   const caseOne = id + "," + request.user.id_user;
+//   const caseTwo = request.user.id_user + "," + id;
 
-  try 
-  {
-    const query = request.server.db.prepare("SELECT * FROM room WHERE members = ?" );
-    let result = query.get(caseOne);
+//   try 
+//   {
+//     const query = request.server.db.prepare("SELECT * FROM room WHERE members = ?" );
+//     let result = query.get(caseOne);
 
-    if (!result) {
-      result = query.get(caseTwo);
-    }
+//     if (!result) {
+//       result = query.get(caseTwo);
+//     }
 
-    if (result) {
-      return reply.send(result);
-    }
+//     if (result) {
+//       return reply.send(result);
+//     }
 
-    return reply.code(404).send("conversation not found");
+//     return reply.code(404).send("conversation not found");
 
-  }
-  catch (dberr) {
-    return reply.code(500).send("internal server error");
-  }
-}
+//   }
+//   catch (dberr) {
+//     return reply.code(500).send("internal server error");
+//   }
+// }
 
 
 export async function getMsgs(request , reply){

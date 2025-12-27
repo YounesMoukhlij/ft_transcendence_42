@@ -1,13 +1,14 @@
 
 import Particles, { initParticlesEngine } from "@tsparticles/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo} from "react";
 import { loadSlim } from "@tsparticles/slim";
+import type { ISourceOptions } from "@tsparticles/engine";
 
 
 
-const ParticlesBackground = (props) => {
+const ParticlesBackground = () => {
 
-  const [init, setInit] = useState(false);
+ 
 
 
   useEffect(() => {
@@ -15,13 +16,13 @@ const ParticlesBackground = (props) => {
       await loadSlim(engine);
 
     }).then(() => {
-      setInit(true);
+      
     });
   }, []);
 
 
 
-  const options = useMemo(
+  const options = useMemo<ISourceOptions>(
     () => ({
       background: {
         color: {

@@ -29,6 +29,7 @@
 
 import "./globals.css";
 import React from "react";
+import Providers from "./providers";
 
 export const metadata = {
   title: "Ping Pong Game",
@@ -43,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="h-full">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

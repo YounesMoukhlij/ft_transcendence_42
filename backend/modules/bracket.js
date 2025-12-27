@@ -6,6 +6,10 @@ export async function getTournamentBracket(request, reply) {
 
   const tournament_id = request.params.id;
 
+  if (!tournament_id) {
+    return reply.code(400).send({ error: "tournament id is required" });
+  }
+
     try{
     const query = request.server.db.prepare(
       `select game_date as date, 
@@ -17,7 +21,9 @@ export async function getTournamentBracket(request, reply) {
        where tournament_id =? ORDER BY game_date`
   );
     const tournament = query.all(tournament_id); 
-    if (!tournament) return reply.code(404).send({error: "tournament not found" });
+    if (!tournament || tournament.length === 0) {
+      return reply.code(404).send({ error: "tournament not found" });
+    }
 
   let Matches = [];
   let firstWinner; 
@@ -79,7 +85,6 @@ export async function recordMatchOnBlockChain(request, reply) {
 
       type = "casual",
       tournament_id = null,
-      tournament_round = null,
 
       duration = null,
       longest_rally = null,
@@ -108,7 +113,6 @@ export async function recordMatchOnBlockChain(request, reply) {
         lose_score,
         type,
         tournament_id,
-        tournament_round,
         duration,
         longest_rally,
         average_rally,
@@ -119,7 +123,7 @@ export async function recordMatchOnBlockChain(request, reply) {
         max_points_streak_lose,
         max_leading_time_win,
         max_leading_time_lose
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const params = [
@@ -129,7 +133,6 @@ export async function recordMatchOnBlockChain(request, reply) {
       lose_score,
       type,
       tournament_id,
-      tournament_round,
       duration,
       longest_rally,
       average_rally,
@@ -143,7 +146,7 @@ export async function recordMatchOnBlockChain(request, reply) {
     ];
 
     try {
-      const result = await createRowQuery.run(params);
+      const result = createRowQuery.run(...params);
 
     // blockchain needs game_id so : insert data to DB get the game ID
     // store in blockchain get transaction hash and UPDATE the db 

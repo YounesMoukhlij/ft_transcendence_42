@@ -1,42 +1,34 @@
-- image and username problem in chat
-- Emoji table should be hidden when clicked anywhere and friend list in small 
-- implement game challenge from notification 
-- remove friend request from notify if handeled in profile 
+Ayoub 
+    * chat redirect 
 
 
 
-must get friend in home 
-add message array fo zoostand 
-update room in db
-update add friend api
-add socket at layout
-Get freinds
-global css
 
-zoostand (updatelastmessage function ) 
-sql room
+zakaria wla chi motatawi3 
+    * notification mobile burger menu
 
 
-
-chnage lib/api.js to ts
-
-kamlin bdlo axios b api from lib/api
 
 zmoumni
->  design dyal nav almost done
->  gha n3awd side bar almost done
->  google mn poste akhor 
-> ana o ayoub f design dyalo 
-> abechcha yssayb design f chat simple white black gray
+    * if delete an account must be logged out 
 
 
-ayoub 
-type script 
-not found f user ghalat example : /profile/tfo 
 
 
-redis ila 7aydna local host derna ip ma ka ykhdemch khasso container ymkn
-SIDE BAR KAMLA
-NAV DESIGN 
-SERVER CORS
-404 
+ # IMPORTANT 
+ # KOL WA7ED I9RA CODE DYALO OU ISHOUF ILA TCHANGAT SHIHAJA 
+ # FASH TMIRJA HADSHI TBDLO SHI 7WAYEJ
+ LMERJ kan s3ib
+
+- Fash Katbdel tsswira, felgame ou tournoi kaykoun feha error (Hadi ghan9adoha 7itash 3endna lfunction li kathandli hadshi)
+
+- Lprofile kaykhsser fash katbdel usernaame (Hadi ghan9adha ana ayoub ez pz);
+
+- Zakaria zid lina notification fel burger menu
+
+- Abd Moughit 9ad lina chat style fash kayktro les msg + isseen
+
+- Youness lgame katlaga shwya, speed dyal kora na9ssa shwwya, ou lfinal feh error makay3tish control l players
+kanb9aw watch only 
+
+

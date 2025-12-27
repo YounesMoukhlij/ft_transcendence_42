@@ -10,7 +10,7 @@ const PROTECTED_PATHS = [
   '/leaderboard',
 ]
 
-const PUBLIC_PATHS = ['/signIn', '/signUp', '/forgotPassword']
+const PUBLIC_PATHS = ['/signIn', '/signUp']
 
 export function middleware(request: NextRequest) {
   const isAuthenticated = request.cookies.has('auth_token')

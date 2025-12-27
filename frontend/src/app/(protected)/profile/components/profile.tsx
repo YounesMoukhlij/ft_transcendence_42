@@ -6,7 +6,7 @@ import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import { Progress } from "./ui/progress"
-import { Target, TrendingUp, Calendar, Award, BarChart3, Activity, Clock, Zap, Star, Trophy } from "lucide-react"
+import { Target, TrendingUp, Calendar, Award, BarChart3, Activity, Clock, Trophy } from "lucide-react"
 import { PerformanceChart } from "./performance-chart"
 import { MatchHistoryTable } from "./match-history-table"
 import { StatsOverview } from "./stats-overview"
@@ -15,6 +15,7 @@ import { RankBanner } from "./rank-banner"
 import { useCountUp, formatDuration } from "../hooks/useCountUp"
 import { User } from "@/types/user"
 import {getProfileImageUrl} from '@/lib/utils'
+import { useUserStore } from "@/store/userStore"
 
 
 
@@ -28,9 +29,10 @@ interface ProfileProps {
 export  function Profile({user} : ProfileProps)  {
 
 const [overviewV, setOverviewV] = useState(true);
-const [matchHistoryV, setMatchHistoryV] = useState(false);
+// const [matchHistoryV, setMatchHistoryV] = useState(false);
 const [AnalyticsV, setAnalyticsV] = useState(false);
-const [activeTab, setActiveTab] = useState("overview")
+const [activeTab, setActiveTab] = useState("overview");
+const {friends} = useUserStore();
 
 
 
@@ -47,6 +49,7 @@ const getRank = (): "gold" | "silver" | "bronze" => {
   avatar: getProfileImageUrl(user.avatar),
   rankType: getRank(),
   experience: user.xp,
+  conversationId: friends?.filter(item => item.id_user == user.id)[0]?.conversation_id || -1,
   expForLevel: 1000,
 
   totalMatches: user.totalMatches,
@@ -93,7 +96,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
             <TabsTrigger
               value="overview"
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer"
-              onClick={() => {setOverviewV(true); setAnalyticsV(false); setMatchHistoryV(false);}}
+              onClick={() => {setOverviewV(true); setAnalyticsV(false);}}
             >
               <BarChart3 className="w-4 h-4" />
               Overview
@@ -101,7 +104,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
             <TabsTrigger
               value="matches"
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer"
-              onClick={() => {setOverviewV(false); setMatchHistoryV(true); setAnalyticsV(false); }}
+              onClick={() => {setOverviewV(false);  setAnalyticsV(false); }}
             >
               <Calendar className="w-4 h-4" />
               Match History
@@ -109,7 +112,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
             <TabsTrigger
               value="performance"
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer"
-              onClick={() => {setOverviewV(false); setMatchHistoryV(false); setAnalyticsV(true);}}
+              onClick={() => {setOverviewV(false);  setAnalyticsV(true);}}
             >
               <TrendingUp className="w-4 h-4" />
               Analytics

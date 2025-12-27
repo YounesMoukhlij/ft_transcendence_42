@@ -1,0 +1,1278 @@
+// Game WebSocket Message Handler
+// Handles all game-related WebSocket messages
+
+export function handleGameMessage(socket, userId, message, gameManager, db, usersSocket) {
+  // Handle game challenge decline messages (forward to friend)
+  if (message.type === 'game_challenge_declined') {
+    const friendId = message.data?.friendId;
+    if (friendId) {
+      // Get decliner username from database
+      const getUserStmt = db.prepare('SELECT username FROM users WHERE id_user = ?');
+      const decliner = getUserStmt.get(userId);
+      const declinerUsername = decliner?.username || 'Unknown';
+
+      // Use GameManager to handle the decline
+      gameManager.handleGameChallengeDecline(userId, declinerUsername, friendId);
+    }
+    return; // Don't process further
+  }
+
+  switch (message.type) {
+    case 'findMatch': {
+      // Check if this is for an accepted challenge first
+      const challengeId = message.payload?.challengeId;
+      const username = message.payload?.username;
+      const customization = message.payload?.customization || {};
+
+      if (!username) {
+        socket.send(JSON.stringify({ type: 'error', message: 'Username required' }));
+        return;
+      }
+
+      // If there's a challengeId, this is for an accepted challenge (friend invitation)
+      if (challengeId) {
+        console.log(`[findMatch] Challenge-based matchmaking requested. challengeId: ${challengeId}, userId: ${userId}`);
+
+        if (!gameManager.acceptedChallenges.has(challengeId)) {
+          console.error(`[findMatch] Challenge ${challengeId} not found in acceptedChallenges`);
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Challenge not found or expired. Please send a new invitation.'
+          }));
+          return; // Don't proceed to random matchmaking
+        }
+
+        const challenge = gameManager.acceptedChallenges.get(challengeId);
+        console.log(`[findMatch] Found challenge:`, {
+          inviterId: challenge.inviterId,
+          acceptorId: challenge.acceptorId,
+          inviterReady: challenge.inviterReady,
+          acceptorReady: challenge.acceptorReady
+        });
+
+        // Verify this user is part of the challenge
+        if (challenge.inviterId !== userId && challenge.acceptorId !== userId) {
+          console.error(`[findMatch] User ${userId} is not part of challenge ${challengeId}`);
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'You are not part of this challenge'
+          }));
+          return;
+        }
+
+        // Mark this player as ready
+        if (challenge.inviterId === userId) {
+          challenge.inviterReady = true;
+          challenge.inviterCustomization = customization;
+          console.log(`[findMatch] Inviter (${userId}) is ready`);
+        } else if (challenge.acceptorId === userId) {
+          challenge.acceptorReady = true;
+          challenge.acceptorCustomization = customization;
+          console.log(`[findMatch] Acceptor (${userId}) is ready`);
+        }
+
+        // Update the challenge in the map
+        gameManager.acceptedChallenges.set(challengeId, challenge);
+
+        // If both players are ready, create the game room
+        if (challenge.inviterReady && challenge.acceptorReady) {
+          console.log(`[findMatch] Both players ready, creating game room...`);
+          const inviterSocket = usersSocket.get(challenge.inviterId.toString());
+          const acceptorSocket = usersSocket.get(challenge.acceptorId.toString());
+
+          if (!inviterSocket || !acceptorSocket) {
+            console.error(`[findMatch] One or both sockets not found. inviterSocket: ${!!inviterSocket}, acceptorSocket: ${!!acceptorSocket}`);
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'Opponent is no longer online'
+            }));
+            gameManager.acceptedChallenges.delete(challengeId);
+            return;
+          }
+
+          // Get usernames
+          const getUserStmt = db.prepare('SELECT username FROM users WHERE id_user = ?');
+          const inviterUser = getUserStmt.get(challenge.inviterId);
+          const acceptorUser = getUserStmt.get(challenge.acceptorId);
+
+          const player1 = {
+            id: challenge.inviterId,
+            username: inviterUser?.username || 'Player 1',
+            socket: inviterSocket,
+            customization: challenge.inviterCustomization || {}
+          };
+
+          const player2 = {
+            id: challenge.acceptorId,
+            username: acceptorUser?.username || 'Player 2',
+            socket: acceptorSocket,
+            customization: challenge.acceptorCustomization || {}
+          };
+
+          // Create game room
+          const result = gameManager.createGameRoom(player1, player2);
+          console.log(`[findMatch] Game room created: ${result.roomCode}`);
+
+          // Remove challenge
+          gameManager.acceptedChallenges.delete(challengeId);
+
+          // Both players will receive matchFound message from createGameRoom
+        } else {
+          // One player is ready, waiting for the other
+          console.log(`[findMatch] Waiting for opponent. inviterReady: ${challenge.inviterReady}, acceptorReady: ${challenge.acceptorReady}`);
+          socket.send(JSON.stringify({
+            type: 'waitingForOpponent',
+            message: 'Waiting for opponent to finish customization...'
+          }));
+        }
+
+        return; // Don't proceed to random matchmaking
+      }
+
+      // Check if user has an active accepted challenge (in case challengeId wasn't sent)
+      let activeChallenge = null;
+      for (const [challengeId, challenge] of gameManager.acceptedChallenges.entries()) {
+        if (challenge.inviterId === userId || challenge.acceptorId === userId) {
+          activeChallenge = { challengeId, challenge };
+          console.log(`[findMatch] Found active challenge ${challengeId} for user ${userId}`);
+          break;
+        }
+      }
+
+      if (activeChallenge) {
+        // User has an active challenge but didn't send challengeId - use the found challenge
+        const { challengeId, challenge } = activeChallenge;
+
+        // Mark this player as ready
+        if (challenge.inviterId === userId) {
+          challenge.inviterReady = true;
+          challenge.inviterCustomization = customization;
+          console.log(`[findMatch] Inviter (${userId}) is ready (challenge found automatically)`);
+        } else if (challenge.acceptorId === userId) {
+          challenge.acceptorReady = true;
+          challenge.acceptorCustomization = customization;
+          console.log(`[findMatch] Acceptor (${userId}) is ready (challenge found automatically)`);
+        }
+
+        // Update the challenge in the map
+        gameManager.acceptedChallenges.set(challengeId, challenge);
+
+        // If both players are ready, create the game room
+        if (challenge.inviterReady && challenge.acceptorReady) {
+          console.log(`[findMatch] Both players ready, creating game room...`);
+          const inviterSocket = usersSocket.get(challenge.inviterId.toString());
+          const acceptorSocket = usersSocket.get(challenge.acceptorId.toString());
+
+          if (!inviterSocket || !acceptorSocket) {
+            console.error(`[findMatch] One or both sockets not found. inviterSocket: ${!!inviterSocket}, acceptorSocket: ${!!acceptorSocket}`);
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'Opponent is no longer online'
+            }));
+            gameManager.acceptedChallenges.delete(challengeId);
+            return;
+          }
+
+          // Get usernames
+          const getUserStmt = db.prepare('SELECT username FROM users WHERE id_user = ?');
+          const inviterUser = getUserStmt.get(challenge.inviterId);
+          const acceptorUser = getUserStmt.get(challenge.acceptorId);
+
+          const player1 = {
+            id: challenge.inviterId,
+            username: inviterUser?.username || 'Player 1',
+            socket: inviterSocket,
+            customization: challenge.inviterCustomization || {}
+          };
+
+          const player2 = {
+            id: challenge.acceptorId,
+            username: acceptorUser?.username || 'Player 2',
+            socket: acceptorSocket,
+            customization: challenge.acceptorCustomization || {}
+          };
+
+          // Create game room
+          const result = gameManager.createGameRoom(player1, player2);
+          console.log(`[findMatch] Game room created: ${result.roomCode}`);
+
+          // Remove challenge
+          gameManager.acceptedChallenges.delete(challengeId);
+
+          // Both players will receive matchFound message from createGameRoom
+        } else {
+          // One player is ready, waiting for the other
+          console.log(`[findMatch] Waiting for opponent. inviterReady: ${challenge.inviterReady}, acceptorReady: ${challenge.acceptorReady}`);
+          socket.send(JSON.stringify({
+            type: 'waitingForOpponent',
+            message: 'Waiting for opponent to finish customization...'
+          }));
+        }
+
+        return; // Don't proceed to random matchmaking
+      }
+
+      // Random matchmaking (no challengeId and no active challenge)
+      console.log(`[findMatch] Random matchmaking requested for user ${userId}`);
+      const player = {
+        id: userId,
+        username: username,
+        socket: socket,
+        customization: customization
+      };
+
+      const result = gameManager.addToMatchmakingQueue(player);
+
+      if (result.error) {
+        socket.send(JSON.stringify({ type: 'error', message: result.error }));
+      } else if (result.status === 'searching') {
+        socket.send(JSON.stringify({ type: 'searching' }));
+      }
+      break;
+    }
+
+    case 'paddleMove': {
+      const direction = message.payload?.direction;
+      if (direction && ['up', 'down', 'stop'].includes(direction)) {
+        gameManager.handlePaddleMove(userId, direction);
+      }
+      break;
+    }
+
+    case 'requestGameState': {
+      // Client requesting current game state (e.g., after page navigation)
+      const roomCode = message.payload?.roomCode;
+      if (roomCode) {
+        const room = gameManager.gameRooms.get(roomCode);
+        if (room && room.gameState) {
+          // Send current game state to requesting player
+          // Use room.gameState which contains the actual game state (paddles, ball, scores)
+          const gameState = {
+            player1: {
+              id: room.gameState.player1.id,
+              username: room.gameState.player1.username,
+              avatar: room.gameState.player1.avatar || null,
+              y: room.gameState.player1.y,
+              score: room.gameState.player1.score,
+              customization: room.gameState.player1.customization || room.player1.customization || null
+            },
+            player2: {
+              id: room.gameState.player2.id,
+              username: room.gameState.player2.username,
+              avatar: room.gameState.player2.avatar || null,
+              y: room.gameState.player2.y,
+              score: room.gameState.player2.score,
+              customization: room.gameState.player2.customization || room.player2.customization || null
+            },
+            ball: room.gameState.ball
+          };
+
+          // Add tournament context if available
+          const gameStateMessage = {
+            type: 'gameState',
+            roomCode: roomCode,
+            payload: gameState
+          };
+
+          if (room.tournamentContext) {
+            gameStateMessage.tournamentId = room.tournamentContext.tournamentId;
+            gameStateMessage.matchId = room.tournamentContext.matchId;
+            gameStateMessage.round = room.tournamentContext.round;
+            gameStateMessage.matchNumber = room.tournamentContext.matchNumber;
+          }
+
+          socket.send(JSON.stringify(gameStateMessage));
+          console.log(`[requestGameState] Sent game state to player ${userId} for room ${roomCode}`);
+        } else {
+          console.warn(`[requestGameState] Room ${roomCode} not found or has no gameState`);
+        }
+      }
+      break;
+    }
+
+    case 'leaveRoom': {
+      const roomCode = message.payload?.roomCode;
+      if (roomCode) {
+        gameManager.removePlayer(roomCode, userId);
+      } else {
+      }
+      break;
+    }
+
+    case 'cancelSearch': {
+      // Remove player from matchmaking queue
+      // Make it idempotent - don't error if not in queue (user might have already cancelled or never joined)
+      const removed = gameManager.removeFromMatchmakingQueue(userId);
+      if (removed) {
+        socket.send(JSON.stringify({ type: 'searchCancelled' }));
+        console.log(`[cancelSearch] User ${userId} cancelled matchmaking search`);
+      } else {
+        // User is not in matchmaking queue - this is fine, just send success
+        // This can happen if they already cancelled, or if they're in a friend challenge
+        socket.send(JSON.stringify({ type: 'searchCancelled' }));
+        console.log(`[cancelSearch] User ${userId} not in matchmaking queue (already cancelled or friend challenge)`);
+      }
+      break;
+    }
+
+    case 'cancelFriendChallenge': {
+      // Handle cancellation of friend challenge (User A cancels waiting for User B)
+      const challengeId = message.payload?.challengeId;
+
+      if (!challengeId) {
+        // If no challengeId provided, try to find active challenge for this user
+        for (const [id, challenge] of gameManager.acceptedChallenges.entries()) {
+          if (challenge.inviterId === userId || challenge.acceptorId === userId) {
+            gameManager.acceptedChallenges.delete(id);
+            console.log(`[cancelFriendChallenge] User ${userId} cancelled challenge ${id}`);
+            socket.send(JSON.stringify({ type: 'searchCancelled' }));
+            return;
+          }
+        }
+        socket.send(JSON.stringify({ type: 'error', message: 'No active challenge found' }));
+        return;
+      }
+
+      // Verify this user is part of the challenge
+      const challenge = gameManager.acceptedChallenges.get(challengeId);
+      if (challenge && (challenge.inviterId === userId || challenge.acceptorId === userId)) {
+        // Remove the challenge
+        gameManager.acceptedChallenges.delete(challengeId);
+        console.log(`[cancelFriendChallenge] User ${userId} cancelled challenge ${challengeId}`);
+
+        // Notify the other player that the challenge was cancelled
+        const otherUserId = challenge.inviterId === userId ? challenge.acceptorId : challenge.inviterId;
+        const otherUserSocket = usersSocket.get(otherUserId.toString());
+        if (otherUserSocket) {
+          gameManager.sendToPlayer(otherUserSocket, {
+            type: 'friendChallengeCancelled',
+            data: {
+              message: 'The other player cancelled the challenge'
+            }
+          });
+        }
+
+        socket.send(JSON.stringify({ type: 'searchCancelled' }));
+      } else {
+        socket.send(JSON.stringify({ type: 'error', message: 'Challenge not found or you are not part of it' }));
+      }
+      break;
+    }
+
+    case 'inviteFriend': {
+      // Handle friend invitation directly (not nested in 'game' action)
+      const friendId = message.payload?.friendId;
+      const username = message.payload?.username;
+      const customization = message.payload?.customization || {};
+
+      if (!friendId) {
+        socket.send(JSON.stringify({
+          type: 'error',
+          message: 'Friend ID required'
+        }));
+        return;
+      }
+
+      // Check if they are friends
+      const friendsCheck = db.prepare(`
+        SELECT * FROM friends
+        WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+      `);
+      const friendship = friendsCheck.get(userId, friendId, friendId, userId);
+
+      if (!friendship) {
+        socket.send(JSON.stringify({
+          type: 'error',
+          message: 'You are not friends with this user'
+        }));
+        return;
+      }
+
+      const getUserStmt = db.prepare('SELECT username FROM users WHERE id_user = ?');
+      const user = getUserStmt.get(userId);
+
+      const result = gameManager.sendFriendInvitation(
+        userId,
+        user?.username || username,
+        friendId,
+        customization
+      );
+
+      if (result.error) {
+        socket.send(JSON.stringify({
+          type: 'error',
+          message: result.error
+        }));
+      } else {
+        socket.send(JSON.stringify({
+          type: 'gameInvitationSent',
+          payload: { roomCode: result.roomCode, friendId }
+        }));
+      }
+      break;
+    }
+
+    case 'acceptInvitation': {
+      // Handle accept invitation directly (not nested in 'game' action)
+      const roomCode = message.payload?.roomCode;
+      const customization = message.payload?.customization || {};
+
+      // Get user info
+      const getUserStmt = db.prepare('SELECT username FROM users WHERE id_user = ?');
+      const user = getUserStmt.get(userId);
+
+      if (!user) {
+        socket.send(JSON.stringify({
+          type: 'error',
+          message: 'User not found'
+        }));
+        return;
+      }
+
+      // Find invitation by roomCode
+      // Invitations are stored with the friendId (acceptor) as key
+      let invitation = null;
+      let inviterId = null;
+      for (const [friendId, inv] of gameManager.pendingInvitations.entries()) {
+        if (inv.roomCode === roomCode) {
+          // friendId is the acceptor (the one who received the invitation)
+          if (parseInt(friendId) === userId) {
+            invitation = inv;
+            inviterId = inv.from; // the one who sent the invitation
+            break;
+          }
+        }
+      }
+
+      if (!invitation) {
+        socket.send(JSON.stringify({
+          type: 'error',
+          message: 'Invitation not found or expired'
+        }));
+        return;
+      }
+
+      // userId is the acceptor, inviterId is the one who sent the invitation
+      const result = gameManager.acceptFriendInvitation(
+        userId, // acceptorId (the one who received the invitation)
+        inviterId, // the one who sent it
+        user.username,
+        socket,
+        customization
+      );
+
+      if (result.error) {
+        socket.send(JSON.stringify({
+          type: 'error',
+          message: result.error
+        }));
+      }
+      // Success handled in acceptFriendInvitation (sends matchFound to both players)
+      break;
+    }
+
+    case 'declineInvitation': {
+      // Handle decline invitation directly (not nested in 'game' action)
+      const roomCode = message.payload?.roomCode;
+
+      // Find invitation by roomCode
+      for (const [friendId, inv] of gameManager.pendingInvitations.entries()) {
+        if (inv.roomCode === roomCode) {
+          gameManager.declineFriendInvitation(friendId);
+          break;
+        }
+      }
+      break;
+    }
+
+    case 'rematch:request': {
+      // Find room by player
+      const found = gameManager.findRoomByPlayer(userId);
+      if (found) {
+        const result = gameManager.requestRematch(found.roomCode, userId);
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        }
+      }
+      break;
+    }
+
+    case 'rematch:accept': {
+      const found = gameManager.findRoomByPlayer(userId);
+      if (found) {
+        const result = gameManager.acceptRematch(found.roomCode, userId);
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        }
+      }
+      break;
+    }
+
+    case 'rematch:decline': {
+      const found = gameManager.findRoomByPlayer(userId);
+      if (found) {
+        gameManager.declineRematch(found.roomCode, userId);
+      }
+      break;
+    }
+
+    case 'game': {
+      // Handle game actions (for backward compatibility and tournament actions)
+      const action = message.action;
+      const payload = message.payload || {};
+
+      // Tournament actions
+      if (action === 'createTournament') {
+        const playerCount = payload.playerCount || 4;
+        // Tournaments are PUBLIC by default so other players can see and request to join them
+        // Private tournaments should only be used when host wants invite-only access
+        const isPrivate = payload.isPrivate !== undefined ? payload.isPrivate : false;
+        const tournamentName = payload.tournamentName;
+
+        const playerInfo = {
+          playerName: payload.playerName || 'Host Player',
+          avatar: payload.avatar,
+          color: payload.color || '#3B82F6'
+        };
+
+        const result = gameManager.createTournament(userId, playerInfo, playerCount, isPrivate, tournamentName);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          socket.send(JSON.stringify({
+            type: 'tournamentCreated',
+            data: {
+              tournamentId: result.tournamentId,
+              tournament: gameManager.getTournamentData(result.tournament)
+            }
+          }));
+        }
+        return;
+      }
+
+      if (action === 'searchTournaments') {
+        const tournaments = gameManager.searchTournaments(userId);
+        socket.send(JSON.stringify({
+          type: 'tournamentsFound',
+          data: tournaments
+        }));
+        return;
+      }
+
+      if (action === 'joinTournament') {
+        const tournamentId = payload.tournamentId;
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'tournamentJoinFailed',
+            data: { message: 'Tournament ID required' }
+          }));
+          return;
+        }
+
+        const playerInfo = {
+          playerName: payload.playerName || 'Player',
+          avatar: payload.avatar,
+          color: payload.color || '#10B981'
+        };
+
+        const result = gameManager.joinTournament(tournamentId, userId, playerInfo);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'tournamentJoinFailed',
+            data: { message: result.error, tournamentId }
+          }));
+        }
+        // Success is handled via tournamentJoined message in joinTournament method
+        return;
+      }
+
+      if (action === 'requestJoinTournament') {
+        const tournamentId = payload.tournamentId;
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'tournamentJoinRequestFailed',
+            data: { message: 'Tournament ID required' }
+          }));
+          return;
+        }
+
+        const playerInfo = {
+          playerName: payload.playerName || 'Player',
+          avatar: payload.avatar,
+          color: payload.color || '#10B981'
+        };
+
+        const result = gameManager.requestJoinTournament(tournamentId, userId, playerInfo);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'tournamentJoinRequestFailed',
+            data: { message: result.error, tournamentId }
+          }));
+        } else {
+          socket.send(JSON.stringify({
+            type: 'tournamentJoinRequestSent',
+            data: {
+              message: 'Join request sent. Waiting for host approval...',
+              tournamentId: tournamentId,
+              requestId: result.requestId
+            }
+          }));
+        }
+        return;
+      }
+
+      if (action === 'approveJoinRequest') {
+        const tournamentId = payload.tournamentId;
+        const requestId = payload.requestId;
+
+        if (!tournamentId || !requestId) {
+          socket.send(JSON.stringify({
+            type: 'joinRequestError',
+            data: { message: 'Tournament ID and Request ID required' }
+          }));
+          return;
+        }
+
+        const result = gameManager.approveJoinRequest(tournamentId, requestId, userId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'joinRequestError',
+            data: { message: result.error }
+          }));
+        }
+        // Success handled in approveJoinRequest
+        return;
+      }
+
+      if (action === 'declineJoinRequest') {
+        const tournamentId = payload.tournamentId;
+        const requestId = payload.requestId;
+
+        if (!tournamentId || !requestId) {
+          socket.send(JSON.stringify({
+            type: 'joinRequestError',
+            data: { message: 'Tournament ID and Request ID required' }
+          }));
+          return;
+        }
+
+        const result = gameManager.declineJoinRequest(tournamentId, requestId, userId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'joinRequestError',
+            data: { message: result.error }
+          }));
+        }
+        // Success handled in declineJoinRequest
+        return;
+      }
+
+      if (action === 'inviteToTournament') {
+        const friendId = payload.friendId;
+        const tournamentId = payload.tournamentId;
+
+        if (!friendId || !tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Friend ID and Tournament ID required'
+          }));
+          return;
+        }
+
+        // Check if they are friends
+        const friendsCheck = db.prepare(`
+          SELECT * FROM friends
+          WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+        `);
+        const friendship = friendsCheck.get(userId, friendId, friendId, userId);
+
+        if (!friendship) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'You are not friends with this user'
+          }));
+          return;
+        }
+
+        const result = gameManager.inviteToTournament(tournamentId, userId, friendId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        }
+        // Success handled in inviteToTournament
+        return;
+      }
+
+      if (action === 'acceptTournamentInvite') {
+        const tournamentId = payload.tournamentId;
+
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        // Get user info
+        const getUserStmt = db.prepare('SELECT username FROM users WHERE id_user = ?');
+        const user = getUserStmt.get(userId);
+
+        if (!user) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'User not found'
+          }));
+          return;
+        }
+
+        const playerInfo = {
+          playerName: user.username,
+          avatar: payload.avatar,
+          color: payload.color || '#10B981'
+        };
+
+        const result = gameManager.acceptTournamentInvite(tournamentId, userId, playerInfo);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        }
+        // Success handled in acceptTournamentInvite
+        return;
+      }
+
+      if (action === 'declineTournamentInvite') {
+        const tournamentId = payload.tournamentId;
+
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        const result = gameManager.declineTournamentInvite(tournamentId, userId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          socket.send(JSON.stringify({
+            type: 'tournamentInviteDeclined',
+            data: {
+              tournamentId: tournamentId,
+              message: 'Tournament invitation declined successfully'
+            }
+          }));
+        }
+        return;
+      }
+
+      if (action === 'findRandomOpponent') {
+        const tournamentId = payload.tournamentId;
+
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        // Get user info
+        const getUserStmt = db.prepare('SELECT username FROM users WHERE id_user = ?');
+        const user = getUserStmt.get(userId);
+
+        if (!user) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'User not found'
+          }));
+          return;
+        }
+
+        const playerInfo = {
+          playerId: userId,
+          playerName: payload.playerName || user.username,
+          avatar: payload.avatar,
+          color: payload.color || '#10B981'
+        };
+
+        const result = gameManager.findRandomOpponent(tournamentId, userId, playerInfo);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          socket.send(JSON.stringify({
+            type: 'randomOpponentSearchStarted',
+            data: { message: result.message }
+          }));
+        }
+        return;
+      }
+
+      if (action === 'cancelTournament') {
+        const tournamentId = payload.tournamentId;
+
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        const result = gameManager.cancelTournament(tournamentId, userId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          socket.send(JSON.stringify({
+            type: 'tournamentCancelled',
+            data: {
+              tournamentId: tournamentId,
+              message: 'Tournament cancelled successfully'
+            }
+          }));
+        }
+        return;
+      }
+
+      if (action === 'leaveTournament') {
+        const tournamentId = payload.tournamentId;
+
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        const result = gameManager.leaveTournament(tournamentId, userId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        }
+        // Note: success response is already sent via tournamentLeft message in leaveTournament method
+        return;
+      }
+
+      if (action === 'startTournament') {
+        const tournamentId = payload.tournamentId;
+        const customization = payload.customization || {};
+
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        // Verify user is the host
+        const tournament = gameManager.tournaments.get(tournamentId);
+        if (!tournament) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament not found'
+          }));
+          return;
+        }
+
+        if (tournament.host.id !== userId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Only the host can start the tournament'
+          }));
+          return;
+        }
+
+        if (tournament.currentPlayers !== tournament.maxPlayers) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament is not full'
+          }));
+          return;
+        }
+
+        // Store customization in tournament (can be used later for game settings)
+        tournament.customization = customization;
+
+        // Start the tournament
+        const result = gameManager.startTournament(tournamentId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          // Success - tournamentStarted message will be sent via broadcastTournamentUpdate
+          // which is called in startTournament
+        }
+        return;
+      }
+
+      if (action === 'reportMatchResult') {
+        const tournamentId = payload.tournamentId;
+        const matchId = payload.matchId;
+        const winner = payload.winner;
+
+        if (!tournamentId || !matchId || !winner) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID, match ID, and winner are required'
+          }));
+          return;
+        }
+
+        // Handle match result
+        const result = gameManager.handleMatchResult(tournamentId, matchId, winner, userId);
+
+        if (result.error) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          // Success - bracket update will be broadcast via broadcastTournamentUpdate
+          socket.send(JSON.stringify({
+            type: 'matchResultRecorded',
+            data: {
+              tournamentId,
+              matchId,
+              winner
+            }
+          }));
+        }
+        return;
+      }
+
+      // Ensure final match room exists (can be triggered by Round 1 winners)
+      if (action === 'ensureFinalMatchRoom') {
+        const tournamentId = payload.tournamentId;
+
+        if (!tournamentId) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        // GUARD: Verify tournament exists and final match is not finished
+        const tournament = gameManager.tournaments.get(tournamentId);
+        if (!tournament) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament not found'
+          }));
+          return;
+        }
+
+        const bracket = tournament.bracket;
+        if (!bracket) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament bracket not found'
+          }));
+          return;
+        }
+
+        const finalMatch = bracket.find(m => m.round === 2);
+        if (finalMatch && finalMatch.status === 'finished') {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Final match is already finished'
+          }));
+          return;
+        }
+
+        // Check if both Round 1 matches are finished
+        const round1Matches = bracket.filter(m => m.round === 1);
+        const bothRound1Finished = round1Matches.length === 2 &&
+                                   round1Matches.every(m => m.status === 'finished' && m.winner);
+
+        if (!bothRound1Finished) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Round 1 matches are not finished yet'
+          }));
+          return;
+        }
+
+        // Get the two winners
+        const winner1 = round1Matches[0].winner;
+        const winner2 = round1Matches[1].winner;
+        const winner1Id = (winner1.id || winner1.id_user).toString();
+        const winner2Id = (winner2.id || winner2.id_user).toString();
+
+        // Verify user is one of the winners
+        const userIdStr = userId.toString();
+        if (userIdStr !== winner1Id && userIdStr !== winner2Id) {
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Only Round 1 winners can proceed to final match'
+          }));
+          return;
+        }
+
+        // Initialize readiness tracking for this tournament if not exists
+        if (!gameManager.finalMatchReady.has(tournamentId)) {
+          gameManager.finalMatchReady.set(tournamentId, new Set());
+        }
+
+        const readySet = gameManager.finalMatchReady.get(tournamentId);
+
+        // Mark this player as ready (Set prevents duplicates, so multiple clicks are safe)
+        const wasAlreadyReady = readySet.has(userIdStr);
+        readySet.add(userIdStr);
+        console.log(`[ensureFinalMatchRoom] Player ${userIdStr} is ready for final match. Ready players:`, Array.from(readySet), `(was already ready: ${wasAlreadyReady})`);
+
+        // Get both player sockets for broadcasting
+        const player1Socket = gameManager.usersSocket.get(winner1Id);
+        const player2Socket = gameManager.usersSocket.get(winner2Id);
+
+        // Broadcast readiness status to both players
+        const readinessStatus = {
+          tournamentId,
+          readyPlayers: Array.from(readySet),
+          bothReady: readySet.size === 2
+        };
+
+        if (player1Socket && player1Socket.readyState === 1) {
+          player1Socket.send(JSON.stringify({
+            type: 'finalMatchReadiness',
+            data: readinessStatus
+          }));
+        }
+
+        if (player2Socket && player2Socket.readyState === 1) {
+          player2Socket.send(JSON.stringify({
+            type: 'finalMatchReadiness',
+            data: readinessStatus
+          }));
+        }
+
+        // If both players are ready, create the final match room
+        if (readySet.size === 2) {
+          console.log(`[ensureFinalMatchRoom] Both players ready! Creating final match room...`);
+          const result = gameManager.createFinalMatchRoom(tournamentId);
+
+          if (result.error) {
+            // Clear readiness on error
+            gameManager.finalMatchReady.delete(tournamentId);
+            if (player1Socket && player1Socket.readyState === 1) {
+              player1Socket.send(JSON.stringify({
+                type: 'error',
+                message: result.error
+              }));
+            }
+            if (player2Socket && player2Socket.readyState === 1) {
+              player2Socket.send(JSON.stringify({
+                type: 'error',
+                message: result.error
+              }));
+            }
+          } else {
+            // Clear readiness tracking after successful creation
+            gameManager.finalMatchReady.delete(tournamentId);
+
+            // Send success to both players
+            if (player1Socket && player1Socket.readyState === 1) {
+              player1Socket.send(JSON.stringify({
+                type: 'finalMatchRoomEnsured',
+                data: {
+                  tournamentId,
+                  roomCode: result.roomCode
+                }
+              }));
+            }
+            if (player2Socket && player2Socket.readyState === 1) {
+              player2Socket.send(JSON.stringify({
+                type: 'finalMatchRoomEnsured',
+                data: {
+                  tournamentId,
+                  roomCode: result.roomCode
+                }
+              }));
+            }
+          }
+        } else {
+          // Not both ready yet - just acknowledge the readiness
+          socket.send(JSON.stringify({
+            type: 'finalMatchReadiness',
+            data: readinessStatus
+          }));
+        }
+        return;
+      }
+
+      // Legacy game actions (friend invitations, etc.)
+      switch (action) {
+        case 'inviteFriend': {
+          // Redirect to new format
+          const friendId = payload.friendId;
+          const username = payload.playerName || payload.username;
+          const customization = payload.customization || {};
+
+          if (!friendId) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'Friend ID required'
+            }));
+            return;
+          }
+
+          // Check if they are friends
+          const friendsCheck = db.prepare(`
+            SELECT * FROM friends
+            WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+          `);
+          const friendship = friendsCheck.get(userId, friendId, friendId, userId);
+
+          if (!friendship) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'You are not friends with this user'
+            }));
+            return;
+          }
+
+          const getUserStmt = db.prepare('SELECT username FROM users WHERE id_user = ?');
+          const user = getUserStmt.get(userId);
+
+          const result = gameManager.sendFriendInvitation(
+            userId,
+            user?.username || username,
+            friendId,
+            customization
+          );
+
+          if (result.error) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: result.error
+            }));
+          } else {
+            socket.send(JSON.stringify({
+              type: 'gameInvitationSent',
+              payload: { roomCode: result.roomCode, friendId }
+            }));
+          }
+          break;
+        }
+
+        case 'acceptInvitation': {
+          const roomCode = payload.roomCode;
+          const customization = payload.customization || {};
+
+          // Get user info
+          const getUserStmt = db.prepare('SELECT username FROM users WHERE id_user = ?');
+          const user = getUserStmt.get(userId);
+
+          if (!user) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'User not found'
+            }));
+            return;
+          }
+
+          // Find invitation by roomCode
+          // Invitations are stored with the friendId (acceptor) as key
+          let invitation = null;
+          let inviterId = null;
+          for (const [friendId, inv] of gameManager.pendingInvitations.entries()) {
+            if (inv.roomCode === roomCode) {
+              // friendId is the acceptor (the one who received the invitation)
+              if (parseInt(friendId) === userId) {
+                invitation = inv;
+                inviterId = inv.from; // the one who sent the invitation
+                break;
+              }
+            }
+          }
+
+          if (!invitation) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'Invitation not found or expired'
+            }));
+            return;
+          }
+
+          // userId is the acceptor, inviterId is the one who sent the invitation
+          const result = gameManager.acceptFriendInvitation(
+            userId, // acceptorId (the one who received the invitation)
+            inviterId, // the one who sent it
+            user.username,
+            socket,
+            customization
+          );
+
+          if (result.error) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: result.error
+            }));
+          }
+          // Success handled in acceptFriendInvitation (sends matchFound)
+          break;
+        }
+
+        case 'declineInvitation': {
+          const roomCode = payload.roomCode;
+
+          // Find invitation by roomCode
+          for (const [friendId, inv] of gameManager.pendingInvitations.entries()) {
+            if (inv.roomCode === roomCode) {
+              gameManager.declineFriendInvitation(friendId);
+              break;
+            }
+          }
+          break;
+        }
+      }
+      break;
+    }
+
+    default:
+      // Unknown message type - ignore
+      break;
+  }
+}
+

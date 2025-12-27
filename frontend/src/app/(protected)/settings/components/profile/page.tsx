@@ -5,9 +5,29 @@ import { Camera, Globe, ChevronDown } from 'lucide-react'
 import {getProfileImageUrl} from "@/lib/utils"
 
 
+interface UserProfile {
+  profile_img: string;
+  username: string;
+  email: string;
+  bio?: string;
+  languages?: string;
+}
+
+interface ProfileFormData {
+  username: string;
+  email: string;
+  bio: string;
+  language: string;
+  languages: string;
+  fullname: string;
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
+
 interface ProfileTabProps {
-  user: any
-  formData: any 
+  user: UserProfile
+  formData: ProfileFormData 
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
   languages: { id: string; label: string; flag: string }[]
   isPasswordAuth: boolean;
@@ -194,4 +214,4 @@ const ProfileTab = ({
   )
 }
 
-export default ProfileTab
+export default ProfileTab;

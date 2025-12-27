@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useUserStore } from '../store/userStore'; // Adjust path to your store
 
-const API_URL = 'http://localhost:4444'; // Your backend URL
+const API_URL = process.env.NEXT_PUBLIC_BACK_API; // Your backend URL
 
 const api = axios.create({
   baseURL: API_URL,

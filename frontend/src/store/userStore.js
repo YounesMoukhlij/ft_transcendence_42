@@ -26,12 +26,19 @@ export const useUserStore = create(
       socket: null,
       friends: [],
 
+      // Game invite UI state (used by ProtectedClient)
+      Display_game_invite: false,
+      inviterData: null,
+
 
       messages: [],
 
       pendingRequests: [],
       sentRequests: [],
       contactId : -1,
+
+      Set_Display_game_invite: (value) => set({ Display_game_invite: value }),
+      setInviterData: (data) => set({ inviterData: data }),
 
 
 
@@ -50,7 +57,7 @@ connect: () => {
 
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   
-  const url = `${protocol}://e1r8p8.1337.ma:4444/ws?token=${token}`;
+  const url = `${protocol}://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/ws?token=${token}`;
 
   try {
     const ws = new WebSocket(url);
@@ -64,6 +71,7 @@ connect: () => {
     };
 
     ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
     };
 
     set({ socket: ws });
@@ -383,6 +391,7 @@ updatePinStatus: (attribute, friendId, value) => {
       }),
 
       onRehydrateStorage: (state) => {
+         console.log("Hydration completed", state);
         return (state, error) => {
           state.setHasHydrated(true);
           if (!error) state.initConnection();
