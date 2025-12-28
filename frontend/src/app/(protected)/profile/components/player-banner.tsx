@@ -1,4 +1,5 @@
 
+import Image from "next/image"
 interface PlayerBannerProps {
   userStats: {
     username : string
@@ -34,9 +35,15 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
         <div className="flex-grow flex items-center justify-start space-x-4 z-20">
             
 
-            <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center text-3xl text-gray-500 shadow-lg border border-yellow-700/50">
-                <img src={userStats.avatar} alt={userStats.username} className="rounded-full w-20 h-20" />
-            </div>
+             <div className="w-20 h-20 bg-gray-800 relative rounded-full flex items-center justify-center text-3xl text-gray-500 shadow-lg border border-yellow-700/50">
+               <Image
+    src={userStats.avatar}
+    alt={userStats.username}
+    fill
+    className="rounded-full object-cover"
+  />
+            </div> 
+
 
           
             <div>

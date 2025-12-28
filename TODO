@@ -11,6 +11,7 @@ zakaria wla chi motatawi3
 
 zmoumni
     * if delete an account must be logged out 
+    
 
 
 
@@ -22,13 +23,18 @@ zmoumni
 
 - Fash Katbdel tsswira, felgame ou tournoi kaykoun feha error (Hadi ghan9adoha 7itash 3endna lfunction li kathandli hadshi)
 
-- Lprofile kaykhsser fash katbdel usernaame (Hadi ghan9adha ana ayoub ez pz);
 
-- Zakaria zid lina notification fel burger menu
 
-- Abd Moughit 9ad lina chat style fash kayktro les msg + isseen
+// Zakaria :
+- zid lina notification fel burger menu
+- http://10.32.87.105:4444/updateUserInfo  ==> had api mprotecti f front bo7do, exaple nickname change 
+
+- Abd Moughit 9ad design lels images kbar shwwya
 
 - Youness lgame katlaga shwya, speed dyal kora na9ssa shwwya, ou lfinal feh error makay3tish control l players
 kanb9aw watch only 
+
+
+- Game details f partie dyali khassha Fixation
 
 

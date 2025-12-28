@@ -23,7 +23,7 @@ import {
     me
 
 } from '../modules/userAuth.module.js';
-import { getUserStats, getUserStatsbyUsername } from '../modules/profile.module.js';
+import { getUserStats, getUserStatsbyId } from '../modules/profile.module.js';
 import { getMatchHistory } from '../modules/matchHistory.module.js';
 import { getLeagueStats } from '../modules/leagues.module.js';
 import { getPlayerProgress } from '../modules/playerProgress.js';
@@ -136,7 +136,7 @@ export default async function routes(fastify, options) {
   fastify.get('/getUserStats', getUserStats);
 
   // user by username 
-  fastify.get('/getUserStats/:username', getUserStatsbyUsername);
+  fastify.get('/getUserStats/:id', getUserStatsbyId);
   
   // leagues Toutes
 

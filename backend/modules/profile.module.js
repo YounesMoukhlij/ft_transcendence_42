@@ -3,71 +3,53 @@ import jwt from 'jsonwebtoken';
 
 
 
-export async function getUserStatsbyUsername(request, reply) {
+export async function getUserStatsbyId(request, reply) {
 
-
-  const authHeader = request.headers['authorization'];
-
-  if (!authHeader)
-    reply.code(401).send("missing token");
-    
-  const token = authHeader.split(' ')[1];
-  let decodedObject;
-
-  try{
-    decodedObject = jwt.verify(token, process.env.SECRET);
-  }
-  catch(err){
-    return reply.code(401).send("Invalid token");
-  }
- 
-  const username = request.params.username;
-
+  const id = request.params.id;
   try {
     const query = request.server.db.prepare(
-      "SELECT id_user as id, username, fullname, xp, profile_img as avatar FROM users WHERE username = ?"
+      "SELECT id_user as id, username, fullname, xp, profile_img as avatar FROM users WHERE id_user = ?"
     );
-    const userStats = query.get(username);
-
+    const userStats = query.get(id);
     if (!userStats) return reply.code(404).send({ error: "User not found" });
 
 
     const matchesQuery = request.server.db.prepare(
-     "select COUNT(*) as total from game_history WHERE user_win=(select id_user from users Where username= ?) OR user_lose=(select id_user from users Where username= ?)"
+     "select COUNT(*) as total from game_history WHERE user_win=? OR user_lose=?"
     );
-    const totalMatches = matchesQuery.get(username, username);
+    const totalMatches = matchesQuery.get(id, id);
     
      const winsQuery = request.server.db.prepare(
-     "select COUNT(*) as total from game_history WHERE user_win = (select id_user from users Where username= ?)"
+     "select COUNT(*) as total from game_history WHERE user_win = ?"
     );
-    const wins = winsQuery.get(username);
+    const wins = winsQuery.get(id);
 
 
     const lossesQuery = request.server.db.prepare(
-      "select COUNT(*) as total from game_history WHERE user_lose=(select id_user from users Where username= ?)"
+      "select COUNT(*) as total from game_history WHERE user_lose=?"
     );
-    const losses = lossesQuery.get(username);
+    const losses = lossesQuery.get(id);
 
     const winRate = Math.floor(Number(wins.total) / Number(totalMatches.total) * 100);
 
 
     const currentStreakQuery = request.server.db.prepare(`select COUNT(*) as total from game_history
-      where user_win=(select id_user from users where username= ?) AND
+      where user_win=? AND
       game_history_id > (select max(game_history_id) from game_history 
-      where user_lose=(select id_user from users where username= ?))`)
+      where user_lose=?)`)
 
-    const currentStreak = currentStreakQuery.get(username, username);
+    const currentStreak = currentStreakQuery.get(id, id);
 
 
     const winGoalsQuery = request.server.db.prepare(
-      `select sum(lose_score) as total from game_history where user_lose=(select id_user from users where username=?)`);
+      `select sum(lose_score) as total from game_history where user_lose=?`);
     
-    const winGoals = winGoalsQuery.get(username);
+    const winGoals = winGoalsQuery.get(id);
 
     const lossGoalsQuery = request.server.db.prepare(
-      `select sum(lose_score) as total from game_history where user_lose=(select id_user from users where username=?)`);
+      `select sum(lose_score) as total from game_history where user_lose=?`);
 
-    const lossGoals = lossGoalsQuery.get(username);
+    const lossGoals = lossGoalsQuery.get(id);
 
   //-------------------------------------------------------
     const bronzePlayersQuery = request.server.db.prepare(
@@ -87,19 +69,17 @@ export async function getUserStatsbyUsername(request, reply) {
     const goldPlayersCount = goldPlayersQuery.get();
     //-------------------------------------------------------
       const recentMatchesQuery = request.server.db.prepare(
-        `select game_history_id as id, (select username from users where id_user=user_win) as winner, (select username from users where id_user=user_lose) as loser, win_score
-, lose_score, game_date, duration from game_history where user_win=(select id_user from users 
-          where username=?) OR user_lose=(select id_user from users where username=?) ORDER BY game_date DESC limit 4;`
+        `select game_history_id as id, user_win as winner_id, (select username from users where id_user=user_win) as winner, (select username from users where id_user=user_lose) as loser, win_score
+, lose_score, game_date, duration from game_history where user_win=? OR user_lose=? ORDER BY game_date DESC limit 4;`
       );
 
-      const recentMatches = recentMatchesQuery.all(username, username);
-
+      const recentMatches = recentMatchesQuery.all(id, id);
 
     recentMatches.forEach(match => {
-  match.opponent = match.winner === username ? match.loser : match.winner;
-  match.result = match.winner == username ? "Win" : "Lose";
-  let userScore = match.winner === username ? match.win_score : match.lose_score;
-  let opponentScore = match.winner === username ? match.lose_score : match.win_score;
+  match.opponent = match.winner_id === id ? match.loser : match.winner;
+  match.result = match.winner_id == id ? "Win" : "Lose";
+  let userScore = match.winner_id === id ? match.win_score : match.lose_score;
+  let opponentScore = match.winner_id === id ? match.lose_score : match.win_score;
   match.score = `${userScore} - ${opponentScore}`;
   });
 
@@ -124,69 +104,55 @@ export async function getUserStatsbyUsername(request, reply) {
 export async function getUserStats(request, reply) {
 
 
-  const authHeader = request.headers['authorization'];
 
-  if (!authHeader)
-    reply.code(401).send("missing token");
-    
-  const token = authHeader.split(' ')[1];
-  let decodedObject;
-
-  try{
-    decodedObject = jwt.verify(token, process.env.SECRET);
-  }
-  catch(err){
-    return reply.code(401).send("Invalid token");
-  }
- 
-  const username = decodedObject.username;
+  const id = request.user.id_user
   
 
   try {
     const query = request.server.db.prepare(
-      "SELECT id_user as id, username, fullname, xp, profile_img as avatar FROM users WHERE username = ?"
+      "SELECT id_user as id, username, fullname, xp, profile_img as avatar FROM users WHERE id_user = ?"
     );
-    const userStats = query.get(username);
+    const userStats = query.get(id);
 
     if (!userStats) return reply.code(404).send({ error: "User not found" });
 
 
     const matchesQuery = request.server.db.prepare(
-     "select COUNT(*) as total from game_history WHERE user_win=(select id_user from users Where username= ?) OR user_lose=(select id_user from users Where username= ?)"
+     "select COUNT(*) as total from game_history WHERE user_win=? OR user_lose=?"
     );
-    const totalMatches = matchesQuery.get(username, username);
+    const totalMatches = matchesQuery.get(id, id);
     
      const winsQuery = request.server.db.prepare(
-     "select COUNT(*) as total from game_history WHERE user_win = (select id_user from users Where username= ?)"
+     "select COUNT(*) as total from game_history WHERE user_win = ?"
     );
-    const wins = winsQuery.get(username);
+    const wins = winsQuery.get(id);
 
 
     const lossesQuery = request.server.db.prepare(
-      "select COUNT(*) as total from game_history WHERE user_lose=(select id_user from users Where username= ?)"
+      "select COUNT(*) as total from game_history WHERE user_lose = ?"
     );
-    const losses = lossesQuery.get(username);
+    const losses = lossesQuery.get(id);
 
     const winRate = Math.floor(Number(wins.total) / Number(totalMatches.total) * 100);
 
 
     const currentStreakQuery = request.server.db.prepare(`select COUNT(*) as total from game_history
-      where user_win=(select id_user from users where username= ?) AND
+      where user_win=? AND
       game_history_id > (select max(game_history_id) from game_history 
-      where user_lose=(select id_user from users where username= ?))`)
+      where user_lose=?)`)
 
-    const currentStreak = currentStreakQuery.get(username, username);
+    const currentStreak = currentStreakQuery.get(id, id);
 
 
     const winGoalsQuery = request.server.db.prepare(
-      `select sum(lose_score) as total from game_history where user_lose=(select id_user from users where username=?)`);
+      `select sum(lose_score) as total from game_history where user_lose=?`);
     
-    const winGoals = winGoalsQuery.get(username);
+    const winGoals = winGoalsQuery.get(id);
 
     const lossGoalsQuery = request.server.db.prepare(
-      `select sum(lose_score) as total from game_history where user_lose=(select id_user from users where username=?)`);
+      `select sum(lose_score) as total from game_history where user_lose=?`);
 
-    const lossGoals = lossGoalsQuery.get(username);
+    const lossGoals = lossGoalsQuery.get(id);
 
   //-------------------------------------------------------
     const bronzePlayersQuery = request.server.db.prepare(
@@ -206,19 +172,17 @@ export async function getUserStats(request, reply) {
     const goldPlayersCount = goldPlayersQuery.get();
     //-------------------------------------------------------
       const recentMatchesQuery = request.server.db.prepare(
-        `select game_history_id as id, (select username from users where id_user=user_win) as winner, (select username from users where id_user=user_lose) as loser, win_score
-, lose_score, game_date, duration from game_history where user_win=(select id_user from users 
-          where username=?) OR user_lose=(select id_user from users where username=?) ORDER BY game_date DESC limit 4;;`
+        `select game_history_id as id, user_win as winner_id, (select username from users where id_user=user_win) as winner, (select username from users where id_user=user_lose) as loser, win_score
+, lose_score, game_date, duration from game_history where user_win=? OR user_lose=? ORDER BY game_date DESC limit 4;;`
       );
 
-      const recentMatches = recentMatchesQuery.all(username, username);
-
+      const recentMatches = recentMatchesQuery.all(id, id);
 
     recentMatches.forEach(match => {
-  match.opponent = match.winner === username ? match.loser : match.winner;
-  match.result = match.winner == username ? "Win" : "Lose";
-  let userScore = match.winner === username ? match.win_score : match.lose_score;
-  let opponentScore = match.winner === username ? match.lose_score : match.win_score;
+  match.opponent = match.winner_id === id ? match.loser : match.winner;
+  match.result = match.winner_id == id ? "Win" : "Lose";
+  let userScore = match.winner_id === id ? match.win_score : match.lose_score;
+  let opponentScore = match.winner_id === id ? match.lose_score : match.win_score;
   match.score = `${userScore} - ${opponentScore}`;
   });
 

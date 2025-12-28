@@ -10,11 +10,11 @@ import { useRouter } from "next/navigation";
 import Loading from "@/components/Loading/page";
 
 interface UserProfileProps {
-  params: Promise<{ username: string }>;
+  params: Promise<{ id: number }>;
 }
 
 export default function UserProfile({ params }: UserProfileProps) {
-  const { username } = use(params);
+  const { id } = use(params);
 
   const { user: currentUser, addSentRequestsArray, setFriends } = useUserStore();
   const router = useRouter();
@@ -24,14 +24,14 @@ export default function UserProfile({ params }: UserProfileProps) {
 
   useEffect(() => {
     if (!currentUser?.access_token) return; // still no user → skip
-    if (!username) return;
+    if (!id) return;
 
     let active = true;
     // setLoading(true);
 
     const fetchProfile = async () => {
       try {
-        const res = await api.get<User>(`/getUserStats/${username}`,{
+        const res = await api.get<User>(`/getUserStats/${id}`,{
           headers: { Authorization: `Bearer ${currentUser.access_token}` },
         });
         if (!active) return;
@@ -75,7 +75,7 @@ export default function UserProfile({ params }: UserProfileProps) {
 
     fetchProfile();
     return () => { active = false; };
-  }, [username, currentUser]);
+  }, [id, currentUser]);
 
   // --- RENDER PROTECTION ---
 

@@ -216,7 +216,7 @@ const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel /
           </TabsContent>
 
           <TabsContent data-show={activeTab == "matches" ? true : false} value="matches" className="space-y-6 transition-all duration-800 data-[show=false]:opacity-0 data-[show=true]:opacity-100">
-            <MatchHistoryTable username={user.username}/>
+            <MatchHistoryTable username={userStats.username}/>
           </TabsContent>
 
           <TabsContent data-show={AnalyticsV} value="performance" className="space-y-6 transition-all duration-300 opacity-0 scale-95  data-[show=true]:opacity-100 data-[show=true]:scale-100">

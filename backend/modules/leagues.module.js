@@ -1,23 +1,8 @@
 
-import jwt from 'jsonwebtoken';
-
 export async function getLeagueStats(request, reply) {
-  const authHeader = request.headers['authorization'];
-    
-  if (!authHeader)
-    reply.code(401).send("missing token");
-        
-  const token = authHeader.split(' ')[1];
-  let decodedObject;
-    
-  try{
-    decodedObject = jwt.verify(token, process.env.SECRET);
-  }
-  catch(err){
-    return reply.code(401).send("Invalid token");
-  }
+ 
   const league = request.params.league;
-  // console.log("-----------------------------------------\n");
+
 
   let minExp = 0;
   let maxExp = 0;
@@ -39,6 +24,7 @@ export async function getLeagueStats(request, reply) {
   try {
     const query = request.server.db.prepare(
         `SELECT DISTINCT u.username as name,
+        id_user as id,
         u.xp as experience,
         COUNT(g.game_history_id) AS gamesPlayed,
         SUM(CASE WHEN g.user_win = u.id_user THEN 1 ELSE 0 END) AS wins,
@@ -52,13 +38,12 @@ export async function getLeagueStats(request, reply) {
         GROUP BY u.id_user;
         `
     );
-    const leagueStats = query.all(minExp, maxExp); // use .get() for single row
+    const leagueStats = query.all(minExp, maxExp);
 
     if (!leagueStats) return reply.code(404).send({ error: "league not found" });
 
-    let i = 0;
+   
     leagueStats.forEach(player => {
-      player.id = i++;
       player.difference = player.pointsScored - player.pointsConceded;
       if (player.gamesPlayed == 0)
       {
@@ -68,7 +53,6 @@ export async function getLeagueStats(request, reply) {
     });
 
 
-    // console.log(leagueStats);
    
     return reply.send(leagueStats);
   } catch (err) {

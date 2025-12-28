@@ -9,6 +9,26 @@ import { useUserStore } from "@/store/userStore";
 import {friendType} from "./types";
 import {getProfileImageUrl} from "@/lib/utils"
 
+
+
+const formatXP = (xp) => {
+  const units = ['', 'K', 'M', 'B', 'T', 'Q']
+  let unitIndex = 0
+  let value = xp
+
+  while (value >= 1000 && unitIndex < units.length - 1) {
+    value /= 1000
+    unitIndex++
+  }
+
+  return (
+    value >= 10
+      ? Math.floor(value) + units[unitIndex]
+      : value.toFixed(1).replace(/\.0$/, '') + units[unitIndex]
+  )
+}
+
+
 export function useDeblock() {
   const { user, updateDeBlockState } = useUserStore();
 
@@ -152,9 +172,9 @@ export default function FriendCard() {
         )}
 
         <div className="w-full grid grid-cols-3 gap-3">
-          <div className="bg-gray-800 rounded-xl p-4 text-center">
-            <p className="text-xs text-gray-400 mb-1 font-medium">XP</p>
-            <p className="text-xl font-bold text-white">{friend.xp}</p>
+          <div className="bg-gray-800 rounded-xl p-2 text-center">
+            <p className="text-xs text-gray-400 pt-2 mb-1 font-medium">XP</p>
+            <p className="text-xl font-bold w-[4rem] text-center  text-white">{formatXP(friend.xp)}</p>
           </div>
 
           <div className="bg-gray-800 rounded-xl p-4 text-center">
@@ -195,7 +215,7 @@ export default function FriendCard() {
           </div>
 
           <button
-            onClick={() => redirect(`/profile/${friend.username}`)}
+            onClick={() => redirect(`/profile/${friend.id_user}`)}
             className="w-full bg-white hover:bg-gray-200 transition-colors rounded-xl py-3 font-bold text-black"
           >
             View Profile

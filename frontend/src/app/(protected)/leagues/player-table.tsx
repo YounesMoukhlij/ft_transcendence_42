@@ -11,7 +11,7 @@ import Link from "next/link"
 import "./style.css"
 
 interface Player {
-  id: string
+  id: number
   name: string
   gamesPlayed: number
   wins: number
@@ -38,6 +38,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
 
 
   const players = data;
+  console.log("data ===========> ", data);
   const filteredAndSortedPlayers = useMemo(() => {
   const filtered = players?.filter((player) => player.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
@@ -214,7 +215,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">#{index + 1}</span>
                        <Link
-                      href={`/profile/${player.name}`} // navigate to their profile
+                      href={`/profile/${player.id}`} // navigate to their profile
                       className="hover:underline text-blue-500"
                       >
                       {player.name}

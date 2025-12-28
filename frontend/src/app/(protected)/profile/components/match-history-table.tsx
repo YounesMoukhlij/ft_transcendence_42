@@ -8,6 +8,7 @@ import { useUserStore } from "@/store/userStore";
 import { useRouter } from "next/navigation"
 import api from "@/lib/api";
 
+
 interface MatchHistoryTableProps {
   username: string
 }
@@ -39,7 +40,6 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
           }
         );
         setMatchHistory(res.data);
-        console.log("Match history fetched:", res.data);
       } catch (err) {
         console.error(err);
       }

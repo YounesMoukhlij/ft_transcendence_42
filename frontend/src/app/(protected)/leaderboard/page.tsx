@@ -40,8 +40,10 @@ async function getLeaderboardData(token: string, page: number) {
   return res.json();
 }
 
-const LeaderboardItem = ({ player, rank }: { player: Player, rank: number }) => (
-  <Link href={`/profile/${player.username}`} className="block">
+const LeaderboardItem = ({ player, rank }: { player: Player, rank: number }) => {
+  console.log("The image url is:", getProfileImageUrl(player.profile_img));
+  return (
+    <Link href={`/profile/${player.username}`} className="block">
     <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-900 transition-colors">
       <div className="flex items-center gap-4">
         <div className={`font-semibold text-lg w-8 ${rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-400' : rank === 3 ? 'text-yellow-800' : 'text-gray-400'}`}>
@@ -65,7 +67,7 @@ const LeaderboardItem = ({ player, rank }: { player: Player, rank: number }) => 
       </div>
     </div>
   </Link>
-);
+)};
 
 // --- The main async Page Component ---
 // Next.js App Router pages receive 'searchParams' as a prop

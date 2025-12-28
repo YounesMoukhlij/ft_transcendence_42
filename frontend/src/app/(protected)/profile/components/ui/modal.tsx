@@ -12,6 +12,8 @@ import {
 import { MatchStats } from "./matchReport";
 import { GameDetails } from "@/types/user"
 import { formatDuration } from "../../hooks/useCountUp";
+import Image from "next/image";
+import {getProfileImageUrl} from '@/lib/utils'
 
 
 interface GameModalProps {
@@ -59,6 +61,9 @@ export function GameModalDemo({game, onClose} : GameModalProps)
   const guestTouches : number = game.guestTouches;
   const guestStreak : number = game.guestMaxStreak;
   const guestLeading: number = game.guestLeadingTime;
+
+  const hostImg = getProfileImageUrl(game.hostImg);
+  const guestImg = getProfileImageUrl(game.guestImg);
   
 
   
@@ -84,8 +89,14 @@ export function GameModalDemo({game, onClose} : GameModalProps)
             
            <div className="flex justify-around items-center">
             <div className="w-32 h-32 mt-6">
-                <div className="w-28 h-28 border bg-background rounded-sm ">
-                  <img src={game.hostImg} alt="pfp" className="rounded-sm" />
+                <div className=" relative w-28 h-28 border bg-background rounded-sm ">
+                  {/* <img src={game.hostImg} alt="pfp" className="rounded-sm" /> */}
+                      <Image
+                      src={hostImg}
+                      alt={game.host}
+                      fill
+                      className="rounded-sm object-cover"
+                    />
                 </div>
                 <p className="ml-10 mt-2">{game.host}</p>
             </div>
@@ -96,8 +107,14 @@ export function GameModalDemo({game, onClose} : GameModalProps)
                 </h1>
             </div>
             <div className="w-32 h-32 mt-6 flex-col justify-center">
-                <div className="w-28 h-28 border bg-background rounded-sm">
-                  <img src={game.guestImg} alt="pfp" className="rounded-sm "/>
+                <div className=" relative w-28 h-28 border bg-background rounded-sm">
+                  {/* <img src={game.guestImg} alt="pfp" className="rounded-sm "/> */}
+                      <Image
+                      src={guestImg}
+                      alt={game.guest}
+                      fill
+                      className="rounded-sm object-cover"
+                    />
                 </div>
                 <p className="ml-10 mt-2">{game.guest}</p>
             </div>
