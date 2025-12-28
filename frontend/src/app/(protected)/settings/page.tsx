@@ -12,7 +12,7 @@ import DeleteConfirmationDialog from './components/DeleteConfirmationDialog'
 import TwoFAModal from './components/TwoFAModal'
 import ProfileTab from './components/profile/ProfileTab'
 import SecurityTab from './components/security/SecurityTab'
-import HelpTab from './components/help/page'
+import HelpTab from './components/help/HelpTab'
 import Loading from '@/components/Loading/page'
 
 const ProfileSettingsPage = () => {
