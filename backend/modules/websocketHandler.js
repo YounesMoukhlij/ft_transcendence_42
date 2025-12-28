@@ -231,6 +231,9 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
     // 2) /ws then first message is userId (game flow)
     const token = parseTokenFromReq(req);
 
+
+
+    console.log("============> token here" , token);
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.SECRET);

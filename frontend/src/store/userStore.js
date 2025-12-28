@@ -57,7 +57,7 @@ connect: () => {
 
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   
-  const url = `${protocol}://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/ws?token=${token}`;
+  const url = `${protocol}://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/ws?token=${token}`;
 
   try {
     const ws = new WebSocket(url);

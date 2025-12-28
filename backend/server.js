@@ -37,11 +37,9 @@ const corsAllowlist = (process.env.CORS_ORIGINS || '')
 
 app.register(cors, {
   origin: (origin, cb) => {
-    // Allow non-browser clients (no Origin header)
     if (!origin) return cb(null, true);
 
     if (!isProd) {
-      // Dev/LAN: reflect the Origin so credentials work
       return cb(null, true);
     }
 
@@ -56,7 +54,7 @@ app.register(cors, {
 
     return cb(new Error('CORS blocked'), false);
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'WSS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
 });
@@ -194,11 +192,11 @@ async function startServer() {
 const port = Number(process.env.PORT || 4444);
 await app.listen({ port, host: '0.0.0.0' });
 
-// WebSocket server (supports both /ws?token=... and first-message userId)
+
 const wss = new WebSocketServer({ server: app.server, path: '/ws' });
 setupWebSocketServer(wss, db, users_socket, gameManager);
 
-// Start periodic game-related tasks
+
 try {
   gameManager.startPeriodicTasks();
 } catch (e) {

@@ -1,31 +1,31 @@
 services:
-  # Frontend:
-  #   build:
-  #     context: .
-  #     dockerfile: ./infra/Dockerfile.front
-  #   container_name: frontend
-  #   image: frontend:0.1
-  #   restart: always
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - Backend
-  #   networks:
-  #     - monitoring
+  Frontend:
+    build:
+      context: .
+      dockerfile: ./infra/Dockerfile.front
+    container_name: frontend
+    image: frontend:0.1
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - Backend
+    networks:
+      - monitoring
     
-  # Backend:
-  #   build:
-  #     context: .
-  #     dockerfile: ./infra/Dockerfile.back
-  #   container_name: backend
-  #   image: backend:0.1
-  #   restart: always
-  #   ports:  
-  #     - "4444:4444"
-  #   networks:
-  #     - monitoring
-  #   depends_on:
-  #     - Redis
+  Backend:
+    build:
+      context: .
+      dockerfile: ./infra/Dockerfile.back
+    container_name: backend
+    image: backend:0.1
+    restart: always
+    ports:  
+      - "4444:4444"
+    networks:
+      - monitoring
+    depends_on:
+      - Redis
   
   Redis:
     build:
@@ -39,19 +39,19 @@ services:
     networks:
       - monitoring
 
-  # nginx:
-  #   build:
-  #     context: .
-  #     dockerfile: ./infra/Dockerfile.nginx
-  #   container_name: nginx
-  #   image: nginx:0.1
-  #   ports:
-  #   - "8080:8080"
-  #   depends_on:
-  #     - Frontend
-  #   restart: always
-  #   networks:
-  #     - monitoring
+  nginx:
+    build:
+      context: .
+      dockerfile: ./infra/Dockerfile.nginx
+    container_name: nginx
+    image: nginx:0.1
+    ports:
+    - "8080:8080"
+    depends_on:
+      - Frontend
+    restart: always
+    networks:
+      - monitoring
 
   # cadvisor:
   #   image: gcr.io/cadvisor/cadvisor:latest

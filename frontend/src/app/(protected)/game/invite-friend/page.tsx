@@ -49,7 +49,7 @@ export default function InviteFriendPage() {
 
       try {
         const response = await axios.get(
-          `${getBackendURL()}/GetFriends`,
+          `${getBackendURL()}/api/GetFriends`,
           {
             params: { username: user.username },
             headers: {
@@ -293,7 +293,7 @@ export default function InviteFriendPage() {
 
     try {
       const response = await axios.post(
-        `${getBackendURL()}/sendGameChallenge`,
+        `${getBackendURL()}/api/sendGameChallenge`,
         { Friend_id: friend.id_user },
         {
           headers: {

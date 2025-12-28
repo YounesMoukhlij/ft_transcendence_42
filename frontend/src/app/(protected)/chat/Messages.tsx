@@ -98,7 +98,7 @@ export default function Messages(){
     }
     try{
       await axios.post(
-      `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/pinned`,{},
+      `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/pinned`,{},
     {
       params: {
         id: friend.conversation_id,
@@ -161,7 +161,7 @@ export default function Messages(){
     {
         try {
         const msgsRes = await axios.get(
-            `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getMsgs`,
+            `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/getMsgs`,
             {
             params: {
                 id: id,

@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 
 
 RUN apt-get install -y nodejs
@@ -25,11 +25,12 @@ WORKDIR /var/www/Backend
 COPY ./backend/package*.json ./
 
 
-RUN npm install
-RUN npm install -g nodemon
-
 COPY ./backend/ .
 
+RUN rm -rf node_modules
+RUN npm install
+RUN npm i better-sqlite3
+RUN npm install -g nodemon
 
 EXPOSE 4444
 

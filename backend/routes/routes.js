@@ -48,11 +48,15 @@ export default async function routes(fastify, options) {
        "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/auth/42", "/42Auth", "/2fa/login-verify"];
     const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
 
-    if (publicRoutes.includes(pathname)) return;
+
+    
+    if (publicRoutes.includes(pathname)) 
+      return;
+    
     try {
       await request.jwtVerify();
     } catch (err) {
-      return reply.code(401).send({ message: "unauthorized" });
+      return reply.code(401).send({ message: "here unauthorized" });
     }
   });
 

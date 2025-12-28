@@ -149,7 +149,7 @@ export default function Navbar() {
       setIsSearching(true);
       try {
         const response = await axios.get(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/searchUsers`,
+          `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/searchUsers`,
           {
             params: { query: searchQuery.trim() },
             headers: { Authorization: `Bearer ${user.access_token}` }
@@ -193,7 +193,7 @@ export default function Navbar() {
 
     try {
       const res = await axios.post(
-        `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/sendRequestFriend`,
+        `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/sendRequestFriend`,
         { id: resultUser.id_user },
         { headers: { Authorization: `Bearer ${user.access_token}` } }
       );
@@ -213,7 +213,7 @@ export default function Navbar() {
     toast.error('Deleted');
     const sender_id = notificatiion.filter(item => item.notify_id == notify_id)[0].sender_user;
     setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
-    const res = await axios.delete(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteFriendRequest`, {
+    const res = await axios.delete(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteFriendRequest`, {
       params: { id: notify_id },
       headers: { Authorization: `Bearer ${user.access_token}` }
     });
@@ -223,7 +223,7 @@ export default function Navbar() {
   }
 
   async function AcceptFriendRequest(item: friendRequestType) {
-    const res = await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/AddFriend`, {
+    const res = await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/AddFriend`, {
       id: item.sender_user,
     }, {
       headers: { Authorization: `Bearer ${user.access_token}` }
@@ -252,7 +252,7 @@ export default function Navbar() {
       SetunseenCount(0);
     }
     try {
-      axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/NotificationSeen`,
+      axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/NotificationSeen`,
         {},
         { headers: { Authorization: `Bearer ${user.access_token}` } }
       );
@@ -270,7 +270,7 @@ export default function Navbar() {
     async function get_notify() {
       try {
         const result = await axios.get(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetNotification`,
+          `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetNotification`,
           { headers: { Authorization: `Bearer ${user.access_token}` } }
         );
         setNotification(result.data.reverse());
@@ -337,7 +337,7 @@ export default function Navbar() {
       // - send WS `start_game` to the acceptor
       // We also navigate immediately for a smoother UX.
       const res = await axios.post(
-        `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/startGame`,
+        `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/startGame`,
         { id: item.sender_user },
         { headers: { Authorization: `Bearer ${user.access_token}` } }
       );
@@ -352,7 +352,7 @@ export default function Navbar() {
       // Delete notification (best-effort)
       try {
         await axios.delete(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteNotification`,
+          `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
           {
             params: { notifyId: item.notify_id },
             headers: { Authorization: `Bearer ${user.access_token}` }
@@ -379,7 +379,7 @@ export default function Navbar() {
 
     try {
       await axios.delete(
-        `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteNotification`,
+        `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
         {
           params: { notifyId: item.notify_id },
           headers: { Authorization: `Bearer ${user.access_token}` }
@@ -429,7 +429,7 @@ export default function Navbar() {
       // Delete notification (best-effort)
       try {
         await axios.delete(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteNotification`,
+          `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
           {
             params: { notifyId: item.notify_id },
             headers: { Authorization: `Bearer ${user.access_token}` }
@@ -484,7 +484,7 @@ export default function Navbar() {
 
       try {
         await axios.delete(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/DeleteNotification`,
+          `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
           {
             params: { notifyId: item.notify_id },
             headers: { Authorization: `Bearer ${user.access_token}` }
