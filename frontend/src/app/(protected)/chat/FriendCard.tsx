@@ -21,8 +21,8 @@ const formatXP = (xp) => {
 
   return (
     value >= 10
-      ? Math.floor(value) + units[unitIndex]
-      : value.toFixed(1).replace(/\.0$/, '') + units[unitIndex]
+      ? Math?.floor(value) + units[unitIndex]
+      : value?.toFixed(1).replace(/\.0$/, '') + units[unitIndex]
   )
 }
 
