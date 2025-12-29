@@ -126,7 +126,7 @@ async function handleSettingChange(label, newValue) {
   }
 
   try {
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/changeusersettings`, {
+    await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/changeusersettings`, {
       settingAttribute,
       newValue,
     },
@@ -272,7 +272,7 @@ export default function FriendList( )
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/GetFriends`, {
+        const res = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetFriends`, {
           headers: {
             Authorization: `Bearer ${user.access_token}`
           }

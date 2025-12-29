@@ -34,7 +34,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
   const fetchUserData = async (token: string, isNewUser: string | null) => {
     try {
       // console.log('-------------->', process.env.NEXT_PUBLIC_BACK_API)
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACK_API}/me`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACK_API}/api/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -167,7 +167,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
 
     try {
       // --- AXIOS REFACTOR: POST Login ---
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/login`, { 
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/login`, { 
         username: username.trim(), 
         password: password 
       })
@@ -219,7 +219,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
 
     try {
       // --- AXIOS REFACTOR: POST 2FA Verify ---
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/2fa/login-verify`, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/2fa/login-verify`, {
         userId: parseInt(tempUserId),
         token: twoFACode
       })

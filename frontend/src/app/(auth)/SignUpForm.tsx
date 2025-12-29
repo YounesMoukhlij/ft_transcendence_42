@@ -86,7 +86,7 @@ export default function SignUpForm({ onToggle }: SignUpFormProps) {
       const {...userData } = formData
       
       // --- AXIOS REFACTOR: POST Request ---
-     await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/AddUser`, {
+     await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/AddUser`, {
         username: userData.username.trim(),
         email: userData.email.trim(),
         password: userData.password

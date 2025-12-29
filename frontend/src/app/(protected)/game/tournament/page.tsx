@@ -299,7 +299,7 @@ export default function TournamentPage() {
       if (!user?.access_token) return;
 
       try {
-        const response = await axios.get(`${getBackendURL()}/getUserStats`, {
+        const response = await axios.get(`${getBackendURL()}/api/getUserStats`, {
           headers: {
             Authorization: `Bearer ${user.access_token}`,
           },
@@ -324,7 +324,7 @@ export default function TournamentPage() {
     const fetchFriends = async () => {
       if (user) {
         try {
-          const response = await axios.get(`${getBackendURL()}/GetFriends`, {
+          const response = await axios.get(`${getBackendURL()}/api/GetFriends`, {
             params: { username: user.username },
             headers: {
               Authorization: `Bearer ${user.access_token}`,

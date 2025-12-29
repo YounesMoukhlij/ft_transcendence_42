@@ -8,7 +8,7 @@ export const getProfileImageUrl = (currentImg: string) => {
     return `${process.env.NEXT_PUBLIC_DEFAULT_PROFILE_IMAGE}`;
   }
   if (currentImg && currentImg.startsWith('/uploads/')) {
-    return `${process.env.NEXT_PUBLIC_BACK_API}${currentImg}`;
+    return `${process.env.NEXT_PUBLIC_BACK_API}/api/${currentImg}`;
   }
   return currentImg;
 };
@@ -64,7 +64,7 @@ export function getBackendURL(): string {
 
   // Build and validate URL
   try {
-    const url = `http://${finalHost}:${finalPort}`;
+    const url = `https://${finalHost}:${finalPort}`;
     new URL(url); // This will throw if invalid
 
     // Log the backend URL in development for debugging
@@ -81,7 +81,7 @@ export function getBackendURL(): string {
   } catch {
     console.error('Invalid backend URL configuration:', { host: finalHost, port: finalPort });
     // Still return a valid URL even if validation fails
-    return `http://${finalHost}:${finalPort}`;
+    return `https://${finalHost}:${finalPort}`;
   }
 }
 
@@ -92,7 +92,7 @@ export function getBackendURL(): string {
  */
 export async function refreshAccessToken(refreshToken: string): Promise<string | null> {
   try {
-    const response = await axios.post(`${getBackendURL()}/refreshToken`, {
+    const response = await axios.post(`${getBackendURL()}/api/refreshToken`, {
       refreshToken: refreshToken
     });
 

@@ -9,8 +9,6 @@ import { useUserStore } from "@/store/userStore";
 import {friendType} from "./types";
 import {getProfileImageUrl} from "@/lib/utils"
 
-
-
 const formatXP = (xp) => {
   const units = ['', 'K', 'M', 'B', 'T', 'Q']
   let unitIndex = 0
@@ -23,8 +21,8 @@ const formatXP = (xp) => {
 
   return (
     value >= 10
-      ? Math.floor(value) + units[unitIndex]
-      : value.toFixed(1).replace(/\.0$/, '') + units[unitIndex]
+      ? Math?.floor(value) + units[unitIndex]
+      : value?.toFixed(1).replace(/\.0$/, '') + units[unitIndex]
   )
 }
 
@@ -36,7 +34,7 @@ export function useDeblock() {
     if (item.blockedByUser1 !== user.id_user && item.blockedByUser2 !== user.id_user)
       return ;
     
-    await axios.post(`http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/Deblock`, {
+    await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/Deblock`, {
       conv_id: item.conversation_id,
       friend_id: item.id_user 
     },{
@@ -59,7 +57,7 @@ export function useFriendActions() {
 
   async function handleUnfriend(friendId: number, conversationId: number) {
     await axios.post(
-      `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/unfriend`,
+      `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/unfriend`,
       {
         conv_id: conversationId,
         friend_id: friendId,
@@ -78,7 +76,7 @@ export function useFriendActions() {
       return;
 
     await axios.post(
-      `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/block`,
+      `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/block`,
       {
         conv_id: item.conversation_id,
         friend_id: item.id_user,
@@ -146,7 +144,7 @@ export default function FriendCard() {
 
 
         <div className="text-center w-full">
-          <h1 className="text-2xl font-bold text-white mb-1">{friend.username}</h1>
+          <h1 className="text-2xl font-bold text-white mb-1 ">{friend.username}</h1>
           <h2 className="text-sm text-gray-400 mb-3">{friend.fullname}</h2>
           
 

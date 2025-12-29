@@ -134,7 +134,7 @@ export default function LocalGamePage() {
           // Otherwise, fetch by username if available
           if (player1.name && user?.access_token) {
             const response = await axios.get(
-              `${getBackendURL()}/getUserStats/${player1.name}`,
+              `${getBackendURL()}/api/getUserStats/${player1.name}`,
               {
                 headers: { Authorization: `Bearer ${user.access_token}` }
               }
@@ -175,7 +175,7 @@ export default function LocalGamePage() {
           // Otherwise, fetch by username if available
           if (player2.name && user?.access_token) {
             const response = await axios.get(
-              `${getBackendURL()}/getUserStats/${player2.name}`,
+              `${getBackendURL()}/api/getUserStats/${player2.name}`,
               {
                 headers: { Authorization: `Bearer ${user.access_token}` }
               }

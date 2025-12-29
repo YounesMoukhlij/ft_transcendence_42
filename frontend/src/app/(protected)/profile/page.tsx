@@ -20,7 +20,7 @@ export default function UserProfile() {
     const fetchUserData = async () => {
       try {
         const res = await axios.get(
-          `http://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/getUserStats`,
+          `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/getUserStats`,
           { headers: { Authorization: `Bearer ${currentUser.access_token}` } }
         );
 

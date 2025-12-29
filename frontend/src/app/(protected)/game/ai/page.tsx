@@ -75,7 +75,7 @@ export default function AIGamePage() {
       const fetchUserProfile = async () => {
         try {
           const response = await axios.get(
-            `${getBackendURL()}/getUserStats`,
+            `${getBackendURL()}/api/getUserStats`,
             {
               headers: { Authorization: `Bearer ${user.access_token}` }
             }

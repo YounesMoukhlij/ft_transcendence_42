@@ -272,7 +272,7 @@ export default function RemoteGamePage() {
 
             try {
               const response = await axios.get(
-                `${getBackendURL()}/GetFriends`,
+                `${getBackendURL()}/api/GetFriends`,
                 {
                   params: { username: user.username },
                   headers: {
