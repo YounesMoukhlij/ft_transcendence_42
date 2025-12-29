@@ -91,7 +91,8 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
     socket.userId = idStr;
     users_socket.set(idStr, socket);
 
-    // Respect user's status sharing setting
+    console.log("============> connected the new size of map " , users_socket.size);
+
     let statusMode = 1;
     try {
       const allowQuery = db.prepare('SELECT status_share FROM users WHERE id_user = ?');
@@ -231,13 +232,13 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
     // 2) /ws then first message is userId (game flow)
     const token = parseTokenFromReq(req);
 
-
-
-    console.log("============> token here" , token);
+    
+    
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.SECRET);
         const userId = decoded?.id_user;
+        console.log("============> new clinet want to connect " , userId);
         if (!userId) {
           socket.close();
           return;

@@ -42,7 +42,7 @@ export default function Messages(){
   const searchParams = useSearchParams();
   const messages = useUserStore((state) => state.messages);
 
-  const {socket ,contactId ,setContactId, updatePinStatus, friends ,addMessage  , user ,  setMessages ,  updateLastMessage } = useUserStore();
+  const {socket ,contactId ,setContactId, updatePinStatus, friends  , connect,addMessage  , user ,  setMessages ,  updateLastMessage } = useUserStore();
   const [friend , SetFriend] = useState(null);
   const [show, setShow] = useState<boolean>(false);
   const [input, setInput] = useState<string>('');
@@ -54,14 +54,19 @@ export default function Messages(){
   const { handleDeblock } = useDeblock();
   
   useEffect(()=>{
-    if (input.length > 0 && user.typing_indicator){
+    if (!socket)
+      connect();
+  },[])
+
+  useEffect(()=>{
+    if (input.length > 0 && user.typing_indicator && socket){
       socket.send(
         JSON.stringify({
         type: "istyping",
         friend: contactId,
     })
   );
-    }
+  }
   },[input , socket]);
 
    useEffect(() => {
@@ -194,6 +199,8 @@ export default function Messages(){
     const conversation_id = friends.find(item => item.id_user === contactId).conversation_id;
 
     try {
+      if (!socket)
+        return ;
         socket.send(
           JSON.stringify({
           type: "message",
