@@ -43,7 +43,7 @@ export function PerformanceChart({username }: PerformanceChartProps) {
 
       try {
         const res = await api.get<PerformanceData[]>(
-          `/getPlayerProgress/${targetUsername}`,
+          `/api/getPlayerProgress/${targetUsername}`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }

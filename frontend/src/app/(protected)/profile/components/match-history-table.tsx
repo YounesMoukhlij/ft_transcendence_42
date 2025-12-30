@@ -34,7 +34,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
 
       try {
         const res = await api.get<GameDetails[]>(
-          `/getMatchHistory/${targetUsername}`,
+          `/api/getMatchHistory/${targetUsername}`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }

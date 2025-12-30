@@ -31,7 +31,7 @@ export default function UserProfile({ params }: UserProfileProps) {
 
     const fetchProfile = async () => {
       try {
-        const res = await api.get<User>(`/getUserStats/${id}`,{
+        const res = await api.get<User>(`/api/getUserStats/${id}`,{
           headers: { Authorization: `Bearer ${currentUser.access_token}` },
         });
         if (!active) return;
@@ -46,7 +46,7 @@ export default function UserProfile({ params }: UserProfileProps) {
       }
       try {
          const res = await api.get(
-          `/getSentRequests`,
+          `/api/getSentRequests`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }

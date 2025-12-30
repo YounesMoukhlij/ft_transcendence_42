@@ -153,7 +153,7 @@ const ProfileSettingsPage = () => {
       }
 
       // Axios automatically sets the Content-Type to multipart/form-data when passed FormData
-      const response = await api.post(`${process.env.NEXT_PUBLIC_BACK_API}/updateUserInfo`, dataToSave, {
+      const response = await api.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/updateUserInfo`, dataToSave, {
         headers: { Authorization: `Bearer ${user.access_token}` },
       })
       const data = response.data

@@ -19,7 +19,7 @@ interface Player {
 async function getLeaderboardData(token: string, page: number) {
   const limit = 10;
   // We pass ?page=X&limit=10 to the backend
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/leaderboard?page=${page}&limit=${limit}`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/api/leaderboard?page=${page}&limit=${limit}`, {
     cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
@@ -30,8 +30,9 @@ async function getLeaderboardData(token: string, page: number) {
   if (res.status === 401) {
     return null;
   }
-
+  
   if (!res.ok) {
+    console.log("======================> " , res);
     // If backend doesn't support pagination queries yet, it might just return all data.
     // That is fine, but for true pagination, backend must handle these params.
     throw new Error('Failed to fetch data');

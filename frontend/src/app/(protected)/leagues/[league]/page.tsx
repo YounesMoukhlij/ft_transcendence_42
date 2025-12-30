@@ -28,7 +28,7 @@ export default function LeagueTable({ params }: LeaguePageProps) {
 
     const fetchLeagueStats = async () => {
       try {
-        const res = await api.get(`/getLeaguesStats/${league}`, {
+        const res = await api.get(`/api/getLeaguesStats/${league}`, {
           headers: { Authorization: `Bearer ${currentUser.access_token}` },
         });
         if (!active) return;

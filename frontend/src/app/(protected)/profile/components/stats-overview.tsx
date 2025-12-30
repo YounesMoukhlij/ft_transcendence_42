@@ -99,7 +99,7 @@ const router = useRouter();
 const handleAddFriend = async () => {
   try {
       const res = await api.post(
-      `/sendRequestFriend`,
+      `/api/sendRequestFriend`,
       { id: userStats.id },
       {
         headers: {
@@ -166,9 +166,8 @@ const handleUnfriend = async () =>
 
       //  Unfriend
 
-      console.log(userStats);
      const res =  await api.post(
-        `/unfriend`,
+        `/api/unfriend`,
         {
           // user: currentUser.username,
           conv_id : userStats.conversationId,
@@ -218,7 +217,7 @@ const handleCancelFriendRequest = async () => {
   try {
    const notify_id = sentRequests.filter(object => object.getter_user == userStats.id)[0].notify_id;
     const res = await api.delete(
-      `/cancelFriendRequest`,
+      `/api/cancelFriendRequest`,
      {
       params:{
         id: notify_id,

@@ -257,8 +257,7 @@ function FriendCard({ item }) {
 
 export default function FriendList( )
 {
-  const { setFriends , user} = useUserStore();
-  const friends = useUserStore(state => state.friends);
+  const { setFriends , friends ,user} = useUserStore();
   const [setting , setSetting] = useState<boolean>(false);
 
 
@@ -278,7 +277,7 @@ export default function FriendList( )
           }
         });
 
-        setFriends(res.data);
+      setFriends(res.data);
       } catch (err) {
         console.log(err);
       }
@@ -350,54 +349,55 @@ export default function FriendList( )
                       .sort((a, b) => a.username.localeCompare(b.username))
                       .map((item, index) => <FriendCard key={index} item={item} />)
                   ):(
-                      
+                   
+                    
                      (() => {
-  const processedFriends = friends.map(item => {
-    const isPinned =
-      item.pinnedUser1 === user.id_user ||
-      item.pinnedUser2 === user.id_user;
+                       const processedFriends = friends.map(item => {
+                         const isPinned =
+                         item.pinnedUser1 === user.id_user ||
+                         item.pinnedUser2 === user.id_user;
+                         
+                         return { ...item, isPinned };
+                        });
+                        console.log("===============>" , friends);
+                        console.log("===============>" , processedFriends);
+                        
+                        const pinned = processedFriends
+                          .filter(item => item.isPinned)
+                          .sort((a, b) => {
+                            const tA =
+                              a.pinnedUser1 === user.id_user
+                                ? new Date(a.pinnedDateUser1 || 0).getTime()
+                                : new Date(a.pinnedDateUser2 || 0).getTime();                     
 
-    return { ...item, isPinned };
-  });
+                            const tB =
+                              b.pinnedUser1 === user.id_user
+                                ? new Date(b.pinnedDateUser1 || 0).getTime()
+                                : new Date(b.pinnedDateUser2 || 0).getTime();                     
 
-  const pinned = processedFriends
-    .filter(item => item.isPinned)
-    .sort((a, b) => {
-      const tA =
-        a.pinnedUser1 === user.id_user
-          ? new Date(a.pinnedDateUser1 || 0).getTime()
-          : new Date(a.pinnedDateUser2 || 0).getTime();
+                            return tB - tA;
+                          });                     
 
-      const tB =
-        b.pinnedUser1 === user.id_user
-          ? new Date(b.pinnedDateUser1 || 0).getTime()
-          : new Date(b.pinnedDateUser2 || 0).getTime();
+                        const unpinned = processedFriends
+                          .filter(item => !item.isPinned)
+                          .sort((a, b) => {
+                            const tA = new Date(a.lastMessageTime || 0).getTime();
+                            const tB = new Date(b.lastMessageTime || 0).getTime();
+                            return tB - tA;
+                          });                     
+                          return (
+                            <>
+                            {pinned.map((item, id) => (
+                              <FriendCard key={"p" + id} item={item} />
+                              ))}                     
 
-      return tB - tA;
-    });
-
-  const unpinned = processedFriends
-    .filter(item => !item.isPinned)
-    .sort((a, b) => {
-      const tA = new Date(a.lastMessageTime || 0).getTime();
-      const tB = new Date(b.lastMessageTime || 0).getTime();
-      return tB - tA;
-    });
-
-  return (
-    <>
-      {pinned.map((item, id) => (
-        <FriendCard key={"p" + id} item={item} />
-      ))}
-
-      {unpinned.map((item, id) => (
-        <FriendCard key={"u" + id} item={item} />
-      ))}
-    </>
-  );
-})()
-         )
-
+                            {unpinned.map((item, id) => (
+                              <FriendCard key={"u" + id} item={item} />
+                            ))}
+                          </>
+                        );
+                      })()
+                  )
                 }
             </div>
         </div>
