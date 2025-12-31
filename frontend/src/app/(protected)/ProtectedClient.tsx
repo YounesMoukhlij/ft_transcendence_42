@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ToastContainer } from "react-toastify";
 import { useGameContext } from "@/components/GameContext";
 
+
 export default function ProtectedClient({
   children,
 }: {
@@ -15,7 +16,7 @@ export default function ProtectedClient({
   const { setGameMode } = useGameContext();
 
   const {
-    user, updateSeenMessage, contactId, socket, addMessage,
+    user, removePendingRequests, updateSeenMessage, contactId, socket, addMessage,connect, removeSentRequests, addPendingRequests ,
     updateLastMessage, removeFriend, updateFriendStatus, Set_Display_game_invite,
     socketBlockState, setInviterData, addFriend, updateTypingStatus
   } = useUserStore();
@@ -29,6 +30,8 @@ export default function ProtectedClient({
   };
 
   useEffect(() => {
+    connect();
+    // alert("socket connected");
     const a = new Audio("/sound/message.mp3");
     setAudio(a);
 
@@ -48,7 +51,34 @@ export default function ProtectedClient({
 
     socket.onmessage = (event) => {
       const { type, data } = JSON.parse(event.data);
-
+      if (type === "notify")
+      {
+        if (data.title == "request friend") {
+          addPendingRequests({
+            sender_user: data.sender_user,
+            sender_username: data.sender_username,
+            notify_id: data.notify_id,
+          });
+          } else if (data.title == "friend request accepted") {
+            removeSentRequests(data.sender_user);
+            addFriend({ id_user: data.sender_user });
+          }
+          // setNotification(prev => [{
+          //   sender_user: data.sender_user,
+          //   title: data.title,
+          //   sender_username: data.sender_username,
+          //   sender_profile_img: data.sender_profile_img,
+          //   notify_id: data.notify_id,
+          //   expired: data.expired,
+          //   tournamentId: data.tournamentId
+          // }, ...prev]);
+        } else if (type == "unfriend") {
+          removeFriend(data.id_user);
+        } else if (type == "rejected") {
+          removeSentRequests(data.getter_user);
+        } else if (type == "canceled request") {
+          removePendingRequests(data.sender_user);
+      }
       if (type === "message") {
         if (user.sound_notification) playSound();
         addMessage(data);
@@ -86,6 +116,7 @@ export default function ProtectedClient({
         setTimeout(() => updateTypingStatus(0, data.friendId), 2000);
       }
       if (type === "seen") updateSeenMessage(data.conv_id);
+
     };
   }, [socket, user?.sound_notification, contactId, router, setGameMode]);
 

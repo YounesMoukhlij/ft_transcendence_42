@@ -44,10 +44,10 @@ export default function Navbar() {
   const hamburgerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   
-  const { connect} = useUserStore();
+  // const { connect} = useUserStore();
   const setUsername = useUserStore.setState;
-  const socket = useUserStore((state) => state.socket);
-  const { addFriend, removeFriend, friends, addPendingRequests, addPendingRequestsArray, removePendingRequests, removeSentRequests, sentRequests, pendingRequests, addSentRequests } = useUserStore();
+  // const socket = useUserStore((state) => state.socket);
+  const { addFriend,  friends,  addPendingRequestsArray, removePendingRequests, sentRequests, pendingRequests, addSentRequests } = useUserStore();
   const user = useUserStore((state) => state.user);
 
   function isTimeValid(item) {
@@ -282,51 +282,22 @@ export default function Navbar() {
     get_notify();
   }, [user, friends]);
 
-  useEffect(() => {
-    connect();
-  }, [user?.id_user]);
+
 
   useEffect(() => {
     SetunseenCount(notificatiion.filter(n => !n.is_seen).length);
   }, [notificatiion]);
 
-  useEffect(() => {
-    if (!socket) return;
-    const handleNotify = (event: MessageEvent) => {
-      const { type, data } = JSON.parse(event.data);
-      if (type === "notify") {
-        if (data.title == "request friend") {
-          addPendingRequests({
-            sender_user: data.sender_user,
-            sender_username: data.sender_username,
-            notify_id: data.notify_id,
-          });
-        } else if (data.title == "friend request accepted") {
-          removeSentRequests(data.sender_user);
-          addFriend({ id_user: data.sender_user });
-        }
-        setNotification(prev => [{
-          sender_user: data.sender_user,
-          title: data.title,
-          sender_username: data.sender_username,
-          sender_profile_img: data.sender_profile_img,
-          notify_id: data.notify_id,
-          expired: data.expired,
-          tournamentId: data.tournamentId
-        }, ...prev]);
-      } else if (type == "unfriend") {
-        removeFriend(data.id_user);
-      } else if (type == "rejected") {
-        removeSentRequests(data.getter_user);
-      } else if (type == "canceled request") {
-        removePendingRequests(data.sender_user);
-      }
-    };
-    socket.addEventListener("message", handleNotify);
-    return () => {
-      socket.removeEventListener("message", handleNotify);
-    };
-  }, [socket]);
+  // useEffect(() => {
+  //   if (!socket) return;
+  //   const handleNotify = (event: MessageEvent) => {
+  //     const { type, data } = JSON.parse(event.data);
+      
+  //   socket.addEventListener("message", handleNotify);
+  //   return () => {
+  //     socket.removeEventListener("message", handleNotify);
+  //   };
+  // }, [socket]);
 
   async function AcceptGameChallenge(item) {
     if (!user?.access_token) return;

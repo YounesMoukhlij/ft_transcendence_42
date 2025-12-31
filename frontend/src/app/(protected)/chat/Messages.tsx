@@ -42,7 +42,7 @@ export default function Messages(){
   const searchParams = useSearchParams();
   const messages = useUserStore((state) => state.messages);
 
-  const {socket ,contactId ,setContactId, updatePinStatus, friends  , connect,addMessage  , user ,  setMessages ,  updateLastMessage } = useUserStore();
+  const {socket ,contactId ,setContactId, updatePinStatus, friends ,addMessage  , user ,  setMessages ,  updateLastMessage } = useUserStore();
   const [friend , SetFriend] = useState(null);
   const [show, setShow] = useState<boolean>(false);
   const [input, setInput] = useState<string>('');
@@ -53,10 +53,6 @@ export default function Messages(){
   const { handleUnfriend, handleBlock } = useFriendActions();
   const { handleDeblock } = useDeblock();
   
-  useEffect(()=>{
-    if (!socket)
-      connect();
-  },[])
 
   useEffect(()=>{
     if (input.length > 0 && user.typing_indicator && socket){
@@ -67,7 +63,7 @@ export default function Messages(){
     })
   );
   }
-  },[input , socket]);
+  },[input]);
 
    useEffect(() => {
     const handleClickOutside = (event :MouseEvent) => {
@@ -152,7 +148,7 @@ export default function Messages(){
           
     }))
   
-  },[contactId , socket]);
+  },[contactId]);
 
   useEffect(() => {
     const chatContainer = document.querySelector('.chat-body');
@@ -350,7 +346,7 @@ export default function Messages(){
                          friend &&  contactId > -1 &&
                           <div className="">
                           {
-                            messages.filter(item => item.conv_id == friends.find(item => item.id_user === contactId).conversation_id).map((item, index) => {
+                            messages.filter(item => item.conv_id == friends.find(item => item.id_user === contactId)?.conversation_id).map((item, index) => {
                               const currentDate = item.created_at.split(' ')[0];
                               const prevDate = index > 0 ? messages[index - 1].created_at.split(' ')[0] : null;
                               return (

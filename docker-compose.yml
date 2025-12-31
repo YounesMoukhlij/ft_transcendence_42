@@ -12,9 +12,9 @@ services:
       - Backend
     networks:
       - monitoring
-    volumes:
-      - ./frontend:/var/www/nextApp
-    command: sh -c "npm install && npm run dev"
+    # volumes:
+    #   - ./frontend:/var/www/nextApp
+    # command: sh -c "npm install && npm run dev"
 
   Backend:
     build:
@@ -29,6 +29,9 @@ services:
       - monitoring
     depends_on:
       - Redis
+    volumes:
+      - ./backend:/var/www/Backend
+    command: sh -c "npm install && nodemon server.js"
 
   Redis:
     build:

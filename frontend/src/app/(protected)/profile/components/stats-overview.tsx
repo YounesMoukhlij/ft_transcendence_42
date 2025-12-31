@@ -124,7 +124,7 @@ const handleAddFriend = async () => {
 const handleAcceptFriend = async () => {
   try {
     const res = await api.post(
-      `/AddFriend`,
+      `/api/AddFriend`,
     {
       id: userStats.id,
     },{

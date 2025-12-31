@@ -42,51 +42,51 @@ export const useUserStore = create(
 
 
 
-connect: () => {
-  const state = get();
+    connect: () => {
+      const state = get();
 
-  if (state.socket || state.isConnect) return;
-  if (typeof window === "undefined") return;
+      if (state.socket || state.isConnect) return;
+      if (typeof window === "undefined") return;
 
-  const token = state.user?.access_token; 
-  console.log(token);
+      const token = state.user?.access_token; 
+      console.log(token);
 
-  if (!token) {
-    return;
-  }
+      if (!token) {
+        return;
+      }
 
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  
-  const url = `${protocol}://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/ws?token=${token}`;
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      
+      const url = `${protocol}://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/ws?token=${token}`;
 
-  try {
-    const ws = new WebSocket(url);
-    console.log(url);
-    ws.onopen = () => {
-      set({ socket: ws, isConnect: true });
-    };
+      try {
+        const ws = new WebSocket(url);
+        console.log(url);
+        ws.onopen = () => {
+          set({ socket: ws, isConnect: true });
+        };
 
-    ws.onclose = () => {
-      set({ socket: null, isConnect: false });
-    };
+        ws.onclose = () => {
+          set({ socket: null, isConnect: false });
+        };
 
-    ws.onerror = (err) => {
-      console.error("WebSocket error:", err);
-    };
+        ws.onerror = (err) => {
+          console.error("WebSocket error:", err);
+        };
 
-    set({ socket: ws });
+        // set({ socket: ws });
 
-  } catch (err) {
-    console.error("Failed to create WebSocket:", err);
-  }
-},
+      } catch (err) {
+        console.error("Failed to create WebSocket:", err);
+      }
+    },
 
 
 
-      initConnection: () => {
-        const id = get().user?.id_user;
-        if (id) get().connect();
-      },
+      // initConnection: () => {
+      //   const id = get().user?.id_user;
+      //   if (id) get().connect();
+      // },
 
     setContactId : (contactId) => set({contactId}),
 
