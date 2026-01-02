@@ -42,44 +42,97 @@ export const useUserStore = create(
 
 
 
-    connect: () => {
-      const state = get();
+    // connect: () => {
+    //   const state = get();
 
-      if (state.socket || state.isConnect) return;
-      if (typeof window === "undefined") return;
+    //   if (state.socket || state.isConnect) return;
+    //   if (typeof window === "undefined") return;
 
-      const token = state.user?.access_token; 
-      console.log(token);
+    //   const token = state.user?.access_token; 
+    //   console.log(token);
 
-      if (!token) {
-        return;
-      }
+    //   if (!token) {
+    //     return;
+    //   }
 
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    //   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
       
-      const url = `${protocol}://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/ws?token=${token}`;
+    //   const url = `${protocol}://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/ws?token=${token}`;
 
-      try {
-        const ws = new WebSocket(url);
-        console.log(url);
-        ws.onopen = () => {
-          set({ socket: ws, isConnect: true });
-        };
+    //   try {
+    //     const ws = new WebSocket(url);
+    //     console.log(url);
+    //     ws.onopen = () => {
+    //       alert("connect");
+    //       set({ socket: ws, isConnect: true });
+    //     };
 
-        ws.onclose = () => {
-          set({ socket: null, isConnect: false });
-        };
+    //     ws.onclose = () => {
+    //       set({ socket: null, isConnect: false });
+    //       connect();
+    //       alert("disconnect");
+    //     };
 
-        ws.onerror = (err) => {
-          console.error("WebSocket error:", err);
-        };
+    //     ws.onerror = (err) => {
+    //       console.error("WebSocket error:", err);
+    //     };
 
-        // set({ socket: ws });
+    //     // set({ socket: ws });
 
-      } catch (err) {
-        console.error("Failed to create WebSocket:", err);
-      }
-    },
+    //   } catch (err) {
+    //     console.error("Failed to create WebSocket:", err);
+    //   }
+    // },
+
+
+    connect: () => {
+    const state = get();
+
+    if (state.socket || state.isConnect) return;
+    if (typeof window === "undefined") return;
+
+    const token = state.user?.access_token;
+    if (!token) return;
+
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const url = `${protocol}://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/ws?token=${token}`;
+
+    try {
+      const ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        set({
+          socket: ws,
+          isConnect: true,
+          reconnectAttempts: 0,
+        });
+      };
+
+      ws.onclose = () => {
+
+
+        set({ socket: null, isConnect: false });
+
+        const attempts = get().reconnectAttempts + 1;
+        const delay = Math.min(1000 * 2 ** attempts, 30000); 
+
+        set({ reconnectAttempts: attempts });
+
+        setTimeout(() => {
+          get().connect();
+        }, delay);
+      };
+
+      ws.onerror = (err) => {
+        console.error("WebSocket error:", err);
+        ws.close();
+      };
+
+    } catch (err) {
+      console.error("Failed to create WebSocket:", err);
+    }
+  },
+
 
 
 

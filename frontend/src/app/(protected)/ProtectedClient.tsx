@@ -29,6 +29,7 @@ export default function ProtectedClient({
     audio.play().catch(() => {});
   };
 
+
   useEffect(() => {
     connect();
     // alert("socket connected");
@@ -53,6 +54,7 @@ export default function ProtectedClient({
       const { type, data } = JSON.parse(event.data);
       if (type === "notify")
       {
+        // alert("here");
         if (data.title == "request friend") {
           addPendingRequests({
             sender_user: data.sender_user,
