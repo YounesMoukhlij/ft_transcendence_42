@@ -194,7 +194,7 @@ const rejectFriendRequest = async () => {
    try {
       //  Reject friend request
       const notify_id = pendingRequests.filter(object => object.sender_user == userStats.id)[0].notify_id;
-     const res =  await api.delete(`/DeleteFriendRequest` , {
+     const res =  await api.delete(`/api/DeleteFriendRequest` , {
       params:{
         id: notify_id,
       },

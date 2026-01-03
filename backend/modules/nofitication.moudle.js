@@ -284,10 +284,11 @@ if (!notify)
       const members = [userId, friendId].join(',');
       const room = db.prepare("INSERT INTO room (members) VALUES (?)").run(members);
 
-      const notify = db.prepare(`INSERT INTO notification (getter_user, sender_user, title) VALUES (?, ?, ?, ?)
+      const notify = db.prepare(`INSERT INTO notification (getter_user, sender_user, title ,notifyBody) VALUES (?, ?, ?, ?)
       `).run(
         friendId,
         userId,
+        "friend request accepted",
         "friend request accepted",
       );
 

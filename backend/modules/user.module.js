@@ -144,9 +144,8 @@ export async function unfriend(request, reply) {
     if (!room)
       return reply.code(404).send({ error: "conversation  not found" });
 
-    let members;
     // try {
-      members = JSON.parse(room.members);
+      const members = room.members.split(',').map(n => Number(n));
     // } catch {
     //   return reply.code(500).send({ error: "invalid room members format" });
     // }
