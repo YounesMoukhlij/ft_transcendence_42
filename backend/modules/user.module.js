@@ -126,44 +126,66 @@ export async function DeblockFunction(request , reply){
 }
 
 
-
 export async function unfriend(request, reply) {
   const result = BlockSchema.safeParse(request.body);
   if (!result.success)
-    return reply.code(400).send("midding prams");
+    return reply.code(400).send("missing params");
 
-  const {conv_id , friend_id } = result.data;
-  
+  const { conv_id, friend_id } = result.data;
+  const userId = request.user.id_user;
+
   try {
+ 
+    const roomStmt = request.server.db.prepare(
+      "SELECT members FROM room WHERE conversation_id = ?"
+    );
+    const room = roomStmt.get(conv_id);
+
+    if (!room)
+      return reply.code(404).send({ error: "conversation  not found" });
+
+    let members;
+    // try {
+      members = JSON.parse(room.members);
+    // } catch {
+    //   return reply.code(500).send({ error: "invalid room members format" });
+    // }
+
+    if (!members.includes(userId))
+      return reply.code(403).send({ error: "you are not a member of this conversation" });
+
+    request.server.db
+      .prepare("DELETE FROM message WHERE conv_id = ?")
+      .run(conv_id);
+    request.server.db
+      .prepare("DELETE FROM room WHERE conversation_id = ?")
+      .run(conv_id);
+
+    request.server.db.prepare(`
+      DELETE FROM friends 
+      WHERE (user_id = ? AND friend_id = ?) 
+         OR (user_id = ? AND friend_id = ?)
+    `).run(userId, friend_id, friend_id, userId);
+
     const socket = request.server.users_socket.get(friend_id.toString());
-
-    const msg = request.server.db.prepare("DELETE FROM message WHERE conv_id = ?");
-    msg.run(conv_id);
-
-    const Roomquery = request.server.db.prepare("DELETE FROM room WHERE conversation_id = ?");
-    Roomquery.run(conv_id);
-
-    const Friendquery = request.server.db.prepare("DELETE FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)");
-    Friendquery.run(request.user.id_user, friend_id, friend_id, request.user.id_user);
-
-    if (socket){
-      const data = {
-        id_user : request.user.id_user,
-        username: request.user.username
-      };
-
+    if (socket) {
       socket.send(JSON.stringify({
         type: "unfriend",
-        data: data
+        data: {
+          id_user: userId,
+          username: request.user.username
+        }
       }));
     }
-    
+
     reply.code(200).send(true);
+
   } catch (err) {
-    console.log(err);
-    reply.code(500).send({ error: 'Failed to unfriend' });
+    console.error(err);
+    reply.code(500).send({ error: "Failed to unfriend" });
   }
 }
+
 
 
 

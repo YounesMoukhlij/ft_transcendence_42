@@ -93,9 +93,9 @@ export default async function routes(fastify, options) {
   fastify.post('/pinned' , pinned);
   fastify.get('/GetFriends' , GetFriends);
   fastify.get('/getMsgs' , getMsgs);
-  fastify.post('/unfriend' , unfriend);   // must check id the clinet is member in the room
-  fastify.post('/AddFriend' , AddFriend); // has same error
-  fastify.post('/sendRequestFriend' , sendRequestFriend);  // must check 
+  fastify.post('/unfriend' , unfriend);   
+  fastify.post('/AddFriend' , AddFriend);
+  fastify.post('/sendRequestFriend' , sendRequestFriend); 
   fastify.get('/GetNotification' , GetNotification);    
   fastify.post('/block' , blockFunction);   // check it 
   fastify.post('/Deblock' , DeblockFunction); // check it 

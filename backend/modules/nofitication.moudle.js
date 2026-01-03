@@ -172,116 +172,167 @@ export async function cancelFriendRequest(request , reply){
 
 export async function sendRequestFriend(request, reply) {
   const result = ParseIdSchema.safeParse(request.body);
-
   if (!result.success)
     return reply.code(400).send("missing params");
 
-  const { id } = result.data;
-  const socket = request.server.users_socket.get(id.toString());
+  const { id: targetId } = result.data;
+  const userId = request.user.id_user;
+  const db = request.server.db;
+
+  if (targetId === userId)
+    return reply.code(400).send(false);
 
   try {
-    const title = "request friend";
-    const existsNotify = request.server.db.prepare(`SELECT 1 FROM notification  WHERE getter_user = ? AND title = ? AND sender_user = ? AND notifyBody = ? LIMIT 1`);
-    const exists = existsNotify.get(id, title, request.user.id_user, "request friend");
+    const userExists = db.prepare("SELECT id_user FROM users WHERE id_user = ?").get(targetId);
 
-  if (exists)
-    return reply.code(200).send(true);
-  
-    const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody) VALUES (?, ?, ?, ?)`);
-    const result = insertQuery.run(id, title, request.user.id_user, "request friend");
-    const insertedId = result.lastInsertRowid;
+    if (!userExists)
+      return reply.code(404).send({ error: "user not found" });
 
-    
+    const alreadyFriends = db.prepare(`SELECT 1 FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+    `).get(userId, targetId, targetId, userId);
+
+    if (alreadyFriends)
+      return reply.code(409).send({ error: "already friends" });
+
+    const existsNotify = db.prepare(` SELECT notify_id FROM notification WHERE title = ? AND ( (getter_user = ? AND sender_user = ?) OR (getter_user = ? AND sender_user = ?))LIMIT 1`).get(
+      "request friend",
+      targetId, userId, 
+      userId, targetId
+    );
+  if (existsNotify)
+    return reply.code(409).send({ error: "Friend request already exists" });
+
+
+    const insert = db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody)VALUES (?, ?, ?, ?)`).run(targetId, "request friend", userId, "request friend");
+
+    const notifyId = insert.lastInsertRowid;
+
+    const socket = request.server.users_socket.get(targetId.toString());
     if (socket) {
-      
-      const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
-      const result = query1.get(request.user.id_user);
-      
-      const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
-      const res = query2.get(id, request.user.id_user);
-      
-      const object = {
-        getter_user: id,
-        sender_user: request.user.id_user,
-        sender_username: request.user.username,
-        title: title,
-        sender_profile_img: result.profile_img,
-        notify_id: res.notify_id
-      };
+      const sender = db.prepare(`
+        SELECT username, profile_img
+        FROM users WHERE id_user = ?
+      `).get(userId);
+
       socket.send(JSON.stringify({
         type: "notify",
-        data: object
+        data: {
+          notify_id: notifyId,
+          getter_user: targetId,
+          sender_user: userId,
+          sender_username: sender.username,
+          sender_profile_img: sender.profile_img,
+          title: "request friend"
+        }
       }));
     }
 
-    return reply.code(200).send(insertedId);
+    reply.code(200).send(notifyId);
 
   } catch (err) {
+    console.error(err);
     reply.code(500).send({ error: "Internal server error" });
   }
 }
 
 
 
-export async function AddFriend( request  , reply){
-  const result = ParseIdSchema.safeParse(request.body);
 
+
+
+
+
+export async function AddFriend(request, reply) {
+  const result = ParseIdSchema.safeParse(request.body);
   if (!result.success)
     return reply.code(400).send("missing params");
 
-  const { id } = result.data;
-  const socket = request.server.users_socket.get(id.toString());
+  const { id: friendId } = result.data;
+  const userId = request.user.id_user;
+  const db = request.server.db;
 
-  try{
-      const Fquery = request.server.db.prepare("INSERT INTO friends (user_id , friend_id) VALUES (?,?)");
-      Fquery.run(request.user.id_user , id);
+  if (friendId === userId)
+    return reply.code(400).send({ error: "you cannot add yourself" });
 
-      const conversationquery = request.server.db.prepare("INSERT INTO room (members) VALUES (?)");
-      const members = [request.user.id_user, id].join(',');
-      const ret = conversationquery.run(members);
+  try {
 
+    const targetUser = db.prepare("SELECT id_user FROM users WHERE id_user = ?").get(friendId);
 
-      const title = "friend request accepted";
-      const setQuery = request.server.db.prepare("INSERT INTO notification (getter_user, title, sender_user, notifyBody ) VALUES (?, ?, ?, ?)")
-      const result = setQuery.run(id, title, request.user.id_user, "friend request accepted");
+    if (!targetUser)
+      return reply.code(404).send({ error: "user not found" });
 
-      const deleteQuery = request.server.db.prepare("Delete from notification where getter_user = ? AND sender_user = ? AND title = ?");
-      const deleteResult = deleteQuery.run(request.user.id_user, id, "request friend");
+    const alreadyFriends = db.prepare(`SELECT 1 FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)`).get(userId, friendId, friendId, userId);
 
-      if (socket){
-        const query = request.server.db.prepare("SELECT * FROM USERS WHERE id_user = ? ");
-        const res = query.get(request.user.id_user);
-        const object = {
-          profile_img: res.profile_img,
-          username: res.username,
-          fullname:"say hello",
-          id_user: res.id_user,
-          status:1
-        };
+    if (alreadyFriends)
+      return reply.code(409).send({ error: "already friends" });
 
-        socket.send(JSON.stringify({
-            type: "test",
-            data: object
-        }));
+    const notify = db.prepare(`SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ? AND title = ?`).get(
+    request.user.id_user, 
+    friendId,      
+    "request friend"
+  );
 
-        const notifyObject = {
-          sender_profile_img: res.profile_img,
-          sender_username: res.username,
-          title: title,
-          sender_user: request.user.id_user,
-          notify_id: result.lastInsertRowid
-        };
-        socket.send(JSON.stringify({
-            type: "notify",
-            data: notifyObject
-        }));
-      }
-      reply.code(200).send(ret);
-    }catch(err){
-      console.log(err);
-      reply.code(500);
+if (!notify)
+  return reply.code(403).send({ error: "Friend request not found" });
+
+    
+    const transaction = db.transaction(() => {
+      db.prepare("INSERT INTO friends (user_id, friend_id) VALUES (?, ?)").run(userId, friendId);
+
+      db.prepare("INSERT INTO friends (user_id, friend_id) VALUES (?, ?)").run(friendId, userId);
+
+      const members = [userId, friendId].join(',');
+      const room = db.prepare("INSERT INTO room (members) VALUES (?)").run(members);
+
+      const notify = db.prepare(`INSERT INTO notification (getter_user, sender_user, title) VALUES (?, ?, ?, ?)
+      `).run(
+        friendId,
+        userId,
+        "friend request accepted",
+      );
+
+      return {
+        room_id: room.lastInsertRowid,
+        notify_id: notify.lastInsertRowid
+      };
+    });
+
+    const resultTx = transaction();
+
+    const socket = request.server.users_socket.get(friendId.toString());
+    if (socket) {
+      const me = db.prepare(`SELECT id_user, username, profile_img, fullname FROM users WHERE id_user = ?`).get(userId);
+
+      socket.send(JSON.stringify({
+        type: "friend request accepted",
+        data: {
+          id_user: me.id_user,
+          username: me.username,
+          fullname: me.fullname,
+          profile_img: me.profile_img,
+          room_id: resultTx.room_id
+        }
+      }));
     }
+
+    reply.code(200).send(resultTx);
+
+  } catch (err) {
+    console.error(err);
+
+    /* UNIQUE constraint safety */
+    if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      return reply.code(409).send({ error: "Friendship already exists" });
+    }
+
+    reply.code(500).send({ error: "Failed to add friend" });
+  }
 }
+
+
+
+
+
 
 
 

@@ -121,10 +121,6 @@ export async function DeleteAccount(request, reply) {
                 WHERE user_id = ? OR friend_id = ?
             `).run(userId, userId);
 
-            db.prepare(`
-                DELETE FROM friend_requests
-                WHERE sender_id = ? OR receiver_id = ?
-            `).run(userId, userId);
 
             db.prepare(`
                 DELETE FROM game_history

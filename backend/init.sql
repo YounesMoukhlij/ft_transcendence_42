@@ -37,17 +37,6 @@ CREATE TABLE friends (
     UNIQUE(user_id, friend_id)  -- prevent duplicates
 );
 
-CREATE TABLE friend_requests (
-    id_request INTEGER PRIMARY KEY AUTOINCREMENT,
-    sender_id INTEGER NOT NULL,
-    receiver_id INTEGER NOT NULL,
-    status TEXT DEFAULT 'pending', -- e.g., pending, accepted, rejected
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id_user),
-    FOREIGN KEY (receiver_id) REFERENCES users(id_user),
-    UNIQUE(sender_id, receiver_id)  -- prevent duplicate requests
-);
-
 
 -- Game history
 CREATE TABLE game_history (
@@ -141,72 +130,5 @@ CREATE TABLE tournaments (
     id_tournament INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL            -- optional, store hash of results on-chain
 );
-
-
--- INSERT INTO game_history (
---     user_win, user_lose, win_score, lose_score,
---     type, tournament_id, tournament_round,
---     game_date, duration, longest_rally, average_rally, ball_max_speed,
---     touches_win, touches_lose, max_points_streak_win, max_points_streak_lose,
---     max_leading_time_win, max_leading_time_lose, blockchain_hash
--- )
--- VALUES
--- (3, 1, 11, 7, 'casual', NULL, NULL,
---  DATETIME('now', '-1 day', '-2 hours'), 420, 18, 7.4, 65,
---  90, 74, 4, 3, 210, 125, NULL),
--- (1, 3, 11, 8, 'casual', NULL, NULL,
---  DATETIME('now', '-1 day', '-1 hour'), 395, 15, 6.3, 62,
---  84, 79, 3, 2, 180, 150, NULL),
-
--- (3, 2, 11, 4, 'casual', NULL, NULL,
---  DATETIME('now', '-2 days', '-3 hours'), 380, 20, 8.0, 70,
---  102, 61, 5, 1, 260, 80, NULL),
--- (2, 3, 12, 10, 'casual', NULL, NULL,
---  DATETIME('now', '-2 days', '-1 hour'), 510, 22, 8.5, 72,
---  110, 108, 4, 4, 240, 230, NULL),
-
-
--- (3, 4, 11, 9, 'casual', NULL, NULL,
---  DATETIME('now', '-3 days', '-4 hours'), 450, 19, 7.1, 68,
---  97, 89, 3, 2, 200, 170, NULL),
-
-
--- (4, 3, 11, 6, 'casual', NULL, NULL,
---  DATETIME('now', '-4 days', '-2 hours'), 370, 16, 6.5, 63,
---  80, 72, 4, 3, 190, 160, NULL),
--- (3, 1, 11, 5, 'casual', NULL, NULL,
---  DATETIME('now', '-4 days', '-1 hour'), 390, 21, 8.1, 74,
---  120, 55, 6, 1, 280, 60, NULL),
-
--- (3, 2, 11, 10, 'casual', NULL, NULL,
---  DATETIME('now', '-5 days', '-3 hours'), 520, 23, 9.2, 78,
---  130, 127, 5, 4, 300, 290, NULL),
-
--- (3, 4, 15, 12, 'tournament', 1, 'Quarter-Final',
---  DATETIME('now', '-6 days', '-1 hour'), 600, 25, 10.1, 82,
---  150, 140, 6, 5, 350, 330, '0xABC123'),
--- (4, 3, 13, 11, 'tournament', 1, 'Semi-Final',
---  DATETIME('now', '-6 days', '-30 minutes'), 580, 22, 9.3, 80,
---  142, 135, 5, 4, 330, 300, '0xDEF456'),
-
--- (3, 1, 11, 3, 'casual', NULL, NULL,
---  DATETIME('now', '-7 days', '-4 hours'), 360, 14, 6.0, 60,
---  78, 44, 5, 1, 250, 40, NULL),
-
--- (2, 3, 11, 9, 'casual', NULL, NULL,
---  DATETIME('now', '-8 days', '-3 hours'), 430, 18, 7.7, 67,
---  95, 90, 3, 3, 210, 200, NULL),
--- (3, 2, 12, 10, 'casual', NULL, NULL,
---  DATETIME('now', '-8 days', '-1 hour'), 510, 21, 8.9, 75,
---  121, 118, 4, 4, 260, 250, NULL),
-
-
--- (4, 3, 11, 7, 'casual', NULL, NULL,
---  DATETIME('now', '-9 days', '-2 hours'), 400, 17, 7.0, 64,
---  87, 75, 4, 2, 210, 150, NULL),
-
--- (3, 1, 11, 6, 'casual', NULL, NULL,
---  DATETIME('now', '-10 days', '-3 hours'), 390, 20, 7.6, 73,
---  112, 64, 5, 1, 270, 90, NULL);
 
 
