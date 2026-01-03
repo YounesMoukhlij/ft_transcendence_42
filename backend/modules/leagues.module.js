@@ -21,6 +21,8 @@ export async function getLeagueStats(request, reply) {
     minExp = 42000;
     maxExp = 1000000;
   }
+  else
+    return reply.code(404).send({error : "league not found"});
   try {
     const query = request.server.db.prepare(
         `SELECT DISTINCT u.username as name,

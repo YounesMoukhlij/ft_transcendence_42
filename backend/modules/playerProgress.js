@@ -1,25 +1,8 @@
 import jwt from 'jsonwebtoken';
 
 export async function getPlayerProgress(request, reply) {
-  const authHeader = request.headers['authorization'];
-
-  // console.log("Hello everyone");
   
-    if (!authHeader)
-      reply.code(401).send("missing token");
-      
-    const token = authHeader.split(' ')[1];
-    let decodedObject;
-  
-    try{
-      decodedObject = jwt.verify(token, process.env.SECRET);
-    }
-    catch(err){
-      return reply.code(401).send("Invalid token");
-    }
-   
   const username = request.params.username;
-
 
   try {
         const PlayerProgressQuery = request.server.db.prepare(
@@ -49,10 +32,8 @@ export async function getPlayerProgress(request, reply) {
                         COALESCE(stats.losses, 0) AS losses
                     FROM last7
                     LEFT JOIN stats ON last7.d = stats.gday
-                    ORDER BY last7.d;
-`
-      );
-
+                    ORDER BY last7.d;`
+    );
         const PlayerProgress = PlayerProgressQuery.all(username, username);
 
         const result = PlayerProgress.map(row => ({

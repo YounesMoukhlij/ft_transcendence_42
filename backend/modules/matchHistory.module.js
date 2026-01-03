@@ -1,23 +1,7 @@
-import jwt from 'jsonwebtoken';
 
 export async function getMatchHistory(request, reply) {
-  const authHeader = request.headers['authorization'];
-  
-    if (!authHeader)
-      reply.code(401).send("missing token");
-      
-    const token = authHeader.split(' ')[1];
-    let decodedObject;
-  
-    try{
-      decodedObject = jwt.verify(token, process.env.SECRET);
-    }
-    catch(err){
-      return reply.code(401).send("Invalid token");
-    }
-   
-  const username = request.params.username;
 
+  const username = request.params.username;
 
   try {
         const MatchHistoryQuery = request.server.db.prepare(

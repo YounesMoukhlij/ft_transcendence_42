@@ -102,11 +102,8 @@ export async function getUserStatsbyId(request, reply) {
 
 export async function getUserStats(request, reply) {
 
-
-
   const id = request.user.id_user
   
-
   try {
     const query = request.server.db.prepare(
       "SELECT id_user as id, username, fullname, xp, profile_img as avatar FROM users WHERE id_user = ?"

@@ -56,18 +56,17 @@ export function generateToken(username, email, id_user) {
 
     const payload = { username, email, id_user };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-    // console.log(" >> Token generated successfully for user:", username, email, id_user);
+
     return token;
 }
 
-// Helper function to hash passwords
+
 async function hashPassword(password) {
     const salt = await bcrypt.genSalt(10);
     return await bcrypt.hash(password, salt);
 }
 
-// ====== USER MANAGEMENT ======
-// add new user
+
 export async function AddUser(request, reply) {
     const { username, email, password } = request.body;
 
@@ -175,7 +174,7 @@ export async function DeleteAccount(request, reply) {
 }
 
 
-//  settings update user info
+
 export async function updateUserInfo(request, reply) {
     const id_user = request.user.id_user;
     
@@ -394,8 +393,7 @@ export async function update2FA(request, reply) {
     }
 }
 
-// ====== 2FA SETUP ======
-// Generate Secret & OTP URL
+
 export async function generate2FA(request, reply) {
     const { id_user, email } = request.user;
 
@@ -413,7 +411,7 @@ export async function generate2FA(request, reply) {
         return reply.code(500).send({ success: false, message: "Error generating 2FA secret" });
     }
 }
-// Verify Token & Enable 2FA
+
 export async function verifyAndEnable2FA(request, reply) {
     const { token } = request.body; // The 6-digit code
     const { id_user } = request.user;
@@ -448,10 +446,12 @@ export async function verifyAndEnable2FA(request, reply) {
         return reply.code(500).send({ success: false, message: "Error verifying 2FA token" });
     }
 }
-// LOGIN
+
 export async function login(request, reply) {
     const { username, password } = request.body;
     
+
+    // console.log(username ,)
     if (!username || !password) {
         return reply.code(400).send({ 
             success: false, 
@@ -516,7 +516,7 @@ export async function login(request, reply) {
     }
 }
 
-// Verify 2FA code during LOGIN
+
 export async function loginVerify2FA(request, reply) {
     const { userId, token } = request.body; // 6-digit code
 
@@ -567,7 +567,7 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
-// send email with nodemailer of the verification code
+
 async function sendVerificationCode(userEmail, code) {
   const mailOptions = {
     from: `ft_transcendence_42 Support`,
@@ -674,7 +674,7 @@ async function sendVerificationCode(userEmail, code) {
   }
 }
 
-// password reset steps
+
 export async function forgotPassword(request, reply) {
     const { email } = request.body;
     const redis = request.server.redis;
@@ -748,7 +748,6 @@ export async function verifyCode(request, reply) {
     }
 }
 
-// Reset the Password Using the generated 5 min Token
 export async function resetPasswordWithToken(request, reply) {
     const { resetToken, newPassword } = request.body;
 
@@ -784,7 +783,7 @@ export async function resetPasswordWithToken(request, reply) {
     }
 }
 
-// ====== GOOGLE OAUTH ======
+
 export async function InitiateGoogleAuth(request, reply) {
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}&response_type=code&scope=openid%20email%20profile`;
     
@@ -826,7 +825,7 @@ export async function GoogleAuth(request, reply) {
         let isNewUser = false;
 
         if (user) {
-            // Existing user
+            
             userId = user.id_user;
         } else {
             // New user
@@ -860,7 +859,7 @@ export async function GoogleAuth(request, reply) {
     }
 }
 
-// ====== 42 OAUTH ======
+
 export async function Initiate42Auth(request, reply) {
     const authUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${process.env.OAUTH42_UID}&redirect_uri=${process.env.OAUTH42_CALLBACK_URL}&response_type=code`;
     return reply.redirect(authUrl);
@@ -938,7 +937,6 @@ export async function FortyTwoAuth(request, reply) {
     }
 }
 
-// Search users by username/fullname
 export async function searchUsers(request, reply) {
     const { query } = request.query;
 

@@ -1,4 +1,5 @@
 export async function saveGameCustomization(req, reply) {
+    
     const { tableBg, ballColor, paddleColor } = req.body;
     const userId = req.user.id_user;
     const db = req.server.db;

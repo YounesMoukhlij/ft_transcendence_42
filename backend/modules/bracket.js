@@ -232,7 +232,7 @@ export async function getTournamentMatchesFromBlockChain(request, response)
   try {
     const id = request.params.id;
 
-     if (!id) {
+    if (!id) {
       return response.code(400).send({ error: "Tournament ID is required" });
     }
     if (isNaN(id)) {

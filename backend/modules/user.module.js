@@ -1,39 +1,4 @@
-import {ParseIdSchema , sendMsgSchema ,usersettings , BlockSchema , PinnedSchema} from "./moduleSchema.js";
-
-
-// export async function getConversationId(request, reply) {
-
-// const result = ParseIdSchema.safeParse(request.query);
-
-//   if (!result.success) {
-//     return reply.code(400).send("missing params");
-//   }
-//   const { id } = result.data;
-//   console
-
-//   const caseOne = id + "," + request.user.id_user;
-//   const caseTwo = request.user.id_user + "," + id;
-
-//   try 
-//   {
-//     const query = request.server.db.prepare("SELECT * FROM room WHERE members = ?" );
-//     let result = query.get(caseOne);
-
-//     if (!result) {
-//       result = query.get(caseTwo);
-//     }
-
-//     if (result) {
-//       return reply.send(result);
-//     }
-
-//     return reply.code(404).send("conversation not found");
-
-//   }
-//   catch (dberr) {
-//     return reply.code(500).send("internal server error");
-//   }
-// }
+import {ParseIdSchema ,usersettings , BlockSchema , PinnedSchema} from "./moduleSchema.js";
 
 
 export async function getMsgs(request , reply){
@@ -56,81 +21,6 @@ export async function getMsgs(request , reply){
   }
 
 }
-
-
-
-// export async function sendMsg(request, reply) {
-
-//   const result = sendMsgSchema.safeParse(request.body);
-
-//   if (!result.success) {
-//     return reply.code(400).send("bad request ");
-//   }
-
-
-//   const {input , friend_id , id} = result.data;
-  
-//   const socket = request.server.users_socket.get(friend_id.toString());
-  
-  
-  
-//   try {
-//     const query = request.server.db.prepare(
-//       "INSERT INTO message (conv_id, message, sender, isSeen) VALUES (?, ?, ?, ?)"
-//     );
-    
-//     const isSeen = socket ? 1 : 0;
-//     query.run(id, input, request.user.id_user, isSeen);
-    
-//     const room_query = request.server.db.prepare(`UPDATE room SET lastMessage = ?, lastMessageTime = CURRENT_TIMESTAMP,lastMessageSender = ? WHERE conversation_id = ?`); 
-//     room_query.run(input, request.user.id_user, id);
-    
-    
-//     if (socket) {
-//       const data = {
-//         message: input,
-//         conv_id: id,
-//         sender_user_id: request.user.id_user
-//       };
-//       socket.send(JSON.stringify({
-//         type: "message",
-//         data,
-//       }));
-//     }
-
-//     reply.code(200).send( true );
-//   } catch (err) {
-//     console.log(err);
-//     reply.code(500).send({ error: "Internal server error" });
-//   }
-// }
-
-
-
-
-
-export async function IsOnline(request , reply){
-
-  const result = ParseIdSchema.safeParse(request.query);
-
-  if (!result.success)
-    return reply.code(400).send("missing params");
-
-  const {id}  = result.data;
-
-  const socket = request.server.users_socket.get(id.toString());
-
-  try {
-    if(socket)
-      reply.code(200).send(true);
-    else
-      reply.code(200).send(false);
-
-  } catch (err) {
-    reply.code(500).send(err);
-  }
-}
-
 
 
 
@@ -286,9 +176,6 @@ export async function pinned(request, reply) {
   const { id, pinned } = result.data;
 
 
-
-  console.log('id -------->' , id);
-  console.log('pinned flag -------->' , pinned);
   try {
     const room = request.server.db
       .prepare("SELECT * FROM room WHERE conversation_id = ?")
@@ -331,6 +218,8 @@ export async function pinned(request, reply) {
       );
       sql.run(id);
     }
+    else
+      return reply.code(403).send(false);
     
     return reply.code(200).send(true);
 
