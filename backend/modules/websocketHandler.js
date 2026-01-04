@@ -35,6 +35,9 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
           const now = new Date();
           let expired = null;
 
+
+
+          
           if (notif.expired) {
             try {
               let expiredStr = notif.expired;

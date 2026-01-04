@@ -292,11 +292,6 @@ export default function Navbar() {
   useEffect(() => {
     // console.log("notification -===> " , notifications);
     SetunseenCount(notifications.filter(n => !n.is_seen).length);
-
-
-
-
-    console.log("new notification =======+>" , notifications);
   }, [notifications]);
 
   // useEffect(() => {

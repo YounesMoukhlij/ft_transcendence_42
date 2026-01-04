@@ -286,6 +286,9 @@ export default function FriendList( )
     }, [user?.access_token]);
 
 
+  useEffect(()=>{
+    console.log(friends);
+  }, [friends])
 
 
     const [searchTerm, setSearchTerm] = useState<string>('');

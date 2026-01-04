@@ -346,9 +346,14 @@ updatePinStatus: (attribute, friendId, value) => {
         })),
 
       addSentRequests: (friend) =>
-        set((state) => ({
-          sentRequests: [...state.sentRequests, friend],
-        })),
+        set((state) => {
+          const updated = [...state.sentRequests, friend];
+          console.log("BEFORE:", state.sentRequests);
+          console.log("ADDING:", friend);
+          console.log("AFTER:", updated);
+          return { sentRequests: updated };
+        }),
+
 
     addSentRequestsArray: (friendsArray) =>
     set(() => ({
@@ -356,7 +361,8 @@ updatePinStatus: (attribute, friendId, value) => {
     })),
 
       removeSentRequests: (id) =>
-        set((state) => ({
+        set((state) => (
+                  console.log("chtachedddddddd" , id),{
           sentRequests: state.sentRequests.filter(
             (u) => u.getter_user !== id
           ),

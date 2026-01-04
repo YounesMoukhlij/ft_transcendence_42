@@ -19,8 +19,11 @@ export default function ProtectedClient({
   const {
     user, removePendingRequests, updateSeenMessage, contactId, socket, addMessage,connect, removeSentRequests, addPendingRequests ,
     updateLastMessage, removeFriend, updateFriendStatus, Set_Display_game_invite,
-    socketBlockState, setInviterData, addFriend, updateTypingStatus ,sentRequests, addNotification , friends , friendRequestSent, deleteNotification
+    socketBlockState, setInviterData, addFriend, updateTypingStatus , addNotification , deleteNotification
   } = useUserStore();
+
+
+  const sentRequests = useUserStore.getState().sentRequests;
 
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
@@ -68,10 +71,11 @@ export default function ProtectedClient({
           });
           
         } else if (data.title == "friend request accepted") {
+
           addNotification(data);
-          removeSentRequests(data.getter_user);
+          const sentRequests = useUserStore.getState().sentRequests;
+          removeSentRequests(data.sender_user);
           addFriend({ id_user: data.sender_user , conversation_id: data.room_id });
-          console.log("fffff====+>" , friends);
         }
       } 
 
@@ -80,7 +84,6 @@ export default function ProtectedClient({
       } else if (type == "rejected") {
         removeSentRequests(data.getter_user);
       } else if (type == "canceled request") {
-        console.log(data.notify_id);
         deleteNotification(data.notify_id);
         removePendingRequests(data.sender_user);
       }
