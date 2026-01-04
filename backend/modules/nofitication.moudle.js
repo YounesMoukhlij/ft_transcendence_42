@@ -312,6 +312,7 @@ export async function AddFriend(request, reply) {
         data: {
           title:"friend request accepted",
           id_user: me.id_user,
+          sender_user: request.user.id_user,
           username: me.username,
           fullname: me.fullname,
           profile_img: me.profile_img,
@@ -325,9 +326,8 @@ export async function AddFriend(request, reply) {
   } catch (err) {
     console.error(err);
 
-    /* UNIQUE constraint safety */
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
-      return reply.code(409).send({ error: "Friendship already exists" });
+      return reply.code(409).send({ error: "friendship already exists" });
     }
 
     reply.code(500).send({ error: "Failed to add friend" });
@@ -617,5 +617,42 @@ export function DeleteNotification(request , reply){
   } catch (err) {
     console.error('Error deleting notification:', err);
     return reply.code(500).send({ error: 'Internal server error' });
+  }
+}
+
+
+
+
+
+
+
+export function getConversationId(request , reply)
+{
+
+  console.log("1-=================+>");
+  const { id } = request.query;
+  if (!id )
+    return reply(400).send(fasle);
+  console.log("1-=================+>");
+  try{
+    console.log("1-=================+>");
+    const targetUser = request.server.db.prepare("SELECT id_user FROM users WHERE id_user = ?").get(id);
+    if (!targetUser)
+      return reply.code(404).send({ error: "user not found" });
+    console.log("1-=================+>");
+    
+    
+    
+    const caseOne = id + "," + request.user.id_user;
+    const casetwo= request.user.id_user+ "," + id ;
+    console.log("1-=================+>");
+    const roomId = request.server.db.prepare("SELECT conversation_id FROM room WHERE members = ? OR members = ?").get(caseOne , casetwo);
+    console.log("1-=================+>");
+    reply.code(200).send(roomId);
+
+  }catch(err){
+    console.log(err);
+    reply.code(500).send(false);
+
   }
 }

@@ -350,10 +350,10 @@ updatePinStatus: (attribute, friendId, value) => {
           sentRequests: [...state.sentRequests, friend],
         })),
 
-  addSentRequestsArray: (friendsArray) =>
-  set(() => ({
-    sentRequests: [...friendsArray], // creates a new array, no accumulation
-  })),
+    addSentRequestsArray: (friendsArray) =>
+    set(() => ({
+      sentRequests: [...friendsArray], // creates a new array, no accumulation
+    })),
 
       removeSentRequests: (id) =>
         set((state) => ({

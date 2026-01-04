@@ -1,5 +1,5 @@
 import {changeusersettings, getMsgs  , blockFunction ,DeblockFunction , unfriend , pinned} from '../modules/user.module.js';
-import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests , DeleteNotification } from '../modules/nofitication.moudle.js';
+import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests , DeleteNotification ,getConversationId } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
     DeleteAccount,
@@ -100,7 +100,7 @@ export default async function routes(fastify, options) {
   fastify.post('/block' , blockFunction);
   fastify.post('/Deblock' , DeblockFunction);  
   fastify.get('/getSentRequests', GetSentRequests);
-  
+  fastify.get('/getConversationId' , getConversationId);
   fastify.delete('/DeleteFriendRequest' , DeleteFriendRequest);
   fastify.delete('/cancelFriendRequest', cancelFriendRequest);
   fastify.delete('/DeleteNotification' , DeleteNotification);

@@ -109,10 +109,12 @@ const handleAddFriend = async () => {
     );
     if (res.status === 200)
     {
+
       addSentRequests({
         getter_user: userStats.id,
         notify_id: res.data,
       });
+
     }
 
   } catch (err) {
@@ -155,19 +157,20 @@ const handleAcceptFriend = async () => {
 const handleUnfriend = async () => 
 {
    try {
-      //  Get conversation ID
-      // const conversation_id = await api.get(
-      //   `/getConversationId`,
-      //   { id: userStats.id },
-      //     headers: {
-      //       Authorization: `Bearer ${currentUser?.access_token}`,
-      //     },
-      // );
-
-      // const conv_id : number = conversation_id.data.conversation_id;
-
-      //  Unfriend
-
+      
+      if (userStats.conversationId === -1)
+      {
+        const res = await api.get(
+        `/api/getConversationId`,
+        {
+          headers: {
+            Authorization: `Bearer ${currentUser?.access_token}`,
+          },
+          params: { id: userStats.id }
+        }
+      );
+      userStats.conversationId = res.data.conversation_id;
+    }
      const res =  await api.post(
         `/api/unfriend`,
         {

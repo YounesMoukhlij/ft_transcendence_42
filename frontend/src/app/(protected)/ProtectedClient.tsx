@@ -19,7 +19,7 @@ export default function ProtectedClient({
   const {
     user, removePendingRequests, updateSeenMessage, contactId, socket, addMessage,connect, removeSentRequests, addPendingRequests ,
     updateLastMessage, removeFriend, updateFriendStatus, Set_Display_game_invite,
-    socketBlockState, setInviterData, addFriend, updateTypingStatus , addNotification ,notifications, deleteNotification
+    socketBlockState, setInviterData, addFriend, updateTypingStatus ,sentRequests, addNotification , friends , friendRequestSent, deleteNotification
   } = useUserStore();
 
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
@@ -56,11 +56,9 @@ export default function ProtectedClient({
       const { type, data } = JSON.parse(event.data);
 
 
-          console.log("==========+>eeee hna type khaso ykon notify " , type);
 
       if (type === "notify")
       {
-        console.log("key ---> ", data.title);
         if (data.title == "request friend") {
           addNotification(data);
           addPendingRequests({
@@ -70,10 +68,11 @@ export default function ProtectedClient({
           });
           
         } else if (data.title == "friend request accepted") {
-            addNotification(data);
-            removeSentRequests(data.sender_user);
-            addFriend({ id_user: data.sender_user });
-          }
+          addNotification(data);
+          removeSentRequests(data.getter_user);
+          addFriend({ id_user: data.sender_user , conversation_id: data.room_id });
+          console.log("fffff====+>" , friends);
+        }
       } 
 
       if (type == "unfriend") {
