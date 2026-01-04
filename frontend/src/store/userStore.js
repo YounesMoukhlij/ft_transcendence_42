@@ -372,13 +372,13 @@ updatePinStatus: (attribute, friendId, value) => {
 
       addNotification: (notification) =>
       set((state) => ({
-          notifications: [...state.notifications, notification],
+          notifications: [ notification , ...state.notifications],
       })),
 
  deleteNotification: (id) =>
   set((state) => {
     console.log("Deleting notification with id:", id);
-    console.log("Current notifications before delete:", state.notifications);
+    // console.log("Current notifications before delete:", state.notifications);
 
     const newNotifications = state.notifications.filter(
       (n) => n.notify_id !== id

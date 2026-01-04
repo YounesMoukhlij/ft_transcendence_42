@@ -56,11 +56,11 @@ export default function ProtectedClient({
       const { type, data } = JSON.parse(event.data);
 
 
+          console.log("==========+>eeee hna type khaso ykon notify " , type);
+
       if (type === "notify")
       {
-
-
-      console.log("title =====+++> " , data.title);
+        console.log("key ---> ", data.title);
         if (data.title == "request friend") {
           addNotification(data);
           addPendingRequests({
@@ -81,11 +81,9 @@ export default function ProtectedClient({
       } else if (type == "rejected") {
         removeSentRequests(data.getter_user);
       } else if (type == "canceled request") {
-        console.log("data  ===========> " , data);
         console.log(data.notify_id);
         deleteNotification(data.notify_id);
         removePendingRequests(data.sender_user);
-        // return;
       }
       if (type === "message") {
         if (user.sound_notification) playSound();

@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import {ParseIdSchema} from './moduleSchema.js'
+import { title } from 'process';
   function ft_getTime() {
   const now = new Date();
   
@@ -273,9 +274,9 @@ export async function AddFriend(request, reply) {
     "request friend"
   );
 
-if (!notify)
-  return reply.code(403).send({ error: "Friend request not found" });
-
+  if (!notify)
+    return reply.code(403).send({ error: "Friend request not found" });
+  const notifyId = notify.notify_id;
     
     const transaction = db.transaction(() => {
       db.prepare("INSERT INTO friends (user_id, friend_id) VALUES (?, ?)").run(userId, friendId);
@@ -285,6 +286,7 @@ if (!notify)
       const members = [userId, friendId].join(',');
       const room = db.prepare("INSERT INTO room (members) VALUES (?)").run(members);
 
+      db.prepare("DELETE FROM notification WHERE notify_id = ?").run(notifyId);
       const notify = db.prepare(`INSERT INTO notification (getter_user, sender_user, title ,notifyBody) VALUES (?, ?, ?, ?)
       `).run(
         friendId,
@@ -306,8 +308,9 @@ if (!notify)
       const me = db.prepare(`SELECT id_user, username, profile_img, fullname FROM users WHERE id_user = ?`).get(userId);
 
       socket.send(JSON.stringify({
-        type: "friend request accepted",
+        type: "notify",
         data: {
+          title:"friend request accepted",
           id_user: me.id_user,
           username: me.username,
           fullname: me.fullname,

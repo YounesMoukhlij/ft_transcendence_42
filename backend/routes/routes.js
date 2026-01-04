@@ -97,8 +97,8 @@ export default async function routes(fastify, options) {
   fastify.post('/AddFriend' , AddFriend);
   fastify.post('/sendRequestFriend' , sendRequestFriend); 
   fastify.get('/GetNotification' , GetNotification);    
-  fastify.post('/block' , blockFunction);   // check it 
-  fastify.post('/Deblock' , DeblockFunction); // check it 
+  fastify.post('/block' , blockFunction);
+  fastify.post('/Deblock' , DeblockFunction);  
   fastify.get('/getSentRequests', GetSentRequests);
   
   fastify.delete('/DeleteFriendRequest' , DeleteFriendRequest);

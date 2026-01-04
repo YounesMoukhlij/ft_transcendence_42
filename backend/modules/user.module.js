@@ -39,6 +39,18 @@ export async function blockFunction(request , reply){
   try{
 
 
+    const roomStmt = request.server.db.prepare("SELECT members FROM room WHERE conversation_id = ?");
+    const room = roomStmt.get(conv_id);
+
+    if (!room)
+      return reply.code(404).send({ error: "conversation  not found" });
+
+    const members = room.members.split(',').map(n => Number(n));
+
+    if (!members.includes(request.user.id_user))
+      return reply.code(403).send({ error: "you are not a member of this conversation" });
+
+
     const querydata = request.server.db.prepare(`SELECT * from room WHERE conversation_id = ?`);
     const data = querydata.get(conv_id);
 
@@ -86,6 +98,18 @@ export async function DeblockFunction(request , reply){
   const socket = request.server.users_socket.get(friend_id.toString());
 
   try{
+
+    const roomStmt = request.server.db.prepare("SELECT members FROM room WHERE conversation_id = ?");
+    const room = roomStmt.get(conv_id);
+
+    if (!room)
+      return reply.code(404).send({ error: "conversation  not found" });
+
+    const members = room.members.split(',').map(n => Number(n));
+
+    if (!members.includes(request.user.id_user))
+      return reply.code(403).send({ error: "you are not a member of this conversation" });
+
     const query = request.server.db.prepare(`SELECT * FROM  room WHERE conversation_id = ?`);
     const result = query.all(conv_id);
 

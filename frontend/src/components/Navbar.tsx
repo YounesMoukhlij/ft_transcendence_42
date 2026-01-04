@@ -239,7 +239,7 @@ export default function Navbar() {
       removePendingRequests(item.sender_user);
       addFriend(object);
     }
-    // setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
+    // console.log("item ------< " , item);
     deleteNotification(item.notify_id);
 
   }
