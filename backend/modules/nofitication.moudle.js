@@ -147,7 +147,8 @@ export async function cancelFriendRequest(request , reply){
   {
     const object = {
       getter_user : response.getter_user,
-      sender_user : response.sender_user
+      sender_user : response.sender_user,
+      notify_id: id
     }
     socket.send(JSON.stringify({
       type: "canceled request",

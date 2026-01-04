@@ -35,6 +35,7 @@ export const useUserStore = create(
 
       pendingRequests: [],
       sentRequests: [],
+      notifications: [],
       contactId : -1,
 
       Set_Display_game_invite: (value) => set({ Display_game_invite: value }),
@@ -366,6 +367,31 @@ updatePinStatus: (attribute, friendId, value) => {
       // ----------------------
 
       setMessages: (messagesArray) => set({ messages: messagesArray }),
+
+      setnotifications: (notifications) => set({ notifications }),
+
+      addNotification: (notification) =>
+      set((state) => ({
+          notifications: [...state.notifications, notification],
+      })),
+
+ deleteNotification: (id) =>
+  set((state) => {
+    console.log("Deleting notification with id:", id);
+    console.log("Current notifications before delete:", state.notifications);
+
+    const newNotifications = state.notifications.filter(
+      (n) => n.notify_id !== id
+    );
+
+    console.log("Notifications after delete:", newNotifications);
+
+    return { notifications: newNotifications };
+  }),
+
+
+
+
 
       addMessage: (data) =>
         set((state) => {

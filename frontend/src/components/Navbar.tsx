@@ -32,7 +32,7 @@ export default function Navbar() {
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationIndex, setNotificationIndex] = useState(false);
-  const [notificatiion, setNotification] = useState([]);
+
   const [unseenCount, SetunseenCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,10 +44,9 @@ export default function Navbar() {
   const hamburgerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   
-  // const { connect} = useUserStore();
   const setUsername = useUserStore.setState;
-  // const socket = useUserStore((state) => state.socket);
-  const { addFriend,  friends,  addPendingRequestsArray, removePendingRequests, sentRequests, pendingRequests, addSentRequests } = useUserStore();
+  const { addFriend,  friends,  addPendingRequestsArray, removePendingRequests, sentRequests, pendingRequests, addSentRequests , 
+          notifications , deleteNotification ,setnotifications} = useUserStore();
   const user = useUserStore((state) => state.user);
 
   function isTimeValid(item) {
@@ -137,7 +136,6 @@ export default function Navbar() {
     }
   };
 
-  // Debounced search
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 2) {
       setSearchResults([]);
@@ -211,8 +209,10 @@ export default function Navbar() {
 
   async function DelteFriendRequest(notify_id) {
     toast.error('Deleted');
-    const sender_id = notificatiion.filter(item => item.notify_id == notify_id)[0].sender_user;
-    setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
+    const sender_id = notifications.filter(item => item.notify_id == notify_id)[0].sender_user;
+    // deleteNotification(notify_id);
+    deleteNotification(notify_id);
+    // setNotification(notificatiion => notificatiion.filter(item => item.notify_id !== notify_id));
     const res = await axios.delete(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteFriendRequest`, {
       params: { id: notify_id },
       headers: { Authorization: `Bearer ${user.access_token}` }
@@ -239,7 +239,9 @@ export default function Navbar() {
       removePendingRequests(item.sender_user);
       addFriend(object);
     }
-    setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
+    // setNotification(notificatiion => notificatiion.filter(items => items.notify_id !== item.notify_id));
+    deleteNotification(item.notify_id);
+
   }
 
   function showNotification() {
@@ -248,7 +250,7 @@ export default function Navbar() {
 
     // When opening, mark all as seen locally for correct dot behavior
     if (!wasOpen) {
-      setNotification((prev) => prev.map((n) => ({ ...n, is_seen: true })));
+      // setNotifications((prev) => prev.map((n) => ({ ...n, is_seen: true })));
       SetunseenCount(0);
     }
     try {
@@ -273,7 +275,10 @@ export default function Navbar() {
           `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetNotification`,
           { headers: { Authorization: `Bearer ${user.access_token}` } }
         );
-        setNotification(result.data.reverse());
+        // setNotification(result.data.reverse());
+        console.log(result.data);
+        setnotifications(result.data);
+
         addPendingRequestsArray(result.data.filter(object => object.title == "request friend"));
       } catch (error) {
         console.error('Failed to fetch notifications', error);
@@ -285,8 +290,14 @@ export default function Navbar() {
 
 
   useEffect(() => {
-    SetunseenCount(notificatiion.filter(n => !n.is_seen).length);
-  }, [notificatiion]);
+    // console.log("notification -===> " , notifications);
+    SetunseenCount(notifications.filter(n => !n.is_seen).length);
+
+
+
+
+    console.log("new notification =======+>" , notifications);
+  }, [notifications]);
 
   // useEffect(() => {
   //   if (!socket) return;
@@ -333,7 +344,8 @@ export default function Navbar() {
         console.log(e);
       }
 
-      setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+      // setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+      deleteNotification(item.notify_id);
       setNotificationIndex(false);
       router.push('/game/customize');
     } catch (err) {
@@ -345,7 +357,8 @@ export default function Navbar() {
   async function RejectGameChallenge(item) {
     if (!user?.access_token) return;
 
-    setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+    // setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+    deleteNotification(item.notify_id);
     setNotificationIndex(false);
 
     try {
@@ -410,7 +423,8 @@ export default function Navbar() {
         console.log(err);
       }
 
-      setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+      // setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+      deleteNotification(item.notify_id);
       setNotificationIndex(false);
       router.push('/game/tournament');
     } catch (err) {
@@ -450,7 +464,9 @@ export default function Navbar() {
         }));
       }
 
-      setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+      // setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
+            deleteNotification(item.notify_id);
+
       setNotificationIndex(false);
 
       try {
@@ -603,12 +619,12 @@ export default function Navbar() {
                     Notifications
                   </div>
                   <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
-                    {notificatiion.length === 0 ? (
+                    {notifications.length === 0 ? (
                       <div className="text-center text-gray-400 py-8 text-sm">
                         No notifications
                       </div>
                     ) : (
-                      notificatiion.map((item, index) => {
+                      notifications.map((item, index) => {
                         if (item.title === "game challenge") {
                           return (
                             <div

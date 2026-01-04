@@ -5,6 +5,7 @@ import { useUserStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
 import { ToastContainer } from "react-toastify";
 import { useGameContext } from "@/components/GameContext";
+import { number } from "framer-motion";
 
 
 export default function ProtectedClient({
@@ -18,7 +19,7 @@ export default function ProtectedClient({
   const {
     user, removePendingRequests, updateSeenMessage, contactId, socket, addMessage,connect, removeSentRequests, addPendingRequests ,
     updateLastMessage, removeFriend, updateFriendStatus, Set_Display_game_invite,
-    socketBlockState, setInviterData, addFriend, updateTypingStatus
+    socketBlockState, setInviterData, addFriend, updateTypingStatus , addNotification ,notifications, deleteNotification
   } = useUserStore();
 
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
@@ -50,36 +51,41 @@ export default function ProtectedClient({
   useEffect(() => {
     if (!socket) return;
 
+    // alert("here");
     socket.onmessage = (event) => {
       const { type, data } = JSON.parse(event.data);
+
+
       if (type === "notify")
       {
-        // alert("here");
+
+
+      console.log("title =====+++> " , data.title);
         if (data.title == "request friend") {
+          addNotification(data);
           addPendingRequests({
             sender_user: data.sender_user,
             sender_username: data.sender_username,
             notify_id: data.notify_id,
           });
-          } else if (data.title == "friend request accepted") {
+          
+        } else if (data.title == "friend request accepted") {
+            addNotification(data);
             removeSentRequests(data.sender_user);
             addFriend({ id_user: data.sender_user });
           }
-          // setNotification(prev => [{
-          //   sender_user: data.sender_user,
-          //   title: data.title,
-          //   sender_username: data.sender_username,
-          //   sender_profile_img: data.sender_profile_img,
-          //   notify_id: data.notify_id,
-          //   expired: data.expired,
-          //   tournamentId: data.tournamentId
-          // }, ...prev]);
-        } else if (type == "unfriend") {
-          removeFriend(data.id_user);
-        } else if (type == "rejected") {
-          removeSentRequests(data.getter_user);
-        } else if (type == "canceled request") {
-          removePendingRequests(data.sender_user);
+      } 
+
+      if (type == "unfriend") {
+        removeFriend(data.id_user);
+      } else if (type == "rejected") {
+        removeSentRequests(data.getter_user);
+      } else if (type == "canceled request") {
+        console.log("data  ===========> " , data);
+        console.log(data.notify_id);
+        deleteNotification(data.notify_id);
+        removePendingRequests(data.sender_user);
+        // return;
       }
       if (type === "message") {
         if (user.sound_notification) playSound();

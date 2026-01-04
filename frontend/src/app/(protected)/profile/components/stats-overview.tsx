@@ -28,7 +28,7 @@ interface StatsOverviewProps {
 
 
 export function StatsOverview({ userStats }: StatsOverviewProps) {
-const { user: currentUser, friends, addFriend, removeFriend, pendingRequests, removePendingRequests,  sentRequests, addSentRequests, removeSentRequests  } = useUserStore();
+const { user: currentUser, friends, addFriend, removeFriend, deleteNotification,pendingRequests, removePendingRequests,  sentRequests, addSentRequests, removeSentRequests  } = useUserStore();
 
 const _winRate = useCountUp(userStats.winRate, 700) || 0;
 const _totalMatches = useCountUp(userStats.totalMatches, 700);
@@ -123,6 +123,7 @@ const handleAddFriend = async () => {
 
 const handleAcceptFriend = async () => {
   try {
+    const notify_id = pendingRequests.filter(object => object.sender_user == userStats.id)[0].notify_id;
     const res = await api.post(
       `/api/AddFriend`,
     {
@@ -136,6 +137,7 @@ const handleAcceptFriend = async () => {
     if (res.status === 200)
     {
       removePendingRequests(userStats.id);
+      deleteNotification(notify_id);
       addFriend({
         id_user: userStats.id,
         username: userStats.username,
@@ -169,9 +171,7 @@ const handleUnfriend = async () =>
      const res =  await api.post(
         `/api/unfriend`,
         {
-          // user: currentUser.username,
           conv_id : userStats.conversationId,
-          // friend: userStats.username,
           friend_id: userStats.id,
         },{
           headers: {
@@ -206,6 +206,7 @@ const rejectFriendRequest = async () => {
     if (res.status === 200)
     {
       removePendingRequests(userStats.id);
+      deleteNotification(notify_id);
     }
 
     } catch (err) {
