@@ -1,7 +1,7 @@
 'use client';
 
 const WS_FALLBACK_PORT = process.env.NEXT_PUBLIC_BACKEND_PORT || process.env.NEXT_PUBLIC_WS_PORT || '4444';
-const WS_FALLBACK_PATH = process.env.NEXT_PUBLIC_WS_PATH || '/ws';
+const WS_FALLBACK_PATH = '/api/ws';
 const WS_EXPLICIT_URL = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_WEBSOCKET_URL;
 
 let sharedSocket: WebSocket | null = null;
