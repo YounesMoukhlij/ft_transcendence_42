@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useGameContext, Player, TournamentMatch } from '@/components/GameContext';
 import PingPongGame from '@/components/PingPongGame';
 import GameCustomization from '@/components/GameCustomization';
-import { getWebSocket } from '@/components/globalSocket';
+// import { getWebSocket } from '@/components/globalSocket';
 import { useUserStore } from '@/store/userStore';
 import Image from 'next/image';
 import { FaUser, FaUpload, FaCrown, FaTrophy, FaSearch, FaCheck, FaTimes as FaReject, FaClock, FaTimes } from 'react-icons/fa';
@@ -76,7 +76,7 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
 }) => {
   const { t } = useTranslation();
   return (
-    <div className="w-full max-w-6xl mx-auto h-full bg-gray-900 bg-opacity-90 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl border-2 border-purple-500 p-3 sm:p-6 lg:p-8">
+    <div className="w-full max-w-6xl mx-auto h-full  bg-opacity-90 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-2xl border-2 border-purple-500 p-3 sm:p-6 lg:p-8 bg-red-500">
       <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-300 mb-4 sm:mb-6 text-center">{t('game.registerPlayers')}</h2>
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
         {tempPlayers.map((player, index) => (
@@ -158,8 +158,13 @@ export default function TournamentPage() {
   const user = useUserStore((state) => state.user);
   const setUser = useUserStore((state) => state.setUser);
   const clearUser = useUserStore((state) => state.clearUser);
+  const {socket , connect}= useUserStore();
   const { gameState, setGameMode, setPlayers, setTournament, updateTournamentMatch, setCustomisation } = useGameContext();
 
+
+  useEffect(() =>{
+    connect();
+  },[])
   // Initialize tournamentStep from sessionStorage synchronously to prevent flash of setup screen for invited players
   // Only initialize to 'registration' if user is an invited player WITH tournament context (pendingTournamentId)
   // This prevents regular users from seeing the lobby due to stale sessionStorage data
@@ -203,7 +208,7 @@ export default function TournamentPage() {
   const [registeredPlayers, setRegisteredPlayers] = useState<Player[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [remoteTournament, setRemoteTournament] = useState<RemoteTournament | null>(null);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  // const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [tournamentId, setTournamentId] = useState('');
   const [tempPlayers, setTempPlayers] = useState<Player[]>([]);
@@ -475,26 +480,26 @@ export default function TournamentPage() {
   useEffect(() => {
     // If we don't have tournament data yet, request it
     if (!tournamentId && !remoteTournament && user?.id_user) {
-      const ws = getWebSocket();
-      if (ws) {
+      // const ws = getWebSocket();
+      if (socket) {
         const checkTournament = () => {
-          if (ws.readyState === WebSocket.OPEN) {
+          if (socket.readyState === WebSocket.OPEN) {
             // Send user ID for authentication
-            ws.send(String(user.id_user));
+            socket.send(String(user.id_user));
 
             // Request tournament list after a short delay to ensure auth is processed
             setTimeout(() => {
-              if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
+              if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
                   type: 'game',
                   action: 'searchTournaments',
                   payload: {}
                 }));
               }
             }, 500);
-          } else if (ws.readyState === WebSocket.CONNECTING) {
+          } else if (socket.readyState === WebSocket.CONNECTING) {
             // Wait for connection
-            ws.addEventListener('open', checkTournament, { once: true });
+            socket.addEventListener('open', checkTournament, { once: true });
           }
         };
 
@@ -573,8 +578,8 @@ export default function TournamentPage() {
   // Separate useEffect for WebSocket management
   useEffect(() => {
     // Always set up WebSocket to handle tournament messages
-    const ws = getWebSocket();
-    setSocket(ws);
+    // const ws = getWebSocket();
+    // setSocket(socket);
 
     const handleMessage = (event: MessageEvent) => {
         const message = JSON.parse(event.data);
@@ -2053,21 +2058,21 @@ export default function TournamentPage() {
         }
       };
 
-      ws.addEventListener('message', handleMessage);
+      socket.addEventListener('message', handleMessage);
 
       // Handle socket reconnection
       const handleOpen = () => {
         // Send user ID for authentication
         if (user?.id_user) {
-          ws.send(String(user.id_user));
+          socket.send(String(user.id_user));
         }
 
         // If we're in a tournament, request latest state after a short delay
         // This ensures the socket is fully ready
         setTimeout(() => {
-          if (tournamentId && ws.readyState === WebSocket.OPEN) {
+          if (tournamentId && socket.readyState === WebSocket.OPEN) {
             // Request tournament update by searching (which will return current tournament if we're in it)
-            ws.send(JSON.stringify({
+            socket.send(JSON.stringify({
               type: 'game',
               action: 'searchTournaments',
               payload: {}
@@ -2075,7 +2080,7 @@ export default function TournamentPage() {
           } else if (!tournamentId && tournamentType === 'remote' && tournamentStep === 'setup') {
             // If we just navigated here from accepting an invite but don't have tournamentId yet,
             // request tournament list to see if we're in one (the backend will include our tournament if we're registered)
-            ws.send(JSON.stringify({
+            socket.send(JSON.stringify({
               type: 'game',
               action: 'searchTournaments',
               payload: {}
@@ -2093,23 +2098,23 @@ export default function TournamentPage() {
         console.error('WebSocket error:', error);
       };
 
-      ws.addEventListener('open', handleOpen);
-      ws.addEventListener('close', handleClose);
-      ws.addEventListener('error', handleError);
+      socket.addEventListener('open', handleOpen);
+      socket.addEventListener('close', handleClose);
+      socket.addEventListener('error', handleError);
 
       // Send username for authentication if already open
-      if (ws.readyState === WebSocket.OPEN) {
+      if (socket.readyState === WebSocket.OPEN) {
         if (user?.id_user) {
-          ws.send(String(user.id_user));
+          socket.send(String(user.id_user));
         }
       }
 
       // Periodic sync: Request tournament updates every 15 seconds if in a tournament
       // This ensures players stay synchronized even if they miss a broadcast
       const syncInterval = setInterval(() => {
-        if (tournamentId && remoteTournament && ws.readyState === WebSocket.OPEN) {
+        if (tournamentId && remoteTournament && socket.readyState === WebSocket.OPEN) {
           // Request latest tournament state
-          ws.send(JSON.stringify({
+          socket.send(JSON.stringify({
             type: 'game',
             action: 'searchTournaments',
             payload: {}
@@ -2118,10 +2123,10 @@ export default function TournamentPage() {
       }, 15000); // Sync every 15 seconds (matches backend broadcast interval)
 
       return () => {
-        ws.removeEventListener('message', handleMessage);
-        ws.removeEventListener('open', handleOpen);
-        ws.removeEventListener('close', handleClose);
-        ws.removeEventListener('error', handleError);
+        socket.removeEventListener('message', handleMessage);
+        socket.removeEventListener('open', handleOpen);
+        socket.removeEventListener('close', handleClose);
+        socket.removeEventListener('error', handleError);
         clearInterval(syncInterval);
       };
     // eslint-disable-next-line react-hooks/exhaustive-deps
