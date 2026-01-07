@@ -5,7 +5,6 @@ import { useUserStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
 import { ToastContainer } from "react-toastify";
 import { useGameContext } from "@/components/GameContext";
-import { number } from "framer-motion";
 
 
 export default function ProtectedClient({
@@ -35,8 +34,8 @@ export default function ProtectedClient({
 
 
   useEffect(() => {
-    connect();
-    // alert("socket connected");
+    if (!socket)
+      connect();
     const a = new Audio("/sound/message.mp3");
     setAudio(a);
 
