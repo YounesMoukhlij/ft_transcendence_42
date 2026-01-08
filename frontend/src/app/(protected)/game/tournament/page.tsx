@@ -1614,19 +1614,33 @@ export default function TournamentPage() {
               // Update serverGameState with final state to prevent freezing
               if (finalGameState) {
                 console.log('[Frontend] Setting final gameState from gameOver message');
+                // CRITICAL: Preserve roomCode and matchId from current serverGameState to ensure paddle movement works
+                const currentRoomCode = serverGameState?.roomCode;
+                const currentMatchId = serverGameState?.matchId;
+
                 const enrichedFinal = {
                   ...finalGameState,
-                  roomCode: finalGameState.roomCode
+                  // Prioritize existing serverGameState values, then fallback to other sources
+                  roomCode: currentRoomCode
+                    || finalGameState.roomCode
                     || gameState.tournament?.bracket?.[currentMatchIndex]?.roomCode
-                    || serverGameState?.roomCode
                     || message.roomCode,
-                  matchId: finalGameState.matchId
+                  matchId: currentMatchId
+                    || finalGameState.matchId
                     || gameState.tournament?.bracket?.[currentMatchIndex]?.id
                     || message.matchId,
                   round: finalGameState.round
                     || gameState.tournament?.bracket?.[currentMatchIndex]?.round
                     || message.round,
                 };
+
+                console.log('[Frontend] Final gameState enrichment:', {
+                  hadExistingRoomCode: !!currentRoomCode,
+                  hadExistingMatchId: !!currentMatchId,
+                  finalRoomCode: enrichedFinal.roomCode,
+                  finalMatchId: enrichedFinal.matchId
+                });
+
                 setServerGameState(enrichedFinal);
               }
 
