@@ -27,6 +27,7 @@ class GameManager {
     this.randomOpponentQueue = new Map(); // userId -> { tournamentId, playerInfo }
     this.creatingFinalMatch = new Set(); // tournamentId -> Set of tournamentIds currently creating final match (prevents race conditions)
     this.finalMatchReady = new Map(); // tournamentId -> Set<playerId> - tracks which players are ready for final match
+    this.tournamentObservers = new Map(); // tournamentId -> Set<playerId> - eliminated hosts who can still watch
   }
 
   // Generate unique room code
@@ -2888,30 +2889,119 @@ class GameManager {
     // Broadcast updated bracket to all players
     const broadcastLoserId = (player1Id === winnerId ? player2Id : player1Id).toString();
 
-    // CRITICAL: Disconnect losers from tournament socket after Round 1 loss
-    // They should no longer receive tournament updates
+    // CRITICAL: Handle Round 1 elimination with special logic for host
     if (match.round === 1) {
-      // Track eliminated player
-      if (!this.eliminatedPlayers) {
-        this.eliminatedPlayers = new Map();
-      }
-      if (!this.eliminatedPlayers.has(tournamentId)) {
-        this.eliminatedPlayers.set(tournamentId, new Set());
-      }
-      this.eliminatedPlayers.get(tournamentId).add(broadcastLoserId);
+      // Check if the loser is the tournament host
+      const isHostLosing = tournament.host.id.toString() === broadcastLoserId;
 
-      const loserSocket = this.usersSocket.get(broadcastLoserId);
-      if (loserSocket) {
-        // Send tournament elimination message to loser
-        this.sendToPlayer(loserSocket, {
-          type: 'tournamentEliminated',
-          data: {
-            tournamentId: tournamentId,
-            matchId: matchId,
-            message: 'You have been eliminated from the tournament. You will no longer receive tournament updates.'
-          }
+      if (isHostLosing) {
+        // TRANSFER HOST PRIVILEGES: Host loses match but tournament continues with new host
+        console.log(`[handleMatchResult] Host ${broadcastLoserId} lost match ${matchId}, transferring host privileges`);
+
+        // Find remaining active players (not eliminated and not the old host)
+        const activePlayers = tournament.registeredPlayers.filter(player => {
+          const playerIdStr = player.id.toString();
+          // Player is active if they're not eliminated AND not the old host
+          return !this.eliminatedPlayers?.get(tournamentId)?.has(playerIdStr);
         });
-        console.log(`[handleMatchResult] Disconnected loser ${broadcastLoserId} from tournament ${tournamentId} after Round 1 loss`);
+
+        if (activePlayers.length > 0) {
+          // Select new host: preferably the winner of this match, otherwise random
+          const winnerPlayer = tournament.registeredPlayers.find(p =>
+            p.id.toString() === winnerId || p.id === winnerId
+          );
+          const newHost = winnerPlayer || activePlayers[Math.floor(Math.random() * activePlayers.length)];
+
+          console.log(`[handleMatchResult] Transferring host from ${tournament.host.id} to ${newHost.id}`);
+
+          // Update tournament host
+          tournament.host = {
+            id: newHost.id,
+            name: newHost.name,
+            avatar: newHost.avatar || 'https://cdn-icons-png.flaticon.com/512/6858/6858504.png',
+            color: newHost.color || '#3B82F6'
+          };
+
+          // Update host in database
+          try {
+            if (tournament.dbId) {
+              const updateStmt = this.db.prepare('UPDATE tournaments SET host_id = ? WHERE id_tournament = ?');
+              updateStmt.run(newHost.id, tournament.dbId);
+              console.log(`[handleMatchResult] Updated tournament host in database: ${newHost.id}`);
+            }
+          } catch (error) {
+            console.error('[handleMatchResult] Error updating tournament host in database:', error);
+          }
+
+          // Add old host to observers (they can still watch)
+          if (!this.tournamentObservers) {
+            this.tournamentObservers = new Map();
+          }
+          if (!this.tournamentObservers.has(tournamentId)) {
+            this.tournamentObservers.set(tournamentId, new Set());
+          }
+          this.tournamentObservers.get(tournamentId).add(broadcastLoserId);
+
+          // Notify old host they lost but tournament continues
+          const oldHostSocket = this.usersSocket.get(broadcastLoserId);
+          if (oldHostSocket) {
+            this.sendToPlayer(oldHostSocket, {
+              type: 'tournamentEliminated',
+              data: {
+                tournamentId: tournamentId,
+                matchId: matchId,
+                message: 'You lost your match, but the tournament continues. You can watch as an observer.',
+                isHostTransfer: true,
+                newHost: newHost
+              }
+            });
+          }
+
+          // Notify new host about their promotion
+          const newHostSocket = this.usersSocket.get(newHost.id.toString());
+          if (newHostSocket) {
+            this.sendToPlayer(newHostSocket, {
+              type: 'becameTournamentHost',
+              data: {
+                tournamentId: tournamentId,
+                message: 'You are now the tournament host!',
+                reason: 'Previous host was eliminated'
+              }
+            });
+          }
+
+          // DO NOT add old host to eliminated players - they remain as observers
+          console.log(`[handleMatchResult] Old host ${broadcastLoserId} remains as observer, new host: ${newHost.id}`);
+        } else {
+          // No active players left - this shouldn't happen in a 4-player tournament
+          console.error(`[handleMatchResult] ERROR: No active players left after host elimination in tournament ${tournamentId}`);
+          // Fallback: cancel tournament
+          this.cancelTournament(tournamentId, tournament.host.id);
+          return { success: true, bracket };
+        }
+      } else {
+        // Regular player elimination (not host)
+        if (!this.eliminatedPlayers) {
+          this.eliminatedPlayers = new Map();
+        }
+        if (!this.eliminatedPlayers.has(tournamentId)) {
+          this.eliminatedPlayers.set(tournamentId, new Set());
+        }
+        this.eliminatedPlayers.get(tournamentId).add(broadcastLoserId);
+
+        const loserSocket = this.usersSocket.get(broadcastLoserId);
+        if (loserSocket) {
+          // Send tournament elimination message to loser
+          this.sendToPlayer(loserSocket, {
+            type: 'tournamentEliminated',
+            data: {
+              tournamentId: tournamentId,
+              matchId: matchId,
+              message: 'You have been eliminated from the tournament. You will no longer receive tournament updates.'
+            }
+          });
+          console.log(`[handleMatchResult] Disconnected loser ${broadcastLoserId} from tournament ${tournamentId} after Round 1 loss`);
+        }
       }
     }
 
@@ -3035,13 +3125,23 @@ class GameManager {
     }
     const eliminatedSet = this.eliminatedPlayers.get(tournament.id);
 
+    // Track observers (eliminated hosts who can still watch)
+    if (!this.tournamentObservers) {
+      this.tournamentObservers = new Map(); // tournamentId -> Set of observer player IDs
+    }
+    if (!this.tournamentObservers.has(tournament.id)) {
+      this.tournamentObservers.set(tournament.id, new Set());
+    }
+    const observerSet = this.tournamentObservers.get(tournament.id);
+
     // Send to all registered players (includes host) EXCEPT eliminated players
     for (const player of tournament.registeredPlayers) {
       if (sentTo.has(player.id)) continue; // Skip if already sent
 
-      // Skip eliminated players - they should not receive tournament updates
       const playerIdStr = player.id.toString();
-      if (eliminatedSet.has(playerIdStr)) {
+
+      // Skip eliminated players UNLESS they are observers (eliminated hosts)
+      if (eliminatedSet.has(playerIdStr) && !observerSet.has(playerIdStr)) {
         console.log(`[broadcastTournamentUpdate] Skipping eliminated player ${playerIdStr} from tournament ${tournament.id} updates`);
         continue;
       }
@@ -3502,6 +3602,20 @@ class GameManager {
             // If Set is now empty, remove it
             if (readySet.size === 0) {
               this.finalMatchReady.delete(tournamentId);
+            }
+          }
+        }
+
+        // Clean up observers if player was an observer
+        if (this.tournamentObservers?.has(tournamentId)) {
+          const observerSet = this.tournamentObservers.get(tournamentId);
+          const playerIdStr = playerId.toString();
+          if (observerSet.has(playerIdStr)) {
+            observerSet.delete(playerIdStr);
+            console.log(`[handleTournamentDisconnect] Removed observer ${playerIdStr} from tournament ${tournamentId}`);
+            // If Set is now empty, remove it
+            if (observerSet.size === 0) {
+              this.tournamentObservers.delete(tournamentId);
             }
           }
         }

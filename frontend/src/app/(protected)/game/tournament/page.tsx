@@ -581,6 +581,11 @@ export default function TournamentPage() {
     // const ws = getWebSocket();
     // setSocket(socket);
 
+    // Guard against null socket
+    if (!socket) {
+      return;
+    }
+
     const handleMessage = (event: MessageEvent) => {
         const message = JSON.parse(event.data);
 
@@ -1894,7 +1899,17 @@ export default function TournamentPage() {
           case 'tournamentEliminated':
             // Player has been eliminated or left - disconnect from tournament
             toast.info(message.data.message || 'You have been disconnected from the tournament');
-            // Reset tournament state
+
+            // Check if this is a host transfer (host lost but tournament continues)
+            if (message.data.isHostTransfer) {
+              // Host remains as observer - don't reset tournament state completely
+              setIsHost(false); // No longer host
+              toast.info(`Tournament continues with new host: ${message.data.newHost?.name || 'another player'}`);
+              // Stay on tournament page to watch as observer
+              break;
+            }
+
+            // Regular elimination - reset tournament state
             setRemoteTournament(null);
             setTournamentId('');
             setIsHost(false);
@@ -1907,6 +1922,12 @@ export default function TournamentPage() {
             setTimeout(() => {
               router.push('/game');
             }, 2000);
+            break;
+
+          case 'becameTournamentHost':
+            // Player has been promoted to tournament host
+            setIsHost(true);
+            toast.success(message.data.message || 'You are now the tournament host!');
             break;
 
           case 'tournamentPlayerLeft':
@@ -2123,10 +2144,13 @@ export default function TournamentPage() {
       }, 15000); // Sync every 15 seconds (matches backend broadcast interval)
 
       return () => {
-        socket.removeEventListener('message', handleMessage);
-        socket.removeEventListener('open', handleOpen);
-        socket.removeEventListener('close', handleClose);
-        socket.removeEventListener('error', handleError);
+        // Guard against null socket in cleanup
+        if (socket) {
+          socket.removeEventListener('message', handleMessage);
+          socket.removeEventListener('open', handleOpen);
+          socket.removeEventListener('close', handleClose);
+          socket.removeEventListener('error', handleError);
+        }
         clearInterval(syncInterval);
       };
     // eslint-disable-next-line react-hooks/exhaustive-deps
