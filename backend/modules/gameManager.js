@@ -3227,6 +3227,58 @@ class GameManager {
     return { success: true };
   }
 
+  // Silent cleanup for completed tournaments (no user notifications)
+  cleanupCompletedTournament(tournamentId, userId) {
+    console.log(`[cleanupCompletedTournament] Starting cleanup for tournament ${tournamentId} by user ${userId}`);
+
+    const tournament = this.tournaments.get(tournamentId);
+    if (!tournament) {
+      console.log(`[cleanupCompletedTournament] Tournament ${tournamentId} not found in active tournaments`);
+      // Tournament might already be cleaned up, which is fine
+      return { success: true };
+    }
+
+    console.log(`[cleanupCompletedTournament] Found tournament ${tournamentId} with status: ${tournament.status}`);
+
+    // Allow any player to trigger cleanup (not just host)
+    // This is called automatically after tournament completion
+
+    // Clean up tournament data (same as cancelTournament)
+    const wasDeleted = this.tournaments.delete(tournamentId);
+    console.log(`[cleanupCompletedTournament] Tournament ${tournamentId} removed from active tournaments: ${wasDeleted}`);
+
+    this.tournamentJoinRequests.delete(tournamentId);
+
+    // Remove from random opponent queue
+    let removedFromQueue = 0;
+    for (const [key, entry] of this.randomOpponentQueue.entries()) {
+      if (entry.isTournamentSearch && entry.tournamentId === tournamentId) {
+        this.randomOpponentQueue.delete(key);
+        removedFromQueue++;
+      }
+    }
+    console.log(`[cleanupCompletedTournament] Removed ${removedFromQueue} entries from random opponent queue`);
+
+    // Remove tournament invites for this tournament
+    let cleanedInvites = 0;
+    for (const [playerId, invites] of this.tournamentInvites.entries()) {
+      const originalLength = invites.length;
+      const filteredInvites = invites.filter(inv => inv.tournamentId !== tournamentId);
+      if (filteredInvites.length !== originalLength) {
+        cleanedInvites += (originalLength - filteredInvites.length);
+        if (filteredInvites.length === 0) {
+          this.tournamentInvites.delete(playerId);
+        } else {
+          this.tournamentInvites.set(playerId, filteredInvites);
+        }
+      }
+    }
+    console.log(`[cleanupCompletedTournament] Cleaned up ${cleanedInvites} tournament invites`);
+
+    console.log(`[cleanupCompletedTournament] Successfully completed cleanup for tournament ${tournamentId}`);
+    return { success: true };
+  }
+
   // Leave tournament (non-host players only)
   leaveTournament(tournamentId, playerId) {
     const tournament = this.tournaments.get(tournamentId);
@@ -3620,8 +3672,9 @@ class GameManager {
           }
         }
 
-        // If host disconnected, disband tournament
-        if (tournament.host.id === playerId) {
+        // If host disconnected, disband tournament (but not if tournament already completed)
+        if (tournament.host.id === playerId && tournament.status !== 'finished' && tournament.status !== 'completed') {
+          console.log(`[handleTournamentDisconnect] Host ${playerId} disconnected from active tournament ${tournamentId} - disbanding`);
           // Notify all players
           this.broadcastTournamentUpdate(tournament);
           for (const player of tournament.registeredPlayers) {
@@ -3637,6 +3690,12 @@ class GameManager {
           this.tournaments.delete(tournamentId);
           this.tournamentJoinRequests.delete(tournamentId);
           // Clean up final match readiness for this tournament
+          this.finalMatchReady.delete(tournamentId);
+        } else if (tournament.host.id === playerId && (tournament.status === 'finished' || tournament.status === 'completed')) {
+          console.log(`[handleTournamentDisconnect] Host ${playerId} disconnected from completed tournament ${tournamentId} - silent cleanup`);
+          // Tournament already completed, just clean up silently
+          this.tournaments.delete(tournamentId);
+          this.tournamentJoinRequests.delete(tournamentId);
           this.finalMatchReady.delete(tournamentId);
         } else {
           // Broadcast update

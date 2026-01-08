@@ -1752,16 +1752,16 @@ export default function TournamentPage() {
               // Redirect all players to game lobby after showing tournament completion (10 seconds)
               setTimeout(() => {
                 console.log('[Frontend] Redirecting all players to game lobby after tournament completion');
-                // Leave tournament for all players - do NOT send cancelTournament as tournament is already completed
-                if (socket && tournamentId) {
-                  // For both host and non-host players, just send leaveTournament
-                  // Tournament is already finished on backend, so no need to cancel
+                // Silent cleanup for host only - tournament is already finished
+                if (socket && tournamentId && isHost) {
+                  console.log(`[Frontend] Host sending cleanupCompletedTournament for completed tournament ${tournamentId}`);
                   socket.send(JSON.stringify({
                     type: 'game',
-                    action: 'leaveTournament',
+                    action: 'cleanupCompletedTournament',
                     payload: { tournamentId }
                   }));
                 }
+                // Non-host players don't need to do anything - tournament is finished
                 // Redirect to game lobby
                 router.push('/game');
               }, 10000); // 10 seconds to view tournament completion screen
@@ -2772,24 +2772,8 @@ export default function TournamentPage() {
       const redirectTimer = setTimeout(() => {
         console.log('[Frontend] Redirecting all players to game lobby after tournament completion');
 
-        // Leave tournament for all players (rooms already deleted by backend)
-        if (socket && tournamentId) {
-          if (isHost) {
-            socket.send(JSON.stringify({
-              type: 'game',
-              action: 'cancelTournament',
-              payload: { tournamentId }
-            }));
-          } else {
-            socket.send(JSON.stringify({
-              type: 'game',
-              action: 'leaveTournament',
-              payload: { tournamentId }
-            }));
-          }
-        }
-
-        // Redirect to game lobby
+        // Tournament cleanup is handled immediately in tournamentCompleted handler
+        // Just redirect to game lobby
         router.push('/game');
       }, 10000); // 10 seconds to view tournament completion screen
 

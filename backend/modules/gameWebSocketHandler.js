@@ -867,6 +867,34 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
         return;
       }
 
+      if (action === 'cleanupCompletedTournament') {
+        const tournamentId = payload.tournamentId;
+        console.log(`[WebSocket] Received cleanupCompletedTournament for tournament ${tournamentId} from user ${userId}`);
+
+        if (!tournamentId) {
+          console.log(`[WebSocket] cleanupCompletedTournament failed: Tournament ID required`);
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: 'Tournament ID required'
+          }));
+          return;
+        }
+
+        const result = gameManager.cleanupCompletedTournament(tournamentId, userId);
+
+        if (result.error) {
+          console.log(`[WebSocket] cleanupCompletedTournament failed: ${result.error}`);
+          socket.send(JSON.stringify({
+            type: 'error',
+            message: result.error
+          }));
+        } else {
+          // Silent cleanup - no message sent to users
+          console.log(`[WebSocket] cleanupCompletedTournament successful: Tournament ${tournamentId} cleaned up silently by user ${userId}`);
+        }
+        return;
+      }
+
       if (action === 'leaveTournament') {
         const tournamentId = payload.tournamentId;
 
