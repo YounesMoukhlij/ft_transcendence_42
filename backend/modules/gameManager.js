@@ -284,18 +284,10 @@ class GameManager {
     const playerIdStr = String(playerId);
     if (String(room.player1.id) === playerIdStr) {
       room.paddleDirections.player1 = direction;
-      if (matchLabel) {
-        console.log(`[handlePaddleMove] ${matchLabel}: Player1 (${playerId}) direction: ${direction}`);
-      } else {
-        console.log(`[handlePaddleMove] Player1 (${playerId}) direction set to: ${direction}`);
-      }
+      
     } else if (String(room.player2.id) === playerIdStr) {
       room.paddleDirections.player2 = direction;
-      if (matchLabel) {
-        console.log(`[handlePaddleMove] ${matchLabel}: Player2 (${playerId}) direction: ${direction}`);
-      } else {
-        console.log(`[handlePaddleMove] Player2 (${playerId}) direction set to: ${direction}`);
-      }
+      
     } else {
       console.warn(`[handlePaddleMove] Player ${playerId} not found in room ${roomCode}`);
     }
@@ -565,24 +557,14 @@ class GameManager {
 
 
 
-            console.log(`[startGameLoop] Tournament match finished due to disconnect - automatically reporting result:`, {
-              tournamentId,
-              matchId,
-              winner: winnerPlayer.name,
-              quitter: loserUsername,
-              round: room.tournamentContext.round
-            });
+            
 
             // Automatically report match result to tournament system
             try {
               const matchResult = this.handleMatchResult(tournamentId, matchId, winnerPlayer, winnerId);
 
 
-              if (matchResult.error) {
-                console.error(`[startGameLoop] Failed to report tournament match result:`, matchResult.error);
-              } else {
-                console.log(`[startGameLoop] Successfully reported tournament match result for match ${matchId}`);
-              }
+             
             } catch (error) {
 
               console.error(`[startGameLoop] Error reporting tournament match result:`, error);
@@ -693,7 +675,7 @@ class GameManager {
             const updatedSocket = this.usersSocket.get(room.player1.id.toString());
             if (updatedSocket && updatedSocket.readyState === 1) {
               room.player1.socket = updatedSocket;
-              console.log(`[startGameLoop] Updated stale socket for player1 (${room.player1.id}) before gameOver`);
+              
             }
           }
 
@@ -701,7 +683,7 @@ class GameManager {
             const updatedSocket = this.usersSocket.get(room.player2.id.toString());
             if (updatedSocket && updatedSocket.readyState === 1) {
               room.player2.socket = updatedSocket;
-              console.log(`[startGameLoop] Updated stale socket for player2 (${room.player2.id}) before gameOver`);
+              
             }
           }
 
@@ -730,7 +712,7 @@ class GameManager {
           setTimeout(() => {
             const finalRoom = this.gameRooms.get(roomCode);
             if (finalRoom) {
-              console.log(`[startGameLoop] Sending final gameState after gameOver for room ${roomCode}`);
+              
               this.broadcastGameState(roomCode, finalRoom.gameState);
             }
           }, 100); // 100ms delay to ensure gameOver is sent first
@@ -764,22 +746,13 @@ class GameManager {
                   avatar: room.player2.avatar || null
                 };
 
-            console.log(`[startGameLoop] Tournament match finished - automatically reporting result:`, {
-              tournamentId,
-              matchId,
-              winner: winnerPlayer.name,
-              round: room.tournamentContext.round
-            });
-
+            
+              
             // Automatically report match result to tournament system
             // This ensures Round 2 is created immediately when both Round 1 matches finish
             try {
               const matchResult = this.handleMatchResult(tournamentId, matchId, winnerPlayer, winnerId);
-              if (matchResult.error) {
-                console.error(`[startGameLoop] Failed to report tournament match result:`, matchResult.error);
-              } else {
-                console.log(`[startGameLoop] Successfully reported tournament match result for match ${matchId}`);
-              }
+             
             } catch (error) {
               console.error(`[startGameLoop] Error reporting tournament match result:`, error);
             }
@@ -843,22 +816,14 @@ class GameManager {
     if (freshP1Socket && freshP1Socket.readyState === 1) {
       if (room.player1.socket !== freshP1Socket) {
         room.player1.socket = freshP1Socket;
-        if (matchLabel) {
-          console.log(`[broadcastGameState] ${matchLabel}: Updated socket for player1 (${room.player1.id})`);
-        } else {
-          console.log(`[broadcastGameState] Updated socket for player1 (${room.player1.id}) in room ${roomCode}`);
-        }
+       
       }
     }
 
     if (freshP2Socket && freshP2Socket.readyState === 1) {
       if (room.player2.socket !== freshP2Socket) {
         room.player2.socket = freshP2Socket;
-        if (matchLabel) {
-          console.log(`[broadcastGameState] ${matchLabel}: Updated socket for player2 (${room.player2.id})`);
-        } else {
-          console.log(`[broadcastGameState] Updated socket for player2 (${room.player2.id}) in room ${roomCode}`);
-        }
+      
       }
     }
 
@@ -970,6 +935,7 @@ class GameManager {
     }
   }
 
+
   // Send message to player
   sendToPlayer(socket, message) {
     if (!socket) {
@@ -1035,7 +1001,7 @@ class GameManager {
               const roomAge = Date.now() - (matchRoom.createdAt || matchRoom.startTime || 0);
               const MIN_ROOM_AGE = 10000; // 10 seconds
               if (roomAge < MIN_ROOM_AGE) {
-                console.log(`[removePlayer] Player ${playerId} left tournament match ${activeMatch.id} but room ${activeMatch.roomCode} is too new (${roomAge}ms < ${MIN_ROOM_AGE}ms). Not processing as match result.`);
+                
                 return; // Exit early - don't process as match result
               }
             } else {
@@ -1046,7 +1012,7 @@ class GameManager {
                 const matchAge = activeMatch.startedAt ? Date.now() - activeMatch.startedAt : Infinity;
 
                 if (matchAge < MIN_MATCH_AGE) {
-                  console.log(`[removePlayer] Player ${playerId} left final match ${activeMatch.id} but match was started ${matchAge}ms ago (< ${MIN_MATCH_AGE}ms). Room was likely just created and deleted - not processing as match result.`);
+                
                   return; // Exit early - don't process as match result
                 }
               }
@@ -1106,11 +1072,11 @@ class GameManager {
           try {
             const matchResult = this.handleMatchResult(tournamentId, activeMatch.id, winnerPlayer, winner.id || winner.id_user);
 
-            if (matchResult.error) {
-              console.error(`[removePlayer] Failed to report tournament match result for active match:`, matchResult.error);
-            } else {
-              console.log(`[removePlayer] Successfully processed active tournament match result for match ${activeMatch.id}`);
-            }
+            // if (matchResult.error) {
+            //   console.error(`[removePlayer] Failed to report tournament match result for active match:`, matchResult.error);
+            // } else {
+            //   console.log(`[removePlayer] Successfully processed active tournament match result for match ${activeMatch.id}`);
+            // }
 
             // CRITICAL: Disconnect quitter from tournament socket
             // They should no longer receive tournament updates
@@ -1135,7 +1101,7 @@ class GameManager {
                   message: 'You have left the tournament match. You will no longer receive tournament updates.'
                 }
               });
-              console.log(`[removePlayer] Disconnected quitter ${quitterId} from tournament ${tournamentId} after leaving match`);
+              // console.log(`[removePlayer] Disconnected quitter ${quitterId} from tournament ${tournamentId} after leaving match`);
             }
           } catch (error) {
             console.error(`[removePlayer] Error reporting tournament match result for active match:`, error);
@@ -1156,7 +1122,7 @@ class GameManager {
     const MIN_ROOM_AGE = 10000; // 10 seconds - minimum time before processing leave as match result (increased for final match)
 
     if (room.tournamentContext && roomAge < MIN_ROOM_AGE) {
-      console.log(`[removePlayer] Player ${playerId} left tournament room ${roomCode} too soon (${roomAge}ms < ${MIN_ROOM_AGE}ms). Not processing as match result to prevent skipping. Game will continue until minimum time has passed.`);
+      // console.log(`[removePlayer] Player ${playerId} left tournament room ${roomCode} too soon (${roomAge}ms < ${MIN_ROOM_AGE}ms). Not processing as match result to prevent skipping. Game will continue until minimum time has passed.`);
       // CRITICAL: Don't delete the room or stop the game loop when guard blocks
       // The game loop will naturally detect the disconnected socket and handle it after minimum time
       // This prevents the game from pausing for the remaining player
@@ -1180,7 +1146,7 @@ class GameManager {
       if (!hasReachedWinningScore) {
         // Score hasn't reached winning score yet - don't process as match result
         // Mark the player as disconnected and let the game loop handle it naturally
-        console.log(`[removePlayer] Player ${playerId} left tournament room ${roomCode} but score (${currentP1Score}-${currentP2Score}) hasn't reached winning score (${WINNING_SCORE}). Not processing as match result.`);
+        // console.log(`[removePlayer] Player ${playerId} left tournament room ${roomCode} but score (${currentP1Score}-${currentP2Score}) hasn't reached winning score (${WINNING_SCORE}). Not processing as match result.`);
         // Mark the player's socket as disconnected by setting it to null
         if (room.player1.id === playerId) {
           room.player1.socket = null;
@@ -1281,13 +1247,13 @@ class GameManager {
 
 
 
-      console.log(`[removePlayer] Tournament match finished due to disconnect - automatically reporting result:`, {
-        tournamentId,
-        matchId,
-        winner: winnerPlayer.name,
-        quitter: quitter.username,
-        round: room.tournamentContext.round
-      });
+      // console.log(`[removePlayer] Tournament match finished due to disconnect - automatically reporting result:`, {
+      //   tournamentId,
+      //   matchId,
+      //   winner: winnerPlayer.name,
+      //   quitter: quitter.username,
+      //   round: room.tournamentContext.round
+      // });
 
       // Automatically report match result to tournament system
       try {

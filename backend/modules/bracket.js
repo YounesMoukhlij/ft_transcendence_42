@@ -68,7 +68,7 @@ export async function getTournamentBracket(request, reply) {
 
     return reply.code(200).send(Matches);
   } catch (err) {
-    console.log(err);
+    
     return reply.code(500).send({ error: "Internal server error" });
   }
 }
