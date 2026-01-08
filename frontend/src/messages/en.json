@@ -18,7 +18,9 @@
     "chat": "Chat",
     "leaderboard": "Leaderboard",
     "leagues": "Leagues",
-    "close": "Close"
+    "close": "Close",
+    "back": "Back",
+    "continue": "Continue"
   },
   "settings": {
     "title": "Account Settings",

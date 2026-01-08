@@ -17,7 +17,10 @@
     "game": "Juego",
     "chat": "Chat",
     "leaderboard": "Clasificación",
-    "leagues": "Ligas"
+    "leagues": "Ligas",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "continue": "Continuar"
   },
   "settings": {
     "title": "Configuración de la cuenta",
@@ -412,6 +415,8 @@
     "match": "Partido",
     "vs": "vs",
     "matchWinner": "¡Ganador del Partido!",
+    "loadingBracket": "Cargando bracket...",
+    "loadingResults": "Cargando resultados...",
     "advancingToNextRound": "Avanzando a la siguiente ronda...",
     "tournamentComplete": "¡Torneo Completo!",
     "continueToNextMatch": "Continuar al Siguiente Partido",
@@ -423,6 +428,9 @@
     "winnerTakesTournament": "El ganador se lleva el torneo",
     "returnToGame": "Volver al Juego",
     "tournamentBracket": "Cuadro del Torneo",
+    "startMatch": "Iniciar Partido",
+    "semiFinal": "Semifinal",
+    "final": "Final",
     "tournamentProgress": "Progreso del Torneo",
     "continueTournament": "Continuar Torneo",
     "newTournament": "Nuevo Torneo",

@@ -15,14 +15,58 @@ import LocalTournamentAnimations from '@/components/LocalTournamentAnimations';
 import LocalTournamentPlayerRegistration from '@/components/LocalTournamentPlayerRegistration';
 import LocalTournamentGameOverlay from '@/components/LocalTournamentGameOverlay';
 
-const defaultAvatars = [
-  'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png',
-  'https://i.pravatar.cc/150?img=1',
-  'https://i.pravatar.cc/150?img=2',
-  'https://i.pravatar.cc/150?img=3',
-  'https://i.pravatar.cc/150?img=4',
-  'https://i.pravatar.cc/150?img=5',
+// Generate modern, attractive avatar SVGs with gradients and patterns
+const generateModernAvatarSVG = (primaryColor: string, secondaryColor: string, pattern: string): string => {
+  const svg = `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:${primaryColor};stop-opacity:1" />
+        <stop offset="100%" style="stop-color:${secondaryColor};stop-opacity:1" />
+      </linearGradient>
+      <pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+        ${pattern}
+      </pattern>
+    </defs>
+    <circle cx="50" cy="50" r="48" fill="url(#grad)" stroke="#ffffff" stroke-width="2"/>
+    <circle cx="50" cy="50" r="45" fill="url(#pattern)" opacity="0.3"/>
+  </svg>`;
+
+  // Use a proper UTF-8 to base64 conversion that works with Unicode
+  try {
+    // For browser environment, use btoa with proper encoding
+    return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+  } catch (e) {
+    // Fallback for environments where btoa/unescape isn't available
+    return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`;
+  }
+};
+
+// Modern avatar patterns - simplified and more reliable
+const avatarPatterns = [
+  // Player 2: Blue gradient with simple dots
+  generateModernAvatarSVG('#3B82F6', '#1D4ED8',
+    '<circle cx="15" cy="15" r="3" fill="white" opacity="0.8"/><circle cx="35" cy="35" r="3" fill="white" opacity="0.8"/><circle cx="15" cy="35" r="2" fill="white" opacity="0.6"/>'),
+
+  // Player 3: Green gradient with diagonal lines
+  generateModernAvatarSVG('#10B981', '#059669',
+    '<line x1="10" y1="10" x2="40" y2="40" stroke="white" stroke-width="2" opacity="0.7"/><line x1="40" y1="10" x2="10" y2="40" stroke="white" stroke-width="2" opacity="0.7"/>'),
+
+  // Player 4: Purple gradient with geometric shapes
+  generateModernAvatarSVG('#8B5CF6', '#7C3AED',
+    '<rect x="12" y="12" width="8" height="8" fill="white" opacity="0.8"/><rect x="30" y="30" width="8" height="8" fill="white" opacity="0.8"/>'),
+
+  // Player 5: Orange gradient with simple pattern
+  generateModernAvatarSVG('#F59E0B', '#D97706',
+    '<circle cx="25" cy="25" r="15" fill="none" stroke="white" stroke-width="3" opacity="0.7"/><circle cx="25" cy="25" r="5" fill="white" opacity="0.9"/>'),
 ];
+
+// Special host avatar with star pattern (no Unicode characters)
+const hostAvatar = generateModernAvatarSVG('#FFD700', '#FFA500',
+  '<polygon points="25,10 28,18 36,18 30,24 32,32 25,27 18,32 20,24 14,18 22,18" fill="white" opacity="0.9"/><circle cx="25" cy="25" r="8" fill="none" stroke="white" stroke-width="2" opacity="0.7"/>');
+
+// For the host (player 1), we'll use their actual profile image, fallback to special crown avatar
+// For other players, use the modern pattern avatars
+const defaultAvatars = avatarPatterns;
 
 type TournamentStep = 'setup' | 'registration' | 'customization' | 'bracket' | 'playing' | 'completed';
 
@@ -64,12 +108,13 @@ export default function LocalTournamentPage() {
       const newTempPlayers: GamePlayer[] = Array.from({ length: 4 }, (_, i) => ({
         id: `player-${i + 1}`,
         name: i === 0 ? (user?.username || t('game.player') + ' 1') : '',
-        avatar: defaultAvatars[i % defaultAvatars.length],
+        // Host gets their profile image, fallback to crown avatar, others get modern pattern avatars
+        avatar: i === 0 ? (user?.profile_img || hostAvatar) : defaultAvatars[(i - 1) % defaultAvatars.length],
         color: colors[i % colors.length],
       }));
       setTempPlayers(newTempPlayers);
     }
-  }, [tournamentStep, user?.username, t]);
+  }, [tournamentStep, user?.username, user?.profile_img, t]);
 
   // Tournament manager handles bracket logic - only create when we have 4 registered players
   const tournamentManager = useMemo(() => {

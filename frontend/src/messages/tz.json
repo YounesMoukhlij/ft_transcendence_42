@@ -17,7 +17,10 @@
     "game": "Urar",
     "chat": "Ameslay",
     "leaderboard": "Agaraw n imarigen",
-    "leagues": "Tigrawin"
+    "leagues": "Tigrawin",
+    "close": "Mdel",
+    "back": "Uɣal",
+    "continue": "Kemmel"
   },
   "settings": {
     "title": "Iɣewwaṛen n umiḍan",
@@ -412,6 +415,8 @@
     "match": "Tigawt",
     "vs": "mgal",
     "matchWinner": "Aneɣlaf n tigawt!",
+    "loadingBracket": "Asali n tebdart...",
+    "loadingResults": "Asali n yigmaḍ...",
     "advancingToNextRound": "Anekcum ɣer ugaraw i d-iteddun...",
     "tournamentComplete": "Amussu yekfa!",
     "continueToNextMatch": "Kemmel ɣer tigawt i d-iteddun",
@@ -423,6 +428,9 @@
     "winnerTakesTournament": "Aneɣlaf ad yawi amussu",
     "returnToGame": "Uɣal ɣer wurar",
     "tournamentBracket": "Taswint n umussu",
+    "startMatch": "Bdu tigawt",
+    "semiFinal": "Ameggar n ugaraw",
+    "final": "Aneggaru",
     "tournamentProgress": "Asfari n umussu",
     "continueTournament": "Kemmel amussu",
     "newTournament": "Amussu amaynut",
