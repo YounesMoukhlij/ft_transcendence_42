@@ -136,7 +136,7 @@ const PlayerRegistration: React.FC<PlayerRegistrationProps> = React.memo(({
           onClick={onBack}
           className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm sm:text-base"
         >
-          {t('game.back')}
+          {t('common.back')}
         </button>
         <button
           onClick={onComplete}
@@ -3945,14 +3945,14 @@ export default function TournamentPage() {
                 onClick={() => router.push('/game')}
                 className="w-full xs:w-auto px-3 py-2 xs:px-4 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base order-2 xs:order-1"
               >
-                {t('game.back')}
+                {t('common.back')}
               </button>
               {tournamentType === 'local' && (
                 <button
                   onClick={() => setTournamentStep('registration')}
                   className="w-full xs:w-auto px-4 py-2 xs:px-6 xs:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base order-1 xs:order-2"
                 >
-                  {t('game.continue')}
+                  {t('common.continue')}
                 </button>
               )}
             </div>
@@ -4303,7 +4303,7 @@ export default function TournamentPage() {
               }}
               className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-xs xs:text-sm sm:text-base"
             >
-              {t('game.back')}
+              {t('common.back')}
             </button>
           </div>
         </div>
@@ -5969,7 +5969,7 @@ export default function TournamentPage() {
                     }}
                     className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm sm:text-base"
                   >
-                    {t('game.back')}
+                    {t('common.back')}
                   </button>
                 );
               }
