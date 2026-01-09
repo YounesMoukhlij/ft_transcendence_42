@@ -2864,21 +2864,33 @@ class GameManager {
         // TRANSFER HOST PRIVILEGES: Host loses match but tournament continues with new host
         console.log(`[handleMatchResult] Host ${broadcastLoserId} lost match ${matchId}, transferring host privileges`);
 
-        // Find remaining active players (not eliminated and not the old host)
+        // Initialize eliminated players tracking if needed
+        if (!this.eliminatedPlayers) {
+          this.eliminatedPlayers = new Map();
+        }
+        if (!this.eliminatedPlayers.has(tournamentId)) {
+          this.eliminatedPlayers.set(tournamentId, new Set());
+        }
+
+        // Find remaining active players (not eliminated AND not the old host)
         const activePlayers = tournament.registeredPlayers.filter(player => {
           const playerIdStr = player.id.toString();
-          // Player is active if they're not eliminated AND not the old host
-          return !this.eliminatedPlayers?.get(tournamentId)?.has(playerIdStr);
+          // Player is active if they're not eliminated AND not the old host (who just lost)
+          const isEliminated = this.eliminatedPlayers.get(tournamentId).has(playerIdStr);
+          const isOldHost = playerIdStr === broadcastLoserId;
+          return !isEliminated && !isOldHost;
         });
 
+        console.log(`[handleMatchResult] Found ${activePlayers.length} active players for host transfer: ${activePlayers.map(p => p.name || p.username).join(', ')}`);
+
         if (activePlayers.length > 0) {
-          // Select new host: preferably the winner of this match, otherwise random
-          const winnerPlayer = tournament.registeredPlayers.find(p =>
+          // Select new host: preferably the winner of this match, otherwise the first active player
+          const winnerPlayer = activePlayers.find(p =>
             p.id.toString() === winnerId || p.id === winnerId
           );
-          const newHost = winnerPlayer || activePlayers[Math.floor(Math.random() * activePlayers.length)];
+          const newHost = winnerPlayer || activePlayers[0]; // Use first active player instead of random
 
-          console.log(`[handleMatchResult] Transferring host from ${tournament.host.id} to ${newHost.id}`);
+          console.log(`[handleMatchResult] Transferring host from ${tournament.host.name} (${tournament.host.id}) to ${newHost.name} (${newHost.id})`);
 
           // Update tournament host
           tournament.host = {
@@ -2907,6 +2919,21 @@ class GameManager {
             this.tournamentObservers.set(tournamentId, new Set());
           }
           this.tournamentObservers.get(tournamentId).add(broadcastLoserId);
+
+          // Broadcast host change to all players
+          for (const player of tournament.registeredPlayers) {
+            const socket = this.usersSocket.get(player.id.toString());
+            if (socket) {
+              this.sendToPlayer(socket, {
+                type: 'tournamentHostChanged',
+                data: {
+                  tournamentId: tournamentId,
+                  newHost: tournament.host,
+                  reason: 'Previous host was eliminated'
+                }
+              });
+            }
+          }
 
           // Notify old host they lost but tournament continues
           const oldHostSocket = this.usersSocket.get(broadcastLoserId);
@@ -2939,8 +2966,8 @@ class GameManager {
           // DO NOT add old host to eliminated players - they remain as observers
           console.log(`[handleMatchResult] Old host ${broadcastLoserId} remains as observer, new host: ${newHost.id}`);
         } else {
-          // No active players left - this shouldn't happen in a 4-player tournament
-          console.error(`[handleMatchResult] ERROR: No active players left after host elimination in tournament ${tournamentId}`);
+          // No active players left - cancel tournament as fallback
+          console.error(`[handleMatchResult] ERROR: No active players left after host elimination in tournament ${tournamentId}. Registered: ${tournament.registeredPlayers.length}, Eliminated: ${this.eliminatedPlayers.get(tournamentId).size}`);
           // Fallback: cancel tournament
           this.cancelTournament(tournamentId, tournament.host.id);
           return { success: true, bracket };

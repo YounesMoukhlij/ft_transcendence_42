@@ -1768,6 +1768,21 @@ export default function TournamentPage() {
             }
             break;
 
+          case 'tournamentHostChanged':
+            // Tournament host has changed
+            console.log('[Frontend] Host changed:', message.data);
+            toast.info(`${message.data.newHost.name} ${t('game.isNowHost') || 'is now the tournament host'}`);
+            // Update the tournament data with new host
+            setRemoteTournament(prev => prev ? {
+              ...prev,
+              host: message.data.newHost
+            } : null);
+            // Update isHost status if current user is now host
+            if (message.data.newHost.id === user?.id) {
+              setIsHost(true);
+            }
+            break;
+
           case 'tournamentDisbanded':
             // Tournament was disbanded (e.g., host disconnected or cancelled)
             const reason = message.data.reason || 'Tournament was cancelled';
