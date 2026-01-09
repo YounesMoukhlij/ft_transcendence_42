@@ -2849,6 +2849,9 @@ class GameManager {
         this.eliminatedPlayers.delete(tournamentId);
       }
 
+      // Clean up disconnected players from registeredPlayers
+      tournament.registeredPlayers = tournament.registeredPlayers.filter(p => !p.disconnected);
+
       return { success: true, bracket };
     }
 
@@ -2872,13 +2875,14 @@ class GameManager {
           this.eliminatedPlayers.set(tournamentId, new Set());
         }
 
-        // Find remaining active players (not eliminated AND not the old host)
+        // Find remaining active players (not eliminated, not disconnected, AND not the old host)
         const activePlayers = tournament.registeredPlayers.filter(player => {
           const playerIdStr = player.id.toString();
-          // Player is active if they're not eliminated AND not the old host (who just lost)
+          // Player is active if they're not eliminated, not disconnected, AND not the old host (who just lost)
           const isEliminated = this.eliminatedPlayers.get(tournamentId).has(playerIdStr);
+          const isDisconnected = player.disconnected === true;
           const isOldHost = playerIdStr === broadcastLoserId;
-          return !isEliminated && !isOldHost;
+          return !isEliminated && !isDisconnected && !isOldHost;
         });
 
         console.log(`[handleMatchResult] Found ${activePlayers.length} active players for host transfer: ${activePlayers.map(p => p.name || p.username).join(', ')}`);
@@ -2967,7 +2971,8 @@ class GameManager {
           console.log(`[handleMatchResult] Old host ${broadcastLoserId} remains as observer, new host: ${newHost.id}`);
         } else {
           // No active players left - cancel tournament as fallback
-          console.error(`[handleMatchResult] ERROR: No active players left after host elimination in tournament ${tournamentId}. Registered: ${tournament.registeredPlayers.length}, Eliminated: ${this.eliminatedPlayers.get(tournamentId).size}`);
+          const disconnectedCount = tournament.registeredPlayers.filter(p => p.disconnected).length;
+          console.error(`[handleMatchResult] ERROR: No active players left after host elimination in tournament ${tournamentId}. Registered: ${tournament.registeredPlayers.length}, Eliminated: ${this.eliminatedPlayers.get(tournamentId).size}, Disconnected: ${disconnectedCount}`);
           // Fallback: cancel tournament
           this.cancelTournament(tournamentId, tournament.host.id);
           return { success: true, bracket };
@@ -3633,9 +3638,39 @@ class GameManager {
     for (const [tournamentId, tournament] of this.tournaments.entries()) {
       const playerIndex = tournament.registeredPlayers.findIndex(p => p.id === playerId);
       if (playerIndex !== -1) {
-        // Remove player from tournament
-        tournament.registeredPlayers.splice(playerIndex, 1);
-        tournament.currentPlayers--;
+        // Handle disconnection based on tournament status
+        if (tournament.status === 'waiting') {
+          // For waiting tournaments, remove player completely
+          tournament.registeredPlayers.splice(playerIndex, 1);
+          tournament.currentPlayers--;
+          console.log(`[handleTournamentDisconnect] Removed player ${playerId} from waiting tournament ${tournamentId}`);
+        } else if (tournament.status === 'playing') {
+          // For active tournaments, mark player as disconnected but keep in registeredPlayers
+          // This allows tournament logic to continue with remaining active players
+          const disconnectedPlayer = tournament.registeredPlayers[playerIndex];
+          disconnectedPlayer.disconnected = true;
+          disconnectedPlayer.disconnectedAt = Date.now();
+          console.log(`[handleTournamentDisconnect] Marked player ${playerId} as disconnected in active tournament ${tournamentId}`);
+
+          // If this player was in a match, handle match continuation
+          if (tournament.bracket) {
+            const activeMatch = tournament.bracket.find(m =>
+              m.status === 'playing' &&
+              m.player1 && m.player2 &&
+              (m.player1.id?.toString() === playerId.toString() || m.player2.id?.toString() === playerId.toString())
+            );
+
+            if (activeMatch) {
+              console.log(`[handleTournamentDisconnect] Player ${playerId} was in active match ${activeMatch.id}, match will continue with remaining player`);
+              // The game loop will handle the disconnected player naturally
+            }
+          }
+        } else {
+          // For finished/completed tournaments, just remove them
+          tournament.registeredPlayers.splice(playerIndex, 1);
+          tournament.currentPlayers--;
+          console.log(`[handleTournamentDisconnect] Removed player ${playerId} from finished tournament ${tournamentId}`);
+        }
 
         // Clean up final match readiness tracking if player was waiting for final match
         if (this.finalMatchReady.has(tournamentId)) {
