@@ -120,7 +120,7 @@ export default function RemoteGameRoomPage() {
 
       try {
         const response = await axios.get(
-          `${getBackendURL()}/api/getUserStats/${username}`,
+          `${getBackendURL()}/api/getUserStats/${playerId}`,
           {
             headers: { Authorization: `Bearer ${user.access_token}` }
           }

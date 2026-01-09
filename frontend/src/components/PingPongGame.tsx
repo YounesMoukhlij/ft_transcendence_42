@@ -12,7 +12,7 @@ const GAME_HEIGHT = 600;
 const GAME_WIDTH = 800;
 const PADDLE_WIDTH = 16;
 const BALL_RADIUS = 10;
-const WINNING_SCORE = 10;
+const WINNING_SCORE = 5;
 const AI_WINNING_SCORE = 10; // AI games are first to 10 points
 
 // Game constants for smooth gameplay
@@ -418,14 +418,18 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   useEffect(() => { serverGameStateRef.current = serverGameState; }, [serverGameState]);
   useEffect(() => { activeRoomCodeRef.current = activeRoomCode; }, [activeRoomCode]);
   useEffect(() => { activeMatchIdRef.current = activeMatchId; }, [activeMatchId]);
+  const isTournamentFinalMatchRef = useRef(isTournamentFinalMatch);
   useEffect(() => { winnerRef2.current = winner; }, [winner]);
   useEffect(() => { socketRef.current = socket; }, [socket]);
+  useEffect(() => { isTournamentFinalMatchRef.current = isTournamentFinalMatch; }, [isTournamentFinalMatch]);
 
   // Keyboard controls for local, remote, and AI modes - stable event listeners using refs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return; // Ignore key repeat
-      if (winnerRef2.current) return;
+      // For tournament final matches, don't disable input even when winner is detected
+      // The winner screen is hidden but paddles should still be movable
+      if (winnerRef2.current && !isTournamentFinalMatchRef.current) return;
 
       // Determine if this is a remote game (has serverGameState) or local game
       const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
@@ -453,7 +457,9 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (winnerRef2.current) return;
+      // For tournament final matches, don't disable input even when winner is detected
+      // The winner screen is hidden but paddles should still be movable
+      if (winnerRef2.current && !isTournamentFinalMatchRef.current) return;
 
       const isRemoteGame = !!serverGameStateRef.current && !tournamentMode;
       const isLocalGame = tournamentMode || gameState.mode === 'ai' || gameState.mode === 'local';
@@ -484,7 +490,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [tournamentMode, gameState.mode]); // Stable deps - refs handle dynamic values
+  }, [tournamentMode, gameState.mode, isTournamentFinalMatch]); // Stable deps - refs handle dynamic values
 
   // Game loop for local tournament, AI mode, and local mode - improved with delta time
   const gameModeRef = useRef(gameState.mode);
