@@ -512,6 +512,58 @@ export async function login(request, reply) {
     }
 }
 
+// added this for remote tournament
+
+export async function registerInTournament(request, reply) {
+    const { username, password } = request.body;
+    
+    if (!username || !password) {
+        return reply.code(400).send({ 
+            success: false, 
+            message: "Missing required fields" 
+        });
+    }
+    try {
+        const user = request.server.db
+            .prepare("SELECT * FROM users WHERE username = ?")
+            .get(username);
+        
+        if (!user || user.authMethod !== 0) {
+            return reply.code(401).send({ 
+                success: false, 
+                message: "Invalid credentials" 
+            });
+        }
+        
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        
+        if (!isPasswordValid) {
+            return reply.code(401).send({ 
+                success: false, 
+                message: "Incorrect password"
+            });
+        }
+        return reply.code(200).send({ 
+            success: true, 
+            message: "successful",
+            user: {
+                username : user.username,
+                profile : user.profile,
+                id : user.id
+            }
+        });
+
+    } catch (error) {
+        console.error("Error during login:", error);
+        return reply.code(500).send({ 
+            success: false,
+            message: "Internal server error"
+        });
+    }
+
+}
+
+
 
 export async function loginVerify2FA(request, reply) {
     const { userId, token } = request.body; // 6-digit code
