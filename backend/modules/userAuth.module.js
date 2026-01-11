@@ -528,10 +528,10 @@ export async function registerInTournament(request, reply) {
             .prepare("SELECT * FROM users WHERE username = ?")
             .get(username);
         
-        if (!user || user.authMethod !== 0) {
-            return reply.code(401).send({ 
-                success: false, 
-                message: "Invalid credentials" 
+        if (!user || user.auth_method !== 0) {
+            return reply.code(401).send({
+                success: false,
+                message: "Invalid credentials"
             });
         }
         
@@ -543,13 +543,13 @@ export async function registerInTournament(request, reply) {
                 message: "Incorrect password"
             });
         }
-        return reply.code(200).send({ 
-            success: true, 
+        return reply.code(200).send({
+            success: true,
             message: "successful",
             user: {
                 username : user.username,
-                profile : user.profile,
-                id : user.id
+                profile : user.profile_img,
+                id : user.id_user
             }
         });
 

@@ -1,15 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Player } from './GameContext';
-import { FaUser, FaCrown } from 'react-icons/fa';
+import { FaUser, FaCrown, FaPlus, FaTimes } from 'react-icons/fa';
 import Image from 'next/image';
 import { useTranslation } from '@/contexts/LanguageContext';
+import axios from 'axios';
 
 interface LocalTournamentPlayerRegistrationProps {
   tempPlayers: Player[];
   defaultAvatars: string[];
   updatePlayer: (index: number, field: keyof Player, value: string) => void;
+  updatePlayerObject?: (index: number, playerData: Partial<Player>) => void;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -18,175 +20,298 @@ export default function LocalTournamentPlayerRegistration({
   tempPlayers,
   defaultAvatars,
   updatePlayer,
+  updatePlayerObject,
   onComplete,
   onBack,
 }: LocalTournamentPlayerRegistrationProps) {
   const { t } = useTranslation();
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newPlayerUsername, setNewPlayerUsername] = useState('');
+  const [newPlayerPassword, setNewPlayerPassword] = useState('');
+  const [updateCounter, setUpdateCounter] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Debug: log when tempPlayers changes
+  useEffect(() => {
+    console.log('LocalTournamentPlayerRegistration: tempPlayers updated:', tempPlayers.map(p => ({ name: p.name, id: p.id })));
+  }, [tempPlayers]);
 
   const handleAvatarSelect = (playerIndex: number, avatarIndex: number) => {
     updatePlayer(playerIndex, 'avatar', defaultAvatars[avatarIndex % defaultAvatars.length]);
   };
 
+  const handleAddPlayer = async () => {
+    if (newPlayerUsername.trim() && newPlayerPassword.trim()) {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      try {
+        // Call the API to authenticate and get real user data
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/registerInTournament`, {
+          username: newPlayerUsername.trim(),
+          password: newPlayerPassword.trim()
+        }, {
+          withCredentials: true
+        });
+
+        if (response.data.success && response.data.user) {
+          // Find the next available player slot
+          const nextIndex = tempPlayers.findIndex(player => player.name.trim() === '');
+
+          if (nextIndex !== -1) {
+            // Update with real user data from API
+            if (updatePlayerObject) {
+              updatePlayerObject(nextIndex, {
+                name: response.data.user.username,
+                avatar: response.data.user.profile || defaultAvatars[(nextIndex - 1) % defaultAvatars.length],
+                id_user: response.data.user.id,
+                username: response.data.user.username
+              });
+            } else {
+              // Fallback to individual updates if updatePlayerObject is not available
+              updatePlayer(nextIndex, 'name', response.data.user.username);
+              updatePlayer(nextIndex, 'avatar', response.data.user.profile || defaultAvatars[(nextIndex - 1) % defaultAvatars.length]);
+              updatePlayer(nextIndex, 'id_user', response.data.user.id);
+              updatePlayer(nextIndex, 'username', response.data.user.username);
+            }
+
+            // Clear the form and close modal
+            setNewPlayerUsername('');
+            setNewPlayerPassword('');
+            setShowAddUserModal(false);
+            setUpdateCounter(prev => prev + 1); // Force re-render
+          }
+        } else {
+          setErrorMessage(response.data.message || 'Authentication failed');
+        }
+      } catch (error) {
+        console.error('Error registering tournament user:', error);
+        console.error('Error response:', error.response);
+        console.error('Error status:', error.response?.status);
+        console.error('Error data:', error.response?.data);
+        setErrorMessage(
+          error.response?.data?.message ||
+          error.message ||
+          `Failed to authenticate user (${error.response?.status || 'Network Error'})`
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleRemovePlayer = (index: number) => {
+    if (index !== 0) { // Don't allow removing the host
+      if (updatePlayerObject) {
+        updatePlayerObject(index, { name: '' });
+      } else {
+        updatePlayer(index, 'name', '');
+      }
+      setUpdateCounter(prev => prev + 1); // Force re-render
+    }
+  };
+
   const allPlayersReady = tempPlayers.every(player => player.name.trim() !== '');
 
   return (
-    <div className="w-full max-w-6xl mx-auto h-full bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 rounded-3xl shadow-2xl border-2 border-blue-500 p-6 overflow-auto">
+    <div key={`registration-${updateCounter}`} className="w-full max-w-6xl mx-auto h-full bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 rounded-3xl shadow-2xl border-2 border-blue-500 p-6 overflow-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300">
           {t('game.registerPlayers')}
         </h2>
-        <button
-          onClick={onBack}
-          className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all"
-        >
-          {t('common.back')}
-        </button>
-      </div>
-
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {tempPlayers.map((player, index) => (
-          <div
-            key={player.id}
-            className={`relative rounded-2xl p-6 transition-all duration-300 transform hover:scale-105 overflow-hidden ${
-              index === 0
-                ? 'bg-gradient-to-br from-yellow-500/20 via-amber-500/20 to-orange-500/20 border-2 border-yellow-400 shadow-lg shadow-yellow-500/20'
-                : 'bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-blue-400 hover:border-blue-300 shadow-lg'
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowAddUserModal(true)}
+            disabled={tempPlayers.filter(player => player.name.trim() !== '').length >= 4}
+            className={`px-6 py-3 rounded-xl text-white font-semibold transition-all flex items-center gap-2 ${
+              tempPlayers.length >= 4
+                ? 'bg-gray-600 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 shadow-lg'
             }`}
           >
-            {/* Decorative background pattern for non-host players */}
-            {index !== 0 && (
-              <div className="absolute inset-0 opacity-5">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-2xl"></div>
-                <div className="absolute top-2 right-2 w-20 h-20 bg-blue-500/10 rounded-full"></div>
-                <div className="absolute bottom-2 left-2 w-16 h-16 bg-purple-500/10 rounded-full"></div>
-              </div>
-            )}
-
-            {/* Host badge */}
-            {index === 0 && (
-              <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-bl-xl rounded-tr-xl text-xs font-bold shadow-lg">
-                ⭐ HOST
-              </div>
-            )}
-
-            {/* Player Header */}
-            <div className="relative flex flex-col items-center gap-4 mb-6">
-              <div className="relative flex-shrink-0">
-                <div className={`w-20 h-20 rounded-full overflow-hidden border-4 ${
-                  index === 0
-                    ? 'border-yellow-400 shadow-lg shadow-yellow-400/50'
-                    : 'border-blue-400 shadow-lg shadow-blue-400/30'
-                }`}>
-                  <Image
-                    src={player.avatar}
-                    alt={`${t('game.player')} ${index + 1}`}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                {index === 0 && (
-                  <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-2 shadow-lg">
-                    <FaCrown className="text-white text-sm" />
-                  </div>
-                )}
-                {index !== 0 && (
-                  <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full p-2 shadow-lg">
-                    <FaUser className="text-white text-xs" />
-                  </div>
-                )}
-              </div>
-              <div className="text-center">
-                <h3 className={`font-bold text-lg ${
-                  index === 0 ? 'text-yellow-300' : 'text-white'
-                }`}>
-                  {index === 0 ? t('game.hostPlayer') : `${t('game.player')} ${index + 1}`}
-                </h3>
-                {index === 0 && (
-                  <p className="text-yellow-200 text-sm opacity-80">Tournament Leader</p>
-                )}
-              </div>
-            </div>
-
-            {/* Player Name Input */}
-            <div className="mb-6">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={player.name}
-                  onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                  placeholder={index === 0 ? 'Your name is already set' : t('game.enterNameForPlayer', { number: index + 1 })}
-                  className={`w-full px-4 py-3 rounded-xl text-sm transition-all ${
-                    index === 0
-                      ? 'bg-yellow-500/20 border-2 border-yellow-400 text-yellow-100 placeholder-yellow-200/70 cursor-not-allowed'
-                      : 'bg-gray-700/50 border-2 border-gray-600 text-white placeholder-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50'
-                  }`}
-                  disabled={index === 0}
-                />
-                {index === 0 && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Avatar Selection - Only for non-host players */}
-            {index !== 0 && (
-              <div>
-                <label className="block text-gray-300 text-sm mb-3 font-medium">
-                  {t('game.chooseAvatar')}:
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {defaultAvatars.slice(0, 3).map((avatar, avatarIndex) => (
-                    <button
-                      key={avatarIndex}
-                      onClick={() => handleAvatarSelect(index, avatarIndex)}
-                      className={`aspect-square rounded-xl overflow-hidden border-3 transition-all transform hover:scale-110 ${
-                        player.avatar === avatar
-                          ? 'border-blue-400 ring-4 ring-blue-400/50 shadow-lg shadow-blue-400/30 scale-105'
-                          : 'border-gray-600 hover:border-blue-400 hover:shadow-md'
-                      }`}
-                    >
-                      <Image
-                        src={avatar}
-                        alt={`Avatar ${avatarIndex + 1}`}
-                        width={100}
-                        height={100}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+            <FaPlus className="text-sm" />
+            Add User
+          </button>
+          <button
+            onClick={onBack}
+            className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all"
+          >
+            {t('common.back')}
+          </button>
+        </div>
       </div>
 
-      {/* Player Status Indicator */}
-      <div className="mt-6 mb-4">
-        <div className="flex justify-center gap-2 flex-wrap">
+      {/* Players List */}
+      <div className="mb-8">
+        <h3 className="text-xl font-semibold text-white mb-4">Registered Players ({tempPlayers.filter(p => p.name.trim() !== '').length}/4)</h3>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2" key={`players-${updateCounter}`}>
           {tempPlayers.map((player, index) => (
             <div
-              key={player.id}
-              className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all ${
-                player.name.trim() !== ''
-                  ? 'bg-green-500/20 text-green-300 border border-green-500/50'
-                  : 'bg-red-500/20 text-red-300 border border-red-500/50'
+              key={`${player.id}-${player.name}-${index}`}
+              className={`relative rounded-xl p-4 transition-all duration-300 ${
+                index === 0
+                  ? 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-2 border-yellow-400'
+                  : player.name.trim() !== ''
+                  ? 'bg-gradient-to-r from-gray-800 to-gray-900 border-2 border-green-400'
+                  : 'bg-gradient-to-r from-gray-800 to-gray-900 border-2 border-gray-600'
               }`}
             >
-              <div className={`w-2 h-2 rounded-full ${
-                player.name.trim() !== '' ? 'bg-green-400' : 'bg-red-400'
-              }`}></div>
-              <span>{index === 0 ? 'Host' : `P${index + 1}`}</span>
+              <div className="flex items-center gap-4">
+                <div className="relative flex-shrink-0">
+                  <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${
+                    index === 0 ? 'border-yellow-400' : 'border-blue-400'
+                  }`}>
+                    <Image
+                      src={player.avatar}
+                      alt={`${t('game.player')} ${index + 1}`}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  {index === 0 && (
+                    <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-1">
+                      <FaCrown className="text-white text-xs" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className={`font-semibold ${
+                      index === 0 ? 'text-yellow-300' : 'text-white'
+                    }`}>
+                      {index === 0 ? 'Host' : `Player ${index + 1}`}
+                    </h4>
+                    {index === 0 && (
+                      <span className="text-xs bg-yellow-500/20 text-yellow-200 px-2 py-1 rounded-full">
+                        Tournament Leader
+                      </span>
+                    )}
+                    {index !== 0 && player.name.trim() !== '' && (
+                      <button
+                        onClick={() => handleRemovePlayer(index)}
+                        className="text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        <FaTimes className="text-sm" />
+                      </button>
+                    )}
+                  </div>
+                  <p className={`text-sm ${
+                    index === 0 ? 'text-yellow-200' : player.name.trim() !== '' ? 'text-green-300' : 'text-gray-400'
+                  }`}>
+                    {player.name || 'Not registered'}
+                  </p>
+                </div>
+                {player.name.trim() !== '' && (
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                )}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-3xl p-6 border-2 border-blue-500 max-w-md w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-white">Add Player</h3>
+              <button
+                onClick={() => {
+                  setShowAddUserModal(false);
+                  setErrorMessage('');
+                  setIsLoading(false);
+                }}
+                disabled={isLoading}
+                className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+              >
+                <FaTimes className="text-xl" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {errorMessage && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-3">
+                  <p className="text-red-300 text-sm">{errorMessage}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-gray-300 text-sm mb-2 font-medium">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={newPlayerUsername}
+                  onChange={(e) => {
+                    setNewPlayerUsername(e.target.value);
+                    setErrorMessage(''); // Clear error when user types
+                  }}
+                  placeholder="Enter username"
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-300 text-sm mb-2 font-medium">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={newPlayerPassword}
+                  onChange={(e) => {
+                    setNewPlayerPassword(e.target.value);
+                    setErrorMessage(''); // Clear error when user types
+                  }}
+                  placeholder="Enter password"
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
+                />
+              </div>
+
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  if (!isLoading) {
+                    setShowAddUserModal(false);
+                    setErrorMessage('');
+                  }
+                }}
+                disabled={isLoading}
+                className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddPlayer}
+                disabled={!newPlayerUsername.trim() || !newPlayerPassword.trim() || isLoading}
+                className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                  newPlayerUsername.trim() && newPlayerPassword.trim() && !isLoading
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Adding...
+                  </>
+                ) : (
+                  'Add Player'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Continue Button */}
-      <div className="mt-4 text-center">
+      <div className="mt-8 text-center">
         <button
           onClick={onComplete}
           disabled={!allPlayersReady}
@@ -206,7 +331,7 @@ export default function LocalTournamentPlayerRegistration({
             ) : (
               <>
                 <span>⏳</span>
-                <span>Waiting for all players...</span>
+                <span>Need {4 - tempPlayers.filter(p => p.name.trim() !== '').length} more players...</span>
               </>
             )}
           </div>

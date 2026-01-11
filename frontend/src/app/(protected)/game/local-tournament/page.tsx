@@ -244,9 +244,20 @@ export default function LocalTournamentPage() {
             tempPlayers={tempPlayers}
             defaultAvatars={defaultAvatars}
             updatePlayer={(index, field, value) => {
-              const updated = [...tempPlayers];
-              updated[index] = { ...updated[index], [field]: value };
-              setTempPlayers(updated);
+              setTempPlayers(prevPlayers => {
+                const updated = prevPlayers.map((player, i) =>
+                  i === index ? { ...player, [field]: value } : player
+                );
+                return updated;
+              });
+            }}
+            updatePlayerObject={(index, playerData) => {
+              setTempPlayers(prevPlayers => {
+                const updated = prevPlayers.map((player, i) =>
+                  i === index ? { ...player, ...playerData } : player
+                );
+                return updated;
+              });
             }}
             onComplete={handleRegistrationComplete}
             onBack={() => setTournamentStep('setup')}
