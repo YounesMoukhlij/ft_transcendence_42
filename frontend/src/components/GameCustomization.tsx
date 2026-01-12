@@ -35,7 +35,7 @@ const paddleColors = [
 
 interface GameCustomizationProps {
   onBack: () => void;
-  onStartGame: (customization: { tableBg: string; ballColor: string; paddleColor: string; aiDifficulty?: 'easy' | 'medium' | 'hard' | null; }) => void;
+  onStartGame: (customization: { tableBg: string; ballColor: string; paddleColor: string; aiDifficulty?: 'easy' | 'medium' | 'hard' | null; winningScore?: 5 | 10 | null; }) => void;
   isSocketConnected?: boolean;
 }
 
@@ -80,12 +80,14 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
     const randomBallColor = ballColors[Math.floor(Math.random() * ballColors.length)];
     const randomPaddleColor = paddleColors[Math.floor(Math.random() * paddleColors.length)];
     const randomAiDifficulty = (['easy', 'medium', 'hard'] as const)[Math.floor(Math.random() * 3)];
+    const randomWinningScore = Math.random() > 0.5 ? 5 : 10; // Randomly choose 5 or 10 points
 
     return {
       tableBg: randomTableBg,
       ballColor: randomBallColor,
       paddleColor: randomPaddleColor,
-      aiDifficulty: randomAiDifficulty
+      aiDifficulty: randomAiDifficulty,
+      winningScore: randomWinningScore
     };
   }, []); // Only generate once on mount
 
@@ -94,6 +96,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
   const [ballColor, setBallColor] = useState<string>(getRandomDefaults.ballColor);
   const [paddleColor, setPaddleColor] = useState<string>(getRandomDefaults.paddleColor);
   const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>(getRandomDefaults.aiDifficulty);
+  const [winningScore, setWinningScore] = useState<5 | 10>(getRandomDefaults.winningScore);
 
   // Create axios instance with token, but only if token exists
   const axiosInstance = useMemo(() => {
@@ -120,7 +123,8 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           tableBg: getRandomDefaults.tableBg,
           ballColor: getRandomDefaults.ballColor,
           paddleColor: getRandomDefaults.paddleColor,
-          aiDifficulty: gameState.mode === 'ai' ? getRandomDefaults.aiDifficulty : null
+          aiDifficulty: gameState.mode === 'ai' ? getRandomDefaults.aiDifficulty : null,
+          winningScore: getRandomDefaults.winningScore
         });
         return;
       }
@@ -129,20 +133,22 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
         const response = await axiosInstance.get('/getGameCustomization');
         if (response.data && response.data.tableBg && response.data.ballColor && response.data.paddleColor) {
           // Use saved customization if available
-          const { tableBg, ballColor, paddleColor, aiDifficulty } = response.data;
+          const { tableBg, ballColor, paddleColor, aiDifficulty, winningScore } = response.data;
           setTableBg(tableBg);
           setBallColor(ballColor);
           setPaddleColor(paddleColor);
           if (aiDifficulty) setAiDifficulty(aiDifficulty);
+          if (winningScore) setWinningScore(winningScore);
           // Update the game context immediately
-          setCustomisation({ tableBg, ballColor, paddleColor, aiDifficulty: aiDifficulty || null });
+          setCustomisation({ tableBg, ballColor, paddleColor, aiDifficulty: aiDifficulty || null, winningScore: winningScore || 5 });
         } else {
           // No saved customization, use random defaults and update context
           setCustomisation({
             tableBg: getRandomDefaults.tableBg,
             ballColor: getRandomDefaults.ballColor,
             paddleColor: getRandomDefaults.paddleColor,
-            aiDifficulty: gameState.mode === 'ai' ? getRandomDefaults.aiDifficulty : null
+            aiDifficulty: gameState.mode === 'ai' ? getRandomDefaults.aiDifficulty : null,
+            winningScore: getRandomDefaults.winningScore
           });
         }
       } catch (error) {
@@ -164,7 +170,8 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
           tableBg: getRandomDefaults.tableBg,
           ballColor: getRandomDefaults.ballColor,
           paddleColor: getRandomDefaults.paddleColor,
-          aiDifficulty: gameState.mode === 'ai' ? getRandomDefaults.aiDifficulty : null
+          aiDifficulty: gameState.mode === 'ai' ? getRandomDefaults.aiDifficulty : null,
+          winningScore: getRandomDefaults.winningScore
         });
       }
     };
@@ -207,7 +214,8 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
       tableBg,
       ballColor,
       paddleColor,
-      ...(gameState.mode === 'ai' && { aiDifficulty })
+      ...(gameState.mode === 'ai' && { aiDifficulty }),
+      winningScore
     };
     setCustomisation(customization);
 
@@ -422,6 +430,51 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
               </div>
             </div>
           )}
+
+          {/* Winning Score Section */}
+          <div className="flex flex-col gap-2">
+            <h2 className="text-base font-semibold"
+                style={{
+                  background: 'linear-gradient(135deg, #f1f5f9, #cbd5e1)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                }}>
+              {t('game.winningScore')}
+            </h2>
+            <div className="flex gap-3 justify-center">
+              {([5, 10] as const).map((score) => (
+                <button
+                  key={score}
+                  className={`px-4 py-2 rounded-lg border-2 transition-all duration-300 font-semibold text-sm
+                    ${winningScore === score ? 'scale-110' : 'hover:scale-105'}
+                  `}
+                  style={{
+                    background: winningScore === score
+                      ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                      : 'linear-gradient(135deg, #4b5563, #374151)',
+                    color: '#ffffff',
+                    boxShadow: winningScore === score
+                      ? `
+                        inset 0 1px 0 rgba(255,255,255,0.3),
+                        inset 0 -1px 0 rgba(0,0,0,0.3),
+                        0 4px 8px rgba(245,158,11,0.4),
+                        0 0 0 2px rgba(245,158,11,0.6)
+                      `
+                      : `
+                        inset 0 1px 0 rgba(255,255,255,0.1),
+                        inset 0 -1px 0 rgba(0,0,0,0.3),
+                        0 2px 4px rgba(0,0,0,0.3)
+                      `,
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                  }}
+                  onClick={() => setWinningScore(score)}
+                >
+                  {score} {t('game.points')}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Live Preview Section */}
           <div className="flex flex-col gap-2">

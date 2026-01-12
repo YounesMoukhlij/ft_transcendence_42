@@ -341,6 +341,7 @@
     "isTheWinner": "{winner} is the winner!",
     "wins": "{winner} wins!",
     "won": "{winner} won!",
+    "points": "Points",
     "finalScore": "Final Score",
     "playAgain": "Play Again",
     "opponentDeclinedRematch": "Your opponent declined the rematch.",

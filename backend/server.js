@@ -147,11 +147,19 @@ async function startServer() {
           ballColor TEXT,
           paddleColor TEXT,
           aiDifficulty TEXT,
+          winningScore INTEGER DEFAULT 5,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (userId) REFERENCES users(id_user)
         );
       `);
+
+      // Add winningScore column if it doesn't exist (for existing databases)
+      try {
+        db.exec(`ALTER TABLE game_settings ADD COLUMN winningScore INTEGER DEFAULT 5`);
+      } catch (e) {
+        // Column might already exist, ignore error
+      }
     } catch (e) {
       app.log.error(e);
     }

@@ -190,6 +190,7 @@ export interface GameCustomisation {
   ballColor: string | null;
   paddleColor: string | null;
   aiDifficulty?: 'easy' | 'medium' | 'hard' | null;
+  winningScore?: 5 | 10 | null;
 }
 
 export interface GameState {
@@ -236,6 +237,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       ballColor: null,
       paddleColor: null,
       aiDifficulty: null,
+      winningScore: 5, // Default to 5 points
     },
     tournament: undefined,
   });
@@ -268,6 +270,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         ballColor: null,
         paddleColor: null,
         aiDifficulty: null,
+        winningScore: 5, // Default to 5 points
       },
       tournament: undefined,
     });

@@ -51,4 +51,7 @@ https://localhost:8080/signIn
 
 123456789
 
-FIXED : to add in languages : game.failedToLoadFriends
+FIXED : 
+- localtournament
+- notification from user A to user B in remote game 1 vs 1
+- to add in languages : game.failedToLoadFriends

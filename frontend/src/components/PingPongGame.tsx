@@ -12,8 +12,8 @@ const GAME_HEIGHT = 600;
 const GAME_WIDTH = 800;
 const PADDLE_WIDTH = 16;
 const BALL_RADIUS = 10;
-const WINNING_SCORE = 5;
-const AI_WINNING_SCORE = 10; // AI games are first to 10 points
+const winningScore = 5;
+const AI_winningScore = 10; // AI games are first to 10 points
 
 // Game constants for smooth gameplay
 const PADDLE_SPEED = 10; // Pixels per frame at 60 FPS (600 pixels/second)
@@ -502,6 +502,9 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   }, [tournamentMode, tournamentPlayers, gameState.mode, gameState.players]);
   const { scores, paddles, ball, gameStats, updateGameState, resetGameState } = useLocalGameState();
 
+  // Get winning score from customization
+  const winningScore = gameState.customisation?.winningScore || 5;
+
   // Track if we've initialized the game to prevent infinite loops
   const gameInitializedRef = useRef<string | null>(null);
 
@@ -710,7 +713,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
           tournamentId: 'local-tournament' // Identifier for local tournaments
         };
 
-        if (scores.player1 >= WINNING_SCORE) {
+        if (scores.player1 >= winningScore) {
           setWinner(localPlayers[0].name);
           console.log('🏆 PingPongGame: Player 1 wins!', {
             scores,
@@ -737,7 +740,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             }
           });
           onTournamentMatchEnd(winnerPlayer, matchStats);
-        } else if (scores.player2 >= WINNING_SCORE) {
+        } else if (scores.player2 >= winningScore) {
           setWinner(localPlayers[1].name);
           console.log('🏆 PingPongGame: Player 2 wins!', {
             scores,
@@ -767,18 +770,18 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         }
       } else if (gameState.mode === 'ai') {
         // AI mode - check for winner
-        if (scores.player1 >= AI_WINNING_SCORE) {
+        if (scores.player1 >= AI_winningScore) {
           setWinner('You');
-        } else if (scores.player2 >= AI_WINNING_SCORE) {
+        } else if (scores.player2 >= AI_winningScore) {
           setWinner('AI');
         }
       } else if (gameState.mode === 'local' && localPlayers.length >= 2) {
         // Local mode - check for winner
-        if (scores.player1 >= WINNING_SCORE) {
+        if (scores.player1 >= winningScore) {
           const winnerName = localPlayers[0].name;
           setWinner(winnerName);
           if (onGameOver) onGameOver(winnerName);
-        } else if (scores.player2 >= WINNING_SCORE) {
+        } else if (scores.player2 >= winningScore) {
           const winnerName = localPlayers[1].name;
           setWinner(winnerName);
           if (onGameOver) onGameOver(winnerName);
@@ -790,9 +793,9 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   // Check for winner in remote game
   useEffect(() => {
     if (!tournamentMode && gameState.mode !== 'ai' && serverGameState) {
-      if (serverGameState.player1.score >= WINNING_SCORE) {
+      if (serverGameState.player1.score >= winningScore) {
         setWinner(serverGameState.player1.username);
-      } else if (serverGameState.player2.score >= WINNING_SCORE) {
+      } else if (serverGameState.player2.score >= winningScore) {
         setWinner(serverGameState.player2.username);
       }
     }
@@ -1352,22 +1355,22 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         {gameState.mode === 'ai' ? (
           <>
             <p>Use W/S keys to move your paddle.</p>
-            <p>First to {AI_WINNING_SCORE} points wins!</p>
+            <p>First to {AI_winningScore} points wins!</p>
           </>
         ) : tournamentMode ? (
           <>
             <p>Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
-            <p>First to {WINNING_SCORE} points wins!</p>
+            <p>First to {winningScore} points wins!</p>
           </>
         ) : gameState.mode === 'local' ? (
           <>
             <p>Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
-            <p>First to {WINNING_SCORE} points wins!</p>
+            <p>First to {winningScore} points wins!</p>
           </>
         ) : (
           <>
             <p>Use W/S or Arrow Up/Down keys to move your paddle.</p>
-            <p>First to {WINNING_SCORE} points wins!</p>
+            <p>First to {winningScore} points wins!</p>
           </>
         )}
       </div>
