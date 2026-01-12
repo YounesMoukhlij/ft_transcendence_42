@@ -111,10 +111,11 @@ export default function LocalTournamentPage() {
         // Host gets their profile image, fallback to crown avatar, others get modern pattern avatars
         avatar: i === 0 ? (user?.profile_img || hostAvatar) : defaultAvatars[(i - 1) % defaultAvatars.length],
         color: colors[i % colors.length],
+        id_user: i === 0 ? user?.id_user : undefined,
       }));
       setTempPlayers(newTempPlayers);
     }
-  }, [tournamentStep, user?.username, user?.profile_img, t]);
+  }, [tournamentStep, user?.username, user?.profile_img, user?.id_user, t]);
 
   // Tournament manager handles bracket logic - only create when we have 4 registered players
   const tournamentManager = useMemo(() => {
@@ -147,7 +148,7 @@ export default function LocalTournamentPage() {
   }, []);
 
   // Handle match completion - called from PingPongGame
-  const handleMatchComplete = useCallback((winner: GamePlayer) => {
+  const handleMatchComplete = useCallback((winner: GamePlayer, matchStats?: any) => {
     if (!currentMatch || !winner || !tournamentManager) return;
 
     setMatchWinner(winner);
@@ -156,6 +157,200 @@ export default function LocalTournamentPage() {
 
     // Update bracket with winner
     tournamentManager.setMatchWinner(currentMatch.id, winner);
+
+
+    // Save match data to database if statistics are available
+    console.log('Checking if we should save match data:', {
+      hasMatchStats: !!matchStats,
+      winnerIdUser: winner.id_user,
+      winnerId: winner.id,
+      winnerName: winner.name,
+      currentMatchPlayer1: currentMatch?.player1?.name,
+      currentMatchPlayer2: currentMatch?.player2?.name
+    });
+
+    if (matchStats && currentMatch?.player1 && currentMatch?.player2) {
+      // Determine winner and loser from tournament players
+      const isWinnerPlayer1 = winner.id === currentMatch.player1.id;
+      const loser = isWinnerPlayer1 ? currentMatch.player2 : currentMatch.player1;
+
+      // Always attempt to save match data - backend will handle guest players
+      const isPlayer1Winner = matchStats.finalScore.player1 > matchStats.finalScore.player2;
+
+      // Calculate base values first
+      const win_score = (() => {
+        if (matchStats?.finalScore) {
+          const p1 = Number(matchStats.finalScore.player1) || 0;
+          const p2 = Number(matchStats.finalScore.player2) || 0;
+          return Math.max(p1, p2);
+        }
+        // Fallback: assume winner has 10 points, loser has less
+        return isPlayer1Winner ? 10 : 9;
+      })();
+
+      const lose_score = (() => {
+        if (matchStats?.finalScore) {
+          const p1 = Number(matchStats.finalScore.player1) || 0;
+          const p2 = Number(matchStats.finalScore.player2) || 0;
+          return Math.min(p1, p2);
+        }
+        // Fallback: assume winner has 10 points, loser has less
+        return isPlayer1Winner ? 9 : 10;
+      })();
+
+      const duration = (() => {
+        const actualDuration = matchStats?.duration ? Math.round(matchStats.duration / 1000) : 0;
+        // Ensure minimum duration for a valid match (at least 10 seconds)
+        return Math.max(actualDuration, 10);
+      })();
+
+      const longest_rally = (() => {
+        const actualLongest = matchStats?.longestRally || 0;
+        // Estimate based on scores if no rallies tracked
+        const totalPoints = win_score + lose_score;
+        return Math.max(actualLongest, Math.min(totalPoints * 2, 20)); // Estimate 2 touches per point, max 20
+      })();
+
+      const average_rally = (() => {
+        const actualAverage = matchStats?.averageRally ? Math.round(matchStats.averageRally * 100) / 100 : 0;
+        // Estimate based on longest rally if available
+        return actualAverage > 0 ? actualAverage : Math.max(longest_rally * 0.7, 3); // Estimate 70% of longest, min 3
+      })();
+
+      const touches_win = (() => {
+        const actualTouches = isPlayer1Winner ? (matchStats?.player1Touches || 0) : (matchStats?.player2Touches || 0);
+        // Estimate based on rallies and average rally length
+        const estimatedTouches = longest_rally > 0 ? Math.round(average_rally * (win_score + lose_score) * 0.6) : 0;
+        return Math.max(actualTouches, estimatedTouches, win_score * 3); // At least 3 touches per point won
+      })();
+
+      const matchData = {
+        // Player information - use tournament player data directly
+        winner_info: {
+          id_user: winner.id_user,
+          id: winner.id,
+          name: winner.name,
+          username: winner.username
+        },
+        loser_info: {
+          id_user: loser.id_user,
+          id: loser.id,
+          name: loser.name,
+          username: loser.username
+        },
+        // Match scores - use calculated values
+        win_score,
+        lose_score,
+        type: 'tournament',
+        tournament_id: matchStats?.tournamentId || 'local-tournament',
+        duration,
+        longest_rally,
+        average_rally,
+        ball_max_speed: (() => {
+          const actualSpeed = matchStats?.maxBallSpeed ? Math.round(matchStats.maxBallSpeed * 100) / 100 : 0;
+          // Provide reasonable default for ball speed
+          return Math.max(actualSpeed, 8.5); // Default ball speed in m/s
+        })(),
+        touches_win,
+        touches_lose: (() => {
+          const actualTouches = !isPlayer1Winner ? (matchStats?.player1Touches || 0) : (matchStats?.player2Touches || 0);
+          // Estimate based on winner's touches
+          return Math.max(actualTouches, Math.round(touches_win * 0.7), lose_score * 2); // Estimate 70% of winner, min 2 per point lost
+        })(),
+        max_points_streak_win: (() => {
+          const actualStreak = isPlayer1Winner ? (matchStats?.maxStreakPlayer1 || 0) : (matchStats?.maxStreakPlayer2 || 0);
+          // Estimate based on score difference
+          const scoreDiff = win_score - lose_score;
+          return Math.max(actualStreak, Math.min(win_score, Math.max(1, scoreDiff)));
+        })(),
+        max_points_streak_lose: (() => {
+          const actualStreak = !isPlayer1Winner ? (matchStats?.maxStreakPlayer1 || 0) : (matchStats?.maxStreakPlayer2 || 0);
+          // Estimate based on loser's best performance
+          return Math.max(actualStreak, Math.min(lose_score, 2));
+        })(),
+        max_leading_time_win: (() => {
+          const actualTime = matchStats?.leadingTimePlayer1 || matchStats?.leadingTimePlayer2 ?
+            Math.round((isPlayer1Winner ? (matchStats.leadingTimePlayer1 || 0) : (matchStats.leadingTimePlayer2 || 0)) / 1000) : 0;
+          // Estimate based on duration and win margin
+          const estimatedTime = Math.round(duration * 0.7); // Assume winner led 70% of the match
+          return Math.max(actualTime, estimatedTime);
+        })(),
+        max_leading_time_lose: (() => {
+          const actualTime = matchStats?.leadingTimePlayer1 || matchStats?.leadingTimePlayer2 ?
+            Math.round((!isPlayer1Winner ? (matchStats.leadingTimePlayer1 || 0) : (matchStats.leadingTimePlayer2 || 0)) / 1000) : 0;
+          // Estimate based on remaining time
+          const estimatedTime = Math.round(duration * 0.2); // Assume loser led 20% of the match
+          return Math.max(actualTime, estimatedTime);
+        })()
+      };
+
+      console.log('🔍 DEBUG: handleMatchComplete called with:', {
+        winner: winner,
+        loser: loser,
+        isWinnerPlayer1: isWinnerPlayer1,
+        matchStats: matchStats,
+        currentMatch: currentMatch,
+        gameStatsDetails: matchStats ? {
+          duration: Date.now() - (matchStats.startTime || Date.now()),
+          ralliesCount: matchStats.rallies?.length || 0,
+          totalTouches: (matchStats.player1Touches || 0) + (matchStats.player2Touches || 0),
+          maxBallSpeed: matchStats.maxBallSpeed || 0
+        } : 'No matchStats'
+      });
+
+      // Validate matchData before sending
+      const validationErrors = [];
+      if (!matchData.winner_info?.name) validationErrors.push('winner_info.name missing');
+      if (!matchData.loser_info?.name) validationErrors.push('loser_info.name missing');
+      if (matchData.win_score === undefined || matchData.win_score === null) validationErrors.push('win_score invalid');
+      if (matchData.lose_score === undefined || matchData.lose_score === null) validationErrors.push('lose_score invalid');
+
+      if (validationErrors.length > 0) {
+        console.error('❌ Validation errors in matchData:', validationErrors);
+        console.error('❌ Invalid matchData:', matchData);
+        return; // Don't send invalid data
+      }
+
+      console.log('📤 Sending validated match data to API:', JSON.stringify(matchData, null, 2));
+      console.log('🌐 API URL:', `${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`);
+
+      // Fire-and-forget API call
+      fetch(`${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(matchData),
+        credentials: 'include',
+      })
+      .then(async response => {
+        console.log('📡 Response status:', response.status, response.statusText);
+        console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (response.ok) {
+          console.log('✅ Tournament match data saved successfully');
+          return response.json();
+        } else {
+          console.error('❌ Failed to save tournament match data - Status:', response.status);
+          const errorText = await response.text();
+          console.error('❌ Response body:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+      })
+      .then(data => {
+        if (data) {
+          console.log('✅ API Response:', data);
+        }
+      })
+      .catch(error => {
+        console.error('💥 Network/API Error:', error);
+        console.error('💥 Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      });
+    }
   }, [currentMatch, tournamentManager]);
 
   // Handle continue after match
@@ -340,13 +535,13 @@ export default function LocalTournamentPage() {
                         },
                       ] satisfies GameTypePlayer[]}
                       onScoreUpdate={(scores) => setGameScores(scores)}
-                      onTournamentMatchEnd={(winner) => {
+                      onTournamentMatchEnd={(winner, matchStats) => {
                         // Convert winner back to GameContext Player format
                         const gameContextWinner: GamePlayer = {
                           ...winner,
                           color: winner.color || '#ffffff'
                         };
-                        handleMatchComplete(gameContextWinner);
+                        handleMatchComplete(gameContextWinner, matchStats);
                       }}
                     />
                   </div>

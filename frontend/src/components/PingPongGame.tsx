@@ -64,7 +64,7 @@ interface PingPongGameProps {
   // Tournament mode props
   tournamentMode?: boolean;
   tournamentPlayers?: Player[];
-  onTournamentMatchEnd?: (winner: Player) => void;
+  onTournamentMatchEnd?: (winner: Player, matchStats?: any) => void;
   isTournamentFinalMatch?: boolean; // Hide rematch button and game over screen for final match
   onScoreUpdate?: (scores: { player1: number; player2: number }) => void; // Callback for score updates
 
@@ -84,13 +84,30 @@ const useLocalGameState = () => {
       vy: BALL_INITIAL_SPEED,
       speed: BALL_INITIAL_SPEED, // Track current speed
     },
+    // Tournament match statistics - always initialize
+    gameStats: {
+      startTime: Date.now(),
+      rallies: [], // Array of rally lengths (touches before goal)
+      player1Touches: 0,
+      player2Touches: 0,
+      player1Streak: 0,
+      player2Streak: 0,
+      maxStreakPlayer1: 0,
+      maxStreakPlayer2: 0,
+      player1LeadingTime: 0,
+      player2LeadingTime: 0,
+      currentRallyTouches: 0,
+      lastScorer: null,
+      lastLeadingCheck: Date.now(),
+      maxBallSpeed: 0,
+    },
   });
 
   const resetGameState = useCallback(() => {
     // Random initial direction
     const angle = (Math.random() * Math.PI / 3) - Math.PI / 6; // -30 to +30 degrees
     const speed = BALL_INITIAL_SPEED;
-    setGameState({
+    setGameState(prevState => ({
       scores: { player1: 0, player2: 0 },
       paddles: [GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2],
       ball: {
@@ -100,11 +117,46 @@ const useLocalGameState = () => {
         vy: speed * Math.sin(angle),
         speed: speed,
       },
-    });
+      gameStats: {
+        startTime: Date.now(), // Reset start time for new match
+        rallies: [], // Reset rallies for new match
+        player1Touches: 0,
+        player2Touches: 0,
+        player1Streak: 0,
+        player2Streak: 0,
+        maxStreakPlayer1: 0,
+        maxStreakPlayer2: 0,
+        player1LeadingTime: 0,
+        player2LeadingTime: 0,
+        currentRallyTouches: 0,
+        lastScorer: null,
+        lastLeadingCheck: Date.now(),
+        maxBallSpeed: 0,
+      },
+    }));
   }, []);
 
   const updateGameState = useCallback((keysPressed: { [key: string]: boolean }, isAIMode: boolean = false, difficulty: 'easy' | 'medium' | 'hard' = 'medium', deltaTime: number = 1) => {
     setGameState(prev => {
+      const now = Date.now();
+      // Ensure gameStats always exists with default values
+      const defaultGameStats = {
+        startTime: prev.gameStats?.startTime || Date.now(), // Don't reset startTime if it exists
+        rallies: prev.gameStats?.rallies || [], // Don't reset accumulated rallies
+        player1Touches: prev.gameStats?.player1Touches || 0, // Don't reset accumulated touches
+        player2Touches: prev.gameStats?.player2Touches || 0,
+        player1Streak: 0, // Reset streaks per frame (they're calculated)
+        player2Streak: 0,
+        maxStreakPlayer1: prev.gameStats?.maxStreakPlayer1 || 0, // Preserve max streaks
+        maxStreakPlayer2: prev.gameStats?.maxStreakPlayer2 || 0,
+        player1LeadingTime: prev.gameStats?.player1LeadingTime || 0, // Preserve leading time
+        player2LeadingTime: prev.gameStats?.player2LeadingTime || 0,
+        currentRallyTouches: prev.gameStats?.currentRallyTouches || 0, // Preserve current rally
+        lastScorer: prev.gameStats?.lastScorer || null, // Preserve last scorer
+        lastLeadingCheck: Date.now(), // Always update this
+        maxBallSpeed: prev.gameStats?.maxBallSpeed || 0, // Preserve max ball speed
+      };
+      let statsUpdate = { ...defaultGameStats };
       // Paddles - smooth movement based on delta time
       const newPaddles = [...prev.paddles];
       // AI mode: Support both W/S and Arrow Up/Down keys for player 1
@@ -263,6 +315,15 @@ const useLocalGameState = () => {
         vy = Math.sin(angle) * newSpeed;
         speed = newSpeed;
 
+        // Track statistics: increment rally touches and player 1 touches
+        statsUpdate.currentRallyTouches++;
+        statsUpdate.player1Touches++;
+
+        // Track max ball speed
+        if (newSpeed > statsUpdate.maxBallSpeed) {
+          statsUpdate.maxBallSpeed = newSpeed;
+        }
+
         // Prevent sticking
         x = paddle1X + BALL_RADIUS + 1;
       }
@@ -289,6 +350,15 @@ const useLocalGameState = () => {
         vy = Math.sin(angle) * newSpeed;
         speed = newSpeed;
 
+        // Track statistics: increment rally touches and player 2 touches
+        statsUpdate.currentRallyTouches++;
+        statsUpdate.player2Touches++;
+
+        // Track max ball speed
+        if (newSpeed > statsUpdate.maxBallSpeed) {
+          statsUpdate.maxBallSpeed = newSpeed;
+        }
+
         // Prevent sticking
         x = paddle2X - BALL_RADIUS - 1;
       }
@@ -296,13 +366,60 @@ const useLocalGameState = () => {
       const newScores = { ...prev.scores };
       let ballReset = false;
 
-      // Score
-      if (x + BALL_RADIUS < 0) { // Ball passed left paddle
+      // Track leading time (check every few frames to avoid excessive updates)
+      if (now - statsUpdate.lastLeadingCheck > 100) { // Check every 100ms
+        if (newScores.player1 > newScores.player2) {
+          statsUpdate.player1LeadingTime += (now - statsUpdate.lastLeadingCheck);
+        } else if (newScores.player2 > newScores.player1) {
+          statsUpdate.player2LeadingTime += (now - statsUpdate.lastLeadingCheck);
+        }
+        statsUpdate.lastLeadingCheck = now;
+      }
+
+      // Score and track statistics
+      if (x + BALL_RADIUS < 0) { // Ball passed left paddle (player 2 scores)
         newScores.player2++;
         ballReset = true;
-      } else if (x - BALL_RADIUS > GAME_WIDTH) { // Ball passed right paddle
+
+        // Track rally completion
+        statsUpdate.rallies.push(statsUpdate.currentRallyTouches);
+
+        // Update streaks
+        if (statsUpdate.lastScorer === 'player2') {
+          statsUpdate.player2Streak++;
+          if (statsUpdate.player2Streak > statsUpdate.maxStreakPlayer2) {
+            statsUpdate.maxStreakPlayer2 = statsUpdate.player2Streak;
+          }
+        } else {
+          statsUpdate.player2Streak = 1;
+          statsUpdate.player1Streak = 0; // Reset opponent streak
+        }
+        statsUpdate.lastScorer = 'player2';
+
+        // Reset rally touches for next rally
+        statsUpdate.currentRallyTouches = 0;
+
+      } else if (x - BALL_RADIUS > GAME_WIDTH) { // Ball passed right paddle (player 1 scores)
         newScores.player1++;
         ballReset = true;
+
+        // Track rally completion
+        statsUpdate.rallies.push(statsUpdate.currentRallyTouches);
+
+        // Update streaks
+        if (statsUpdate.lastScorer === 'player1') {
+          statsUpdate.player1Streak++;
+          if (statsUpdate.player1Streak > statsUpdate.maxStreakPlayer1) {
+            statsUpdate.maxStreakPlayer1 = statsUpdate.player1Streak;
+          }
+        } else {
+          statsUpdate.player1Streak = 1;
+          statsUpdate.player2Streak = 0; // Reset opponent streak
+        }
+        statsUpdate.lastScorer = 'player1';
+
+        // Reset rally touches for next rally
+        statsUpdate.currentRallyTouches = 0;
       }
 
       const newBall = ballReset
@@ -320,6 +437,7 @@ const useLocalGameState = () => {
         scores: newScores,
         paddles: newPaddles,
         ball: newBall,
+        gameStats: statsUpdate,
       };
     });
   }, []);
@@ -570,24 +688,93 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
     if (!winner && isLocalMode) {
       if (tournamentMode && onTournamentMatchEnd && localPlayers.length >= 2) {
+        // Ensure gameStats exists
+        const gameStats = gameState.gameStats || {
+          startTime: Date.now(),
+          rallies: [],
+          player1Touches: 0,
+          player2Touches: 0,
+          maxStreakPlayer1: 0,
+          maxStreakPlayer2: 0,
+          player1LeadingTime: 0,
+          player2LeadingTime: 0,
+          maxBallSpeed: 0
+        };
+
+        // Calculate final match statistics
+        const matchStats = {
+          player1Id: localPlayers[0].id_user || localPlayers[0].id,
+          player2Id: localPlayers[1].id_user || localPlayers[1].id,
+          finalScore: scores,
+          duration: Date.now() - gameStats.startTime,
+          longestRally: Math.max(...gameStats.rallies, 0),
+          averageRally: gameStats.rallies.length > 0
+            ? gameStats.rallies.reduce((a, b) => a + b, 0) / gameStats.rallies.length
+            : 0,
+          maxBallSpeed: gameStats.maxBallSpeed || 0,
+          player1Touches: gameStats.player1Touches || 0,
+          player2Touches: gameStats.player2Touches || 0,
+          maxStreakPlayer1: gameStats.maxStreakPlayer1 || 0,
+          maxStreakPlayer2: gameStats.maxStreakPlayer2 || 0,
+          leadingTimePlayer1: gameStats.player1LeadingTime || 0,
+          leadingTimePlayer2: gameStats.player2LeadingTime || 0,
+          tournamentId: 'local-tournament' // Identifier for local tournaments
+        };
+
         if (scores.player1 >= WINNING_SCORE) {
           setWinner(localPlayers[0].name);
+          console.log('🏆 PingPongGame: Player 1 wins!', {
+            scores,
+            localPlayers,
+            gameStats
+          });
           // Ensure player has required id property for onTournamentMatchEnd (expects types/game.Player)
           const winnerPlayer: Player = {
             ...localPlayers[0],
             id: localPlayers[0].id || `player-1`,
             id_user: typeof localPlayers[0].id_user === 'number' ? localPlayers[0].id_user : (typeof localPlayers[0].id_user === 'string' ? parseInt(localPlayers[0].id_user, 10) : undefined)
           };
-          onTournamentMatchEnd(winnerPlayer);
+          console.log('📤 PingPongGame: Calling onTournamentMatchEnd with:', {
+            winnerPlayer,
+            matchStats,
+            gameStatsSummary: {
+              duration: Date.now() - (gameStats.startTime || Date.now()),
+              ralliesCount: gameStats.rallies?.length || 0,
+              player1Touches: gameStats.player1Touches || 0,
+              player2Touches: gameStats.player2Touches || 0,
+              maxBallSpeed: gameStats.maxBallSpeed || 0,
+              maxStreakPlayer1: gameStats.maxStreakPlayer1 || 0,
+              maxStreakPlayer2: gameStats.maxStreakPlayer2 || 0
+            }
+          });
+          onTournamentMatchEnd(winnerPlayer, matchStats);
         } else if (scores.player2 >= WINNING_SCORE) {
           setWinner(localPlayers[1].name);
+          console.log('🏆 PingPongGame: Player 2 wins!', {
+            scores,
+            localPlayers,
+            gameStats
+          });
           // Ensure player has required id property for onTournamentMatchEnd (expects types/game.Player)
           const winnerPlayer: Player = {
             ...localPlayers[1],
             id: localPlayers[1].id || `player-2`,
             id_user: typeof localPlayers[1].id_user === 'number' ? localPlayers[1].id_user : (typeof localPlayers[1].id_user === 'string' ? parseInt(localPlayers[1].id_user, 10) : undefined)
           };
-          onTournamentMatchEnd(winnerPlayer);
+          console.log('📤 PingPongGame: Calling onTournamentMatchEnd with:', {
+            winnerPlayer,
+            matchStats,
+            gameStatsSummary: {
+              duration: Date.now() - (gameStats.startTime || Date.now()),
+              ralliesCount: gameStats.rallies?.length || 0,
+              player1Touches: gameStats.player1Touches || 0,
+              player2Touches: gameStats.player2Touches || 0,
+              maxBallSpeed: gameStats.maxBallSpeed || 0,
+              maxStreakPlayer1: gameStats.maxStreakPlayer1 || 0,
+              maxStreakPlayer2: gameStats.maxStreakPlayer2 || 0
+            }
+          });
+          onTournamentMatchEnd(winnerPlayer, matchStats);
         }
       } else if (gameState.mode === 'ai') {
         // AI mode - check for winner

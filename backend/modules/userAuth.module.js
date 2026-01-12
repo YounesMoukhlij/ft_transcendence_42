@@ -555,12 +555,157 @@ export async function registerInTournament(request, reply) {
 
     } catch (error) {
         console.error("Error during login:", error);
-        return reply.code(500).send({ 
+        return reply.code(500).send({
             success: false,
             message: "Internal server error"
         });
     }
 
+}
+
+export async function saveTournamentMatch(request, reply) {
+    const {
+        winner_info,
+        loser_info,
+        win_score,
+        lose_score,
+        type,
+        tournament_id,
+        duration,
+        longest_rally,
+        average_rally,
+        ball_max_speed,
+        touches_win,
+        touches_lose,
+        max_points_streak_win,
+        max_points_streak_lose,
+        max_leading_time_win,
+        max_leading_time_lose,
+        blockchain_hash
+    } = request.body;
+
+    console.log('Received tournament match data:', {
+        winner_info,
+        loser_info,
+        win_score,
+        lose_score,
+        type,
+        tournament_id
+    });
+
+    if (!winner_info || !loser_info || win_score === undefined || lose_score === undefined) {
+        return reply.code(400).send({
+            success: false,
+            message: "Missing required fields: winner_info, loser_info, win_score, lose_score"
+        });
+    }
+
+    try {
+        // Helper function to get user ID - no automatic guest user creation
+        const getUserId = (playerInfo) => {
+            // Must have a numeric id_user to be authenticated
+            if (playerInfo.id_user && typeof playerInfo.id_user === 'number') {
+                return playerInfo.id_user;
+            }
+
+            // Reject players without proper authentication
+            throw new Error(`Player ${playerInfo.name} is not authenticated. All tournament players must be authenticated users.`);
+        };
+
+        // Get user IDs for both players (must be authenticated)
+        const winnerUserId = getUserId(winner_info);
+        const loserUserId = getUserId(loser_info);
+
+        console.log('Resolved user IDs:', {
+            winnerUserId,
+            loserUserId,
+            winnerInfo: winner_info,
+            loserInfo: loser_info
+        });
+
+        const query = request.server.db.prepare(`
+            INSERT INTO game_history (
+                user_win, user_lose, win_score, lose_score, type, tournament_id,
+                duration, longest_rally, average_rally, ball_max_speed,
+                touches_win, touches_lose, max_points_streak_win, max_points_streak_lose,
+                max_leading_time_win, max_leading_time_lose, blockchain_hash
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        const result = query.run(
+            winnerUserId,
+            loserUserId,
+            win_score,
+            lose_score,
+            type || 'tournament',
+            tournament_id === 'local-tournament' ? null : (tournament_id || null),
+            duration || null,
+            longest_rally || null,
+            average_rally || null,
+            ball_max_speed || null,
+            touches_win || null,
+            touches_lose || null,
+            max_points_streak_win || null,
+            max_points_streak_lose || null,
+            max_leading_time_win || null,
+            max_leading_time_lose || null,
+            blockchain_hash || null
+        );
+
+        // Award XP for tournament win - only to authenticated users (not guests)
+        try {
+            const awardXPStmt = request.server.db.prepare('UPDATE users SET xp = xp + ? WHERE id_user = ? AND auth_method != -1');
+
+            // Award more XP for tournament wins (more competitive than casual games)
+            const tournamentWinnerXP = 800;
+            const tournamentLoserXP = 300;
+
+            let winnerXPAdded = 0;
+            let loserXPAdded = 0;
+
+            // Only award XP to authenticated winner
+            if (winner_info.id_user && typeof winner_info.id_user === 'number') {
+                awardXPStmt.run(tournamentWinnerXP, winnerUserId);
+                winnerXPAdded = tournamentWinnerXP;
+            }
+
+            // Only award XP to authenticated loser
+            if (loser_info.id_user && typeof loser_info.id_user === 'number') {
+                awardXPStmt.run(tournamentLoserXP, loserUserId);
+                loserXPAdded = tournamentLoserXP;
+            }
+
+            console.log(`Tournament XP awarded: Winner ${winnerUserId} +${winnerXPAdded} XP, Loser ${loserUserId} +${loserXPAdded} XP`);
+        } catch (xpError) {
+            console.error('Error awarding tournament XP:', xpError);
+            // Don't fail the entire request if XP update fails
+        }
+
+        return reply.code(201).send({
+            success: true,
+            message: "Tournament match data saved successfully",
+            matchId: result.lastInsertRowid
+        });
+
+    } catch (error) {
+        console.error("Error saving tournament match:", error);
+        console.error("Error details:", {
+            message: error.message,
+            code: error.code,
+            errno: error.errno
+        });
+        console.error("Data being inserted:", {
+            winner_info, loser_info, win_score, lose_score, type, tournament_id,
+            duration, longest_rally, average_rally, ball_max_speed,
+            touches_win, touches_lose, max_points_streak_win, max_points_streak_lose,
+            max_leading_time_win, max_leading_time_lose
+        });
+        return reply.code(500).send({
+            success: false,
+            message: "Error saving tournament match data",
+            details: error.message
+        });
+    }
 }
 
 

@@ -20,7 +20,8 @@ import {
     leaderboard,
     searchUsers,
     me,
-    registerInTournament
+    registerInTournament,
+    saveTournamentMatch
 
 } from '../modules/userAuth.module.js';
 import { getUserStats, getUserStatsbyId } from '../modules/profile.module.js';
@@ -44,7 +45,7 @@ export default async function routes(fastify, options) {
 
   fastify.addHook('onRequest' , async (request , reply) => {
         const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser" , "/forgotPassword",
-       "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/auth/42", "/42Auth", "/2fa/login-verify", "/registerInTournament"];
+       "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/auth/42", "/42Auth", "/2fa/login-verify", "/registerInTournament", "/saveTournamentMatch", "/api/getMatchHistory"];
     const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
 
 
@@ -78,6 +79,7 @@ export default async function routes(fastify, options) {
   fastify.post('/resetPasswordWithToken', resetPasswordWithToken);
   fastify.post('/login', login);
   fastify.post('/registerInTournament', registerInTournament);
+  fastify.post('/saveTournamentMatch', saveTournamentMatch);
   fastify.get('/auth/google', InitiateGoogleAuth);
   fastify.get('/auth/42', Initiate42Auth);
   fastify.get('/GoogleAuth', GoogleAuth);

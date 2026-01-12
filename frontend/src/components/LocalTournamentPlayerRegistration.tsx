@@ -86,10 +86,10 @@ export default function LocalTournamentPlayerRegistration({
           setErrorMessage(response.data.message || 'Authentication failed');
         }
       } catch (error) {
-        console.error('Error registering tournament user:', error);
-        console.error('Error response:', error.response);
-        console.error('Error status:', error.response?.status);
-        console.error('Error data:', error.response?.data);
+        // console.error('Error registering tournament user:', error);
+        // console.error('Error response:', error.response);
+        // console.error('Error status:', error.response?.status);
+        // console.error('Error data:', error.response?.data);
         setErrorMessage(
           error.response?.data?.message ||
           error.message ||
