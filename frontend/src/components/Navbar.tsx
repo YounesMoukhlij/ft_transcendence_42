@@ -309,6 +309,44 @@ export default function Navbar() {
     if (!user?.access_token) return;
 
     try {
+      // Handle real-time game invitations (from WebSocket)
+      if (item.invitationData) {
+        // This is a real-time invitation from GameManager
+        const gameSocket = getWebSocket();
+
+        if (gameSocket.readyState === WebSocket.CONNECTING) {
+          await new Promise((resolve) => {
+            gameSocket.addEventListener('open', resolve, { once: true });
+          });
+        }
+
+        if (gameSocket.readyState === WebSocket.OPEN) {
+          if (user?.id_user) gameSocket.send(String(user.id_user));
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          // Send acceptance via WebSocket
+          gameSocket.send(JSON.stringify({
+            type: 'acceptInvitation',
+            payload: {
+              roomCode: item.invitationData.roomCode,
+              customization: {
+                tableBg: '#15803d',
+                ballColor: '#ffffff',
+                paddleColor: '#f87171'
+              }
+            }
+          }));
+
+          // Remove from real-time notifications
+          deleteNotification(item.notify_id);
+          setNotificationIndex(false);
+          setGameMode('remote');
+          router.push('/game/remote');
+          return;
+        }
+      }
+
+      // Handle database-stored game challenges (legacy)
       // Backend will:
       // - send WS `game_challenge_accepted` to the inviter
       // - send WS `start_game` to the acceptor
@@ -352,6 +390,37 @@ export default function Navbar() {
   async function RejectGameChallenge(item) {
     if (!user?.access_token) return;
 
+    // Handle real-time game invitations (from WebSocket)
+    if (item.invitationData) {
+      // This is a real-time invitation from GameManager
+      const gameSocket = getWebSocket();
+
+      if (gameSocket.readyState === WebSocket.CONNECTING) {
+        await new Promise((resolve) => {
+          gameSocket.addEventListener('open', resolve, { once: true });
+        });
+      }
+
+      if (gameSocket.readyState === WebSocket.OPEN) {
+        if (user?.id_user) gameSocket.send(String(user.id_user));
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Send decline via WebSocket
+        gameSocket.send(JSON.stringify({
+          type: 'declineInvitation',
+          payload: {
+            roomCode: item.invitationData.roomCode
+          }
+        }));
+
+        // Remove from real-time notifications
+        deleteNotification(item.notify_id);
+        setNotificationIndex(false);
+        return;
+      }
+    }
+
+    // Handle database-stored game challenges (legacy)
     // setNotification(notificatiion.filter(object => object.notify_id !== item.notify_id));
     deleteNotification(item.notify_id);
     setNotificationIndex(false);

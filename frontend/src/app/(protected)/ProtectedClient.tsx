@@ -68,15 +68,18 @@ export default function ProtectedClient({
             sender_username: data.sender_username,
             notify_id: data.notify_id,
           });
-          
+
         } else if (data.title == "friend request accepted") {
 
           addNotification(data);
           const sentRequests = useUserStore.getState().sentRequests;
           removeSentRequests(data.sender_user);
           addFriend({ id_user: data.sender_user , conversation_id: data.room_id });
+        } else if (data.title == "game challenge") {
+          // Handle game challenge notifications
+          addNotification(data);
         }
-      } 
+      }
 
       if (type == "unfriend") {
         removeFriend(data.id_user);
@@ -116,6 +119,23 @@ export default function ProtectedClient({
         Set_Display_game_invite(true);
         setInviterData(data);
         setTimeout(() => Set_Display_game_invite(false), 5000);
+      }
+
+      if (type === "gameInvitation") {
+        // Handle real-time game invitation from friend
+        // This is sent by GameManager.sendFriendInvitation
+        const invitationData = {
+          notify_id: Date.now(), // Temporary ID for real-time display
+          getter_user: user?.id_user,
+          sender_user: data.payload?.from?.id,
+          sender_username: data.payload?.from?.username,
+          title: "game challenge",
+          sender_profile_img: null, // Will be fetched from notification API
+          expired: null,
+          // Store invitation data for acceptance
+          invitationData: data.payload
+        };
+        addNotification(invitationData);
       }
       if (type === "test") addFriend(data);
       if (type === "isTyping") {

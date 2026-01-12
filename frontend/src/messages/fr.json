@@ -288,6 +288,7 @@
     "loadingFriends": "Chargement des amis...",
     "mustBeLoggedIn": "Vous devez être connecté pour envoyer des invitations",
     "failedToSendInvitation": "Échec de l'envoi de l'invitation. Veuillez réessayer.",
+    "failedToLoadFriends": "Échec du chargement de la liste d'amis.",
     "gameInvitationSent": "Invitation de jeu envoyée à {username} !",
     "friendDeclinedChallenge": "{username} a refusé votre défi de jeu.",
     "sent": "Envoyé",

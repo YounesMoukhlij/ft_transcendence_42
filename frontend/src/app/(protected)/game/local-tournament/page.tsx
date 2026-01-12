@@ -271,8 +271,8 @@ export default function LocalTournamentPage() {
         max_leading_time_win: (() => {
           const actualTime = matchStats?.leadingTimePlayer1 || matchStats?.leadingTimePlayer2 ?
             Math.round((isPlayer1Winner ? (matchStats.leadingTimePlayer1 || 0) : (matchStats.leadingTimePlayer2 || 0)) / 1000) : 0;
-          // Estimate based on duration and win margin
-          const estimatedTime = Math.round(duration * 0.7); // Assume winner led 70% of the match
+          // Estimate based on duration and win margin ok ok 
+          const estimatedTime = Math.round(duration * 0.7); // Assume winner led 70% of the match ma3endna mandiro a ba AYOUB
           return Math.max(actualTime, estimatedTime);
         })(),
         max_leading_time_lose: (() => {
@@ -306,13 +306,13 @@ export default function LocalTournamentPage() {
       if (matchData.lose_score === undefined || matchData.lose_score === null) validationErrors.push('lose_score invalid');
 
       if (validationErrors.length > 0) {
-        console.error('❌ Validation errors in matchData:', validationErrors);
-        console.error('❌ Invalid matchData:', matchData);
+        console.error(' Validation errors in matchData:', validationErrors);
+        console.error(' Invalid matchData:', matchData);
         return; // Don't send invalid data
       }
 
-      console.log('📤 Sending validated match data to API:', JSON.stringify(matchData, null, 2));
-      console.log('🌐 API URL:', `${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`);
+      console.log('  Sending validated match data to API:', JSON.stringify(matchData, null, 2));
+      console.log(' WATA KHEDM Aaaaaaaaaaa WLLLLD LKLBA API URL:', `${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`);
 
       // Fire-and-forget API call
       fetch(`${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`, {
@@ -324,27 +324,27 @@ export default function LocalTournamentPage() {
         credentials: 'include',
       })
       .then(async response => {
-        console.log('📡 Response status:', response.status, response.statusText);
-        console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+        console.log(' HANA -> Response status:', response.status, response.statusText);
+        console.log(' Response headers:', Object.fromEntries(response.headers.entries()));
 
         if (response.ok) {
-          console.log('✅ Tournament match data saved successfully');
+          console.log(' HANA -> Tournament match data saved successfully');
           return response.json();
         } else {
-          console.error('❌ Failed to save tournament match data - Status:', response.status);
+          console.error(' HANA Failed to save tournament match data - Status:', response.status);
           const errorText = await response.text();
-          console.error('❌ Response body:', errorText);
+          console.error(' Response body:', errorText);
           throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
       })
       .then(data => {
         if (data) {
-          console.log('✅ API Response:', data);
+          console.log(' API Response:', data);
         }
       })
       .catch(error => {
-        console.error('💥 Network/API Error:', error);
-        console.error('💥 Error details:', {
+        console.error(' Network/API Error:', error);
+        console.error(' Error details:', {
           message: error.message,
           stack: error.stack,
           name: error.name

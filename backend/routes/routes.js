@@ -86,10 +86,10 @@ export default async function routes(fastify, options) {
   fastify.get('/42Auth', FortyTwoAuth);
   
 
-  fastify.post('/sendGameChallenge' , sendGameChallenge);     // in order to send game challenge must be the user in freind list 
+  fastify.post('/sendGameChallenge' , sendGameChallenge);     // in order to send game challenge must be the user in friend list 
   fastify.post('/startGame' , AcceptGameChallenge);     // Dont start the game unless it is in notifications,and must not be expired, and the user sent the invite can't accept
-  fastify.get('/searchUsers', searchUsers);
   fastify.post('/saveGameCustomization', saveGameCustomization);    // missing parsing
+  fastify.get('/searchUsers', searchUsers);
   fastify.get('/getGameCustomization', getGameCustomization);
 
 

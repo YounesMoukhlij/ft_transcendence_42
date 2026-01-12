@@ -104,7 +104,7 @@ CREATE TABLE notification (
     notify_id INTEGER PRIMARY KEY AUTOINCREMENT,
     getter_user INTEGER NOT NULL,
     sender_user INTEGER NOT NULL,
-    title INTEGER NOT NULL,
+    title TEXT NOT NULL,
     notifyBody TEXT NOT NULL,
     is_seen BOOLEAN DEFAULT FALSE,
     expired DATETIME,
@@ -113,6 +113,13 @@ CREATE TABLE notification (
     -- FOREIGN KEY (getter_user) REFERENCES users(id_user),
     -- FOREIGN KEY (sender_user) REFERENCES users(id_user)
 );
+
+-- Migration: Update title column from INTEGER to TEXT if it exists
+-- This handles existing databases that may have the wrong column type
+ALTER TABLE notification ADD COLUMN title_temp TEXT;
+UPDATE notification SET title_temp = CAST(title AS TEXT);
+ALTER TABLE notification DROP COLUMN title;
+ALTER TABLE notification RENAME COLUMN title_temp TO title;
 
 -- Message
 CREATE TABLE message (

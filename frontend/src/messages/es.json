@@ -288,6 +288,7 @@
     "loadingFriends": "Cargando amigos...",
     "mustBeLoggedIn": "Debes iniciar sesión para enviar invitaciones",
     "failedToSendInvitation": "Error al enviar invitación. Por favor intenta de nuevo.",
+    "failedToLoadFriends": "Error al cargar la lista de amigos.",
     "gameInvitationSent": "¡Invitación de juego enviada a {username}!",
     "friendDeclinedChallenge": "{username} rechazó tu desafío de juego.",
     "sent": "Enviado",

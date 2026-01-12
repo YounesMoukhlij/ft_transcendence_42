@@ -288,6 +288,7 @@
     "loadingFriends": "Loading friends...",
     "mustBeLoggedIn": "You must be logged in to send invitations",
     "failedToSendInvitation": "Failed to send invitation. Please try again.",
+    "failedToLoadFriends": "Failed to load friends list.",
     "gameInvitationSent": "Game invitation sent to {username}!",
     "friendDeclinedChallenge": "{username} declined your game challenge.",
     "sent": "Sent",

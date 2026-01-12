@@ -432,17 +432,47 @@ export  function sendGameChallenge(request , reply){
   // Support both {Friend_id} (game mate) and {id} (older)
   const id = request.body?.Friend_id ?? request.body?.id;
   if (!id) return reply.code(400).send("missing params");
-  
+
   try{
+    const senderId = request.user.id_user;
+
+    // Check if target user exists
+    const targetUser = request.server.db.prepare("SELECT id_user FROM users WHERE id_user = ?").get(id);
+    if (!targetUser) {
+      return reply.code(404).send({ error: "User not found" });
+    }
+
+    // Check if target user is in friend list
+    const areFriends = request.server.db.prepare(`
+      SELECT 1 FROM friends
+      WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+    `).get(senderId, id, id, senderId);
+
+    if (!areFriends) {
+      return reply.code(403).send({ error: "Can only send game challenges to friends" });
+    }
+
+    // Check if there's already an active game challenge between these users
+    const existingChallenge = request.server.db.prepare(`
+      SELECT notify_id FROM notification
+      WHERE title = 'game challenge'
+      AND ((getter_user = ? AND sender_user = ?) OR (getter_user = ? AND sender_user = ?))
+      AND expired > ?
+    `).get(id, senderId, senderId, id, ft_getTime());
+
+    if (existingChallenge) {
+      return reply.code(409).send({ error: "Game challenge already exists between these users" });
+    }
+
     const title = "game challenge";
     const query = request.server.db.prepare('SELECT profile_img FROM users where id_user = ?');
-    const result = query.get(request.user.id_user);
+    const result = query.get(senderId);
 
     // 1.5 minutes in the future (YY-MM-DD format)
     const ExpiredTime = ft_getExpiredTime(1.5);
     const insertQuery = request.server.db.prepare(` INSERT INTO notification (getter_user, title, sender_user, notifyBody , expired) VALUES (?, ?, ?, ? , ?)`);
 
-    const insertResult = insertQuery.run(id, title, request.user.id_user, "game challenge" , ExpiredTime);
+    const insertResult = insertQuery.run(id, title, senderId, "game challenge" , ExpiredTime);
     const notify_id = insertResult.lastInsertRowid;
     
     
@@ -452,17 +482,13 @@ export  function sendGameChallenge(request , reply){
     if (socket){
       
       const query1 = request.server.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
-      const result = query1.get(request.user.id_user);
-      
-      
-      const query2 = request.server.db.prepare("SELECT notify_id FROM notification WHERE getter_user = ? AND sender_user = ?");
-      const res = query2.get(id, request.user.id_user);
+      const result = query1.get(senderId);
 
 
       const object  = {
         username: request.user.username,
         img: result.profile_img,
-        id: request.user.id_user
+        id: senderId
       };
       socket.send(JSON.stringify({
           type: "game_invite",
@@ -471,7 +497,7 @@ export  function sendGameChallenge(request , reply){
 
       const object_notify = {
         getter_user: id,
-        sender_user: request.user.id_user,
+        sender_user: senderId,
         sender_username: request.user.username,
         title: title,
         sender_profile_img: result.profile_img,
@@ -503,6 +529,24 @@ export function AcceptGameChallenge(request , reply){
   try {
     const acceptorId = request.user.id_user;
 
+    // Prevent sender from accepting their own challenge
+    if (parseInt(inviterId) === acceptorId) {
+      return reply.code(403).send({ error: 'Cannot accept your own game challenge' });
+    }
+
+    // Check if there's a valid game challenge notification
+    const notification = request.server.db.prepare(`
+      SELECT notify_id, expired FROM notification
+      WHERE title = 'game challenge'
+      AND getter_user = ?
+      AND sender_user = ?
+      AND expired > ?
+    `).get(acceptorId, inviterId, ft_getTime());
+
+    if (!notification) {
+      return reply.code(404).send({ error: 'No valid game challenge found or challenge has expired' });
+    }
+
     const inviterSocket = request.server.users_socket.get(inviterId.toString());
     const acceptorSocket = request.server.users_socket.get(acceptorId.toString());
 
@@ -512,6 +556,9 @@ export function AcceptGameChallenge(request , reply){
     if (!acceptor) {
       return reply.code(404).send({ error: 'User not found' });
     }
+
+    // Delete the notification after accepting
+    request.server.db.prepare('DELETE FROM notification WHERE notify_id = ?').run(notification.notify_id);
 
     // Create challengeId and store it for game matchmaking
     const challengeId = `${inviterId}_${acceptorId}`;

@@ -288,6 +288,7 @@
     "loadingFriends": "Aqqen n yimedakwalen...",
     "mustBeLoggedIn": "Aql-ak ad tekcem i wakken ad tazneḍ isiwlen",
     "failedToSendInvitation": "Azen n usiwel yecceḍ. Ma ulac aɣilif, ɛreḍ tikelt-nniḍen.",
+    "failedToLoadFriends": "Azen n usali n yemdukal yecceḍ.",
     "gameInvitationSent": "Asiwel n wurar yettwaznen ɣer {username}!",
     "friendDeclinedChallenge": "{username} iagi aɣerfi-ik n wurar.",
     "sent": "Yettwaznen",

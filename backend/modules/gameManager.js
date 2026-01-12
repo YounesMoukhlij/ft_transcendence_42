@@ -30,6 +30,23 @@ class GameManager {
     this.tournamentObservers = new Map(); // tournamentId -> Set<playerId> - eliminated hosts who can still watch
   }
 
+  // Helper function to generate expiration time (YY-MM-DD format)
+  getExpiredTime(minutesFromNow = 5) {
+    const now = new Date();
+    const expired = new Date(now.getTime() + minutesFromNow * 60 * 1000);
+
+    const pad = (n) => n.toString().padStart(2, '0');
+
+    const year = expired.getFullYear().toString().slice(-2);
+    const month = pad(expired.getMonth() + 1);
+    const day = pad(expired.getDate());
+    const hours = pad(expired.getHours());
+    const minutes = pad(expired.getMinutes());
+    const seconds = pad(expired.getSeconds());
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
   // Generate unique room code
   generateRoomCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -1279,13 +1296,8 @@ class GameManager {
 
   // Handle friend invitation
   sendFriendInvitation(fromUserId, fromUsername, friendId, customization) {
-    const friendSocket = this.usersSocket.get(friendId.toString());
-
-    if (!friendSocket) {
-      return { error: 'Friend is not online' };
-    }
-
     const roomCode = this.generateRoomCode();
+
     // Store invitation with friendId (acceptor) as key
     this.pendingInvitations.set(friendId.toString(), {
       from: fromUserId, // inviter
@@ -1295,18 +1307,60 @@ class GameManager {
       timestamp: Date.now()
     });
 
-    // Send invitation to friend
-    this.sendToPlayer(friendSocket, {
-      type: 'gameInvitation',
-      payload: {
-        from: {
-          id: fromUserId,
-          username: fromUsername
-        },
-        roomCode,
-        customization
+    // Create database notification for persistence
+    try {
+      // Get user profile image
+      const getUserStmt = this.db.prepare('SELECT profile_img FROM users WHERE id_user = ?');
+      const userResult = getUserStmt.get(fromUserId);
+
+      // Create notification with 5-minute expiration (YY-MM-DD format)
+      const expiredTime = this.getExpiredTime(5); // 5 minutes for game invitations
+      const insertStmt = this.db.prepare(`
+        INSERT INTO notification (getter_user, title, sender_user, notifyBody, expired)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+
+      const insertResult = insertStmt.run(friendId, "game challenge", fromUserId, "game challenge", expiredTime);
+      const notifyId = insertResult.lastInsertRowid;
+
+      // Send real-time WebSocket message if friend is online
+      const friendSocket = this.usersSocket.get(friendId.toString());
+      if (friendSocket) {
+        // Get the sender's profile image again (could optimize this)
+        const senderQuery = this.db.prepare("SELECT profile_img FROM users WHERE id_user = ?");
+        const senderResult = senderQuery.get(fromUserId);
+
+        // Send both the game invitation and the notification via WebSocket
+        this.sendToPlayer(friendSocket, {
+          type: 'gameInvitation',
+          payload: {
+            from: {
+              id: fromUserId,
+              username: fromUsername
+            },
+            roomCode,
+            customization
+          }
+        });
+
+        // Also send notification via WebSocket for immediate display
+        friendSocket.send(JSON.stringify({
+          type: "notify",
+          data: {
+            notify_id: notifyId,
+            getter_user: friendId,
+            sender_user: fromUserId,
+            sender_username: fromUsername,
+            title: "game challenge",
+            sender_profile_img: senderResult?.profile_img,
+            expired: expiredTime
+          }
+        }));
       }
-    });
+    } catch (error) {
+      console.error('Error creating game invitation notification:', error);
+      // Continue anyway - the invitation still works via WebSocket if user is online
+    }
 
     return { roomCode };
   }

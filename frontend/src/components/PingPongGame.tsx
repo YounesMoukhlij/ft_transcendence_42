@@ -500,7 +500,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const localPlayers = useMemo(() => {
     return tournamentMode ? tournamentPlayers : (gameState.mode === 'local' ? gameState.players : []);
   }, [tournamentMode, tournamentPlayers, gameState.mode, gameState.players]);
-  const { scores, paddles, ball, updateGameState, resetGameState } = useLocalGameState();
+  const { scores, paddles, ball, gameStats, updateGameState, resetGameState } = useLocalGameState();
 
   // Track if we've initialized the game to prevent infinite loops
   const gameInitializedRef = useRef<string | null>(null);
@@ -688,18 +688,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
     if (!winner && isLocalMode) {
       if (tournamentMode && onTournamentMatchEnd && localPlayers.length >= 2) {
-        // Ensure gameStats exists
-        const gameStats = gameState.gameStats || {
-          startTime: Date.now(),
-          rallies: [],
-          player1Touches: 0,
-          player2Touches: 0,
-          maxStreakPlayer1: 0,
-          maxStreakPlayer2: 0,
-          player1LeadingTime: 0,
-          player2LeadingTime: 0,
-          maxBallSpeed: 0
-        };
+        // gameStats is already available from useLocalGameState
 
         // Calculate final match statistics
         const matchStats = {
