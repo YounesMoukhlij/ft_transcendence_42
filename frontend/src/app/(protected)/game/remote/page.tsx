@@ -557,7 +557,7 @@ export default function RemoteGamePage() {
                             <div className="flex items-center gap-3">
                               <div className="relative">
                                 <Image
-                                  src={friend.profile_img || '/user.png'}
+                                  src={friend.profile_img || 'https://i.pravatar.cc/150?img=3'}
                                   alt={friend.username || friend.name || 'Friend'}
                                   width={32}
                                   height={32}

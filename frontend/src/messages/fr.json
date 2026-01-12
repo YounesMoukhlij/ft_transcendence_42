@@ -467,7 +467,8 @@
     "allCustomizationOptionsRequired": "Toutes les options de personnalisation doivent être sélectionnées pour démarrer le jeu",
     "backToPlayerSetup": "Retour à la Configuration du Joueur",
     "connecting": "Connexion...",
-    "startGame": "Démarrer le Jeu"
+    "startGame": "Démarrer le Jeu",
+    "alreadyInGame": "vous êtes déjà en jeu"
   }
 }
 

@@ -541,7 +541,8 @@
     "youWon": "YOU WON!",
     "opponentLeft": "Opponent Left",
     "opponentLeftMessage": "The other player has left the game, you win!",
-    "processingWin": "Processing your win..."
+    "processingWin": "Processing your win...",
+    "alreadyInGame": "you are already in game"
   }
 }
 

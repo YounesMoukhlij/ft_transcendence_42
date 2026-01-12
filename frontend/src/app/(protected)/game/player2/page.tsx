@@ -8,9 +8,9 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { FaUser, FaUpload, FaCheck, FaArrowRight } from 'react-icons/fa';
 
 const predefinedAvatars = [
-  '/profileface.png',
   '/robot.png',
-  '/user.png',
+  'https://i.pravatar.cc/150?img=5',
+  'https://i.pravatar.cc/150?img=2',
 ];
 
 function Player2Setup() {
@@ -84,7 +84,7 @@ function Player2Setup() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Image
-                  src={player1.avatar || '/profileface.png'}
+                  src={player1.avatar || 'https://i.pravatar.cc/150?img=1'}
                   alt={player1.name}
                   width={64}
                   height={64}

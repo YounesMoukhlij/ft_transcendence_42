@@ -399,13 +399,13 @@ export default function InviteFriendPage() {
                     <div className="flex items-center gap-4 flex-1">
                       <div className="relative">
                         <Image
-                          src={friend.profile_img || '/user.png'}
+                          src={friend.profile_img || 'https://i.pravatar.cc/150?img=4'}
                           alt={friend.username || friend.name || 'Friend'}
                           width={48}
                           height={48}
                           className="w-12 h-12 rounded-full bg-gray-600 object-cover border-2 border-gray-500"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/user.png';
+                            (e.target as HTMLImageElement).src = 'https://i.pravatar.cc/150?img=4';
                           }}
                         />
                         {/* Online status indicator */}

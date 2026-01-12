@@ -46,16 +46,43 @@ export default function LocalTournamentPlayerRegistration({
       setIsLoading(true);
       setErrorMessage('');
 
+      // Check for duplicate usernames in existing players
+      const trimmedUsername = newPlayerUsername.trim();
+
+      const isDuplicate = tempPlayers.some(player =>
+        (player.username && player.username.trim() === trimmedUsername) ||
+        (player.name && player.name.trim() === trimmedUsername)
+      );
+
+      if (isDuplicate) {
+        setErrorMessage(t('game.alreadyInGame'));
+        setIsLoading(false);
+        return;
+      }
+
       try {
         // Call the API to authenticate and get real user data
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/registerInTournament`, {
-          username: newPlayerUsername.trim(),
+          username: trimmedUsername,
           password: newPlayerPassword.trim()
         }, {
           withCredentials: true
         });
 
         if (response.data.success && response.data.user) {
+          // Check again for duplicates using the API response data (more reliable)
+          const isDuplicateAfterApi = tempPlayers.some(player =>
+            (player.id_user && player.id_user === response.data.user.id) ||
+            (player.username && player.username.trim() === response.data.user.username.trim()) ||
+            (player.name && player.name.trim() === response.data.user.username.trim())
+          );
+
+          if (isDuplicateAfterApi) {
+            setErrorMessage(t('game.alreadyInGame'));
+            setIsLoading(false);
+            return;
+          }
+
           // Find the next available player slot
           const nextIndex = tempPlayers.findIndex(player => player.name.trim() === '');
 
@@ -115,7 +142,7 @@ export default function LocalTournamentPlayerRegistration({
   const allPlayersReady = tempPlayers.every(player => player.name.trim() !== '');
 
   return (
-    <div key={`registration-${updateCounter}`} className="w-full max-w-6xl mx-auto h-full bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 rounded-3xl shadow-2xl border-2 border-blue-500 p-6 overflow-auto">
+    <div key={`registration-${updateCounter}`} className="w-full max-w-6xl mx-auto h-full   rounded-3xl shadow-2xl  p-6 overflow-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300">
           {t('game.registerPlayers')}
@@ -126,7 +153,7 @@ export default function LocalTournamentPlayerRegistration({
             disabled={tempPlayers.filter(player => player.name.trim() !== '').length >= 4}
             className={`px-6 py-3 rounded-xl text-white font-semibold transition-all flex items-center gap-2 ${
               tempPlayers.length >= 4
-                ? 'bg-gray-600 cursor-not-allowed'
+                ? 'bg-gray-900 cursor-not-allowed text-gray-400'
                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 shadow-lg'
             }`}
           >
@@ -317,14 +344,13 @@ export default function LocalTournamentPlayerRegistration({
           disabled={!allPlayersReady}
           className={`px-16 py-5 rounded-2xl text-xl font-bold transition-all transform shadow-2xl ${
             allPlayersReady
-              ? 'bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-600 hover:from-emerald-600 hover:via-blue-600 hover:to-purple-700 text-white hover:scale-105 animate-pulse'
-              : 'bg-gray-700/50 text-gray-400 cursor-not-allowed border-2 border-gray-600'
+              ? 'bg-white border-2 border-white hover:from-emerald-600 hover:via-blue-600 hover:to-purple-700 text-black hover:scale-105 animate-pulse'
+              : 'bg-white-100 text-gray-400 cursor-not-allowed border-2 border-white'
           }`}
         >
           <div className="flex items-center gap-3">
             {allPlayersReady ? (
               <>
-                <span>🚀</span>
                 <span>{t('common.continue')}</span>
                 <span>✨</span>
               </>

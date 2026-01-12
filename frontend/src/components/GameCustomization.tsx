@@ -215,7 +215,8 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
       ballColor,
       paddleColor,
       ...(gameState.mode === 'ai' && { aiDifficulty }),
-      winningScore
+      // For remote games, use default winning score of 5 since score selection is hidden
+      winningScore: gameState.mode === 'remote' ? 5 : winningScore
     };
     setCustomisation(customization);
 
@@ -431,50 +432,52 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
             </div>
           )}
 
-          {/* Winning Score Section */}
-          <div className="flex flex-col gap-2">
-            <h2 className="text-base font-semibold"
-                style={{
-                  background: 'linear-gradient(135deg, #f1f5f9, #cbd5e1)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-                }}>
-              {t('game.winningScore')}
-            </h2>
-            <div className="flex gap-3 justify-center">
-              {([5, 10] as const).map((score) => (
-                <button
-                  key={score}
-                  className={`px-4 py-2 rounded-lg border-2 transition-all duration-300 font-semibold text-sm
-                    ${winningScore === score ? 'scale-110' : 'hover:scale-105'}
-                  `}
+          {/* Winning Score Section - Hidden for remote 1v1 games */}
+          {gameState.mode !== 'remote' && (
+            <div className="flex flex-col gap-2">
+              <h2 className="text-base font-semibold"
                   style={{
-                    background: winningScore === score
-                      ? 'linear-gradient(135deg, #f59e0b, #d97706)'
-                      : 'linear-gradient(135deg, #4b5563, #374151)',
-                    color: '#ffffff',
-                    boxShadow: winningScore === score
-                      ? `
-                        inset 0 1px 0 rgba(255,255,255,0.3),
-                        inset 0 -1px 0 rgba(0,0,0,0.3),
-                        0 4px 8px rgba(245,158,11,0.4),
-                        0 0 0 2px rgba(245,158,11,0.6)
-                      `
-                      : `
-                        inset 0 1px 0 rgba(255,255,255,0.1),
-                        inset 0 -1px 0 rgba(0,0,0,0.3),
-                        0 2px 4px rgba(0,0,0,0.3)
-                      `,
-                    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                  }}
-                  onClick={() => setWinningScore(score)}
-                >
-                  {score} {t('game.points')}
-                </button>
-              ))}
+                    background: 'linear-gradient(135deg, #f1f5f9, #cbd5e1)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                  }}>
+                {t('game.winningScore')}
+              </h2>
+              <div className="flex gap-3 justify-center">
+                {([5, 10] as const).map((score) => (
+                  <button
+                    key={score}
+                    className={`px-4 py-2 rounded-lg border-2 transition-all duration-300 font-semibold text-sm
+                      ${winningScore === score ? 'scale-110' : 'hover:scale-105'}
+                    `}
+                    style={{
+                      background: winningScore === score
+                        ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                        : 'linear-gradient(135deg, #4b5563, #374151)',
+                      color: '#ffffff',
+                      boxShadow: winningScore === score
+                        ? `
+                          inset 0 1px 0 rgba(255,255,255,0.3),
+                          inset 0 -1px 0 rgba(0,0,0,0.3),
+                          0 4px 8px rgba(245,158,11,0.4),
+                          0 0 0 2px rgba(245,158,11,0.6)
+                        `
+                        : `
+                          inset 0 1px 0 rgba(255,255,255,0.1),
+                          inset 0 -1px 0 rgba(0,0,0,0.3),
+                          0 2px 4px rgba(0,0,0,0.3)
+                        `,
+                      textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                    }}
+                    onClick={() => setWinningScore(score)}
+                  >
+                    {score} {t('game.points')}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Live Preview Section */}
           <div className="flex flex-col gap-2">

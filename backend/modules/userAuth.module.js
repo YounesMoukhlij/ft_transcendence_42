@@ -626,10 +626,10 @@ export async function saveTournamentMatch(request, reply) {
         const query = request.server.db.prepare(`
             INSERT INTO game_history (
                 user_win, user_lose, win_score, lose_score, type, tournament_id,
-                duration, longest_rally, average_rally, ball_max_speed,
+                game_date, duration, longest_rally, average_rally, ball_max_speed,
                 touches_win, touches_lose, max_points_streak_win, max_points_streak_lose,
                 max_leading_time_win, max_leading_time_lose, blockchain_hash
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         const result = query.run(
@@ -639,6 +639,7 @@ export async function saveTournamentMatch(request, reply) {
             lose_score,
             type || 'tournament',
             tournament_id === 'local-tournament' ? null : (tournament_id || null),
+            new Date().toISOString(),
             duration || null,
             longest_rally || null,
             average_rally || null,

@@ -403,7 +403,7 @@ export default function LocalTournamentPage() {
     switch (tournamentStep) {
       case 'setup':
         return (
-          <div className="w-full max-w-4xl mx-auto h-full bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 rounded-3xl shadow-2xl border-2 border-blue-500 p-8 flex flex-col items-center justify-center">
+          <div className="w-full max-w-4xl mx-auto h-full  rounded-3xl shadow-2xl   p-8 flex flex-col items-center justify-center">
             <div className="text-center mb-8">
               <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300 mb-4">
                 {t('game.localTournament')}

@@ -503,7 +503,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   const { scores, paddles, ball, gameStats, updateGameState, resetGameState } = useLocalGameState();
 
   // Get winning score from customization
-  const winningScore = gameState.customisation?.winningScore || 5;
+  const [winningScore, setWinningScore] = useState(5);
+
+  useEffect(() => {
+    const newWinningScore = gameState.customisation?.winningScore || 5;
+    console.log('PingPongGame - updating winningScore:', newWinningScore, 'gameState.customisation:', gameState.customisation);
+    setWinningScore(newWinningScore);
+  }, [gameState.customisation?.winningScore]);
 
   // Track if we've initialized the game to prevent infinite loops
   const gameInitializedRef = useRef<string | null>(null);
@@ -770,9 +776,12 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         }
       } else if (gameState.mode === 'ai') {
         // AI mode - check for winner
-        if (scores.player1 >= AI_winningScore) {
+        console.log('AI winner check - scores:', scores, 'winningScore:', winningScore);
+        if (scores.player1 >= winningScore) {
+          console.log('Setting winner: You');
           setWinner('You');
-        } else if (scores.player2 >= AI_winningScore) {
+        } else if (scores.player2 >= winningScore) {
+          console.log('Setting winner: AI');
           setWinner('AI');
         }
       } else if (gameState.mode === 'local' && localPlayers.length >= 2) {
@@ -1355,7 +1364,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
         {gameState.mode === 'ai' ? (
           <>
             <p>Use W/S keys to move your paddle.</p>
-            <p>First to {AI_winningScore} points wins!</p>
+            <p>First to {winningScore} points wins!</p>
           </>
         ) : tournamentMode ? (
           <>

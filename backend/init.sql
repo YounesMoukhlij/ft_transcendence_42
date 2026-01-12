@@ -138,4 +138,19 @@ CREATE TABLE tournaments (
     name TEXT NOT NULL            -- optional, store hash of results on-chain
 );
 
+-- Game settings table
+CREATE TABLE game_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId INTEGER NOT NULL,
+    tableBg TEXT NOT NULL,
+    ballColor TEXT NOT NULL,
+    paddleColor TEXT NOT NULL,
+    aiDifficulty TEXT,  -- 'easy', 'medium', 'hard' or NULL
+    winningScore INTEGER DEFAULT 5,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES users(id_user),
+    UNIQUE(userId)  -- One settings record per user
+);
+
 
