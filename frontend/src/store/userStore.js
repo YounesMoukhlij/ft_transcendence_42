@@ -36,6 +36,7 @@ export const useUserStore = create(
       pendingRequests: [],
       sentRequests: [],
       notifications: [],
+      bot: [],
       contactId : -1,
 
       Set_Display_game_invite: (value) => set({ Display_game_invite: value }),
@@ -137,10 +138,10 @@ export const useUserStore = create(
 
 
 
-      // initConnection: () => {
-      //   const id = get().user?.id_user;
-      //   if (id) get().connect();
-      // },
+      initConnection: () => {
+        const id = get().user?.id_user;
+        if (id) get().connect();
+      },
 
     setContactId : (contactId) => set({contactId}),
 
@@ -379,6 +380,11 @@ updatePinStatus: (attribute, friendId, value) => {
       addNotification: (notification) =>
       set((state) => ({
           notifications: [ notification , ...state.notifications],
+      })),
+
+      addBot: (item) =>
+      set((state) => ({
+          bot: [...state.bot ,  item],
       })),
 
  deleteNotification: (id) =>

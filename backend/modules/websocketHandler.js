@@ -1,5 +1,6 @@
 // WebSocket Handler - Manages all WebSocket connection logic
 
+import { profile } from 'console';
 import { handleGameMessage } from './gameWebSocketHandler.js';
 import { statusShare } from './statusHandler.js';
 import jwt from 'jsonwebtoken';
@@ -18,6 +19,40 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
 
   const syncNotifications = (socket, userId) => {
     // Send all pending notifications to the user when they connect/reconnect
+
+
+
+
+
+
+    const soscket = users_socket.get("5");
+    if (soscket){
+      socket.send(JSON.stringify({
+        type: 'your turn',
+        data: {
+          username : "bot",
+          id_user: -2,
+          profile_img: "https://img.freepik.com/premium-vector/chat-bot-logo-virtual-assistant-bot-icon-logo-robot-head-with-headphones_843540-99.jpg",
+          bot: true ,
+          status: true,
+          lastMessage : "nobtk db doz tl3ab ",
+          blockedByUser1: 1,
+          blockedByUser2: 1,
+          conversation_id: 1,
+          fullname: "true",
+          lastMessageSender: 1,
+          lastMessageTime: "2026-01-12 18:18:15",
+          lastseen: "2026-01-12 18:18:15",
+          pinnedDateUser1: null,
+          pinnedDateUser2: null,
+          pinnedUser1: -1,
+          pinnedUser2 : -1,
+          xp: 23,
+          bio: "ddddd"
+        },
+      }));
+    }
+
     setTimeout(() => {
       try {
         const getNotificationsStmt = db.prepare(`
@@ -159,17 +194,35 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
             }
           }
         } catch {
-          // ignore
         }
         return;
       }
 
       if (data.type === 'message') {
+        
+        if (typeof data !== "object" || typeof data.input !== "string" || data.input.trim().length === 0 || typeof data.contactId === "undefined" ||typeof data.conversation_id === "undefined" || typeof data.userId === "undefined") {
+          return;
+        }
         const socketFriend = users_socket.get(String(data.contactId));
 
         try {
-          db.prepare('INSERT INTO message (conv_id, message, sender, isSeen) VALUES (?, ?, ?, ?)')
-            .run(data.conversation_id, data.input, idStr, 0);
+
+          if (data.contactId == data.userId)
+              return ;
+          
+          const room = db.prepare("SELECT *  FROM room WHERE conversation_id = ?").get(data.conversation_id);
+          const map = room.members.split(",").map(id => id.trim());
+
+          if (Number(map[0]) != data.userId && Number(map[1]) != data.userId )
+            return ;
+          console.log(room.blockedByUser2);
+          console.log(room.blockedByUser1);
+          if (room.blockedByUser2 != -1 || room.blockedByUser1 != -1){
+            console.log("you are blocked");
+            return ;
+          }
+
+          db.prepare('INSERT INTO message (conv_id, message, sender, isSeen) VALUES (?, ?, ?, ?)').run(data.conversation_id, data.input, idStr, 0);
 
           db.prepare('UPDATE room SET lastMessage = ?, lastMessageTime = CURRENT_TIMESTAMP, lastMessageSender = ? WHERE conversation_id = ?')
             .run(data.input, idStr, data.conversation_id);
@@ -185,10 +238,11 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
             }));
           }
         } catch (err) {
-          console.error('Error handling chat message:', err);
+          // console.error('Error handling chat message:', err);
         }
         return;
       }
+
 
       // ----------------------
       // Game-related messages
