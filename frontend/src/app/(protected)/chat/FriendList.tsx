@@ -65,8 +65,9 @@ function BlockedCard({ item }) {
 
 
 function ChatSettingsCard() {
-  const [tab, setTab] = useState<"general" | "blocked">("general");
   const{updateUserSetting , user , friends} = useUserStore();
+
+  const [tab, setTab] = useState<"general" | "blocked">("general");
 
   function SettingItem({label}) {
     let value = false;
@@ -257,7 +258,8 @@ function FriendCard({ item }) {
 
 export default function FriendList( )
 {
-  const { setFriends , friends ,user , bot , addBot} = useUserStore();
+  const { setFriends , friends ,user , bot} = useUserStore();
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [setting , setSetting] = useState<boolean>(false);
 
 
@@ -300,7 +302,6 @@ export default function FriendList( )
     }, [user?.access_token]);
 
 
-    const [searchTerm, setSearchTerm] = useState<string>('');
 
 
 

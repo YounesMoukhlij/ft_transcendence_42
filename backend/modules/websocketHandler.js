@@ -22,37 +22,6 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
 
 
 
-
-
-
-    const soscket = users_socket.get("5");
-    if (soscket){
-      socket.send(JSON.stringify({
-        type: 'your turn',
-        data: {
-          username : "bot",
-          id_user: -2,
-          profile_img: "https://img.freepik.com/premium-vector/chat-bot-logo-virtual-assistant-bot-icon-logo-robot-head-with-headphones_843540-99.jpg",
-          bot: true ,
-          status: true,
-          lastMessage : "nobtk db doz tl3ab ",
-          blockedByUser1: 1,
-          blockedByUser2: 1,
-          conversation_id: 1,
-          fullname: "true",
-          lastMessageSender: 1,
-          lastMessageTime: "2026-01-12 18:18:15",
-          lastseen: "2026-01-12 18:18:15",
-          pinnedDateUser1: null,
-          pinnedDateUser2: null,
-          pinnedUser1: -1,
-          pinnedUser2 : -1,
-          xp: 23,
-          bio: "ddddd"
-        },
-      }));
-    }
-
     setTimeout(() => {
       try {
         const getNotificationsStmt = db.prepare(`

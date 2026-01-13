@@ -41,6 +41,7 @@ export interface friendType{
   status : boolean;
   username : string;
   xp : number;
+  isBot: boolean;
 }
 
 export interface friendRequestType{

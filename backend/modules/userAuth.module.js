@@ -94,6 +94,13 @@ export async function AddUser(request, reply) {
             .prepare("INSERT INTO users (username, fullname, email, password, profile_img) VALUES (?, ?, ?, ?, ?)");
         const result = query.run(username, username, email, hashedPassword, process.env.DEFAULT_PROFILE_IMAGE);
 
+
+
+         // for me abechcha every user must be have a room with bot 
+
+        request.server.db.prepare("INSERT INTO bot_conv (user_id) VALUES (?)").run(result.lastInsertRowid);
+
+
         return reply.code(201).send({
             success: true,
             message: "User created successfully",
@@ -1168,6 +1175,9 @@ export async function GoogleAuth(request, reply) {
             userId = result.lastInsertRowid;
             isNewUser = true;
             user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(userId);
+
+            // for me abechcha every user must be have a room with bot 
+            request.server.db.prepare("INSERT INTO bot_conv (user_id) VALUES (?)").run(userId);
         }
     
         if (user.twoFA_enabled) {
@@ -1246,6 +1256,10 @@ export async function FortyTwoAuth(request, reply) {
             isNewUser = true;
             user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(userId);
         }
+
+
+            // for me abechcha every user must be have a room with bot 
+            request.server.db.prepare("INSERT INTO bot_conv (user_id) VALUES (?)").run(userId);
 
         if (user.twoFA_enabled) {
             return reply.redirect(`${process.env.FRONTEND_URL}/signIn?2fa_required=true&userId=${userId}`);

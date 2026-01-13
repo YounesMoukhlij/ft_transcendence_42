@@ -1,4 +1,4 @@
-import {changeusersettings, getMsgs  , blockFunction ,DeblockFunction , unfriend , pinned} from '../modules/user.module.js';
+import {changeusersettings, getMsgs  ,  test,testt, GetbotMessages, GetbotChat, blockFunction ,DeblockFunction , unfriend , pinned} from '../modules/user.module.js';
 import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests , DeleteNotification ,getConversationId } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
@@ -62,6 +62,12 @@ export default async function routes(fastify, options) {
   });
 
 
+
+
+    fastify.post('/test' , test);
+  fastify.get('/testt' , testt);
+  fastify.get('/GetbotMessages' , GetbotMessages);
+  fastify.get('/GetbotChat' , GetbotChat),
   
 
   fastify.post('/AddUser', AddUser);

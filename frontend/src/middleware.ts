@@ -8,6 +8,7 @@ const PROTECTED_PATHS = [
   '/dashboard',
   '/settings',
   '/leaderboard',
+  '/game',
 ]
 
 const PUBLIC_PATHS = ['/signIn', '/signUp']

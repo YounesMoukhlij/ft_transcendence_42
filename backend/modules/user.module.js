@@ -1,4 +1,96 @@
+import { cpSync } from "fs";
 import {ParseIdSchema ,usersettings , BlockSchema , PinnedSchema} from "./moduleSchema.js";
+
+
+
+export async function test(request, reply) {
+  try{
+
+    const db = request.server.db
+    .prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+    db.run( 1,"hi this is the test mesage ");
+  }catch(er){
+    console.log(er);
+    return reply.code(500).send(false);
+  }
+  reply.code(200).send(true);
+}
+
+
+
+export async function testt(request, reply) {
+  try{
+    const db = request.server.db.prepare("SELECT * FROM bot_room ");
+    const te = db.all();
+
+    reply.send(te);
+
+  }catch(er){
+    console.log(er);
+    return reply.code(500).send(false);
+  }
+
+}
+
+
+export async function GetbotChat(request, reply) {
+  try {
+    const results = request.server.db
+      .prepare("SELECT * FROM bot_conv WHERE user_id = ?").all(request.user.id_user);
+    if (!results || results.length === 0) {
+      return reply.code(200).send([]);
+    }
+
+    const botsWithAvatar = results.map(bot => ({
+      ...bot,
+      username: "avatar",
+      id_user: -2,
+      status: true,
+      xp: 0,
+      isBot: true,
+      profile_img:
+        "https://imgs.search.brave.com/c1fLBdRqs4DYbPB7INH5uTQgPV5OlxpHY73_TWx1NJ0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90My5m/dGNkbi5uZXQvanBn/LzAzLzY0Lzc2Lzk4/LzM2MF9GXzM2NDc2/OTg2NV9tVm1Ld3Rj/MTI4Nnp4a3Vza214/VXVnMkFlWDdOWXlI/QS5qcGc"
+    }));
+
+    return reply.code(200).send(botsWithAvatar);
+  } catch (err) {
+    console.error(err);
+    reply.code(500).send(false);
+  }
+}
+
+export async function GetbotMessages(request, reply) {
+  const result = ParseIdSchema.safeParse(request.query);
+  if (!result.success) {
+    return reply.code(400).send("missing params");
+  }
+  const { id } = result.data;
+
+  try{
+
+
+    const query = request.server.db.prepare("SELECT * FROM bot_room WHERE conversation_id = ? ORDER BY created_at ASC");
+    const message = query.all(id);
+
+
+
+     const messages = message.map(bot => ({
+      ...bot,
+
+      sender: -2,
+      isSeen: 0,
+    }));
+
+
+    return reply.send(messages);
+  }catch(err){
+    reply.code(500).send("Internal server error");
+  }
+}
+
+
+
+
 
 
 export async function getMsgs(request , reply){
@@ -12,6 +104,7 @@ export async function getMsgs(request , reply){
   const { id } = result.data;
 
   try{
+
       const query = request.server.db.prepare("SELECT * FROM message WHERE conv_id = ? ORDER BY created_at ASC");
       const messages = query.all(id);
       return reply.send(messages);
