@@ -157,4 +157,20 @@ CREATE TABLE game_settings (
     UNIQUE(userId)  -- One settings record per user
 );
 
+CREATE TABLE bot_conv (
+    conversation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lastMessage TEXT,
+    bot BOOLEAN DEFAULT 1,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id_user)
+);
+
+
+CREATE TABLE bot_room (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES bot_conv(conversation_id)
+);
 

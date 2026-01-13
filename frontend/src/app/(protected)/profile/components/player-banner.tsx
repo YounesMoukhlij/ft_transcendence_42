@@ -1,4 +1,4 @@
-
+import { useTranslation } from '@/contexts/LanguageContext';
 import Image from "next/image"
 interface PlayerBannerProps {
   userStats: {
@@ -14,6 +14,7 @@ interface PlayerBannerProps {
 
 
 export function PlayerBanner({ userStats }: PlayerBannerProps) {
+  const {t} = useTranslation();
   const getRankClass = (rankType: string) => {
     switch (rankType) {
       case "bronze":
@@ -65,7 +66,7 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
                     {userStats.winRate}%
                 </span>
                 <span className="text-xs text-gray-400 uppercase tracking-wider mt-1">
-                    Victory Rate
+                    {t('profile.victoryRate')}
                 </span>
             </div>
 
@@ -74,7 +75,7 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
                     {userStats.currentStreak}
                 </span>
                 <span className="text-xs text-gray-400 uppercase tracking-wider mt-1 ">
-                    Current Streak
+                    {t('profile.currentStreak')}
                 </span>
             </div>
             

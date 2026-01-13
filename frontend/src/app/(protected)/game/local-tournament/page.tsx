@@ -313,7 +313,7 @@ export default function LocalTournamentPage() {
         return; // Don't send invalid data
       }
 
-      console.log('  Sending validated match data to API:', JSON.stringify(matchData, null, 2));
+      console.log('  Sending validated match data to API:', matchData);
       console.log(' WATA KHEDM Aaaaaaaaaaa WLLLLD LKLBA API URL:', `${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`);
 
       // Fire-and-forget API call

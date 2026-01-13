@@ -6,6 +6,7 @@ import { useCountUp } from "../hooks/useCountUp"
 import { useUserStore } from "@/store/userStore";
 import { useEffect, useState } from "react"
 import api from "@/lib/api"
+import { useTranslation } from '@/contexts/LanguageContext';
 
 interface UserStats {
   id: number,
@@ -37,6 +38,7 @@ const _avgPoints = useCountUp(Math.round(userStats.averageScore * 100) / 100, 70
 
 
 const [friendshipText, setFriendshipText] = useState("Add Friend");
+const {t} = useTranslation();
 
 
 // 1. isSelfProfile
@@ -246,7 +248,7 @@ const handleCancelFriendRequest = async () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Player Profile
+            {t('profile.playerProfile')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -297,27 +299,27 @@ const handleCancelFriendRequest = async () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
-            Performance Summary
+            {t('profile.performanceSummary')}
           </CardTitle>
-          <CardDescription>Your overall statistics and achievements</CardDescription>
+          <CardDescription>{t('profile.overallStatistics')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-primary/5 rounded-lg">
               <div className="text-2xl font-bold text-primary">{_winRate}%</div>
-              <div className="text-sm text-muted-foreground">Win Rate</div>
+              <div className="text-sm text-muted-foreground">{t('profile.winRate')}</div>
             </div>
             <div className="text-center p-4 bg-accent/5 rounded-lg">
               <div className="text-2xl font-bold text-accent">{_wins}</div>
-              <div className="text-sm text-muted-foreground">Total Wins</div>
+              <div className="text-sm text-muted-foreground">{t('profile.totalWins')}</div>
             </div>
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="text-2xl font-bold">{_totalMatches}</div>
-              <div className="text-sm text-muted-foreground">Matches Played</div>
+              <div className="text-sm text-muted-foreground">{t('profile.matchesPlayed')}</div>
             </div>
             <div className="text-center p-4 bg-secondary/5 rounded-lg">
               <div className="text-2xl font-bold text-secondary">{_avgPoints}</div>
-              <div className="text-sm text-muted-foreground">Avg Points</div>
+              <div className="text-sm text-muted-foreground"> {t('profile.avgPoints')}</div>
             </div>
           </div>
         </CardContent>

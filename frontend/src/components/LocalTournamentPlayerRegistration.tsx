@@ -133,16 +133,6 @@ export default function LocalTournamentPlayerRegistration({
     }
   };
 
-  const handleRemovePlayer = (index: number) => {
-    if (index !== 0) { // Don't allow removing the host
-      if (updatePlayerObject) {
-        updatePlayerObject(index, { name: '' });
-      } else {
-        updatePlayer(index, 'name', '');
-      }
-      setUpdateCounter(prev => prev + 1); // Force re-render
-    }
-  };
 
   const allPlayersReady = tempPlayers.every(player => player.name.trim() !== '');
 
@@ -219,14 +209,6 @@ export default function LocalTournamentPlayerRegistration({
                       <span className="text-xs bg-yellow-500/20 text-yellow-200 px-2 py-1 rounded-full">
                         Tournament Leader
                       </span>
-                    )}
-                    {index !== 0 && player.name.trim() !== '' && (
-                      <button
-                        onClick={() => handleRemovePlayer(index)}
-                        className="text-red-400 hover:text-red-300 transition-colors"
-                      >
-                        <FaTimes className="text-sm" />
-                      </button>
                     )}
                   </div>
                   <p className={`text-sm ${

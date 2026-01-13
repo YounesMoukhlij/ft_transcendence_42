@@ -276,19 +276,28 @@ export default function FriendList( )
               Authorization: `Bearer ${user.access_token}`
             }
           });
-          
-          setFriends(res.data);
+
+
+          const ress = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetbotChat`, {
+            headers: {
+              Authorization: `Bearer ${user.access_token}`
+            }
+          });
+
+
+          const combined = [...ress.data, ...res.data];
+          console.log(combined);
+
+          setFriends(combined);
+
+
         } catch (err) {
           console.log(err);
         }
       };
-    fetchData();
+
+      fetchData();
     }, [user?.access_token]);
-
-
-  useEffect(()=>{
-    console.log(friends);
-  }, [friends])
 
 
     const [searchTerm, setSearchTerm] = useState<string>('');

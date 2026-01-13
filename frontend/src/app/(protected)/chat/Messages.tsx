@@ -111,7 +111,7 @@ export default function Messages(){
     }
 );
 
-    }catch(err){
+  }catch(err){
     console.log(err);
 
     }
@@ -128,18 +128,18 @@ export default function Messages(){
 
     const item = friends.find(f => f.id_user === friendId);
 
-    console.log("||||||||||||" , bot[0]);
-    console.log("||||||||||||==========+>. " , item);
+    // console.log("||||||||||||" , bot[0]);
+    // console.log("||||||||||||==========+>. " , item);
     
     if (!item){
       
-      if (bot.length > 0 && friendId == -2){
+      // if (bot.length > 0 && friendId == -2){
 
-        // alert(contactId);
-        SetFriend(bot[0]);
-        setContactId(-2);
-      }
-      else 
+      //   // alert(contactId);
+      //   SetFriend(bot[0]);
+      //   setContactId(-2);
+      // }
+      // else 
         setContactId(-1);
     }
     else {
@@ -150,7 +150,7 @@ export default function Messages(){
   }, [searchParams, friends , bot]);
 
   useEffect(() =>{
-    if (!socket || contactId == -2)
+    if (!socket)
       return ;
     socket.send(
       JSON.stringify({
@@ -173,8 +173,23 @@ export default function Messages(){
 
     async function getMsgFunction(id : number)
     {
-        try {
-        const msgsRes = await axios.get(
+        
+      try {
+        if (contactId == -2){
+          const msgsRes = await axios.get(
+            `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetbotMessages`,
+              {
+              params: {
+                  id: id,
+              },
+              headers: {
+                  Authorization: `Bearer ${user.access_token}`
+              }
+            }
+          );
+          setMessages(msgsRes.data);
+          console.log("bot messages ===================++>", msgsRes.data);
+        }else {        const msgsRes = await axios.get(
             `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/getMsgs`,
             {
             params: {
@@ -185,8 +200,10 @@ export default function Messages(){
             }
           }
         );
-        setMessages(msgsRes.data);
+          setMessages(msgsRes.data);
+          console.log("human messages ===================++>", msgsRes.data);
 
+        }
         } catch (err) {
         console.error("Error fetching messages:", err);
         }
@@ -195,10 +212,10 @@ export default function Messages(){
     useEffect(()=>{
         if (contactId === -1)
             return ;
-      if (contactId === -2) {
-        setMessages([]); 
-        return;
-      }
+      // if (contactId === -2) {
+      //   setMessages([]); 
+      //   return;
+      // }
         const id = friends.find(item => item.id_user === contactId)?.conversation_id;
         if (id)
           getMsgFunction(id);
@@ -214,6 +231,8 @@ export default function Messages(){
     try {
       if (!socket)
         return ;
+      if ( contactId == -2)
+          return setInput('');
         socket.send(
           JSON.stringify({
           type: "message",
@@ -308,8 +327,7 @@ export default function Messages(){
             </div>
           </div>
           }
-
-
+          
             <div className="flex-shrink-0 p-5 h-28 bg-black border border-gray-800 rounded-xl shadow-lg">
                 {friend && contactId !== -1 && 
                     <div className="w-full h-full flex justify-between">
@@ -361,9 +379,9 @@ export default function Messages(){
                         </div>
                         {
                          friend &&  contactId != -1 &&
-                          <div className="">
+                         <div className="">
                           {
-                            messages.filter(item => item.conv_id == friends.find(item => item.id_user === contactId)?.conversation_id).map((item, index) => {
+                            messages.map((item, index) => {
                               const currentDate = item.created_at.split(' ')[0];
                               const prevDate = index > 0 ? messages[index - 1].created_at.split(' ')[0] : null;
                               return (

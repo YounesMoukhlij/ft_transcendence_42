@@ -28,10 +28,14 @@ const formatXP = (xp) => {
 
 
 export function useDeblock() {
+
   const { user, updateDeBlockState } = useUserStore();
 
+
   async function handleDeblock(item){
-    if (item.blockedByUser1 !== user.id_user && item.blockedByUser2 !== user.id_user)
+
+
+    if (item.blockedByUser1 !== user.id_user && item.blockedByUser2 !== user.id_user || item?.isBot)
       return ;
     
     await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/Deblock`, {
@@ -56,6 +60,8 @@ export function useFriendActions() {
   const { user, updateBlockState, removeFriend, setContactId} = useUserStore();
 
   async function handleUnfriend(friendId: number, conversationId: number) {
+    if (friendId == -2)
+        return ;
     await axios.post(
       `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/unfriend`,
       {
@@ -72,7 +78,7 @@ export function useFriendActions() {
   }
 
   async function handleBlock(item: friendType) {
-    if (item.blockedByUser1 === user.id_user || item.blockedByUser2 === user.id_user)
+    if (item.blockedByUser1 === user.id_user || item.blockedByUser2 === user.id_user || item?.isBot)
       return;
 
     await axios.post(

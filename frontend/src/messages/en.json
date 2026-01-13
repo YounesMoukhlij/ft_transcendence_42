@@ -20,7 +20,8 @@
     "leagues": "Leagues",
     "close": "Close",
     "back": "Back",
-    "continue": "Continue"
+    "continue": "Continue",
+    "league": "League"
   },
   "settings": {
     "title": "Account Settings",

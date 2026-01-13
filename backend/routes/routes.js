@@ -136,19 +136,19 @@ export default async function routes(fastify, options) {
   fastify.get('/getMatchFromBlockChainById/:id', getMatchFromBlockChainById);
   fastify.get('/getTournamentMatchesFromBlockChain/:id', getTournamentMatchesFromBlockChain);
 
-  // Add specific middleware for game endpoints if needed
-  fastify.addHook('preHandler', async (request, reply) => {
-    if (request.url.startsWith('/getTournamentBracket/') ||
-        request.url.startsWith('/getMatchFromBlockChainById/') ||
-        request.url.startsWith('/getTournamentMatchesFromBlockChain/')) {
+  // // Add specific middleware for game endpoints if needed
+  // fastify.addHook('preHandler', async (request, reply) => {
+  //   if (request.url.startsWith('/getTournamentBracket/') ||
+  //       request.url.startsWith('/getMatchFromBlockChainById/') ||
+  //       request.url.startsWith('/getTournamentMatchesFromBlockChain/')) {
 
-      // Additional game-specific validation can go here
-      const tournamentId = request.params?.id;
-      if (tournamentId && !/^[0-9a-fA-F-]+$/.test(tournamentId)) {
-        return reply.code(400).send({ error: "Invalid tournament ID format" });
-      }
-    }
-  });
+  //     // Additional game-specific validation can go here
+  //     const tournamentId = request.params?.id;
+  //     if (tournamentId && !/^[0-9a-fA-F-]+$/.test(tournamentId)) {
+  //       return reply.code(400).send({ error: "Invalid tournament ID format" });
+  //     }
+  //   }
+  // });
 
 
 

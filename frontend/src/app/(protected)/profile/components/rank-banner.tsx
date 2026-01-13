@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Badge } from "./ui/badge"
 import { Users, Medal, Crown, Shield } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslation } from '@/contexts/LanguageContext';
+
 
 interface RankBannerProps {
   rank: "bronze" | "silver" | "gold"
@@ -11,6 +13,7 @@ interface RankBannerProps {
 }
 
 export function RankBanner({ rank, title, description, count }: RankBannerProps) {
+  const {t} = useTranslation();
   const getRankConfig = (rankType: string) => {
     switch (rankType) {
       case "bronze":
@@ -68,7 +71,7 @@ export function RankBanner({ rank, title, description, count }: RankBannerProps)
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-primary" />
           <span className="text-xl font-bold text-card-foreground">{count.toLocaleString()}</span>
-          <span className="text-sm text-muted-foreground">{count == 1 ? "player" : "players"}</span>
+          <span className="text-sm text-muted-foreground">{count == 1 ? t('profile.player') : t('profile.players')}</span>
         </div>
       </CardContent>
     </Card>

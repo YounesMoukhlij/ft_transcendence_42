@@ -20,7 +20,8 @@
     "leagues": "Ligas",
     "close": "Cerrar",
     "back": "Atrás",
-    "continue": "Continuar"
+    "continue": "Continuar",
+     "league": "Liga"
   },
   "settings": {
     "title": "Configuración de la cuenta",

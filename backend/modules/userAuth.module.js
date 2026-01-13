@@ -517,6 +517,8 @@ export async function login(request, reply) {
 export async function registerInTournament(request, reply) {
     const { username, password, tournamentId } = request.body;
     
+    console.log("-------------------------------------------Tournament Id: ", tournamentId);
+
     if (!username || !password || !tournamentId) {
         return reply.code(400).send({ 
             success: false, 
@@ -533,9 +535,10 @@ export async function registerInTournament(request, reply) {
                 message: "Tournament not found"
             });
         }
+        const Host = tournament.host_user;
 
         // shouf wash tournoi 3endha host ou hwa li dar had post request
-        if (tournament.host_user === -1 || tournament.host_user !== request.user.id_user) {
+        if (Host === -1 || Host !== request.user.id_user) {
             return reply.code(403).send({
                 success: false,
                 message: "Only the host can register players"
@@ -552,7 +555,7 @@ export async function registerInTournament(request, reply) {
                 message: "Invalid credentials"
             });
         }
-        
+        const idToAdd = user.id_user;
         const isPasswordValid = await bcrypt.compare(password, user.password);
         
         if (!isPasswordValid) {
@@ -561,22 +564,34 @@ export async function registerInTournament(request, reply) {
                 message: "Incorrect password"
             });
         }
-       else 
+       else // shouf yakma deja kayn f tournoi
        {
+            const Guest1 = tournament.guest1_user;
+            const Guest2 = tournament.guest2_user;
+            const Guest3 = tournament.guest3_user;
+            const tournamentPlayers = [Host, Guest1, Guest2, Guest3];
+            const isAlrdyInTournament = (id) => tournamentPlayers.includes(id);
+        if (isAlrdyInTournament(idToAdd))
+        {
+            return reply.code(403).send({
+                success: false,
+                message: "Player is already in tournament"
+            });
+        }
          // zid luser f tournament
-        if (tournament.guest1_user == -1)
+        else if (Guest1 == -1)
         {
-            request.server.db.prepare("UPDATE tournaments SET guest1_user = ? WHERE id_tournament = ?").run(user.id_user, tournamentId);
+            request.server.db.prepare("UPDATE tournaments SET guest1_user = ? WHERE id_tournament = ?").run(idToAdd, tournamentId);
         }
-        else if (tournament.guest2_user == -1)
+        else if (Guest2 == -1)
         {
-            request.server.db.prepare("UPDATE tournaments SET guest2_user = ? WHERE id_tournament = ?").run(user.id_user, tournamentId);
+            request.server.db.prepare("UPDATE tournaments SET guest2_user = ? WHERE id_tournament = ?").run(idToAdd, tournamentId);
         }
-        else if (tournament.guest3_user == -1)
+        else if (Guest3 == -1)
         {
-            request.server.db.prepare("UPDATE tournaments SET guest3_user = ? WHERE id_tournament = ?").run(user.id_user, tournamentId);
+            request.server.db.prepare("UPDATE tournaments SET guest3_user = ? WHERE id_tournament = ?").run(idToAdd, tournamentId);
         }
-            else {
+        else {
             return reply.code(400).send({
                 success: false,
                 message: "Tournament is already full"
@@ -588,7 +603,7 @@ export async function registerInTournament(request, reply) {
             user: {
                 username : user.username,
                 profile : user.profile_img,
-                id : user.id_user
+                id : idToAdd
             }
         });    
        }
@@ -602,7 +617,9 @@ export async function registerInTournament(request, reply) {
 }
 
 export async function createLocalTournament(request, reply) { // Added by Ayoub, creates tournament and return its ID  
-    const {name} = request.body;
+    const { name } = request.body;
+    const host = request.user.id_user;
+
     if (!name) {
         return reply.code(400).send({
             success: false,
@@ -610,17 +627,19 @@ export async function createLocalTournament(request, reply) { // Added by Ayoub,
         });
     }
     try {
-        const insertQuery = request.server.db.run(`Insert into tournaments (name, host) values (?, ?)`, [name, request.user.id_user]);
+        const result = request.server.db.prepare(
+      `INSERT INTO tournaments (name, host_user) VALUES (?, ?)`
+    ).run(name, host);
         return reply.code(201).send({
             success: true,
             message: "Tournament created successfully",
-            tournamentId: insertQuery.lastInsertRowid 
+            tournamentId: result.lastInsertRowid 
         });
     } catch (error) {
         console.error("Error creating tournament:", error);
         return reply.code(500).send({
             success: false,
-            message: "Internal server error"
+            message: error.message
         });
     }
 }
@@ -671,18 +690,36 @@ export async function saveTournamentMatch(request, reply) {
             throw new Error("Tournament not found");
         }
 
-        // ga3 lplayers khasshoum ikono fel tournament
-        if (tournament.host_user === -1 || tournament.guest1_user === -1 ||
-            tournament.guest2_user === -1 || tournament.guest3_user === -1)
-            {
-                 throw new Error("Tournament should have 4 players registered!");
-            }
-
-        // lhost bo7do howa li y9der yrecordi natija 
+          // lhost bo7do howa li y9der yrecordi natija 
         const posterId = request.user.id_user;
         if (posterId !== tournament.host_user) {
-            throw new Error("Only the tournament host can record match results!");
+            console.log("Poster Id: ", posterId);
+            console.log("Tournament Host: ", tournament.host_user);
+
+            throw new Error("Only the tournament host can record match results!",);
         }
+
+        const PlayerOne = parseInt(winner_info.id_user, 10);
+        const PlayerTwo = parseInt(loser_info.id_user, 10);
+        const Host = tournament.host_user;
+        const Guest1 = tournament.guest1_user;
+        const Guest2 = tournament.guest2_user;
+        const Guest3 = tournament.guest3_user;
+
+        // khass tournoi ikoun feha 4 players
+        if (Host === -1 || Guest1 === -1 || Guest2 === -1 || Guest3 === -1)
+        {
+            throw new Error("Tournament should have 4 players registered!");
+        }
+        // khass ikouno lplayers f tournoi
+        const tournamentPlayers = [Host, Guest1, Guest2, Guest3];
+
+        const isValidPlayer = (player) => tournamentPlayers.includes(player);
+
+        if (!isValidPlayer(PlayerOne) || !isValidPlayer(PlayerTwo)) {
+        throw new Error("Players sent in request don't exist on tournament!");
+        }
+
 
         // khass mayfoutch number dyal lgames f tournoi 3 matchat
         const existingMatchesCount = request.server.db.prepare("SELECT COUNT(*) as count FROM game_history WHERE tournament_id = ?").get(TournamentId).count || 0;
@@ -691,7 +728,6 @@ export async function saveTournamentMatch(request, reply) {
             throw new Error("Max number of matches for this tournament reached!");
         }   
     } catch (error) {
-        console.log("Hereeeeeeee: " + error.message);
         return reply.code(403).send({
                 success: false,
                 message: error.message
@@ -700,18 +736,16 @@ export async function saveTournamentMatch(request, reply) {
 
 
     try {
-        // Helper function to get user ID - no automatic guest user creation
+       
         const getUserId = (playerInfo) => {
-            // Must have a numeric id_user to be authenticated
+          
             if (playerInfo.id_user && typeof playerInfo.id_user === 'number') {
                 return playerInfo.id_user;
             }
 
-            // Reject players without proper authentication
             throw new Error(`Player ${playerInfo.name} is not authenticated. All tournament players must be authenticated users.`);
         };
 
-        // Get user IDs for both players (must be authenticated)
         const winnerUserId = getUserId(winner_info);
         const loserUserId = getUserId(loser_info);
 
