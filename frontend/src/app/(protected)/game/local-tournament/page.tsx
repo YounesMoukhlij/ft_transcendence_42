@@ -14,6 +14,7 @@ import LocalTournamentBracket from '@/components/LocalTournamentBracket';
 import LocalTournamentAnimations from '@/components/LocalTournamentAnimations';
 import LocalTournamentPlayerRegistration from '@/components/LocalTournamentPlayerRegistration';
 import LocalTournamentGameOverlay from '@/components/LocalTournamentGameOverlay';
+import axios from 'axios';
 
 // Generate modern, attractive avatar SVGs with gradients and patterns
 const generateModernAvatarSVG = (primaryColor: string, secondaryColor: string, pattern: string): string => {
@@ -78,6 +79,7 @@ export default function LocalTournamentPage() {
 
   // Tournament state
   const [tournamentStep, setTournamentStep] = useState<TournamentStep>('setup');
+  const [tournamentId, setTournamentId] = useState<number | null>(null);
   const [registeredPlayers, setRegisteredPlayers] = useState<GamePlayer[]>([]);
   const [tempPlayers, setTempPlayers] = useState<GamePlayer[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
@@ -242,7 +244,7 @@ export default function LocalTournamentPage() {
         win_score,
         lose_score,
         type: 'tournament',
-        tournament_id: matchStats?.tournamentId || 'local-tournament',
+        tournament_id: tournamentId,
         duration,
         longest_rally,
         average_rally,
@@ -315,26 +317,21 @@ export default function LocalTournamentPage() {
       console.log(' WATA KHEDM Aaaaaaaaaaa WLLLLD LKLBA API URL:', `${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`);
 
       // Fire-and-forget API call
-      fetch(`${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`, {
-        method: 'POST',
+      axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/saveTournamentMatch`, matchData, {
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(matchData),
-        credentials: 'include',
+          'Authorization': `Bearer ${user?.access_token}`
+        }
       })
-      .then(async response => {
+      .then(response => {
         console.log(' HANA -> Response status:', response.status, response.statusText);
-        console.log(' Response headers:', Object.fromEntries(response.headers.entries()));
 
-        if (response.ok) {
+        if (response.status >= 200 && response.status < 300) {
           console.log(' HANA -> Tournament match data saved successfully');
-          return response.json();
+          return response.data;
         } else {
           console.error(' HANA Failed to save tournament match data - Status:', response.status);
-          const errorText = await response.text();
-          console.error(' Response body:', errorText);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
+          throw new Error(`HTTP ${response.status}`);
         }
       })
       .then(data => {
@@ -351,7 +348,7 @@ export default function LocalTournamentPage() {
         });
       });
     }
-  }, [currentMatch, tournamentManager]);
+  }, [currentMatch, tournamentManager, tournamentId]);
 
   // Handle continue after match
   const handleContinueAfterMatch = useCallback(() => {
@@ -423,7 +420,30 @@ export default function LocalTournamentPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setTournamentStep('registration')}
+                  onClick={async () => {
+                    // Create tournament in backend and get the tournament ID
+                    try {
+                      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/createLocalTournament`, 
+                        { name: 'Local Tournament' },
+                        {
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${user?.access_token}`
+                          }
+                        }
+                      );
+
+                      if (response.status >= 200 && response.status < 300) {
+                        console.log('Tournament created with ID:', response.data.tournamentId);
+                        setTournamentId(response.data.tournamentId);
+                      } else {
+                        console.error('Failed to create tournament:', response.status);
+                      }
+                    } catch (error) {
+                      console.error('Error creating tournament:', error);
+                    }
+                    setTournamentStep('registration');
+                  }}
                   className="w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl text-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
                 >
                   {t('game.startTournament')}
@@ -438,6 +458,7 @@ export default function LocalTournamentPage() {
           <LocalTournamentPlayerRegistration
             tempPlayers={tempPlayers}
             defaultAvatars={defaultAvatars}
+            tournamentId={tournamentId}
             updatePlayer={(index, field, value) => {
               setTempPlayers(prevPlayers => {
                 const updated = prevPlayers.map((player, i) =>
@@ -541,7 +562,7 @@ export default function LocalTournamentPage() {
                           ...winner,
                           color: winner.color || '#ffffff'
                         };
-                        handleMatchComplete(gameContextWinner, matchStats);
+                        handleMatchComplete(gameContextWinner, matchStats); 
                       }}
                     />
                   </div>
@@ -584,6 +605,7 @@ export default function LocalTournamentPage() {
               setTempPlayers([]);
               setMatchWinner(null);
               setShowTournamentWinnerMessage(false);
+              setTournamentId(null);
             }}
             onBack={() => router.push('/game')}
           />
@@ -632,6 +654,7 @@ export default function LocalTournamentPage() {
             setTempPlayers([]);
             setMatchWinner(null);
             setShowTournamentWinnerMessage(false);
+            setTournamentId(null);
           }}
           onBack={() => router.push('/game')}
         />

@@ -135,7 +135,11 @@ CREATE TABLE message (
 
 CREATE TABLE tournaments (
     id_tournament INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL            -- optional, store hash of results on-chain
+    name TEXT NOT NULL,            -- optional, store hash of results on-chain
+    host_user INTEGER DEFAULT -1,
+    guest1_user INTEGER DEFAULT -1,
+    guest2_user INTEGER DEFAULT -1,
+    guest3_user INTEGER DEFAULT -1
 );
 
 -- Game settings table

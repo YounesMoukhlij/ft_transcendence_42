@@ -6,7 +6,7 @@ import { createClient } from 'redis';
 import nodemailer from 'nodemailer';
 import { text } from 'stream/consumers';
 import fs from 'fs';
-import path from 'path';
+import path, { parse } from 'path';
 import { promisify } from 'util';
 import stream from 'stream';
 
@@ -515,16 +515,34 @@ export async function login(request, reply) {
 // added this for remote tournament
 
 export async function registerInTournament(request, reply) {
-    const { username, password } = request.body;
+    const { username, password, tournamentId } = request.body;
     
-    if (!username || !password) {
+    if (!username || !password || !tournamentId) {
         return reply.code(400).send({ 
             success: false, 
             message: "Missing required fields" 
         });
     }
+    
     try {
-        const user = request.server.db
+        // wash tournament kayna be3da
+        const tournament = request.server.db.prepare("SELECT * FROM tournaments WHERE id_tournament = ?").get(tournamentId);
+        if (!tournament) {
+            return reply.code(404).send({
+                success: false,
+                message: "Tournament not found"
+            });
+        }
+
+        // shouf wash tournoi 3endha host ou hwa li dar had post request
+        if (tournament.host_user === -1 || tournament.host_user !== request.user.id_user) {
+            return reply.code(403).send({
+                success: false,
+                message: "Only the host can register players"
+            });
+        }
+     
+       const user = request.server.db
             .prepare("SELECT * FROM users WHERE username = ?")
             .get(username);
         
@@ -543,7 +561,28 @@ export async function registerInTournament(request, reply) {
                 message: "Incorrect password"
             });
         }
-        return reply.code(200).send({
+       else 
+       {
+         // zid luser f tournament
+        if (tournament.guest1_user == -1)
+        {
+            request.server.db.prepare("UPDATE tournaments SET guest1_user = ? WHERE id_tournament = ?").run(user.id_user, tournamentId);
+        }
+        else if (tournament.guest2_user == -1)
+        {
+            request.server.db.prepare("UPDATE tournaments SET guest2_user = ? WHERE id_tournament = ?").run(user.id_user, tournamentId);
+        }
+        else if (tournament.guest3_user == -1)
+        {
+            request.server.db.prepare("UPDATE tournaments SET guest3_user = ? WHERE id_tournament = ?").run(user.id_user, tournamentId);
+        }
+            else {
+            return reply.code(400).send({
+                success: false,
+                message: "Tournament is already full"
+            });
+        }
+         return reply.code(200).send({
             success: true,
             message: "successful",
             user: {
@@ -551,8 +590,8 @@ export async function registerInTournament(request, reply) {
                 profile : user.profile_img,
                 id : user.id_user
             }
-        });
-
+        });    
+       }
     } catch (error) {
         console.error("Error during login:", error);
         return reply.code(500).send({
@@ -560,7 +599,30 @@ export async function registerInTournament(request, reply) {
             message: "Internal server error"
         });
     }
+}
 
+export async function createLocalTournament(request, reply) { // Added by Ayoub, creates tournament and return its ID  
+    const {name} = request.body;
+    if (!name) {
+        return reply.code(400).send({
+            success: false,
+            message: "Missing tournament name"
+        });
+    }
+    try {
+        const insertQuery = request.server.db.run(`Insert into tournaments (name, host) values (?, ?)`, [name, request.user.id_user]);
+        return reply.code(201).send({
+            success: true,
+            message: "Tournament created successfully",
+            tournamentId: insertQuery.lastInsertRowid 
+        });
+    } catch (error) {
+        console.error("Error creating tournament:", error);
+        return reply.code(500).send({
+            success: false,
+            message: "Internal server error"
+        });
+    }
 }
 
 export async function saveTournamentMatch(request, reply) {
@@ -599,6 +661,43 @@ export async function saveTournamentMatch(request, reply) {
             message: "Missing required fields: winner_info, loser_info, win_score, lose_score"
         });
     }
+
+    try {
+        const TournamentId = parseInt(tournament_id, 10);
+
+       // kanshouf awsh kayna tournament
+        const tournament = request.server.db.prepare("SELECT * FROM tournaments WHERE id_tournament = ?").get(TournamentId);
+        if (!tournament) {
+            throw new Error("Tournament not found");
+        }
+
+        // ga3 lplayers khasshoum ikono fel tournament
+        if (tournament.host_user === -1 || tournament.guest1_user === -1 ||
+            tournament.guest2_user === -1 || tournament.guest3_user === -1)
+            {
+                 throw new Error("Tournament should have 4 players registered!");
+            }
+
+        // lhost bo7do howa li y9der yrecordi natija 
+        const posterId = request.user.id_user;
+        if (posterId !== tournament.host_user) {
+            throw new Error("Only the tournament host can record match results!");
+        }
+
+        // khass mayfoutch number dyal lgames f tournoi 3 matchat
+        const existingMatchesCount = request.server.db.prepare("SELECT COUNT(*) as count FROM game_history WHERE tournament_id = ?").get(TournamentId).count || 0;
+        if (existingMatchesCount >= 3)
+        {
+            throw new Error("Max number of matches for this tournament reached!");
+        }   
+    } catch (error) {
+        console.log("Hereeeeeeee: " + error.message);
+        return reply.code(403).send({
+                success: false,
+                message: error.message
+         }); 
+    }
+
 
     try {
         // Helper function to get user ID - no automatic guest user creation

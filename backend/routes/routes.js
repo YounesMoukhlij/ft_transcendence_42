@@ -21,7 +21,8 @@ import {
     searchUsers,
     me,
     registerInTournament,
-    saveTournamentMatch
+    saveTournamentMatch,
+    createLocalTournament
 
 } from '../modules/userAuth.module.js';
 import { getUserStats, getUserStatsbyId } from '../modules/profile.module.js';
@@ -45,7 +46,7 @@ export default async function routes(fastify, options) {
 
   fastify.addHook('onRequest' , async (request , reply) => {
         const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser" , "/forgotPassword",
-       "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/auth/42", "/42Auth", "/2fa/login-verify", "/registerInTournament", "/saveTournamentMatch", "/api/getMatchHistory"];
+       "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/auth/42", "/42Auth", "/2fa/login-verify"];
     const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
 
 
@@ -121,6 +122,15 @@ export default async function routes(fastify, options) {
   fastify.get('/getPlayerProgress/:username', getPlayerProgress); // ila salina 
   // Game endpoints with additional protection
   fastify.get('/getTournamentBracket/:id', getTournamentBracket);
+
+
+  // ana ayoub zedt hadi but dyal local tournament
+
+  fastify.post('/createLocalTournament', createLocalTournament);
+
+
+
+  // ----------------------
 
   // fastify.post('/recordMatchOnBlockChain', recordMatchOnBlockChain);
   fastify.get('/getMatchFromBlockChainById/:id', getMatchFromBlockChainById);

@@ -5,11 +5,12 @@ import { Player } from './GameContext';
 import { FaUser, FaCrown, FaPlus, FaTimes } from 'react-icons/fa';
 import Image from 'next/image';
 import { useTranslation } from '@/contexts/LanguageContext';
-import axios from 'axios';
+import { useUserStore } from '@/store/userStore';
 
 interface LocalTournamentPlayerRegistrationProps {
   tempPlayers: Player[];
   defaultAvatars: string[];
+  tournamentId: number | null;
   updatePlayer: (index: number, field: keyof Player, value: string) => void;
   updatePlayerObject?: (index: number, playerData: Partial<Player>) => void;
   onComplete: () => void;
@@ -19,6 +20,7 @@ interface LocalTournamentPlayerRegistrationProps {
 export default function LocalTournamentPlayerRegistration({
   tempPlayers,
   defaultAvatars,
+  tournamentId,
   updatePlayer,
   updatePlayerObject,
   onComplete,
@@ -31,6 +33,7 @@ export default function LocalTournamentPlayerRegistration({
   const [updateCounter, setUpdateCounter] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const user = useUserStore((state) => state.user);
 
   // Debug: log when tempPlayers changes
   useEffect(() => {
@@ -62,19 +65,25 @@ export default function LocalTournamentPlayerRegistration({
 
       try {
         // Call the API to authenticate and get real user data
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/registerInTournament`, {
-          username: trimmedUsername,
-          password: newPlayerPassword.trim()
-        }, {
-          withCredentials: true
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/api/registerInTournament`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.access_token}`
+          },
+          body: JSON.stringify({
+            username: newPlayerUsername.trim(),
+            password: newPlayerPassword,
+            tournamentId: tournamentId
+          }),
         });
-
-        if (response.data.success && response.data.user) {
+        const data = await response.json();
+        if (data.success && data.user) {
           // Check again for duplicates using the API response data (more reliable)
           const isDuplicateAfterApi = tempPlayers.some(player =>
-            (player.id_user && player.id_user === response.data.user.id) ||
-            (player.username && player.username.trim() === response.data.user.username.trim()) ||
-            (player.name && player.name.trim() === response.data.user.username.trim())
+            (player.id_user && player.id_user === data.user.id) ||
+            (player.username && player.username.trim() === data.user.username.trim()) ||
+            (player.name && player.name.trim() === data.user.username.trim())
           );
 
           if (isDuplicateAfterApi) {
@@ -90,17 +99,17 @@ export default function LocalTournamentPlayerRegistration({
             // Update with real user data from API
             if (updatePlayerObject) {
               updatePlayerObject(nextIndex, {
-                name: response.data.user.username,
-                avatar: response.data.user.profile || defaultAvatars[(nextIndex - 1) % defaultAvatars.length],
-                id_user: response.data.user.id,
-                username: response.data.user.username
+                name: data.user.username,
+                avatar: data.user.profile || defaultAvatars[(nextIndex - 1) % defaultAvatars.length],
+                id_user: data.user.id,
+                username: data.user.username
               });
             } else {
               // Fallback to individual updates if updatePlayerObject is not available
-              updatePlayer(nextIndex, 'name', response.data.user.username);
-              updatePlayer(nextIndex, 'avatar', response.data.user.profile || defaultAvatars[(nextIndex - 1) % defaultAvatars.length]);
-              updatePlayer(nextIndex, 'id_user', response.data.user.id);
-              updatePlayer(nextIndex, 'username', response.data.user.username);
+              updatePlayer(nextIndex, 'name', data.user.username);
+              updatePlayer(nextIndex, 'avatar', data.user.profile || defaultAvatars[(nextIndex - 1) % defaultAvatars.length]);
+              updatePlayer(nextIndex, 'id_user', data.user.id);
+              updatePlayer(nextIndex, 'username', data.user.username);
             }
 
             // Clear the form and close modal
@@ -110,17 +119,13 @@ export default function LocalTournamentPlayerRegistration({
             setUpdateCounter(prev => prev + 1); // Force re-render
           }
         } else {
-          setErrorMessage(response.data.message || 'Authentication failed');
+          setErrorMessage(data.message || 'Authentication failed');
         }
-      } catch (error) {
+      } catch (error: any) {
         // console.error('Error registering tournament user:', error);
-        // console.error('Error response:', error.response);
-        // console.error('Error status:', error.response?.status);
-        // console.error('Error data:', error.response?.data);
         setErrorMessage(
-          error.response?.data?.message ||
           error.message ||
-          `Failed to authenticate user (${error.response?.status || 'Network Error'})`
+          'Failed to authenticate user'
         );
       } finally {
         setIsLoading(false);
