@@ -42,7 +42,7 @@ export default function Messages(){
   const searchParams = useSearchParams();
   const messages = useUserStore((state) => state.messages);
 
-  const {socket ,contactId ,setContactId, updatePinStatus, friends ,addMessage  , user ,  setMessages ,  updateLastMessage } = useUserStore();
+  const {socket ,contactId ,setContactId, updatePinStatus, friends ,addMessage  , user ,  setMessages ,  updateLastMessage , bot  } = useUserStore();
   const [friend , SetFriend] = useState(null);
   const [show, setShow] = useState<boolean>(false);
   const [input, setInput] = useState<string>('');
@@ -125,19 +125,32 @@ export default function Messages(){
       setContactId(-1);
       return;
     }
+
     const item = friends.find(f => f.id_user === friendId);
 
-    if (!item)
-      setContactId(-1);
+    console.log("||||||||||||" , bot[0]);
+    console.log("||||||||||||==========+>. " , item);
+    
+    if (!item){
+      
+      if (bot.length > 0 && friendId == -2){
+
+        // alert(contactId);
+        SetFriend(bot[0]);
+        setContactId(-2);
+      }
+      else 
+        setContactId(-1);
+    }
     else {
       setContactId(item.id_user);
       SetFriend(item);
     }
 
-  }, [searchParams, friends]);
+  }, [searchParams, friends , bot]);
 
   useEffect(() =>{
-    if (!socket)
+    if (!socket || contactId == -2)
       return ;
     socket.send(
       JSON.stringify({
@@ -182,6 +195,10 @@ export default function Messages(){
     useEffect(()=>{
         if (contactId === -1)
             return ;
+      if (contactId === -2) {
+        setMessages([]); 
+        return;
+      }
         const id = friends.find(item => item.id_user === contactId)?.conversation_id;
         if (id)
           getMsgFunction(id);
@@ -192,7 +209,7 @@ export default function Messages(){
       setInput('');
       return;
     }
-    const conversation_id = friends.find(item => item.id_user === contactId).conversation_id;
+    const conversation_id = friends.find(item => item.id_user === contactId)?.conversation_id;
 
     try {
       if (!socket)
@@ -294,7 +311,7 @@ export default function Messages(){
 
 
             <div className="flex-shrink-0 p-5 h-28 bg-black border border-gray-800 rounded-xl shadow-lg">
-                {friend && contactId > -1 && 
+                {friend && contactId !== -1 && 
                     <div className="w-full h-full flex justify-between">
                         <div className="sm:hidden w-[2rem] flex items-center p-1.5">
                             <GiHamburgerMenu onClick={smallListFriendShow} size={20} className="text-white"/>
@@ -334,7 +351,7 @@ export default function Messages(){
                     <div className="chat-body flex-1 flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar min-h-0">
                         <div className="flex justify-center">
                             {
-                               friend &&  contactId > -1 &&
+                               friend &&  contactId != -1 &&
                                 <div className="flex w-[90%] sm:w-[80%] lg:w-[25rem] bg-gray-800 mt-2 sm:mt-4 p-3 sm:p-4 rounded-[10px] border border-gray-700">
                                     <p className="text-center text-gray-300 text-sm">
                                         The messages are end to end encrypted. Only people in this chat can read this conversation, so enjoy with your friend.
@@ -343,7 +360,7 @@ export default function Messages(){
                             }
                         </div>
                         {
-                         friend &&  contactId > -1 &&
+                         friend &&  contactId != -1 &&
                           <div className="">
                           {
                             messages.filter(item => item.conv_id == friends.find(item => item.id_user === contactId)?.conversation_id).map((item, index) => {
@@ -380,7 +397,7 @@ export default function Messages(){
 
                     <div className="flex-shrink-0">
                       {
-                        friend &&  contactId > -1 && (
+                        friend &&  contactId != -1 && (
                           <>
                             {
                               friend.blockedByUser1 === user.id_user || friend.blockedByUser2 === user.id_user  ? (

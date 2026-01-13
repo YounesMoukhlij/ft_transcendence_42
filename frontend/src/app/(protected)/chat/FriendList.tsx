@@ -247,7 +247,7 @@ function FriendCard({ item }) {
                 </div>
               }
                 <p className="text-gray-400">{formatMessageTime(item?.lastMessageTime)}</p>
-                {item.lastMessageSender !== user.id_user && <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-500 rounded-full"></div>}
+                {item?.lastMessageSender !== user?.id_user && <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-500 rounded-full"></div>}
             </div>
         </div>
     );
@@ -257,7 +257,7 @@ function FriendCard({ item }) {
 
 export default function FriendList( )
 {
-  const { setFriends , friends ,user} = useUserStore();
+  const { setFriends , friends ,user , bot , addBot} = useUserStore();
   const [setting , setSetting] = useState<boolean>(false);
 
 
@@ -266,22 +266,22 @@ export default function FriendList( )
     setSetting(!setting);
   }
 
-
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetFriends`, {
-          headers: {
-            Authorization: `Bearer ${user.access_token}`
-          }
-        });
-
-      setFriends(res.data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+        
+    
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const res = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetFriends`, {
+            headers: {
+              Authorization: `Bearer ${user.access_token}`
+            }
+          });
+          
+          setFriends(res.data);
+        } catch (err) {
+          console.log(err);
+        }
+      };
     fetchData();
     }, [user?.access_token]);
 
@@ -331,7 +331,7 @@ export default function FriendList( )
                     <div className="w-full h-full">
                       <ChatSettingsCard />
                     </div>
-                  ) : friends.length === 0 ? (
+                  ) : friends.length === 0 && bot.length === 0 ? (
                     <div className="flex flex-col h-full justify-center items-center gap-4 text-center">
                       <h1 className="text-xl font-semibold text-gray-300">
                         You don t have any friends yet
@@ -362,8 +362,6 @@ export default function FriendList( )
                          
                          return { ...item, isPinned };
                         });
-                        console.log("===============>" , friends);
-                        console.log("===============>" , processedFriends);
                         
                         const pinned = processedFriends
                           .filter(item => item.isPinned)
@@ -392,7 +390,11 @@ export default function FriendList( )
                             <>
                             {pinned.map((item, id) => (
                               <FriendCard key={"p" + id} item={item} />
-                              ))}                     
+                            ))}
+
+                            {bot.map((item, id) => (
+                              <FriendCard key={"p" + id} item={item} />
+                            ))}  
 
                             {unpinned.map((item, id) => (
                               <FriendCard key={"u" + id} item={item} />

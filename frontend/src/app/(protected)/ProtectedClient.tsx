@@ -18,7 +18,7 @@ export default function ProtectedClient({
   const {
     user, removePendingRequests, updateSeenMessage, contactId, socket, addMessage,connect, removeSentRequests, addPendingRequests ,
     updateLastMessage, removeFriend, updateFriendStatus, Set_Display_game_invite,
-    socketBlockState, setInviterData, addFriend, updateTypingStatus , addNotification , deleteNotification
+    socketBlockState, setInviterData, addFriend, updateTypingStatus , addNotification , deleteNotification , addBot
   } = useUserStore();
 
 
@@ -56,8 +56,6 @@ export default function ProtectedClient({
     // alert("here");
     socket.onmessage = (event) => {
       const { type, data } = JSON.parse(event.data);
-
-
 
       if (type === "notify")
       {
@@ -103,7 +101,7 @@ export default function ProtectedClient({
         );
       }
 
-      if (type === "start_game" || type === "game_challenge_accepted") {
+      else if (type === "start_game" || type === "game_challenge_accepted") {
         const challengeId = data?.challengeId;
         if (challengeId && typeof window !== "undefined") {
           localStorage.setItem("pendingChallengeId", String(challengeId));
@@ -112,16 +110,18 @@ export default function ProtectedClient({
         setGameMode("remote");
         router.push("/game/customize");
       }
-      if (type === "block") socketBlockState(data.blockedByUser1, data.blockedByUser2, data.id);
-      if (type === "unfriend") removeFriend(data.id_user);
-      if (type === "status") updateFriendStatus(data.status, data.friend);
-      if (type === "game_invite") {
+      else if (type === "block") socketBlockState(data.blockedByUser1, data.blockedByUser2, data.id);
+      else if (type === "unfriend") removeFriend(data.id_user);
+      else if (type === "status") updateFriendStatus(data.status, data.friend);
+      else if (type === "game_invite") {
         Set_Display_game_invite(true);
         setInviterData(data);
         setTimeout(() => Set_Display_game_invite(false), 5000);
       }
-
-      if (type === "gameInvitation") {
+      
+      
+      else if (type === "your turn") addBot(data);
+      else if (type === "gameInvitation") {
         // Handle real-time game invitation from friend
         // This is sent by GameManager.sendFriendInvitation
         const invitationData = {
@@ -137,12 +137,12 @@ export default function ProtectedClient({
         };
         addNotification(invitationData);
       }
-      if (type === "test") addFriend(data);
-      if (type === "isTyping") {
+      else if (type === "test") addFriend(data);
+      else if (type === "isTyping") {
         updateTypingStatus(1, data.friendId);
         setTimeout(() => updateTypingStatus(0, data.friendId), 2000);
       }
-      if (type === "seen") updateSeenMessage(data.conv_id);
+      else if (type === "seen") updateSeenMessage(data.conv_id);
 
     };
   }, [socket, user?.sound_notification, contactId, router, setGameMode]);
