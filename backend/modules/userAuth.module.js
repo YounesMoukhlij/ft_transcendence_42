@@ -597,6 +597,14 @@ export async function registerInTournament(request, reply) {
         else if (Guest3 == -1)
         {
             request.server.db.prepare("UPDATE tournaments SET guest3_user = ? WHERE id_tournament = ?").run(idToAdd, tournamentId);
+            const HostConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Host).conversation_id;
+            const Guest1ConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Guest1).conversation_id;
+
+             const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+             firstMsg.run( HostConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
+
+            const secondMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+            secondMsg.run( Guest1ConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
         }
         else {
             return reply.code(400).send({
@@ -733,26 +741,43 @@ export async function saveTournamentMatch(request, reply) {
         if (existingMatchesCount >= 3)
         {
             throw new Error("Max number of matches for this tournament reached!");
-        }   
+        }
+        else if (existingMatchesCount == 0) // bash nssifto message dyal semi final 2
+        {
+            const HostConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Guest2).conversation_id;
+            const Guest1ConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Guest3).conversation_id;
+
+             const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+             firstMsg.run( HostConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
+
+            const secondMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+            secondMsg.run( Guest1ConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
+        }
+        else if (existingMatchesCount == 1) // bash nssifto message dyal lfinal
+        {
+            const semiFinalWinner1 = request.server.db.prepare("SELECT user_win from game_history where game_history_id = ?").get(tournament_id).user_win;
+            const semiFinalWinner2 = PlayerOne;
+
+            const HostConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(semiFinalWinner1).conversation_id;
+            const Guest1ConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(semiFinalWinner2).conversation_id;
+
+             const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+             firstMsg.run( HostConvId,`You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!`);
+
+            const secondMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+            secondMsg.run( Guest1ConvId,`You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!`);
+        }
+        
     } catch (error) {
         return reply.code(403).send({
                 success: false,
                 message: error.message
          }); 
     }
-
-
     try {
-       
         const getUserId = (playerInfo) => {
-          
-            if (playerInfo.id_user && typeof playerInfo.id_user === 'number') {
                 return playerInfo.id_user;
-            }
-
-            throw new Error(`Player ${playerInfo.name} is not authenticated. All tournament players must be authenticated users.`);
-        };
-
+        }
         const winnerUserId = getUserId(winner_info);
         const loserUserId = getUserId(loser_info);
 
