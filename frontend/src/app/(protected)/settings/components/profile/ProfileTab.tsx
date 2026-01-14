@@ -3,6 +3,9 @@
 import React from 'react'
 import { Camera, Globe, ChevronDown } from 'lucide-react'
 import {getProfileImageUrl} from "@/lib/utils"
+import { useTranslation } from '@/contexts/LanguageContext';
+
+
 
 
 interface UserProfile {
@@ -55,6 +58,7 @@ const ProfileTab = ({
   setIsDeleteDialogOpen,
   previewImage
 }: ProfileTabProps) => {
+  const {t} = useTranslation();
   return (
     <>
       {/* Profile Image */}
@@ -90,7 +94,7 @@ const ProfileTab = ({
                 htmlFor="languages"
                 className="flex items-center gap-2 text-gray-400 text-sm mb-2"
               >
-                <Globe size={18} /> Preferred Language
+                <Globe size={18} /> {t('settings.preferredLanguage')}
               </label>
               <div className="relative">
                 <select
@@ -121,20 +125,20 @@ const ProfileTab = ({
 
         {/* Username */}
         <div>
-          <label className="text-gray-400 text-sm mb-1 block">Username</label>
+          <label className="text-gray-400 text-sm mb-1 block">{t('settings.username')}</label>
           <input
             type="text"
             name="username"
             value={formData.username}
             onChange={handleInputChange}
-            placeholder="Enter username"
+            placeholder={t('usernamePlaceholder')}
             className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white"
           />
         </div>
 
         {/* Full Name */}
         <div>
-          <label className="text-gray-400 text-sm mb-1 block">Full Name</label>
+          <label className="text-gray-400 text-sm mb-1 block">{t('settings.fullname')}</label>
           <input
             type="text"
             name="fullname"
@@ -168,7 +172,7 @@ const ProfileTab = ({
         {/* Bio */}
         <div className="md:col-span-2 scrollbar-hide">
           <span className="flex justify-between items-center mb-1">
-            <label className="text-gray-400 text-sm mb-1 block">Bio</label>
+            <label className="text-gray-400 text-sm mb-1 block">{t('settings.bio')}</label>
               <p className="text-right text-xs text-gray-500">
                 {formData.bio ? formData.bio.length : 0} / 200
               </p>

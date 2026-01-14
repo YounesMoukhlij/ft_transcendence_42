@@ -1,5 +1,6 @@
 'use client'
 import React from 'react'
+import { useTranslation } from '@/contexts/LanguageContext';
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean
@@ -14,6 +15,7 @@ const DeleteConfirmationDialog = ({
   onConfirm,
   isLoading
 }: DeleteConfirmationDialogProps) => {
+  const {t} = useTranslation();
   if (!isOpen) return null
 
   return (
@@ -47,10 +49,10 @@ const DeleteConfirmationDialog = ({
 
         <div className="px-8 pb-6">
           <h2 className="text-2xl font-bold text-white text-center mb-3">
-            Delete Account ?
+           {t('settings.deleteAccountTitle')}
           </h2>
           <p className="text-gray-400 text-center leading-relaxed">
-            This action is permanent and cannot be undone. All your data, settings, and content will be permanently deleted.
+           {t('settings.deleteAccountMessage')}
           </p>
         </div>
 
@@ -61,7 +63,7 @@ const DeleteConfirmationDialog = ({
             disabled={isLoading}
             className="flex-1 px-6 py-3 rounded-xl font-semibold text-sm sm:text-base border border-white hover:bg-gray-500 hover:cursor-pointer"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -90,10 +92,10 @@ const DeleteConfirmationDialog = ({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                Deleting...
+                {t('settings.deleting')}
               </>
             ) : (
-              'Delete Account'
+              t('settings.deleteAccount')
             )}
           </button>
         </div>

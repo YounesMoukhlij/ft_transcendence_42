@@ -5,6 +5,7 @@ import { useUserStore } from '../../../store/userStore'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api' 
+import { useTranslation } from '@/contexts/LanguageContext';
 
 // Helper components
 import DeleteConfirmationDialog from './components/DeleteConfirmationDialog'
@@ -19,6 +20,8 @@ const ProfileSettingsPage = () => {
   const setUser = useUserStore((state) => state.setUser)
   const hasHydrated = useUserStore((state) => state._hasHydrated)
   
+  const {t} = useTranslation();
+
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
@@ -410,8 +413,8 @@ const ProfileSettingsPage = () => {
       <div className="max-w-4xl mx-auto">
         
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Account Settings</h1>
-          <p className="text-gray-500 text-sm sm:text-base">Manage your profile and preferences</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">{t('settings.title')}</h1>
+          <p className="text-gray-500 text-sm sm:text-base">{t('settings.subtitle')}</p>
         </div>
 
         {/* --- 1. MOBILE MENU (Phone only - Dropdown Design) --- */}

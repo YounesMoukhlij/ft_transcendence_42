@@ -1,6 +1,7 @@
 'use client'
 import React from 'react'
 import { QRCodeSVG } from 'qrcode.react' // QRcode generator
+import { useTranslation } from '@/contexts/LanguageContext';
 
 interface TwoFAModalProps {
   isOpen: boolean
