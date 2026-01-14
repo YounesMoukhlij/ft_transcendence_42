@@ -8,7 +8,7 @@ import PingPongGame from '@/components/PingPongGame';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { IoExpand, IoContract } from 'react-icons/io5';
 import { useUserStore } from '@/store/userStore';
-import axios from 'axios';
+import api from "@/lib/api"
 import { getBackendURL } from '@/lib/utils';
 
 // Extended Document interface for vendor-prefixed fullscreen APIs
@@ -74,8 +74,8 @@ export default function AIGamePage() {
       // Try to fetch updated profile image
       const fetchUserProfile = async () => {
         try {
-          const response = await axios.get(
-            `${getBackendURL()}/api/getUserStats`,
+          const response = await api.get(
+            `/api/getUserStats`,
             {
               headers: { Authorization: `Bearer ${user.access_token}` }
             }

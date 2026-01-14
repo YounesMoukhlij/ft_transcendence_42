@@ -4,7 +4,7 @@ import { useUserStore } from "@/store/userStore";
 
 import { FaCheck, FaCheckDouble } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
-import axios from 'axios'
+import api from "@/lib/api"
 import {EmojiClickData} from './types'
 import { BsEmojiSmile } from "react-icons/bs";
 import { IoGameController } from "react-icons/io5";
@@ -98,8 +98,8 @@ export default function Messages(){
       }
     }
     try{
-      await axios.post(
-      `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/pinned`,{},
+      await api.post(
+      `/api/pinned`,{},
     {
       params: {
         id: friend.conversation_id,
@@ -176,8 +176,8 @@ export default function Messages(){
         
       try {
         if (contactId == -2){
-          const msgsRes = await axios.get(
-            `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetbotMessages`,
+          const msgsRes = await api.get(
+            `/api/GetbotMessages`,
               {
               params: {
                   id: id,
@@ -189,8 +189,8 @@ export default function Messages(){
           );
           setMessages(msgsRes.data);
           console.log("bot messages ===================++>", msgsRes.data);
-        }else {        const msgsRes = await axios.get(
-            `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/getMsgs`,
+        }else {        const msgsRes = await api.get(
+            `/api/getMsgs`,
             {
             params: {
                 id: id,

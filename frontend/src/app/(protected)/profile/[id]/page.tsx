@@ -20,14 +20,13 @@ export default function UserProfile({ params }: UserProfileProps) {
   const router = useRouter();
 
   const [profile, setProfile] = useState<User | null>(null);
-  // const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!currentUser?.access_token) return; // still no user → skip
+    if (!currentUser?.access_token) return; 
     if (!id) return;
 
     let active = true;
-    // setLoading(true);
+
 
     const fetchProfile = async () => {
       try {
@@ -77,10 +76,7 @@ export default function UserProfile({ params }: UserProfileProps) {
     return () => { active = false; };
   }, [id, currentUser]);
 
-  // --- RENDER PROTECTION ---
-
-  // if (!currentUser || loading) return <Loading />; // waiting for user or data
-  if (!profile) return <Loading />; // safety fallback while axios resolves
+  if (!profile) return <Loading />; 
 
   return <Profile user={profile} />;
 }

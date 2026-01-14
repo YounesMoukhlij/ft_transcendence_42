@@ -8,7 +8,7 @@ import { getWebSocket } from '@/components/globalSocket';
 import PingPongGame from '@/components/PingPongGame';
 import GameCustomization from '@/components/GameCustomization';
 import { useUserStore } from '@/store/userStore';
-import axios from 'axios';
+import api from "@/lib/api"
 import { getBackendURL } from '@/lib/utils';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ServerGameState } from '@/types/game';
@@ -271,8 +271,8 @@ export default function RemoteGamePage() {
             if (!user?.username || !user?.access_token) return;
 
             try {
-              const response = await axios.get(
-                `${getBackendURL()}/api/GetFriends`,
+              const response = await api.get(
+                `/api/GetFriends`,
                 {
                   params: { username: user.username },
                   headers: {

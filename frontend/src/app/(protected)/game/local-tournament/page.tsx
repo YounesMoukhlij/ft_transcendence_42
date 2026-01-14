@@ -14,7 +14,7 @@ import LocalTournamentBracket from '@/components/LocalTournamentBracket';
 import LocalTournamentAnimations from '@/components/LocalTournamentAnimations';
 import LocalTournamentPlayerRegistration from '@/components/LocalTournamentPlayerRegistration';
 import LocalTournamentGameOverlay from '@/components/LocalTournamentGameOverlay';
-import axios from 'axios';
+import api from "@/lib/api"
 
 // Generate modern, attractive avatar SVGs with gradients and patterns
 const generateModernAvatarSVG = (primaryColor: string, secondaryColor: string, pattern: string): string => {
@@ -317,7 +317,7 @@ export default function LocalTournamentPage() {
       console.log(' WATA KHEDM Aaaaaaaaaaa WLLLLD LKLBA API URL:', `${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`);
 
       // Fire-and-forget API call
-      axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/saveTournamentMatch`, matchData, {
+      api.post(`/api/saveTournamentMatch`, matchData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.access_token}`
@@ -423,7 +423,7 @@ export default function LocalTournamentPage() {
                   onClick={async () => {
                     // Create tournament in backend and get the tournament ID
                     try {
-                      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/createLocalTournament`, 
+                      const response = await api.post(`/api/createLocalTournament`, 
                         { name: 'Local Tournament' },
                         {
                           headers: {

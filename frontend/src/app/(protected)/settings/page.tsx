@@ -4,7 +4,6 @@ import { User, Shield, HelpCircle, ChevronDown } from 'lucide-react'
 import { useUserStore } from '../../../store/userStore'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
-import axios from 'axios' 
 import api from '@/lib/api' 
 
 // Helper components
@@ -213,7 +212,7 @@ const ProfileSettingsPage = () => {
 
     try {
       if (formData.newPassword.trim() !== '') {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/updateUserPassword`, 
+        const response = await api.post(`/api/updateUserPassword`, 
           {
             current_password: formData.currentPassword,
             new_password: formData.newPassword
@@ -255,7 +254,7 @@ const ProfileSettingsPage = () => {
     if (is2FAEnabled) {
       // Disable 2FA
       try {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/update2FA`, 
+        const response = await api.post(`/api/update2FA`, 
           { twofa: false },
           {
             headers: { Authorization: `Bearer ${user.access_token}` }
@@ -280,7 +279,7 @@ const ProfileSettingsPage = () => {
     } else {
       // Enable 2FA (Step 1: Generate)
       try {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/2fa/generate`, 
+        const response = await api.post(`/api/2fa/generate`, 
           {}, // Empty body
           {
             headers: { Authorization: `Bearer ${user.access_token}` }
@@ -309,7 +308,7 @@ const ProfileSettingsPage = () => {
   const handleVerify2FA = async () => {
     setIsLoading(true)
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/2fa/verify`, 
+      const response = await api.post(`/api/2fa/verify`, 
         { token: verificationCode },
         {
           headers: { Authorization: `Bearer ${user.access_token}` }
@@ -340,7 +339,7 @@ const ProfileSettingsPage = () => {
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     try {
-     await axios.delete(`${process.env.NEXT_PUBLIC_BACK_API}/api/DeleteAccount`, {
+     await api.delete(`/api/DeleteAccount`, {
         headers: { Authorization: `Bearer ${user.access_token}` }
       })
       toast.success('Account deleted successfully!')

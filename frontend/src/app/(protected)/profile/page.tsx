@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/api"
 import { Profile } from "@/app/(protected)/profile/components/profile";
 import { User } from "@/types/user";
 import "@/app/(protected)/profile/style.css";
@@ -19,8 +19,8 @@ export default function UserProfile() {
 
     const fetchUserData = async () => {
       try {
-        const res = await axios.get(
-          `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/getUserStats`,
+        const res = await api.get(
+          `/api/getUserStats`,
           { headers: { Authorization: `Bearer ${currentUser.access_token}` } }
         );
 

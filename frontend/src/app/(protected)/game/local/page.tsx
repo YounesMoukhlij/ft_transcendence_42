@@ -7,7 +7,7 @@ import PingPongGame from '@/components/PingPongGame';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { IoExpand, IoContract } from 'react-icons/io5';
 import { useUserStore } from '@/store/userStore';
-import axios from 'axios';
+import api from "@/lib/api"
 import { getBackendURL } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -133,8 +133,8 @@ export default function LocalGamePage() {
 
           // Otherwise, fetch by username if available
           if (player1.name && user?.access_token) {
-            const response = await axios.get(
-              `${getBackendURL()}/api/getUserStats/${player1.name}`,
+            const response = await api.get(
+              `/api/getUserStats/${player1.name}`,
               {
                 headers: { Authorization: `Bearer ${user.access_token}` }
               }
@@ -174,8 +174,8 @@ export default function LocalGamePage() {
 
           // Otherwise, fetch by username if available
           if (player2.name && user?.access_token) {
-            const response = await axios.get(
-              `${getBackendURL()}/api/getUserStats/${player2.name}`,
+            const response = await api.get(
+              `/api/getUserStats/${player2.name}`,
               {
                 headers: { Authorization: `Bearer ${user.access_token}` }
               }

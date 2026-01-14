@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/userStore';
+import api from "@/lib/api"
 import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -48,7 +49,7 @@ export default function InviteFriendPage() {
       }
 
       try {
-        const response = await axios.get(
+        const response = await api.get(
           `${getBackendURL()}/api/GetFriends`,
           {
             params: { username: user.username },
@@ -292,8 +293,8 @@ export default function InviteFriendPage() {
     setError('');
 
     try {
-      const response = await axios.post(
-        `${getBackendURL()}/api/sendGameChallenge`,
+      const response = await api.post(
+        `/api/sendGameChallenge`,
         { Friend_id: friend.id_user },
         {
           headers: {

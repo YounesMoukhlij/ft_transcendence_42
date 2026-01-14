@@ -9,7 +9,7 @@ import { getWebSocket } from '@/components/globalSocket';
 import PingPongGame from '@/components/PingPongGame';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { IoExpand, IoContract } from 'react-icons/io5';
-import axios from 'axios';
+import api from "@/lib/api"
 import { getBackendURL } from '@/lib/utils';
 
 import { ServerGameState } from '@/types/game';
@@ -119,8 +119,8 @@ export default function RemoteGameRoomPage() {
       if (profileImagesFetched.current.has(playerId)) return;
 
       try {
-        const response = await axios.get(
-          `${getBackendURL()}/api/getUserStats/${playerId}`,
+        const response = await api.get(
+          `/api/getUserStats/${playerId}`,
           {
             headers: { Authorization: `Bearer ${user.access_token}` }
           }

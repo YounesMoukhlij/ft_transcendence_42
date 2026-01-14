@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { redirect } from 'next/navigation';
 import {formatMessageTime} from './tools'
-import axios from 'axios';
+import api from "@/lib/api"
 import { useUserStore } from "@/store/userStore";
 import {friendType} from "./types";
 import {getProfileImageUrl} from "@/lib/utils"
@@ -38,7 +38,7 @@ export function useDeblock() {
     if (item.blockedByUser1 !== user.id_user && item.blockedByUser2 !== user.id_user || item?.isBot)
       return ;
     
-    await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/Deblock`, {
+    await api.post(`/api/Deblock`, {
       conv_id: item.conversation_id,
       friend_id: item.id_user 
     },{
@@ -62,8 +62,7 @@ export function useFriendActions() {
   async function handleUnfriend(friendId: number, conversationId: number) {
     if (friendId == -2)
         return ;
-    await axios.post(
-      `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/unfriend`,
+    await api.post(`/api/unfriend`,
       {
         conv_id: conversationId,
         friend_id: friendId,
@@ -81,8 +80,8 @@ export function useFriendActions() {
     if (item.blockedByUser1 === user.id_user || item.blockedByUser2 === user.id_user || item?.isBot)
       return;
 
-    await axios.post(
-      `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/block`,
+    await api.post(
+      `/api/block`,
       {
         conv_id: item.conversation_id,
         friend_id: item.id_user,

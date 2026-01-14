@@ -1,7 +1,7 @@
 import { FaSearch } from "react-icons/fa";
 import { IoSettingsSharp } from "react-icons/io5";
 import  {useUserStore}  from '@/store/userStore';
-import axios from 'axios';
+import api from "@/lib/api"
 import Link from "next/link";
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -127,7 +127,7 @@ async function handleSettingChange(label, newValue) {
   }
 
   try {
-    await axios.post(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/changeusersettings`, {
+    await api.post(`/api/changeusersettings`, {
       settingAttribute,
       newValue,
     },
@@ -273,14 +273,14 @@ export default function FriendList( )
     useEffect(() => {
       const fetchData = async () => {
         try {
-          const res = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetFriends`, {
+          const res = await api.get(`/api/GetFriends`, {
             headers: {
               Authorization: `Bearer ${user.access_token}`
             }
           });
 
 
-          const ress = await axios.get(`https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/GetbotChat`, {
+          const ress = await api.get(`/api/GetbotChat`, {
             headers: {
               Authorization: `Bearer ${user.access_token}`
             }
