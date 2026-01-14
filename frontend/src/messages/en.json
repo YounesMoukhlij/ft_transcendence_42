@@ -21,7 +21,8 @@
     "close": "Close",
     "back": "Back",
     "continue": "Continue",
-    "league": "League"
+    "league": "League",
+    "en": "of"
   },
   "settings": {
     "title": "Account Settings",

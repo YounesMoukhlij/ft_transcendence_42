@@ -21,7 +21,8 @@
     "close": "Fermer",
     "back": "Retour",
     "continue": "Continuer",
-    "league": "Ligue"
+    "league": "Ligue",
+    "of": "de"
   },
   "settings": {
     "title": "Paramètres du compte",
