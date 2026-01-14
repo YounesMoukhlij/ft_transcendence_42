@@ -251,7 +251,14 @@
     "maxLeadingTime": "Tiempo máximo en ventaja",
     "longestRally": "Peloteo más largo",
     "ballMaxSpeed": "Velocidad máxima de la pelota",
-    "averageRally": "Peloteo promedio"
+    "averageRally": "Peloteo promedio",
+    "sunday": "dom",
+    "monday": "lun",
+    "tuesday": "mar",
+    "wednesday": "mié",
+    "thursday": "jue",
+    "friday": "vie",
+    "saturday": "sáb"
   },
   "game": {
     "selectMode": "Seleccionar Modo de Juego",

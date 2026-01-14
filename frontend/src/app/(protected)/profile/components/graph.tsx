@@ -276,7 +276,26 @@ export function IllustrationGraph({ data }: ChartProps) {
             textAnchor="middle"
             className="fill-gray-400 text-xs font-medium"
           >
-            {d.key}
+           {(() => {
+            switch (d.key) {
+              case 'Sun':
+                return t('profile.sunday')
+              case 'Mon':
+                return  t('profile.monday')
+              case 'Tue':
+                return  t('profile.tuesday')
+              case 'Wed':
+                return  t('profile.wednesday')
+              case 'Thu':
+                  return t('profile.thursday')
+              case 'Fri':
+                  return t('profile.friday')
+              case 'Sat':
+                  return t('profile.saturday')
+              default:
+                return t('profile.sunday');
+            }
+          })()}
           </text>
         ))}
       </svg>

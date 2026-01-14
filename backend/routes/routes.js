@@ -1,4 +1,4 @@
-import {changeusersettings, getMsgs  ,  test,testt, GetbotMessages, GetbotChat, blockFunction ,DeblockFunction , unfriend , pinned} from '../modules/user.module.js';
+import {changeusersettings, getMsgs  , GetbotMessages, GetbotChat, blockFunction ,DeblockFunction , unfriend , pinned} from '../modules/user.module.js';
 import { GetNotification , sendRequestFriend , AddFriend , GetFriends , DeleteFriendRequest, cancelFriendRequest , sendGameChallenge, AcceptGameChallenge , NotificationSeen, GetSentRequests , DeleteNotification ,getConversationId } from '../modules/nofitication.moudle.js';
 import {
     AddUser,
@@ -61,11 +61,6 @@ export default async function routes(fastify, options) {
     }
   });
 
-
-
-
-    fastify.post('/test' , test);
-  fastify.get('/testt' , testt);
   fastify.get('/GetbotMessages' , GetbotMessages);
   fastify.get('/GetbotChat' , GetbotChat),
   
@@ -93,7 +88,7 @@ export default async function routes(fastify, options) {
   fastify.get('/42Auth', FortyTwoAuth);
   
 
-  fastify.post('/sendGameChallenge' , sendGameChallenge);     // in order to send game challenge must be the user in friend list 
+  fastify.post('/sendGameChallenge' , sendGameChallenge); // in order to send game challenge must be the user in friend list 
   fastify.post('/startGame' , AcceptGameChallenge);     // Dont start the game unless it is in notifications,and must not be expired, and the user sent the invite can't accept
   fastify.post('/saveGameCustomization', saveGameCustomization);    // missing parsing
   fastify.get('/searchUsers', searchUsers);
@@ -142,19 +137,7 @@ export default async function routes(fastify, options) {
   fastify.get('/getMatchFromBlockChainById/:id', getMatchFromBlockChainById);
   fastify.get('/getTournamentMatchesFromBlockChain/:id', getTournamentMatchesFromBlockChain);
 
-  // // Add specific middleware for game endpoints if needed
-  // fastify.addHook('preHandler', async (request, reply) => {
-  //   if (request.url.startsWith('/getTournamentBracket/') ||
-  //       request.url.startsWith('/getMatchFromBlockChainById/') ||
-  //       request.url.startsWith('/getTournamentMatchesFromBlockChain/')) {
 
-  //     // Additional game-specific validation can go here
-  //     const tournamentId = request.params?.id;
-  //     if (tournamentId && !/^[0-9a-fA-F-]+$/.test(tournamentId)) {
-  //       return reply.code(400).send({ error: "Invalid tournament ID format" });
-  //     }
-  //   }
-  // });
 
 
 

@@ -12,6 +12,20 @@ import stream from 'stream';
 
 const pipeline = promisify(stream.pipeline);
 
+
+function sendMessage(socket , conv_id , message){
+    if (socket){
+        socket.send(JSON.stringify({
+        type: "message",
+            data: {
+            conv_id,
+            sender_user_id: -2,
+            message: message ,
+            }
+        }));
+    }
+}
+
 export async function me (request, reply) {
     console.log("avatar me called");
     const token = request.headers.authorization?.split(' ')[1];
@@ -594,14 +608,41 @@ export async function registerInTournament(request, reply) {
         {
             request.server.db.prepare("UPDATE tournaments SET guest2_user = ? WHERE id_tournament = ?").run(idToAdd, tournamentId);
         }
-        else if (Guest3 == -1)
+        else if (Guest3 == -1) // bash kanssifto notification dyal semi final 1
         {
             request.server.db.prepare("UPDATE tournaments SET guest3_user = ? WHERE id_tournament = ?").run(idToAdd, tournamentId);
             const HostConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Host).conversation_id;
             const Guest1ConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Guest1).conversation_id;
 
-             const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
-             firstMsg.run( HostConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
+
+            const Hostsocket = request.server.users_socket.get(Host.toString());
+            const Guestsocket = request.server.users_socket.get(Guest1.toString());
+
+            sendMessage(Hostsocket , HostConvId  , `You are successfully registered in the ${tournament.name}, your match will start soon!` );
+            sendMessage(Guestsocket , Guest1ConvId  , `You are successfully registered in the ${tournament.name}, your match will start soon!`);
+     
+            // if (Hostsocket){
+            //     Hostsocket.send(JSON.stringify({
+            //     type: "message",
+            //     data: {
+            //         conv_id: HostConvId,
+            //         sender_user_id: -2,
+            //         message: `You are successfully registered in the ${tournament.name}, your match will start soon!`,
+            //     }
+            //     }));
+            // }
+            // if (Guestsocket){
+            //     Guestsocket.send(JSON.stringify({
+            //     type: "message",
+            //     data: {
+            //         conv_id: Guest1ConvId,
+            //         sender_user_id: -2,
+            //         message: `You are successfully registered in the ${tournament.name}, your match will start soon!`,
+            //     }
+            //     }));
+            // }
+            const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+            firstMsg.run( HostConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
 
             const secondMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
             secondMsg.run( Guest1ConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
@@ -738,17 +779,27 @@ export async function saveTournamentMatch(request, reply) {
 
         // khass mayfoutch number dyal lgames f tournoi 3 matchat
         const existingMatchesCount = request.server.db.prepare("SELECT COUNT(*) as count FROM game_history WHERE tournament_id = ?").get(TournamentId).count || 0;
+        console.log("count -------------------------------------___>" , existingMatchesCount);
         if (existingMatchesCount >= 3)
         {
             throw new Error("Max number of matches for this tournament reached!");
         }
         else if (existingMatchesCount == 0) // bash nssifto message dyal semi final 2
         {
+            
             const HostConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Guest2).conversation_id;
             const Guest1ConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Guest3).conversation_id;
 
-             const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
-             firstMsg.run( HostConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
+
+            const Guest2socket = request.server.users_socket.get(Guest2.toString());
+            const Guest3socket = request.server.users_socket.get(Guest3.toString());
+
+            sendMessage(Guest2socket , HostConvId  , `You are successfully registered in the ${tournament.name}, your match will start soon!` );
+            sendMessage(Guest3socket , Guest1ConvId  , `You are successfully registered in the ${tournament.name}, your match will start soon!`);
+            
+ 
+            const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+            firstMsg.run( HostConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
 
             const secondMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
             secondMsg.run( Guest1ConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
@@ -757,18 +808,33 @@ export async function saveTournamentMatch(request, reply) {
         {
             const semiFinalWinner1 = request.server.db.prepare("SELECT user_win from game_history where game_history_id = ?").get(tournament_id).user_win;
             const semiFinalWinner2 = PlayerOne;
-
+            console.log("finnnnnnal ===============+>       2",  semiFinalWinner2);
+            
             const HostConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(semiFinalWinner1).conversation_id;
             const Guest1ConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(semiFinalWinner2).conversation_id;
+            
+            console.log("finnnnnnal ===============+>       3",  semiFinalWinner2);
 
-             const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
-             firstMsg.run( HostConvId,`You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!`);
+
+
+
+            const Guest2socket = request.server.users_socket.get(semiFinalWinner1.toString());
+            const Guest3socket = request.server.users_socket.get(semiFinalWinner2.toString());
+
+            sendMessage(Guest2socket , HostConvId  , `You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!` );
+            sendMessage(Guest3socket , Guest1ConvId  , `You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!`);
+
+
+
+            const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
+            firstMsg.run( HostConvId,`You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!`);
 
             const secondMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
             secondMsg.run( Guest1ConvId,`You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!`);
         }
         
     } catch (error) {
+        console.log("Hello this is the error: ===>    : ", error);
         return reply.code(403).send({
                 success: false,
                 message: error.message

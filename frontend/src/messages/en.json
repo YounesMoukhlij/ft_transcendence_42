@@ -251,7 +251,14 @@
     "maxLeadingTime": "Max Leading Time",
     "longestRally": "Longest Rally",
     "ballMaxSpeed": "Ball Max Speed",
-    "averageRally": "Average Rally"
+    "averageRally": "Average Rally",
+    "sunday": "sun",
+    "monday": "mon",
+    "tuesday": "tue",
+    "wednesday": "wed",
+    "thursday": "thu",
+    "friday": "fri",
+    "saturday": "sat"
   },
   "game": {
     "selectMode": "Select Game Mode",

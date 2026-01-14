@@ -251,7 +251,14 @@
     "maxLeadingTime": "Temps en tête max",
     "longestRally": "Échange le plus long",
     "ballMaxSpeed": "Vitesse max de la balle",
-    "averageRally": "Échange moyen"
+    "averageRally": "Échange moyen",
+    "sunday": "dim",
+    "monday": "lun",
+    "tuesday": "mar",
+    "wednesday": "mer",
+    "thursday": "jeu",
+    "friday": "ven",
+    "saturday": "sam"
   },
   "game": {
     "selectMode": "Sélectionner le Mode de Jeu",

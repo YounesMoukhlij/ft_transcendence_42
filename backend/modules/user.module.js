@@ -1,37 +1,4 @@
-import { cpSync } from "fs";
 import {ParseIdSchema ,usersettings , BlockSchema , PinnedSchema} from "./moduleSchema.js";
-
-
-
-export async function test(request, reply) {
-  try{
-
-    const db = request.server.db
-    .prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
-    db.run( 1,"hi this is the test mesage ");
-  }catch(er){
-    console.log(er);
-    return reply.code(500).send(false);
-  }
-  reply.code(200).send(true);
-}
-
-
-
-export async function testt(request, reply) {
-  try{
-    const db = request.server.db.prepare("SELECT * FROM bot_room ");
-    const te = db.all();
-
-    reply.send(te);
-
-  }catch(er){
-    console.log(er);
-    return reply.code(500).send(false);
-  }
-
-}
-
 
 export async function GetbotChat(request, reply) {
   try {
