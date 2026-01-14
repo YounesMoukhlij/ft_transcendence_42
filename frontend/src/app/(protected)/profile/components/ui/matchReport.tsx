@@ -1,6 +1,8 @@
 // components/MatchStats.tsx
 
 import { useCountUp } from "../../hooks/useCountUp";
+import { useTranslation } from '@/contexts/LanguageContext';
+
 
 interface MatchStatsProps {
   duration: string;
@@ -11,7 +13,8 @@ interface MatchStatsProps {
 
 export function MatchStats({duration, longestRally, maxSpeed, avgRally} : MatchStatsProps) {
     const _longestRally = useCountUp(longestRally, 850);
-    const _maxSpeed = useCountUp(maxSpeed, 850);;
+    const _maxSpeed = useCountUp(maxSpeed, 850);
+    const {t} = useTranslation();
 
   return (
     <div className="flex justify-center items-center mt-4  p-4 bg-background">
@@ -24,7 +27,7 @@ export function MatchStats({duration, longestRally, maxSpeed, avgRally} : MatchS
              {_longestRally}
             </p>
             <p className="text-gray-300 font-light text-sm mt-1">
-              Longest Rally
+              {t('profile.longestRally')}
             </p>
             {/* Waveform SVG */}
            
@@ -37,7 +40,7 @@ export function MatchStats({duration, longestRally, maxSpeed, avgRally} : MatchS
               <span className="text-xl font-normal ml-1">km/h</span>
             </p>
             <p className="text-gray-300 font-light text-sm mt-1">
-              Ball Max Speed
+              {t('profile.ballMaxSpeed')}
             </p>
             {/* Speedometer SVG */}
           </div>
@@ -47,11 +50,11 @@ export function MatchStats({duration, longestRally, maxSpeed, avgRally} : MatchS
         <div className="flex flex-wrap justify-center gap-4">
           <div className="border border-gray-700 rounded-xl px-6 py-4 text-center shadow-md">
             <p className="text-lg font-semibold">{duration}</p>
-            <p className="text-xs text-gray-400">Duration</p>
+            <p className="text-xs text-gray-400">{t('profile.duration')}</p>
           </div>
           <div className=" border border-gray-700 rounded-xl px-6 py-4 text-center shadow-md">
             <p className="text-lg font-semibold">{avgRally}</p>
-            <p className="text-xs text-gray-400">Average Rally</p>
+            <p className="text-xs text-gray-400">{t('profile.averageRally')}</p>
           </div>
         </div>
       </div>

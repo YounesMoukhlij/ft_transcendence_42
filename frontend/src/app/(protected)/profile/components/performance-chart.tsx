@@ -8,6 +8,8 @@ import { Button } from "./ui/button"
 import { useState, useEffect } from "react"
 import { useUserStore } from "@/store/userStore"
 import api from "@/lib/api"
+import { useTranslation } from '@/contexts/LanguageContext';
+
 
 
 
@@ -26,6 +28,7 @@ export function PerformanceChart({username }: PerformanceChartProps) {
 
   const [illustration, setIllustration] = useState<"graph" | "chart">("graph");
 
+  const {t} = useTranslation();
 
   const { user: currentUser } = useUserStore();
   const [performaceData, setPerformanceData] = useState<PerformanceData[] | null>(null);
@@ -67,16 +70,16 @@ export function PerformanceChart({username }: PerformanceChartProps) {
           <div>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5 " />
-          Performance Trends
+         {t('profile.performanceTrends')}
         </CardTitle>
-           <CardDescription>Weakly wins and losses over time</CardDescription>
+           <CardDescription>{t('profile.weeklyWinsLosses')}</CardDescription>
         </div>
         <div>
           <Button data-state={illustration} onClick={()=> setIllustration("graph")}  variant="normal"  className="rounded data-[state=graph]:bg-primary mr-1">
-          Graph
+          {t('profile.graph')}
         </Button> 
         <Button data-state={illustration} onClick={()=> setIllustration("chart")} variant="normal"  className="data-[state=chart]:bg-primary">
-           Chart
+            {t('profile.chart')}
         </Button> 
         </div>
          

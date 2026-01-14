@@ -1,6 +1,7 @@
 "use client"
 import { CardContent } from "./ui/card"
 import { useRef, useEffect, useState } from "react"
+import { useTranslation } from '@/contexts/LanguageContext';
 
 interface PerformanceData {
   key: string
@@ -18,6 +19,7 @@ export function IllustrationChart({ data }: ChartProps) {
   const [animationProgress, setAnimationProgress] = useState(0);
   const [hover, setHover] = useState<string | null>(null);
 
+  const {t} = useTranslation();
 
 
   useEffect(() => {
@@ -204,14 +206,14 @@ export function IllustrationChart({ data }: ChartProps) {
             <span className="w-3 h-3 bg-red-500 inline-block rounded-sm cursor-pointer"
             onMouseEnter={() => setHover("lossall")}
             onMouseLeave={() => setHover(null)}></span>
-            Losses
+            {t('profile.losses')}
           </div>
           <div className="flex items-center gap-1">
             <span className="w-3 h-3 bg-blue-500 inline-block rounded-sm cursor-pointer"
             onMouseEnter={() => setHover("winall")}
             onMouseLeave={() => setHover(null)}
             ></span>
-            Wins
+            {t('profile.wins')}
           </div>
         </div>
       </div>

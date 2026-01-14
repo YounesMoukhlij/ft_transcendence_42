@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 import { CardContent } from "./ui/card"
+import { useTranslation } from '@/contexts/LanguageContext';
+
 interface PerformanceData {
   key: string
   wins: number
@@ -22,6 +24,8 @@ export function IllustrationGraph({ data }: ChartProps) {
   const [lossesPathLength, setLossesPathLength] = useState(0);
   const [hover, setHover] = useState<string | null>(null);
   const [opacityHover, setOpacityHover] = useState<"win" | "loss" |  null>(null);
+  
+  const {t} = useTranslation();
 
 
   // Responsive observer --------------
@@ -284,14 +288,14 @@ export function IllustrationGraph({ data }: ChartProps) {
               onMouseLeave={() => setOpacityHover(null)}
              >
              </span>
-            Losses
+            {t('profile.losses')}
           </div>
           <div className="flex items-center gap-1">
             <span className="w-3 h-3 bg-green-500 inline-block rounded-sm cursor-pointer"
               onMouseEnter={() => setOpacityHover("win")}
               onMouseLeave={() => setOpacityHover(null)}
             ></span>
-            Wins
+             {t('profile.wins')}
           </div>
         </div>
       </div>

@@ -267,7 +267,20 @@ const handleCancelFriendRequest = async () => {
               data-state={friendshipText !== "Unfriend"}
               variant="outline"
               className="w-fullmt-2 mr-2 bg-transparent data-[state=false]:border-destructive data-[state=false]:text-destructive data-[state=false]:hover:bg-destructive border-primary data-[state=false]:hover:text-destructive-foreground text-primary hover:bg-primary hover:text-primary-foreground cosmic-glow rounded-xxl">
-              {friendshipText}
+              {(() => {
+            switch (friendshipText) {
+              case 'Add friend':
+                return t('profile.addFriend')
+              case 'Cancel request':
+                return  t('profile.cancelRequest')
+              case 'Unfriend':
+                return  t('profile.unfriend')
+              case 'Accept':
+                return  t('profile.accept')
+              default:
+                return t('profile.addFriend');
+            }
+          })()}
             </Button>
             {friendshipText == "Accept" && 
                   <Button 
@@ -275,7 +288,7 @@ const handleCancelFriendRequest = async () => {
             className="mt-2"
             onClick={rejectFriendRequest}
             >
-              Reject
+             {t('profile.reject')}
             </Button>
           }
 
@@ -285,7 +298,7 @@ const handleCancelFriendRequest = async () => {
              className="mt-2"
              onClick={() => router.push(`/chat?friend=${userStats.id}`)} // http://localhost:3000/chat?friend=5
              >
-              message
+              {t('profile.message')}
             </Button>
             }
             </>

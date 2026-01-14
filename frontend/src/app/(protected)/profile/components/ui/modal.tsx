@@ -14,6 +14,8 @@ import { GameDetails } from "@/types/user"
 import { formatDuration } from "../../hooks/useCountUp";
 import Image from "next/image";
 import {getProfileImageUrl} from '@/lib/utils'
+import { useTranslation } from '@/contexts/LanguageContext';
+
 
 
 interface GameModalProps {
@@ -50,6 +52,8 @@ export function GameModalDemo({game, onClose} : GameModalProps)
     return () => clearTimeout(timer); // cleanup if component unmounts
   }, []);
 
+  const {t} = useTranslation(); 
+
   const hostScore : number = game.hostScore;
   const hostTouches : number = game.hostTouches;
   const hostStreak : number = game.hostMaxStreak;
@@ -80,7 +84,7 @@ export function GameModalDemo({game, onClose} : GameModalProps)
                     >
                         <FontAwesomeIcon  icon={faXmark} />
                 </button>
-              <h2 className="text-2xl font-bold mb-4">Game Details</h2>
+              <h2 className="text-2xl font-bold mb-4">{t('profile.gameDetails')}</h2>
 
             </div>
            <hr />
@@ -124,22 +128,22 @@ export function GameModalDemo({game, onClose} : GameModalProps)
                     <TableBody>
                          <TableRow className={hostScore > guestScore ? "left-overtake" : "right-overtake"}>
                              <TableCell  className="text-left ">{hostScore}</TableCell>
-                            <TableHead  className="text-center font-semibold">Final Score</TableHead>
+                            <TableHead  className="text-center font-semibold">{t('profile.finalScore')}</TableHead>
                             <TableCell  className="text-right">{guestScore}</TableCell>
                         </TableRow>
                           <TableRow className={hostTouches > guestTouches ? "left-overtake" : "right-overtake"}>
                              <TableCell  className="text-left ">{hostTouches}</TableCell>
-                            <TableHead  className="text-center font-semibold">Touches</TableHead>
+                            <TableHead  className="text-center font-semibold">{t('profile.touches')}</TableHead>
                             <TableCell  className="text-right">{guestTouches}</TableCell>
                         </TableRow>
                           <TableRow className={hostStreak > guestStreak ? "left-overtake" : "right-overtake"}>
                              <TableCell  className="text-left">{hostStreak}</TableCell>
-                            <TableHead  className="text-center font-semibold">Max Streak</TableHead>
+                            <TableHead  className="text-center font-semibold">{t('profile.maxStreak')}</TableHead>
                             <TableCell  className="text-right">{guestStreak}</TableCell>
                         </TableRow>
                          <TableRow className={hostLeading > guestLeading ? "left-overtake" : "right-overtake"}>
                              <TableCell  className="text-left w-23">{formatDuration(game.hostLeadingTime)}</TableCell>
-                            <TableHead  className="text-center font-semibold">Max Leading Time</TableHead>
+                            <TableHead  className="text-center font-semibold">{t('profile.maxLeadingTime')}</TableHead>
                             <TableCell  className="text-right max-w-10 ">{formatDuration(game.guestLeadingTime)}</TableCell>
                         </TableRow>
 

@@ -7,6 +7,8 @@ import { GameDetails } from "@/types/user"
 import { useUserStore } from "@/store/userStore";
 import { useRouter } from "next/navigation"
 import api from "@/lib/api";
+import { useTranslation } from '@/contexts/LanguageContext';
+
 
 
 interface MatchHistoryTableProps {
@@ -19,6 +21,8 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
   const [matchHistory, setMatchHistory] = useState<GameDetails[] | null>(null)
   const targetUsername = username;
   const router = useRouter();
+  const {t} = useTranslation();
+
 
 
    useEffect(() => {
@@ -55,9 +59,9 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Match History
+              {t('profile.matchHistory')}
             </CardTitle>
-            <CardDescription>Complete record of all your matches</CardDescription>
+            <CardDescription>{t('profile.completeRecord')} </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -66,11 +70,11 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
           <table className="w-full ">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Date</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Opponent</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Result</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Score</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Type</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.date')}</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.opponent')}</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.result')}</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.score')}</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.type')}</th>
               </tr>
             </thead>
             <tbody>
@@ -82,14 +86,14 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
                   <td onClick={() => setSelectedMatch(match)} className="py-3 px-4 text-sm">{match.game_date.substring(0, match.game_date.length - 3)}</td>
                   <td onClick={() => setSelectedMatch(match)} className="py-3 px-4 font-medium">{match.opponent}</td>
                   <td onClick={() => setSelectedMatch(match)} className="py-3 px-4">
-                    <Badge variant={match.result === "Win" ? "default" : "destructive"}>{match.result}</Badge>
+                    <Badge variant={match.result === "Win" ? "default" : "destructive"}>{match.result === "Win" ? t('profile.win') : t('profile.loss')}</Badge>
                   </td>
                   <td onClick={() => setSelectedMatch(match)} className="py-3 px-4 font-mono text-sm">{match.score}</td>
                  { match.type == "tournament" ?
                  <>
                     <td className="py-3 px-4 text-sm text-muted-foreground">
                       <span onClick={() => router.push(`/Tournaments/${match.tournament_id}`)} className="inline cursor-pointer hover:text-primary
-                        transition duration-300 ease-in-out"> {match.type[0].toUpperCase() + match.type.slice(1)}
+                        transition duration-300 ease-in-out"> {t('game.tournament')}
                           < ExternalLink  className="inline w-4 h-4 ml-1 mb-1"/>
                       </span> 
                     </td>
@@ -101,7 +105,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
                         <span className="absolute hidden group-hover:block
                           -left-21 -top-5
                           bg-black text-white text-xs px-2 py-1 rounded shadow">
-                          in blockchain
+                          {t('profile.in_blockchain')}
                         </span>
                     </div> 
                     <span className="transition-all duration-300 ease-in-out" title="on blockchain"></span>
@@ -109,7 +113,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
                  </>
                     :
                     <td onClick={() => setSelectedMatch(match)} className="py-3 px-4 text-sm text-muted-foreground">   
-                    {match?.type[0]?.toUpperCase() + match.type.slice(1)}
+                    {t('profile.duel')}
                     </td>
                     }
                 </tr>
