@@ -460,7 +460,7 @@ const ProfileSettingsPage = () => {
               className={`flex items-center justify-center gap-3 py-3 rounded-xl font-medium sm:w-1/4 transition-all ${getButtonStyle(activeTab === tab.id)} hover:cursor-pointer`}
             >
               <tab.icon size={20} />
-              <span>{tab.label}</span>
+              <span>{tab.label === "Profile" ? t('settings.profile') : tab.label === "Help" ? t('settings.help') : t('settings.security')}</span>
             </button>
           ))}
         </div>

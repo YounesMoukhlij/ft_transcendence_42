@@ -131,7 +131,7 @@ const ProfileTab = ({
             name="username"
             value={formData.username}
             onChange={handleInputChange}
-            placeholder={t('usernamePlaceholder')}
+            placeholder={t('settings.usernamePlaceholder')}
             className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white"
           />
         </div>
@@ -144,7 +144,7 @@ const ProfileTab = ({
             name="fullname"
             value={formData.fullname}
             onChange={handleInputChange}
-            placeholder="Enter full name"
+            placeholder={t('settings.fullnamePlaceholder')}
             className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white  appearance-none"
           />
         </div>
@@ -152,14 +152,14 @@ const ProfileTab = ({
         {/* Email */}
         <div className="md:col-span-2">
           <label className="text-gray-400 text-sm mb-1 block">
-            {isPasswordAuth ? 'Email' : 'Email (You cannot change your email)'}
+            {isPasswordAuth ? t('settings.email') : t('settings.emailOAuth')}
           </label>
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            placeholder="Enter email"
+            placeholder={t('settings.emailPlaceholder')}
             disabled={!isPasswordAuth}
             className={
               isPasswordAuth
@@ -182,7 +182,7 @@ const ProfileTab = ({
             rows={4}
             value={formData.bio}
             onChange={handleInputChange}
-            placeholder="Tell us about yourself..."
+            placeholder={t('settings.bioPlaceholder')}
             className="w-full bg-black border-2 border-gray-600 rounded-xl p-3 text-white focus:border-white resize-none overflow-hidden"
             maxLength={200}
           />
@@ -200,7 +200,7 @@ const ProfileTab = ({
             : 'border border-gray-500 hover:bg-gray-500 hover:text-white'
           }`}
         >
-          {isLoading ? 'Saving...' : 'Save Profile Changes'}
+          {isLoading ? t('settings.saving') : t('settings.saveProfileChanges')}
         </button>
         <button
           onClick={() => setIsDeleteDialogOpen(true)}
@@ -211,7 +211,7 @@ const ProfileTab = ({
             : 'border border-red-600 text-white hover:bg-red-500'
           }`}
         >
-          Delete Account
+          {t('settings.deleteAccount')}
         </button>
       </div>
     </>

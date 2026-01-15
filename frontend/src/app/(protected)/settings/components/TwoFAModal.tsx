@@ -23,7 +23,7 @@ const TwoFAModal = ({
   isLoading
 }: TwoFAModalProps) => {
   if (!isOpen) return null
-
+  const {t} = useTranslation();
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -37,10 +37,10 @@ const TwoFAModal = ({
       >
         <div className="px-8 pt-8 pb-6">
           <h2 className="text-2xl font-bold text-white text-center mb-4">
-            Set Up Two-Factor Authentication
+            {t('settings.setupTwoFactorAuth')}
           </h2>
           <p className="text-gray-400 text-center leading-relaxed">
-            1. Scan the QR code below with your Google Authenticator app.
+            {t('settings.scanQrStep')}
           </p>
         </div>
 
@@ -48,13 +48,13 @@ const TwoFAModal = ({
           {otpAuthUrl ? (
             <QRCodeSVG value={otpAuthUrl} size={200} />
           ) : (
-            <p className="text-black">Loading QR Code...</p>
+            <p className="text-black">{t('settings.loadingQr')}</p>
           )}
         </div>
 
         <div className="px-8 pb-6">
           <p className="text-gray-400 text-center leading-relaxed">
-            2. Enter the 6-digit code from your app to verify.
+            {t('settings.enterOtpStep')}
           </p>
           <input
             type="text"
@@ -73,14 +73,14 @@ const TwoFAModal = ({
             disabled={isLoading}
             className="flex-1 px-6 py-3 rounded-xl font-semibold text-sm sm:text-base border border-gray-500 text-gray-300 hover:bg-gray-800 cursor-pointer"
           >
-            Cancel
+           {t('common.cancel')}
           </button>
           <button
             onClick={onSubmit}
             disabled={isLoading || verificationCode.length < 6}
             className="flex-1 px-6 py-3 rounded-xl font-semibold text-sm sm:text-base border border-white hover:bg-gray-500 hover:text-white disabled:bg-gray-600 disabled:opacity-50 cursor-pointer"
           >
-            {isLoading ? 'Verifying...' : 'Enable'}
+            {isLoading ? t('settings.verifying') : t('settings.enable')}
           </button>
         </div>
       </div>

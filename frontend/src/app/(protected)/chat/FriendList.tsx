@@ -12,12 +12,16 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDeblock } from './FriendCard';
 import {getProfileImageUrl} from "@/lib/utils"
+import { useTranslation } from '@/contexts/LanguageContext';
+
+
 
 
 function BlockedCard({ item }) {
   const [snowflakes, setSnowflakes] = useState([]);
   const { handleDeblock } = useDeblock();
-
+  const {t} = useTranslation();
+  
   useEffect(() => {
     const flakes = Array.from({ length: 15 }).map(() => ({
       id: Math.random(),
@@ -55,7 +59,7 @@ function BlockedCard({ item }) {
         <h1 className="text-white text-2xl">{item.username}</h1>
       </div>
       <div className="flex items-center z-10">
-        <button onClick={()=>handleDeblock(item)} className="bg-white text-black text-2xl rounded-xl p-1 hover:bg-gray-200 hover:cursor-pointer transition-colors">unblok</button>
+        <button onClick={()=>handleDeblock(item)} className="bg-white text-black text-2xl rounded-xl p-1 hover:bg-gray-200 hover:cursor-pointer transition-colors">{t('chat.unblock')}</button>
       </div>
     </div>
   );
@@ -66,7 +70,7 @@ function BlockedCard({ item }) {
 
 function ChatSettingsCard() {
   const{updateUserSetting , user , friends} = useUserStore();
-
+  const {t} = useTranslation();
   const [tab, setTab] = useState<"general" | "blocked">("general");
 
   function SettingItem({label}) {
@@ -84,7 +88,20 @@ function ChatSettingsCard() {
 
   return (
     <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
-      <span className="font-medium text-lg text-white">{label}</span>
+      <span className="font-medium text-lg text-white">{(() => {
+            switch (label) {
+              case "Sound Notifications":
+                return t('chat.notificationSound')
+              case "Typing Indicator":
+                return  t('chat.typingIndicator')
+              case "Read Receipts":
+                return  t('chat.readReceipts')
+              case "Show Online Status":
+                return  t('chat.showOnlineStatus')
+              default:
+                return t('chat.notificationSound');
+            }
+          })()}</span>
 
       <label className="relative inline-flex items-center cursor-pointer">
         <input
@@ -166,7 +183,7 @@ const blockedUsers = friends.filter(
               ${tab === "general"
                 ? "bg-white text-black shadow-lg"
                 : "bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700"}`}>
-            General
+            {t('chat.general')}
           </button>
           <button
             onClick={() => setTab("blocked")}
@@ -175,7 +192,7 @@ const blockedUsers = friends.filter(
                 ? "bg-white text-black shadow-lg"
                 : "bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700"}`}
           >
-            Blocked
+            {t('chat.blocked')}
           </button>
         </div>
 
@@ -191,7 +208,7 @@ const blockedUsers = friends.filter(
        {tab === "blocked" && (
             blockedUsers.length === 0 ? (
               <div className="p-6 text-gray-400 text-lg text-center">
-                No blocked users yet.
+                {t('chat.noBlockedUsers')}
               </div>
             ) : (
 
@@ -308,15 +325,15 @@ export default function FriendList( )
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
     };
-
+    const {t} = useTranslation();
     return(
         <div className='rounded-2xl w-full flex flex-col gap-3.5 h-full'>
             <div className="flex flex-col lg:p-4 p-2 gap-2 h-[10%] lg:h-[15%] min-h-28 max-h-32 rounded-2xl bg-gray-900 shadow-2xl">
               <div className="flex justify-between h-[50%]">
 
                   <div className="flex gap-2.5 h-[50%]">
-                        <h1 className='text-3xl text-white font-bold'>inbox</h1>
-                        <h1 className='bg-gray-800 text-white rounded-lg px-3 flex justify-center items-center h-8 font-semibold'>{friends.filter(item => item.lastMessageSender !== user.id_user).length} New</h1>
+                        <h1 className='text-3xl text-white font-bold'>{t('chat.inbox')}</h1>
+                        <h1 className='bg-gray-800 text-white rounded-lg px-3 flex justify-center items-center h-8 font-semibold'>{friends.filter(item => item.lastMessageSender !== user.id_user).length} {t('chat.new')}</h1>
                   </div>
 
                 <div className="flex justify-center items-center h-[100%]">

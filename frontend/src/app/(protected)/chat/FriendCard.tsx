@@ -8,6 +8,7 @@ import api from "@/lib/api"
 import { useUserStore } from "@/store/userStore";
 import {friendType} from "./types";
 import {getProfileImageUrl} from "@/lib/utils"
+import { useTranslation } from '@/contexts/LanguageContext';
 
 const formatXP = (xp) => {
   const units = ['', 'K', 'M', 'B', 'T', 'Q']
@@ -110,6 +111,7 @@ export default function FriendCard() {
   const { handleDeblock } = useDeblock();
   const { handleUnfriend, handleBlock } = useFriendActions();
 
+  const {t} = useTranslation();
   useEffect(() => {
     const friendId = Number(searchParams.get("friend"));
 
@@ -157,10 +159,10 @@ export default function FriendCard() {
             <span className={`w-2 h-2 rounded-full ${friend.status ? 'bg-green-500' : 'bg-gray-600'}`}></span>
             {!friend.status ? (
               <p className="text-gray-400 text-sm">
-                Last seen: {formatMessageTime(friend.lastseen)}
+               {t('chat.lastSeen')}: {formatMessageTime(friend.lastseen)}
               </p>
             ) : (
-              <p className="text-green-400 text-sm font-medium">Online</p>
+              <p className="text-green-400 text-sm font-medium">{t('chat.online')}</p>
             )}
           </div>
         </div>
@@ -176,17 +178,17 @@ export default function FriendCard() {
 
         <div className="w-full grid grid-cols-3 gap-3">
           <div className="bg-gray-800 rounded-xl p-2 text-center">
-            <p className="text-xs text-gray-400 pt-2 mb-1 font-medium">XP</p>
+            <p className="text-xs text-gray-400 pt-2 mb-1 font-medium">{t('chat.xp')}</p>
             <p className="text-xl font-bold w-[4rem] text-center  text-white">{formatXP(friend.xp)}</p>
           </div>
 
           <div className="bg-gray-800 rounded-xl p-4 text-center">
-            <p className="text-xs text-gray-400 mb-1 font-medium">Wins</p>
+            <p className="text-xs text-gray-400 mb-1 font-medium">{t('chat.wins')}</p>
             <p className="text-xl font-bold text-green-400">{friend.wins}</p>
           </div>
 
           <div className="bg-gray-800 rounded-xl p-4 text-center">
-            <p className="text-xs text-gray-400 mb-1 font-medium">Losses</p>
+            <p className="text-xs text-gray-400 mb-1 font-medium">{t('chat.losses')}</p>
             <p className="text-xl font-bold text-red-400">{friend.losses}</p>
           </div>
         </div>
@@ -198,14 +200,14 @@ export default function FriendCard() {
                 onClick={() => handleBlock(friend)}
                 className="flex-1 bg-gray-800 hover:bg-gray-700 transition-colors rounded-xl py-3 font-semibold text-white"
               >
-                Block
+                {t('chat.block')}
               </button>
             ) : (
               <button
                 onClick={() => handleDeblock(friend)}
                 className="flex-1 bg-gray-800 hover:bg-gray-700 text-red-400 hover:text-red-300 transition-colors rounded-xl py-3 font-semibold"
               >
-                Unblock
+                {t('chat.unblock')}
               </button>
             )}
 
@@ -213,7 +215,7 @@ export default function FriendCard() {
               onClick={() => handleUnfriend(friend.id_user, friend.conversation_id)}
               className="flex-1 bg-gray-800 hover:bg-gray-700 text-red-400 hover:text-red-300 transition-colors rounded-xl py-3 font-semibold"
             >
-              Unfriend
+              {t('chat.unfriend')}
             </button>
           </div>
 
@@ -221,7 +223,7 @@ export default function FriendCard() {
             onClick={() => redirect(`/profile/${friend.id_user}`)}
             className="w-full bg-white hover:bg-gray-200 transition-colors rounded-xl py-3 font-bold text-black"
           >
-            View Profile
+            {t('chat.viewProfile')}
           </button>
         </div>
       </div>

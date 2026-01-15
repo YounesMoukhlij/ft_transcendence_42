@@ -26,6 +26,8 @@ import {useFriendActions} from './FriendCard'
 import { FaUserMinus } from "react-icons/fa"; 
 import { useDeblock } from './FriendCard';
 import {getProfileImageUrl} from "@/lib/utils"
+import { useTranslation } from '@/contexts/LanguageContext';
+
 
 function MessageDateComponent({ date }: { date: string }) {
   const currentDate = date?.split(' ')[0];
@@ -52,6 +54,7 @@ export default function Messages(){
   const buttonRef = useRef(null);
   const { handleUnfriend, handleBlock } = useFriendActions();
   const { handleDeblock } = useDeblock();
+  const {t} = useTranslation();
   
 
   useEffect(()=>{
@@ -292,12 +295,12 @@ export default function Messages(){
               {friend.blockedByUser1 !== user.id_user && friend.blockedByUser2 !== user.id_user ? (
                 <button onClick={()=>handleBlock(friend)} className="w-full text-left px-2 py-2 flex items-center gap-1 hover:bg-gray-800 rounded-lg transition-colors duration-150">
                   <MdBlock />
-                <h1>block</h1>
+                <h1>{t('chat.block')}</h1>
               </button>
               ) : (
                 <button onClick={()=>handleDeblock(friend)} className="w-full text-left px-2 py-2 flex items-center gap-1 hover:bg-gray-800 rounded-lg transition-colors duration-150">
                   <CgUnblock />
-                  <h1>unblock</h1>
+                  <h1>{t('chat.unblock')}</h1>
                 </button>
               )}
             </div>
@@ -308,20 +311,20 @@ export default function Messages(){
                 setshowMore(false) 
               }} className="w-full text-left px-2 py-2 flex gap-1 items-center hover:bg-gray-800 rounded-lg transition-colors duration-150">
                  <FaUserMinus /> 
-                <h1>unfriend</h1>
+                <h1>{t('chat.unfriend')}</h1>
               </button>
             </div>
             <div className="">
               {!friend.isPinned && 
                 <button onClick={()=> handleClick(friend)} disabled={disabled} className={`px-2 py-2 rounded flex items-center gap-1 w-full hover:bg-gray-800 ${disabled ? "opacity-50 cursor-not-allowed" : "hover:cursor-pointer"}`}>
                   <FontAwesomeIcon icon={faThumbtack} className="text-white" />
-                  <h1 className="text-center">pin</h1>
+                  <h1 className="text-center">{t('chat.pin')}</h1>
                 </button>
               }
               {friend.isPinned && 
                 <button onClick={()=>handleClick(friend)} disabled={disabled} className={`px-2 py-2 rounded flex items-center gap-1 w-full hover:bg-gray-800 ${disabled ? "opacity-50 cursor-not-allowed" : "hover:cursor-pointer"}`}>
                   <FontAwesomeIcon  icon={faThumbtackSlash} className="text-white" />
-                  <h1 className="text-center">unpin</h1>
+                  <h1 className="text-center">{t('chat.unpin')}</h1>
                 </button>
               }
             </div>
@@ -340,12 +343,12 @@ export default function Messages(){
                                 <h1 className="text-xl sm:text-2xl md:text-3xl text-white">{friend?.username}</h1>
                                 {
                                     friend?.isTyping ? (
-                                      <h1 className="text-gray-400">Typing...</h1>
+                                      <h1 className="text-gray-400">{t('chat.typing')}</h1>
                                     ):
                                     friend.status ?(
-                                        <h1 className="text-gray-400">Online</h1>
+                                        <h1 className="text-gray-400">{t('chat.online')}</h1>
                                     ):(
-                                        <h1 className="text-gray-500">Last seen at: {formatMessageTime(friend?.lastseen)}</h1>
+                                        <h1 className="text-gray-500">{t('chat.lastSeen')}: {formatMessageTime(friend?.lastseen)}</h1>
                                     )
                                 }
                             </div>
@@ -372,7 +375,7 @@ export default function Messages(){
                                friend &&  contactId != -1 &&
                                 <div className="flex w-[90%] sm:w-[80%] lg:w-[25rem] bg-gray-800 mt-2 sm:mt-4 p-3 sm:p-4 rounded-[10px] border border-gray-700">
                                     <p className="text-center text-gray-300 text-sm">
-                                        The messages are end to end encrypted. Only people in this chat can read this conversation, so enjoy with your friend.
+                                        {t('chat.encryptedMessage')}
                                     </p>
                                 </div>
                             }
@@ -422,7 +425,7 @@ export default function Messages(){
                               <div className="flex items-center p-3.5 justify-between bg-black border-t border-gray-800">
                                 <div className="flex justify-around w-full h-full items-center px-2">
                                   <p className="text-xs sm:text-sm text-gray-400">
-                                    You can t send to this contact. Please deblock first.
+                                    {t('chat.cannotSendDeblock')}
                                   </p>
                                 </div>
                               </div>
@@ -430,7 +433,7 @@ export default function Messages(){
                               <div className="flex items-center p-3.5 justify-between bg-black border-t border-gray-800">
                                 <div className="flex justify-around w-full h-full items-center px-2">
                                   <p className="text-xs sm:text-sm text-gray-400">
-                                    Sorry, you can t send message to this contact
+                                    {t('chat.cannotSendBlocked')}
                                   </p>
                                 </div>
                               </div>
@@ -453,7 +456,7 @@ export default function Messages(){
                                 <div className="mx-2 w-[80%] overflow-hidden">
                                   <input
                                     className="w-full h-10 sm:h-10 lg:h-12 bg-gray-800 text-white border border-gray-700 p-2 sm:p-4 rounded-[20px] sm:rounded-[50px] outline-none focus:border-gray-600 text-xs sm:text-sm lg:text-base placeholder-gray-500"
-                                    placeholder="Write a Message"
+                                    placeholder={t('chat.writeMessagePlaceholder')}
                                     onKeyDown={handleEnterKey}
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
