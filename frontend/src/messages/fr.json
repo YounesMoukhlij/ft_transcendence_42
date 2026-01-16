@@ -539,7 +539,19 @@
     "cancel": "Annuler",
     "adding": "Ajout...",
     "need": "Encore ",
-    "morePlayers" : " joueurs requis..."
+    "morePlayers" : " joueurs requis...",
+    "winningScore": "Score gagnant",
+    "tournamentName": "Nom du tournoi",
+    "enterTournamentName": "Entrez le nom du tournoi",
+    "tournamentNameRequired": "Le nom du tournoi est requis",
+    "tournamentNameMinLength": "Le nom du tournoi doit contenir au moins 3 caractères",
+    "tournamentNameMaxLength": "Le nom du tournoi doit contenir moins de 20 caractères",
+    "tournamentNameInvalidChars": "Le nom du tournoi ne peut contenir que des lettres, des chiffres, des espaces, des tirets et des underscores",
+    "controls": "Commandes",
+    "useWASDOrArrows": "Utilisez les touches WASD ou les flèches pour vous déplacer",
+    "firstTo10PointsWins": "Le premier à atteindre 10 points gagne",
+    "viewResults": "Voir les résultats"
+
   }
 }
 

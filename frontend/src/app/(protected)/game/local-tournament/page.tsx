@@ -374,16 +374,16 @@ export default function LocalTournamentPage() {
         const validateTournamentName = (name: string): string => {
           const trimmedName = name.trim();
           if (!trimmedName) {
-            return t('game.tournamentNameRequired') || 'Tournament name is required';
+            return t('game.tournamentNameRequired');
           }
           if (trimmedName.length < 3) {
-            return t('game.tournamentNameMinLength') || 'Tournament name must be at least 3 characters';
+            return t('game.tournamentNameMinLength') ;
           }
           if (trimmedName.length > 20) {
-            return t('game.tournamentNameMaxLength') || 'Tournament name must be less than 20 characters';
+            return t('game.tournamentNameMaxLength') ;
           }
           if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmedName)) {
-            return t('game.tournamentNameInvalidChars') || 'Tournament name can only contain letters, numbers, spaces, hyphens, and underscores';
+            return t('game.tournamentNameInvalidChars');
           }
           return '';
         };
@@ -444,7 +444,7 @@ export default function LocalTournamentPage() {
                 {/* Tournament Name Input */}
                 <div className="mb-6">
                   <label htmlFor="tournamentName" className="block text-white text-sm font-medium mb-2">
-                    {t('game.tournamentName') || 'Tournament Name'}
+                    {t('game.tournamentName')}
                   </label>
                   <input
                     type="text"

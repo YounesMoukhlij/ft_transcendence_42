@@ -7,3 +7,7 @@ all delete requests should be changed to POST
 // NEED to check translation in the whole project, and check for responsivity
 
 // notification error 3 times 
+
+
+// CHECK the local tournaments endpoints, espicially the saveGame endpoint
+// make sure everything is validated

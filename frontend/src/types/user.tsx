@@ -56,6 +56,7 @@ export interface GameDetails
     longest_rally: number,
     average_rally: number,
     ball_max_speed: number,
+    blockChainHash: string,
 
     hostScore: number,
     guestScore: number,

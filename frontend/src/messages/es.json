@@ -538,8 +538,18 @@
     "cancel": "Cancelar",
     "adding": "Agregando...",
     "need": "Se necesitan ",
-    "morePlayers": "jugadores más..."
-    
+    "morePlayers": "jugadores más...",
+    "winningScore": "Puntuación ganadora",
+    "tournamentName": "Nombre del torneo",
+    "enterTournamentName": "Introduce el nombre del torneo",
+    "tournamentNameRequired": "El nombre del torneo es obligatorio",
+    "tournamentNameMinLength": "El nombre del torneo debe tener al menos 3 caracteres",
+    "tournamentNameMaxLength": "El nombre del torneo debe tener menos de 20 caracteres",
+    "tournamentNameInvalidChars": "El nombre del torneo solo puede contener letras, números, espacios, guiones y guiones bajos",
+    "controls": "Controles",
+    "useWASDOrArrows": "Usa WASD o las flechas para moverte",
+    "firstTo10PointsWins": "El primero en llegar a 10 puntos gana",
+    "viewResults": "Ver resultados"
   }
 }
 

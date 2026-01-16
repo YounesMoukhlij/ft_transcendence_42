@@ -612,7 +612,11 @@
     "cancel": "Cancel",
     "adding": "Adding...",
     "need": "Need ",
-    "morePlayers": " more players..."
+    "morePlayers": " more players...",
+    "winningScore": "Winning Score",
+    "tournamentNameMinLength": "Tournament name must be at least 3 characters",
+    "tournamentNameMaxLength": "Tournament name must be less than 20 characters",
+    "tournamentNameInvalidChars": "Tournament name can only contain letters, numbers, spaces, hyphens, and underscores"
   }
 }
 

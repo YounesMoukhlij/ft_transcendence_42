@@ -99,7 +99,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
                     </td>
                     <td className="py-3 px-2">
                       <div className="relative group inline-flex">
-                       <a href={`https://testnet.snowtrace.io/address/0xfaA0F7950218186597766CE2b6e7c6b43B5F55AE/contract/43113/code`}>
+                       <a target="_blank" href={`https://testnet.snowtrace.io/tx/${match.blockChainHash}?chainid=43113`}>
                         <Link className="w-4 h-4 text-muted-foreground group-hover:text-white transition-all duration-300 ease-in-out"/>
                        </a> 
                         <span className="absolute hidden group-hover:block

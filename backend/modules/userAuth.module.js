@@ -2,13 +2,12 @@ import bcrypt from 'bcrypt';
 import fetch from 'node-fetch';
 import jwt from 'jsonwebtoken';
 import otplib from 'otplib'; 
-import { createClient } from 'redis';
 import nodemailer from 'nodemailer';
-import { text } from 'stream/consumers';
 import fs from 'fs';
 import path, { parse } from 'path';
 import { promisify } from 'util';
 import stream from 'stream';
+import { contract } from "../config/blockchain.js";
 
 const pipeline = promisify(stream.pipeline);
 
@@ -324,7 +323,6 @@ export async function updateUserPassword(request, reply) {
         });
     }
     const { current_password, new_password } = request.body;
-    // console.log("updateUserPassword called with:", { id_user, current_password, new_password });
     
     if (!current_password || !new_password) {
         return reply.code(400).send({
@@ -480,7 +478,6 @@ export async function login(request, reply) {
     const { username, password } = request.body;
     
 
-    // console.log(username ,)
     if (!username || !password) {
         return reply.code(400).send({ 
             success: false, 
@@ -733,8 +730,8 @@ export async function saveTournamentMatch(request, reply) {
             message: "Missing required fields!"
         });
     }
-    const winnerId = parseInt(winner.id_user, 10);
-    const loserId = parseInt(loser.id_user, 10);
+    const winnerId = parseInt(winner, 10);
+    const loserId = parseInt(loser, 10);
     const tournamentId = parseInt(tournament_id, 10);
     
     try {
@@ -764,7 +761,6 @@ export async function saveTournamentMatch(request, reply) {
         // khass ikouno lplayers f tournoi
         const isValidPlayer = (player) => tournamentPlayers.includes(player);
         if (!isValidPlayer(winnerId) || !isValidPlayer(loserId)) {
-            console.log("Invalid players:", { winnerId, loserId, tournamentPlayers });
         throw new Error("Players sent in request don't exist on tournament!");
         }
 
@@ -798,7 +794,10 @@ export async function saveTournamentMatch(request, reply) {
         }
         else if (existingMatchesCount == 1) // bash nssifto message dyal lfinal
         {
-            const semiFinalWinner1 = request.server.db.prepare("SELECT user_win from game_history where game_history_id = ?").get(tournament_id).user_win;
+            const rows = request.server.db
+            .prepare("SELECT user_win FROM game_history WHERE tournament_id = ?")
+            .all(tournament_id);
+            const semiFinalWinner1 = rows.length ? rows[0].user_win : null;
             const semiFinalWinner2 = winnerId;
             
             const HostConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(semiFinalWinner1).conversation_id;
@@ -855,7 +854,7 @@ export async function saveTournamentMatch(request, reply) {
         const gameHistoryId = result.lastInsertRowid;
         const winnerName = request.server.db.prepare("SELECT username FROM users WHERE id_user = ?").get(winnerId).username || "player not found";
         const loserName = request.server.db.prepare("SELECT username FROM users WHERE id_user = ?").get(loserId).username || "player not found";
-        const tournamentName = "DOESNT MATTER";
+        const tournamentName =  request.server.db.prepare("SELECT name FROM tournaments WHERE id_tournament = ?").get(tournamentId).name || "tournament not found";
 
         try {
             const tx = await contract.recordMatch(
@@ -870,15 +869,14 @@ export async function saveTournamentMatch(request, reply) {
                     tournamentName
                   );
             const receipt = await tx.wait();
-            const transaction_hash = receipt.transactionHash;
-            
+            const transaction_hash = receipt?.transactionHash ?? receipt?.hash ?? tx.hash;
             const updateRowQuery = request.server.db.prepare(`UPDATE game_history set blockchain_hash = ? where game_history_id = ?`);
       
-            await updateRowQuery.run(transaction_hash, gameHistoryId);
+            updateRowQuery.run(transaction_hash, gameHistoryId);
         }
         catch (err) {
         console.error("Error in recordMatchonBlockChain:", err);
-      reply.code(500).send({ error: "Transaction failed, Game save in Db but not blockChain" });
+      reply.code(500).send({ error: "Transaction failed, Game saved in Db but not in blockChain" });
     }
 
 
