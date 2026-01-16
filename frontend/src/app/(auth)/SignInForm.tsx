@@ -140,11 +140,11 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
 
   // --- HANDLERS ---
   const handleGoogleAuth = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BACK_API}/auth/google`
+    window.location.href = `${process.env.NEXT_PUBLIC_BACK_API}/api/auth/google`
   }
 
   const handle42Auth = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BACK_API}/auth/42`
+    window.location.href = `${process.env.NEXT_PUBLIC_BACK_API}/api/auth/42`
   }
 
   const validateForm = () => {
