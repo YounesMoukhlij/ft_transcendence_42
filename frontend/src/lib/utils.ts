@@ -8,7 +8,7 @@ export const getProfileImageUrl = (currentImg: string) => {
     return `${process.env.NEXT_PUBLIC_DEFAULT_PROFILE_IMAGE}`;
   }
   if (currentImg && currentImg.startsWith('/uploads/')) {
-    return `${process.env.NEXT_PUBLIC_BACK_API}/api/${currentImg}`;
+    return `${process.env.NEXT_PUBLIC_BACK_API}/api${currentImg}`;
   }
   return currentImg;
 };

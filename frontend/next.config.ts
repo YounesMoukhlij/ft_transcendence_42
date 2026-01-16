@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'cdn.intra.42.fr',
       },
+     {
+        protocol: 'https',
+        hostname: 'localhost',
+        port: '8080',
+        pathname: '/api/uploads/*',
+      },
       {
         protocol: 'https',
         hostname: 'upload.wikimedia.org',

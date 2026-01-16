@@ -70,7 +70,7 @@ export default async function routes(fastify, options) {
   fastify.post('/2fa/verify', verifyAndEnable2FA);
   fastify.post('/2fa/login-verify', loginVerify2FA);
   fastify.get('/me', me);
-  fastify.delete('/DeleteAccount', DeleteAccount);
+  fastify.post('/DeleteAccount', DeleteAccount);
   fastify.post('/changeusersettings' , changeusersettings);
   fastify.get('/leaderboard', leaderboard);
   fastify.post('/updateUserInfo', updateUserInfo);

@@ -55,7 +55,23 @@ export default function Messages(){
   const { handleUnfriend, handleBlock } = useFriendActions();
   const { handleDeblock } = useDeblock();
   const {t} = useTranslation();
-  
+
+
+  async function  handleGameInvite()
+   {
+    try{
+      await api.post(`/api/sendGameChallenge`,{
+        Friend_id: contactId,
+      },
+    {
+      headers: {
+        Authorization: `Bearer ${user.access_token}`
+      }
+    });
+  }catch(err){
+    console.log(err);
+  }
+  }
 
   useEffect(()=>{
     if (input.length > 0 && user.typing_indicator && socket){
@@ -463,7 +479,7 @@ export default function Messages(){
                                   />
                                 </div>
 
-                                <div className="mr-2 sm:mr-4">
+                                <div className="mr-2 sm:mr-4 hover:cursor-pointer" onClick={handleGameInvite}>
                                   <button>
                                     <IoGameController className="w-8 h-8 lg:w-8 lg:h-8 text-gray-400 hover:text-white transition-colors" />
                                   </button>

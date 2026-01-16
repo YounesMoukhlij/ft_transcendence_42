@@ -167,6 +167,18 @@ export async function DeleteAccount(request, reply) {
                    OR lastMessageSender = ?
             `).run(userId, userId, userId, userId, userId);
 
+
+            const conv = db.prepare('SELECT conversation_id FROM bot_conv WHERE user_id = ?').get(userId).conversation_id;
+            db.prepare(`
+                DELETE FROM bot_conv
+                WHERE user_id = ?
+            `).run(userId);
+
+            db.prepare(`
+                DELETE FROM bot_room
+                WHERE conversation_id = ?
+            `).run(conv);
+
             const result = db.prepare(`
                 DELETE FROM users WHERE id_user = ?
             `).run(userId);

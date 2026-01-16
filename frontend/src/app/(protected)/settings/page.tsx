@@ -343,7 +343,7 @@ const ProfileSettingsPage = () => {
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     try {
-     await api.delete(`/api/DeleteAccount`, {
+     await api.post(`/api/DeleteAccount`, {
         headers: { Authorization: `Bearer ${user.access_token}` }
       })
       toast.success(t('settings.accountDeletedSuccess'))

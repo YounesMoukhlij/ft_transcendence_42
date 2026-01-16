@@ -52,7 +52,7 @@ services:
   #   container_name: nginx
   #   image: nginx:0.1
   #   ports:
-  #     - "8080:8080"
+  #     - "3333:8080"
   #   depends_on:
   #     - Frontend
   #   restart: always
@@ -76,7 +76,7 @@ services:
     networks:
       - monitoring
     volumes:
-      - ./infra/nginx.conf:/etc/nginx/nginx.conf
+      - ./infra/nginx.conf:/etc/nginx/sites-available/default
       - ./infra/modsecurity.conf:/etc/nginx/modsec/modsecurity.conf
 
 

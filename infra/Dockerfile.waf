@@ -33,6 +33,7 @@ RUN NGINX_VERSION=$(nginx -v 2>&1 | grep -oP '\d+\.\d+\.\d+') && \
     echo $NGINX_VERSION > /tmp/nginx_version.txt
 
 # Install ModSecurity
+
 WORKDIR /tmp
 RUN git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity && \
     cd ModSecurity && \
@@ -80,6 +81,7 @@ RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/nginx-* /tmp/ModSecurity* /tmp/nginx_version.txt
 
 WORKDIR /etc/nginx
+RUN sed -i '1iload_module /etc/nginx/modules/ngx_http_modsecurity_module.so;' /etc/nginx/nginx.conf
 
 # Verify module exists
 RUN ls -la /etc/nginx/modules/ngx_http_modsecurity_module.so && \
@@ -91,6 +93,8 @@ RUN mkdir -p /etc/nginx/ssl /etc/nginx/sites-available /etc/nginx/sites-enabled
 RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/frontend.key -out /etc/nginx/ssl/frontend.crt -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=e1r9p7/UID=frontend"
 
 RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/backend.key -out /etc/nginx/ssl/backend.crt -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=api.e1r9p7/UID=backend"
+
+
 
 EXPOSE 8080
 
