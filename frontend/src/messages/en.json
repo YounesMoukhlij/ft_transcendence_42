@@ -611,7 +611,8 @@
     "enterPassword": "Enter password",
     "cancel": "Cancel",
     "adding": "Adding...",
-    "needMorePlayers": "Need {count} more players..."
+    "need": "Need ",
+    "morePlayers": " more players..."
   }
 }
 

@@ -254,7 +254,7 @@ export default function LocalTournamentPlayerRegistration({
 
               <div>
                 <label className="block text-gray-300 text-sm mb-2 font-medium">
-                  {t('common.username')}
+                  {t('settings.username')}
                 </label>
                 <input
                   type="text"
@@ -263,7 +263,7 @@ export default function LocalTournamentPlayerRegistration({
                     setNewPlayerUsername(e.target.value);
                     setErrorMessage(''); // Clear error when user types
                   }}
-                  placeholder={t('common.enterUsername')}
+                  placeholder={t('game.enterUsername')}
                   disabled={isLoading}
                   className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                 />
@@ -271,7 +271,7 @@ export default function LocalTournamentPlayerRegistration({
 
               <div>
                 <label className="block text-gray-300 text-sm mb-2 font-medium">
-                  {t('common.password')}
+                  {t('game.password')}
                 </label>
                 <input
                   type="password"
@@ -280,7 +280,7 @@ export default function LocalTournamentPlayerRegistration({
                     setNewPlayerPassword(e.target.value);
                     setErrorMessage(''); // Clear error when user types
                   }}
-                  placeholder={t('common.enterPassword')}
+                  placeholder={t('game.enterPassword')}
                   disabled={isLoading}
                   className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                 />
@@ -316,7 +316,7 @@ export default function LocalTournamentPlayerRegistration({
                     {('g')}
                   </>
                 ) : (
-                  t('common.addPlayer')
+                  t('game.addPlayer')
                 )}
               </button>
             </div>
@@ -344,7 +344,7 @@ export default function LocalTournamentPlayerRegistration({
             ) : (
               <>
                 <span>⏳</span>
-                <span>Need {4 - tempPlayers.filter(p => p.name.trim() !== '').length} more players...</span>
+                <span> {t('game.need')} {4 - tempPlayers.filter(p => p.name.trim() !== '').length} {t('game.morePlayers')} </span>
               </>
             )}
           </div>

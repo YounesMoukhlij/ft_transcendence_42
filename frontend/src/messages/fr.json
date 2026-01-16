@@ -177,7 +177,7 @@
     "unfriend": "Supprimer l'ami",
     "viewProfile": "Voir le profil",
     "new": "Nouveau",
-    "inbox": "Boîte de réception",
+    "inbox": "Inbox",
     "pin": "épingler",
     "unpin": "désépingler",
     "writeMessagePlaceholder": "Écrire un message",
@@ -538,7 +538,8 @@
     "enterPassword": "Entrez le mot de passe",
     "cancel": "Annuler",
     "adding": "Ajout...",
-    "needMorePlayers": "Encore {count} joueurs requis..."
+    "need": "Encore ",
+    "morePlayers" : " joueurs requis..."
   }
 }
 

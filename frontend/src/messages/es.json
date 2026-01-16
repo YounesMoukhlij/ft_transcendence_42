@@ -176,7 +176,7 @@
     "unfriend": "Eliminar amigo",
     "viewProfile": "Ver perfil",
     "new": "Nuevo",
-    "inbox": "Bandeja de entrada",
+    "inbox": "Inbox",
     "pin": "fijar",
     "unpin": "desfijar",
     "writeMessagePlaceholder": "Escribe un mensaje",
@@ -537,7 +537,8 @@
     "enterPassword": "Introduce la contraseña",
     "cancel": "Cancelar",
     "adding": "Agregando...",
-    "needMorePlayers": "Se necesitan {count} jugadores más..."
+    "need": "Se necesitan ",
+    "morePlayers": "jugadores más..."
     
   }
 }
