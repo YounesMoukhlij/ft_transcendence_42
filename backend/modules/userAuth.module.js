@@ -549,9 +549,7 @@ export async function login(request, reply) {
 
 export async function registerInTournament(request, reply) {
     const { username, password, tournamentId } = request.body;
-    
-    console.log("-------------------------------------------Tournament Id: ", tournamentId);
-
+   
     if (!username || !password || !tournamentId) {
         return reply.code(400).send({ 
             success: false, 
@@ -577,7 +575,6 @@ export async function registerInTournament(request, reply) {
                 message: "Only the host can register players"
             });
         }
-     
        const user = request.server.db
             .prepare("SELECT * FROM users WHERE username = ?")
             .get(username);
@@ -611,7 +608,6 @@ export async function registerInTournament(request, reply) {
                 message: "Player is already in tournament"
             });
         }
-         // zid luser f tournament
         else if (Guest1 == -1)
         {
             request.server.db.prepare("UPDATE tournaments SET guest1_user = ? WHERE id_tournament = ?").run(idToAdd, tournamentId);
@@ -695,7 +691,7 @@ export async function createLocalTournament(request, reply) { // Added by Ayoub,
         });
     }
     try {
-        const result = request.server.db.prepare(
+      const result = request.server.db.prepare(
       `INSERT INTO tournaments (name, host_user) VALUES (?, ?)`
     ).run(name, host);
         return reply.code(201).send({
@@ -714,11 +710,10 @@ export async function createLocalTournament(request, reply) { // Added by Ayoub,
 
 export async function saveTournamentMatch(request, reply) {
     const {
-        winner_info,
-        loser_info,
+        winner,
+        loser,
         win_score,
         lose_score,
-        type,
         tournament_id,
         duration,
         longest_rally,
@@ -730,78 +725,64 @@ export async function saveTournamentMatch(request, reply) {
         max_points_streak_lose,
         max_leading_time_win,
         max_leading_time_lose,
-        blockchain_hash
     } = request.body;
 
-    console.log('Received tournament match data:', {
-        winner_info,
-        loser_info,
-        win_score,
-        lose_score,
-        type,
-        tournament_id
-    });
-
-    if (!winner_info || !loser_info || win_score === undefined || lose_score === undefined) {
+    if (!winner || !loser || win_score === undefined || lose_score === undefined) {
         return reply.code(400).send({
             success: false,
-            message: "Missing required fields: winner_info, loser_info, win_score, lose_score"
+            message: "Missing required fields!"
         });
     }
-
+    const winnerId = parseInt(winner.id_user, 10);
+    const loserId = parseInt(loser.id_user, 10);
+    const tournamentId = parseInt(tournament_id, 10);
+    
     try {
-        const TournamentId = parseInt(tournament_id, 10);
-
-       // kanshouf awsh kayna tournament
-        const tournament = request.server.db.prepare("SELECT * FROM tournaments WHERE id_tournament = ?").get(TournamentId);
+        // kanshouf awsh kayna tournament
+        const tournament = request.server.db.prepare("SELECT * FROM tournaments WHERE id_tournament = ?").get(tournamentId);
         if (!tournament) {
             throw new Error("Tournament not found");
         }
-
-          // lhost bo7do howa li y9der yrecordi natija 
-        const posterId = request.user.id_user;
-        if (posterId !== tournament.host_user) {
-            console.log("Poster Id: ", posterId);
-            console.log("Tournament Host: ", tournament.host_user);
-
-            throw new Error("Only the tournament host can record match results!",);
-        }
-
-        const PlayerOne = parseInt(winner_info.id_user, 10);
-        const PlayerTwo = parseInt(loser_info.id_user, 10);
         const Host = tournament.host_user;
         const Guest1 = tournament.guest1_user;
         const Guest2 = tournament.guest2_user;
         const Guest3 = tournament.guest3_user;
+        const tournamentPlayers = [Host, Guest1, Guest2, Guest3];
 
+
+        // lhost bo7do howa li y9der yrecordi natija 
+        const posterId = request.user.id_user;
+        if (posterId !== Host) {
+            throw new Error("Only the tournament host can record match results!",);
+        }
         // khass tournoi ikoun feha 4 players
         if (Host === -1 || Guest1 === -1 || Guest2 === -1 || Guest3 === -1)
         {
             throw new Error("Tournament should have 4 players registered!");
         }
+
         // khass ikouno lplayers f tournoi
-        const tournamentPlayers = [Host, Guest1, Guest2, Guest3];
-
         const isValidPlayer = (player) => tournamentPlayers.includes(player);
-
-        if (!isValidPlayer(PlayerOne) || !isValidPlayer(PlayerTwo)) {
+        if (!isValidPlayer(winnerId) || !isValidPlayer(loserId)) {
+            console.log("Invalid players:", { winnerId, loserId, tournamentPlayers });
         throw new Error("Players sent in request don't exist on tournament!");
         }
 
+        // khass lwinner w lloser maykounosh nafs lplayer
+        if (winnerId === loserId) {
+            throw new Error("Winner and loser cannot be the same player!");
+        }
 
         // khass mayfoutch number dyal lgames f tournoi 3 matchat
-        const existingMatchesCount = request.server.db.prepare("SELECT COUNT(*) as count FROM game_history WHERE tournament_id = ?").get(TournamentId).count || 0;
-        console.log("count -------------------------------------___>" , existingMatchesCount);
+        const existingMatchesCount = request.server.db.prepare("SELECT COUNT(*) as count FROM game_history WHERE tournament_id = ?").get(tournamentId).count || 0;
         if (existingMatchesCount >= 3)
         {
             throw new Error("Max number of matches for this tournament reached!");
         }
         else if (existingMatchesCount == 0) // bash nssifto message dyal semi final 2
         {
-            
             const HostConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Guest2).conversation_id;
             const Guest1ConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(Guest3).conversation_id;
-
 
             const Guest2socket = request.server.users_socket.get(Guest2.toString());
             const Guest3socket = request.server.users_socket.get(Guest3.toString());
@@ -809,7 +790,6 @@ export async function saveTournamentMatch(request, reply) {
             sendMessage(Guest2socket , HostConvId  , `You are successfully registered in the ${tournament.name}, your match will start soon!` );
             sendMessage(Guest3socket , Guest1ConvId  , `You are successfully registered in the ${tournament.name}, your match will start soon!`);
             
- 
             const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
             firstMsg.run( HostConvId,`You are successfully registered in the ${tournament.name}, your match will start soon!`);
 
@@ -819,24 +799,16 @@ export async function saveTournamentMatch(request, reply) {
         else if (existingMatchesCount == 1) // bash nssifto message dyal lfinal
         {
             const semiFinalWinner1 = request.server.db.prepare("SELECT user_win from game_history where game_history_id = ?").get(tournament_id).user_win;
-            const semiFinalWinner2 = PlayerOne;
-            console.log("finnnnnnal ===============+>       2",  semiFinalWinner2);
+            const semiFinalWinner2 = winnerId;
             
             const HostConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(semiFinalWinner1).conversation_id;
             const Guest1ConvId =  request.server.db.prepare("SELECT conversation_id from bot_conv where user_id = ?").get(semiFinalWinner2).conversation_id;
-            
-            console.log("finnnnnnal ===============+>       3",  semiFinalWinner2);
-
-
-
-
+          
             const Guest2socket = request.server.users_socket.get(semiFinalWinner1.toString());
             const Guest3socket = request.server.users_socket.get(semiFinalWinner2.toString());
 
             sendMessage(Guest2socket , HostConvId  , `You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!` );
             sendMessage(Guest3socket , Guest1ConvId  , `You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!`);
-
-
 
             const firstMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
             firstMsg.run( HostConvId,`You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!`);
@@ -844,45 +816,29 @@ export async function saveTournamentMatch(request, reply) {
             const secondMsg = request.server.db.prepare("INSERT INTO bot_room (conversation_id ,message  ) VALUES (? , ?)");
             secondMsg.run( Guest1ConvId,`You have qualified for the final, in the tournament: ${tournament.name}, your match will start soon!`);
         }
-        
     } catch (error) {
-        console.log("Hello this is the error: ===>    : ", error);
         return reply.code(403).send({
                 success: false,
                 message: error.message
          }); 
     }
     try {
-        const getUserId = (playerInfo) => {
-                return playerInfo.id_user;
-        }
-        const winnerUserId = getUserId(winner_info);
-        const loserUserId = getUserId(loser_info);
-
-        console.log('Resolved user IDs:', {
-            winnerUserId,
-            loserUserId,
-            winnerInfo: winner_info,
-            loserInfo: loser_info
-        });
-
-        const query = request.server.db.prepare(`
+             const query = request.server.db.prepare(`
             INSERT INTO game_history (
                 user_win, user_lose, win_score, lose_score, type, tournament_id,
-                game_date, duration, longest_rally, average_rally, ball_max_speed,
+                duration, longest_rally, average_rally, ball_max_speed,
                 touches_win, touches_lose, max_points_streak_win, max_points_streak_lose,
-                max_leading_time_win, max_leading_time_lose, blockchain_hash
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                max_leading_time_win, max_leading_time_lose 
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         const result = query.run(
-            winnerUserId,
-            loserUserId,
+            winnerId,
+            loserId,
             win_score,
             lose_score,
-            type || 'tournament',
-            tournament_id === 'local-tournament' ? null : (tournament_id || null),
-            new Date().toISOString(),
+            'tournament',
+            tournament_id || null,
             duration || null,
             longest_rally || null,
             average_rally || null,
@@ -893,57 +849,76 @@ export async function saveTournamentMatch(request, reply) {
             max_points_streak_lose || null,
             max_leading_time_win || null,
             max_leading_time_lose || null,
-            blockchain_hash || null
         );
 
-        // Award XP for tournament win - only to authenticated users (not guests)
+        // kanjib ID men db
+        const gameHistoryId = result.lastInsertRowid;
+        const winnerName = request.server.db.prepare("SELECT username FROM users WHERE id_user = ?").get(winnerId).username || "player not found";
+        const loserName = request.server.db.prepare("SELECT username FROM users WHERE id_user = ?").get(loserId).username || "player not found";
+        const tournamentName = "DOESNT MATTER";
+
         try {
-            const awardXPStmt = request.server.db.prepare('UPDATE users SET xp = xp + ? WHERE id_user = ? AND auth_method != -1');
-
-            // Award more XP for tournament wins (more competitive than casual games)
-            const tournamentWinnerXP = 800;
-            const tournamentLoserXP = 300;
-
-            let winnerXPAdded = 0;
-            let loserXPAdded = 0;
-
-            // Only award XP to authenticated winner
-            if (winner_info.id_user && typeof winner_info.id_user === 'number') {
-                awardXPStmt.run(tournamentWinnerXP, winnerUserId);
-                winnerXPAdded = tournamentWinnerXP;
-            }
-
-            // Only award XP to authenticated loser
-            if (loser_info.id_user && typeof loser_info.id_user === 'number') {
-                awardXPStmt.run(tournamentLoserXP, loserUserId);
-                loserXPAdded = tournamentLoserXP;
-            }
-
-            console.log(`Tournament XP awarded: Winner ${winnerUserId} +${winnerXPAdded} XP, Loser ${loserUserId} +${loserXPAdded} XP`);
-        } catch (xpError) {
-            console.error('Error awarding tournament XP:', xpError);
-            // Don't fail the entire request if XP update fails
+            const tx = await contract.recordMatch(
+                    gameHistoryId,
+                    winnerId,
+                    loserId,
+                    tournament_id,
+                    winnerName,
+                    loserName,
+                    win_score,
+                    lose_score,
+                    tournamentName
+                  );
+            const receipt = await tx.wait();
+            const transaction_hash = receipt.transactionHash;
+            
+            const updateRowQuery = request.server.db.prepare(`UPDATE game_history set blockchain_hash = ? where game_history_id = ?`);
+      
+            await updateRowQuery.run(transaction_hash, gameHistoryId);
         }
+        catch (err) {
+        console.error("Error in recordMatchonBlockChain:", err);
+      reply.code(500).send({ error: "Transaction failed, Game save in Db but not blockChain" });
+    }
 
+
+
+        // Award XP for tournament win - only to authenticated users (not guests) Commented out for now
+        // try {
+        //     const awardXPStmt = request.server.db.prepare('UPDATE users SET xp = xp + ? WHERE id_user = ? AND auth_method != -1');
+
+        //     // Award more XP for tournament wins (more competitive than casual games)
+        //     const tournamentWinnerXP = 800;
+        //     const tournamentLoserXP = 300;
+
+        //     let winnerXPAdded = 0;
+        //     let loserXPAdded = 0;
+
+        //     // Only award XP to authenticated winner
+        //     if (winner_info.id_user && typeof winner_info.id_user === 'number') {
+        //         awardXPStmt.run(tournamentWinnerXP, winnerUserId);
+        //         winnerXPAdded = tournamentWinnerXP;
+        //     }
+
+        //     // Only award XP to authenticated loser
+        //     if (loser_info.id_user && typeof loser_info.id_user === 'number') {
+        //         awardXPStmt.run(tournamentLoserXP, loserUserId);
+        //         loserXPAdded = tournamentLoserXP;
+        //     }
+
+        //     console.log(`Tournament XP awarded: Winner ${winnerUserId} +${winnerXPAdded} XP, Loser ${loserUserId} +${loserXPAdded} XP`);
+        // } catch (xpError) {
+        //     console.error('Error awarding tournament XP:', xpError);
+        //     // Don't fail the entire request if XP update fails
+        // }
         return reply.code(201).send({
             success: true,
-            message: "Tournament match data saved successfully",
+            message: "Tournament match data saved successfully In both Db and BlockChain",
             matchId: result.lastInsertRowid
         });
 
     } catch (error) {
         console.error("Error saving tournament match:", error);
-        console.error("Error details:", {
-            message: error.message,
-            code: error.code,
-            errno: error.errno
-        });
-        console.error("Data being inserted:", {
-            winner_info, loser_info, win_score, lose_score, type, tournament_id,
-            duration, longest_rally, average_rally, ball_max_speed,
-            touches_win, touches_lose, max_points_streak_win, max_points_streak_lose,
-            max_leading_time_win, max_leading_time_lose
-        });
         return reply.code(500).send({
             success: false,
             message: "Error saving tournament match data",
@@ -951,7 +926,6 @@ export async function saveTournamentMatch(request, reply) {
         });
     }
 }
-
 
 
 export async function loginVerify2FA(request, reply) {

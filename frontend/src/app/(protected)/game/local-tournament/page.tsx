@@ -80,6 +80,8 @@ export default function LocalTournamentPage() {
   // Tournament state
   const [tournamentStep, setTournamentStep] = useState<TournamentStep>('setup');
   const [tournamentId, setTournamentId] = useState<number | null>(null);
+  const [tournamentName, setTournamentName] = useState<string>('');
+  const [tournamentNameError, setTournamentNameError] = useState<string>('');
   const [registeredPlayers, setRegisteredPlayers] = useState<GamePlayer[]>([]);
   const [tempPlayers, setTempPlayers] = useState<GamePlayer[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
@@ -228,22 +230,11 @@ export default function LocalTournamentPage() {
 
       const matchData = {
         // Player information - use tournament player data directly
-        winner_info: {
-          id_user: winner.id_user,
-          id: winner.id,
-          name: winner.name,
-          username: winner.username
-        },
-        loser_info: {
-          id_user: loser.id_user,
-          id: loser.id,
-          name: loser.name,
-          username: loser.username
-        },
+        winner: winner.id_user,
+        loser: loser.id_user,       
         // Match scores - use calculated values
         win_score,
         lose_score,
-        type: 'tournament',
         tournament_id: tournamentId,
         duration,
         longest_rally,
@@ -285,25 +276,8 @@ export default function LocalTournamentPage() {
           return Math.max(actualTime, estimatedTime);
         })()
       };
-
-      console.log('🔍 DEBUG: handleMatchComplete called with:', {
-        winner: winner,
-        loser: loser,
-        isWinnerPlayer1: isWinnerPlayer1,
-        matchStats: matchStats,
-        currentMatch: currentMatch,
-        gameStatsDetails: matchStats ? {
-          duration: Date.now() - (matchStats.startTime || Date.now()),
-          ralliesCount: matchStats.rallies?.length || 0,
-          totalTouches: (matchStats.player1Touches || 0) + (matchStats.player2Touches || 0),
-          maxBallSpeed: matchStats.maxBallSpeed || 0
-        } : 'No matchStats'
-      });
-
       // Validate matchData before sending
       const validationErrors = [];
-      if (!matchData.winner_info?.name) validationErrors.push('winner_info.name missing');
-      if (!matchData.loser_info?.name) validationErrors.push('loser_info.name missing');
       if (matchData.win_score === undefined || matchData.win_score === null) validationErrors.push('win_score invalid');
       if (matchData.lose_score === undefined || matchData.lose_score === null) validationErrors.push('lose_score invalid');
 
@@ -313,9 +287,7 @@ export default function LocalTournamentPage() {
         return; // Don't send invalid data
       }
 
-      console.log('  Sending validated match data to API:', matchData);
-      console.log(' WATA KHEDM Aaaaaaaaaaa WLLLLD LKLBA API URL:', `${process.env.NEXT_PUBLIC_BACK_API}/saveTournamentMatch`);
-
+  
       // Fire-and-forget API call
       api.post(`/api/saveTournamentMatch`, matchData, {
         headers: {
@@ -399,6 +371,55 @@ export default function LocalTournamentPage() {
   const renderContent = () => {
     switch (tournamentStep) {
       case 'setup':
+        const validateTournamentName = (name: string): string => {
+          const trimmedName = name.trim();
+          if (!trimmedName) {
+            return t('game.tournamentNameRequired') || 'Tournament name is required';
+          }
+          if (trimmedName.length < 3) {
+            return t('game.tournamentNameMinLength') || 'Tournament name must be at least 3 characters';
+          }
+          if (trimmedName.length > 20) {
+            return t('game.tournamentNameMaxLength') || 'Tournament name must be less than 20 characters';
+          }
+          if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmedName)) {
+            return t('game.tournamentNameInvalidChars') || 'Tournament name can only contain letters, numbers, spaces, hyphens, and underscores';
+          }
+          return '';
+        };
+
+        const handleStartTournament = async () => {
+          const error = validateTournamentName(tournamentName);
+          if (error) {
+            setTournamentNameError(error);
+            return;
+          }
+          setTournamentNameError('');
+          
+          // Create tournament in backend and get the tournament ID
+          try {
+            const response = await api.post(`/api/createLocalTournament`, 
+              { name: tournamentName.trim() },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${user?.access_token}`
+                }
+              }
+            );
+
+            if (response.status >= 200 && response.status < 300) {
+              console.log('Tournament created with ID:', response.data.tournamentId);
+              setTournamentId(response.data.tournamentId);
+            } else {
+              console.error('Failed to create tournament:', response.status);
+            }
+          } catch (error) {
+            console.error('Error creating tournament:', error);
+          }
+          setTournamentStep('registration');
+        };
+
         return (
           <div className="w-full max-w-4xl mx-auto h-full  rounded-3xl shadow-2xl   p-8 flex flex-col items-center justify-center">
             <div className="text-center mb-8">
@@ -419,32 +440,49 @@ export default function LocalTournamentPage() {
                     {t('game.semiFinalsFinal')}
                   </p>
                 </div>
-                <button
-                  onClick={async () => {
-                    // Create tournament in backend and get the tournament ID
-                    try {
-                      const response = await api.post(`/api/createLocalTournament`, 
-                        { name: 'Local Tournament' },
-                        {
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${user?.access_token}`
-                          }
-                        }
-                      );
-
-                      if (response.status >= 200 && response.status < 300) {
-                        console.log('Tournament created with ID:', response.data.tournamentId);
-                        setTournamentId(response.data.tournamentId);
-                      } else {
-                        console.error('Failed to create tournament:', response.status);
+                
+                {/* Tournament Name Input */}
+                <div className="mb-6">
+                  <label htmlFor="tournamentName" className="block text-white text-sm font-medium mb-2">
+                    {t('game.tournamentName') || 'Tournament Name'}
+                  </label>
+                  <input
+                    type="text"
+                    id="tournamentName"
+                    value={tournamentName}
+                    onChange={(e) => {
+                      setTournamentName(e.target.value);
+                      if (tournamentNameError) {
+                        setTournamentNameError(validateTournamentName(e.target.value));
                       }
-                    } catch (error) {
-                      console.error('Error creating tournament:', error);
-                    }
-                    setTournamentStep('registration');
-                  }}
-                  className="w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl text-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+                    }}
+                    onBlur={() => {
+                      if (tournamentName) {
+                        setTournamentNameError(validateTournamentName(tournamentName));
+                      }
+                    }}
+                    placeholder={t('game.enterTournamentName') || 'Enter tournament name...'}
+                    className={`w-full px-4 py-3 bg-gray-700 border-2 ${
+                      tournamentNameError ? 'border-red-500' : 'border-gray-600 focus:border-blue-500'
+                    } rounded-lg text-white placeholder-gray-400 focus:outline-none transition-colors`}
+                    maxLength={20}
+                  />
+                  {tournamentNameError && (
+                    <p className="mt-2 text-red-400 text-sm">{tournamentNameError}</p>
+                  )}
+                  <p className="mt-1 text-gray-500 text-xs text-right">
+                    {tournamentName.length}/20
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleStartTournament}
+                  disabled={!tournamentName.trim()}
+                  className={`w-full px-8 py-4 text-white rounded-xl text-xl font-semibold transition-all duration-300 transform shadow-lg ${
+                    tournamentName.trim()
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105'
+                      : 'bg-gray-600 cursor-not-allowed opacity-50'
+                  }`}
                 >
                   {t('game.startTournament')}
                 </button>
@@ -606,6 +644,8 @@ export default function LocalTournamentPage() {
               setMatchWinner(null);
               setShowTournamentWinnerMessage(false);
               setTournamentId(null);
+              setTournamentName('');
+              setTournamentNameError('');
             }}
             onBack={() => router.push('/game')}
           />
@@ -655,6 +695,8 @@ export default function LocalTournamentPage() {
             setMatchWinner(null);
             setShowTournamentWinnerMessage(false);
             setTournamentId(null);
+            setTournamentName('');
+            setTournamentNameError('');
           }}
           onBack={() => router.push('/game')}
         />
