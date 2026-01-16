@@ -5,16 +5,15 @@ import { useUserStore } from '../store/userStore'
 import en from '../messages/en.json'
 import es from '../messages/es.json'
 import fr from '../messages/fr.json'
-import tz from '../messages/tz.json'
 
-type Language = 'en' | 'es' | 'fr' | 'tz'
+
+type Language = 'en' | 'es' | 'fr' 
 type Messages = Record<string, unknown>
 
 const messages: Record<Language, Messages> = {
   en,
   es,
   fr,
-  tz,
 }
 
 interface LanguageContextType {

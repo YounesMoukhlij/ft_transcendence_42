@@ -100,12 +100,19 @@
     "enterOtpStep": "2. Entrez le code à 6 chiffres de votre application pour vérifier.",
     "verifying": "Vérification...",
     "enable": "Activer",
+    "usernameLengthError": "Le nom d'utilisateur doit contenir entre 3 et 20 caractères",
+    "generate2FASecretFailed": "Échec de la génération du secret 2FA",
+    "invalidCode": "Code invalide. Veuillez réessayer.",
+    "accountDeletedSuccess": "Compte supprimé avec succès !",
     "errors": {
       "updateFailed": "Échec de la mise à jour du profil",
       "securityUpdateFailed": "Échec de la mise à jour des paramètres de sécurité",
       "twoFactorUpdateFailed": "Échec de la mise à jour des paramètres 2FA",
       "deleteFailed": "Échec de la suppression du compte",
-      "unexpectedError": "Une erreur inattendue s'est produite"
+      "unexpectedError": "Une erreur inattendue s'est produite",
+      "passwordUpdateFailed": "Échec de la mise à jour du mot de passe",
+      "noNewPasswordEntered": "Aucun nouveau mot de passe saisi. Mise à jour du mot de passe ignorée.",
+      "disable2FAFailed": "Échec de la désactivation de l'authentification à deux facteurs"
     }
   },
   "home": {
@@ -518,7 +525,20 @@
     "backToPlayerSetup": "Retour à la Configuration du Joueur",
     "connecting": "Connexion...",
     "startGame": "Démarrer le Jeu",
-    "alreadyInGame": "vous êtes déjà en jeu"
+    "alreadyInGame": "vous êtes déjà en jeu",
+    "addUser": "Ajouter un utilisateur",
+    "registeredPlayers": "Joueurs inscrits",
+    "host": "Hôte",
+    "tournamentLeader": "Chef du tournoi",
+    "notRegistered": "Non inscrit",
+    "addPlayer": "Ajouter un joueur",
+    "username": "Nom d’utilisateur",
+    "enterUsername": "Entrez le nom d’utilisateur",
+    "password": "Mot de passe",
+    "enterPassword": "Entrez le mot de passe",
+    "cancel": "Annuler",
+    "adding": "Ajout...",
+    "needMorePlayers": "Encore {count} joueurs requis..."
   }
 }
 

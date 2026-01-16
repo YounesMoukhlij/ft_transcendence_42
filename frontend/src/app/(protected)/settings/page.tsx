@@ -15,6 +15,7 @@ import SecurityTab from './components/security/SecurityTab'
 import HelpTab from './components/help/HelpTab'
 import Loading from '@/components/Loading/page'
 
+
 const ProfileSettingsPage = () => {
   const {user} = useUserStore();
   const setUser = useUserStore((state) => state.setUser)
@@ -108,7 +109,7 @@ const ProfileSettingsPage = () => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      toast.error('Please upload a valid image file')
+      toast.error(t('settings.imageInvalid'))
       return
     }
     setImageFile(file)
@@ -132,15 +133,15 @@ const ProfileSettingsPage = () => {
     try {
       // Basic validation
       if (!formData.username.trim()) {
-        toast.error('Username is required')
+        toast.error(t('settings.usernameRequired'))
         return
       }
       if (!formData.email.trim()) {
-        toast.error('Email is required')
+        toast.error(t('settings.emailRequired'))
         return
       }
       if (formData.username.length < 3 || formData.username.length > 20) {
-        toast.error('Username must be between 3 and 20 characters')
+        toast.error(t('settings.usernameLengthError'))
         return
       }
 
@@ -160,11 +161,11 @@ const ProfileSettingsPage = () => {
       })
       const data = response.data
       if (!data.success) {
-        toast.error(data.message || 'Failed to update profile')
+        toast.error(data.message || t('settings.errors.updateFailed'))
         return
       }
 
-      toast.success('Profile updated successfully!')
+      toast.success(t('settings.profileUpdated'))
       // Update global store
       const updatedUser = { ...user, ...data.user }
       setUser(updatedUser)
@@ -175,7 +176,7 @@ const ProfileSettingsPage = () => {
 
     } catch (error) {
       console.error('Profile update error:', error)
-      const msg = error.response?.data?.message || 'An unexpected error occurred while updating profile.'
+      const msg = error.response?.data?.message || t('settings.errors.unexpectedError')
       toast.error(msg)
     } finally {
       setIsLoading(false)
@@ -188,25 +189,25 @@ const ProfileSettingsPage = () => {
 
     // Validation checks
     if (is2FAEnabled && !formData.currentPassword.trim()) {
-        toast.error('Current password is required')
+        toast.error(t('settings.currentPasswordRequired'))
         setIsLoading(false)
         return
     }
 
     if (isPasswordAuth) {
         if (formData.newPassword.trim() !== '' && formData.currentPassword.trim() === '') {
-            toast.error('Current password is required to set a new password')
+            toast.error(t('settings.currentPasswordRequiredForNew'))
             setIsLoading(false)
             return
         }
         if (formData.newPassword.trim() !== '') {
             if (formData.newPassword.length < 8) {
-                toast.error('New password must be at least 8 characters long')
+                toast.error(t('settings.passwordMinLength'))
                 setIsLoading(false)
                 return
             }
             if (formData.newPassword !== formData.confirmPassword) {
-                toast.error('New password and confirmation do not match')
+                toast.error(t('settings.passwordMismatch'))
                 setIsLoading(false)
                 return
             }
@@ -227,10 +228,10 @@ const ProfileSettingsPage = () => {
 
         const data = response.data
         if (!data.success) {
-          toast.error(data.message || 'Failed to update password')
+          toast.error(data.message || t('settings.errors.passwordUpdateFailed'))
           return
         }
-        toast.success('Password updated successfully!')
+        toast.success(t('settings.passwordUpdated'))
         
         // Reset password fields
         setFormData((prev) => ({
@@ -240,11 +241,11 @@ const ProfileSettingsPage = () => {
             confirmPassword: ''
         }))
       } else {
-        toast.error('No new password entered. Skipping password update.')
+        toast.error(t('settings.errors.noNewPasswordEntered'))
       }
     } catch (error) {
       console.error('Security update error:', error)
-      const msg = error.response?.data?.message || 'An unexpected error occurred while updating security settings'
+      const msg = error.response?.data?.message || t('settings.errors.unexpectedError')
       toast.error(msg)
     } finally {
       setIsLoading(false)
@@ -266,15 +267,15 @@ const ProfileSettingsPage = () => {
 
         const data = response.data
         if (!data.success) {
-          toast.error(data.message || 'Failed to disable 2FA')
+          toast.error(data.message || t('settings.errors.disable2FAFailed'))
         } else {
           setIs2FAEnabled(false)
           setUser({ ...user, twoFA_enabled: false, twoFA_secret: null })
-          toast.success('Two-Factor Authentication disabled.')
+          toast.success(t('settings.twoFactorDisabled'))
         }
       } catch (error) {
         console.error('2FA disable error:', error)
-        const msg = error.response?.data?.message || 'An error occurred while disabling 2FA.'
+        const msg = error.response?.data?.message || t('settings.errors.unexpectedError')
         toast.error(msg)
       } finally {
         setIsLoading(false)
@@ -291,7 +292,7 @@ const ProfileSettingsPage = () => {
 
         const data = response.data
         if (!data.success) {
-          toast.error(data.message || 'Failed to generate 2FA secret')
+          toast.error(data.message || t('settings.generate2FASecretFailed'))
         } else {
           setOtpAuthUrl(data.otpauth)
           setVerificationCode('')
@@ -299,7 +300,7 @@ const ProfileSettingsPage = () => {
         }
       } catch (error) {
         console.error('2FA generate error:', error)
-        const msg = error.response?.data?.message || 'An error occurred while setting up 2FA.'
+        const msg = error.response?.data?.message || t('settings.errors.unexpectedError')
         toast.error(msg)
       } finally {
         setIsLoading(false)
@@ -320,9 +321,9 @@ const ProfileSettingsPage = () => {
 
       const data = response.data
       if (!data.success) {
-        toast.error(data.message || 'Invalid code. Please try again.')
+        toast.error(data.message || t('settings.invalidCode'))
       } else {
-        toast.success('Two-Factor Authentication enabled successfully!')
+        toast.success(t('settings.twoFactorEnabled'))
         setIs2FAEnabled(true)
         setUser({ ...user, twoFA_enabled: true })
         setShow2FAModal(false)
@@ -331,7 +332,7 @@ const ProfileSettingsPage = () => {
       }
     } catch (error) {
       console.error('2FA verification error:', error)
-      const msg = error.response?.data?.message || 'An error occurred during verification.'
+      const msg = error.response?.data?.message || t('settings.errors.unexpectedError')
       toast.error(msg)
     } finally {
       setIsLoading(false)
@@ -345,13 +346,13 @@ const ProfileSettingsPage = () => {
      await api.delete(`/api/DeleteAccount`, {
         headers: { Authorization: `Bearer ${user.access_token}` }
       })
-      toast.success('Account deleted successfully!')
+      toast.success(t('settings.accountDeletedSuccess'))
       setUser(null)
       setIsDeleteDialogOpen(false)
       router.push('/signIn')
     } catch (error) {
       console.error('Account deletion error:', error)
-      const msg = error.response?.data?.message || 'An unexpected error occurred while deleting the account'
+      const msg = error.response?.data?.message || t('settings.errors.deleteFailed')
       toast.error(msg)
     } finally {
       setIsDeletingAccount(false)

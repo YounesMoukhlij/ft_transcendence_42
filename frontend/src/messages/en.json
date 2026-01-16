@@ -99,12 +99,19 @@
     "enterOtpStep": "2. Enter the 6-digit code from your app to verify.",
     "verifying": "Verifying...",
     "enable": "Enable",
+    "usernameLengthError": "Username must be between 3 and 20 characters",
+    "generate2FASecretFailed": "Failed to generate 2FA secret",
+    "invalidCode": "Invalid code. Please try again.",
+    "accountDeletedSuccess": "Account deleted successfully!", 
     "errors": {
       "updateFailed": "Failed to update profile",
       "securityUpdateFailed": "Failed to update security settings",
       "twoFactorUpdateFailed": "Failed to update 2FA settings",
       "deleteFailed": "Failed to delete account",
-      "unexpectedError": "An unexpected error occurred"
+      "unexpectedError": "An unexpected error occurred",
+      "passwordUpdateFailed": "Failed to update password",
+      "noNewPasswordEntered": "No new password entered. Skipping password update.",
+      "disable2FAFailed": "Failed to disable 2FA"
     }
   },
   "home": {
@@ -591,7 +598,20 @@
     "opponentLeft": "Opponent Left",
     "opponentLeftMessage": "The other player has left the game, you win!",
     "processingWin": "Processing your win...",
-    "alreadyInGame": "you are already in game"
+    "alreadyInGame": "you are already in game",
+    "addUser": "Add User",
+    "registeredPlayers": "Registered Players",
+    "host": "Host",
+    "tournamentLeader": "Tournament Leader",
+    "notRegistered": "Not registered",
+    "addPlayer": "Add Player",
+    "username": "Username",
+    "enterUsername": "Enter username",
+    "password": "Password",
+    "enterPassword": "Enter password",
+    "cancel": "Cancel",
+    "adding": "Adding...",
+    "needMorePlayers": "Need {count} more players..."
   }
 }
 

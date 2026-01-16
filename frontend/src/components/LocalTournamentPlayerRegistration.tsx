@@ -153,7 +153,7 @@ export default function LocalTournamentPlayerRegistration({
             }`}
           >
             <FaPlus className="text-sm" />
-            Add User
+            {t('game.addUser')}
           </button>
           <button
             onClick={onBack}
@@ -166,7 +166,7 @@ export default function LocalTournamentPlayerRegistration({
 
       {/* Players List */}
       <div className="mb-8">
-        <h3 className="text-xl font-semibold text-white mb-4">Registered Players ({tempPlayers.filter(p => p.name.trim() !== '').length}/4)</h3>
+        <h3 className="text-xl font-semibold text-white mb-4">{t('game.registeredPlayers')} ({tempPlayers.filter(p => p.name.trim() !== '').length}/4)</h3>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2" key={`players-${updateCounter}`}>
           {tempPlayers.map((player, index) => (
             <div
@@ -203,18 +203,18 @@ export default function LocalTournamentPlayerRegistration({
                     <h4 className={`font-semibold ${
                       index === 0 ? 'text-yellow-300' : 'text-white'
                     }`}>
-                      {index === 0 ? 'Host' : `Player ${index + 1}`}
+                      {index === 0 ? t('game.host') : `${t('game.player')} ${index + 1}`}
                     </h4>
                     {index === 0 && (
                       <span className="text-xs bg-yellow-500/20 text-yellow-200 px-2 py-1 rounded-full">
-                        Tournament Leader
+                        {t('game.tournamentLeader')}
                       </span>
                     )}
                   </div>
                   <p className={`text-sm ${
                     index === 0 ? 'text-yellow-200' : player.name.trim() !== '' ? 'text-green-300' : 'text-gray-400'
                   }`}>
-                    {player.name || 'Not registered'}
+                    {player.name || t('game.notRegistered')}
                   </p>
                 </div>
                 {player.name.trim() !== '' && (
@@ -231,7 +231,7 @@ export default function LocalTournamentPlayerRegistration({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 rounded-3xl p-6 border-2 border-blue-500 max-w-md w-full">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-white">Add Player</h3>
+              <h3 className="text-2xl font-bold text-white">{t('game.addUser')}</h3>
               <button
                 onClick={() => {
                   setShowAddUserModal(false);
@@ -254,7 +254,7 @@ export default function LocalTournamentPlayerRegistration({
 
               <div>
                 <label className="block text-gray-300 text-sm mb-2 font-medium">
-                  Username
+                  {t('common.username')}
                 </label>
                 <input
                   type="text"
@@ -263,7 +263,7 @@ export default function LocalTournamentPlayerRegistration({
                     setNewPlayerUsername(e.target.value);
                     setErrorMessage(''); // Clear error when user types
                   }}
-                  placeholder="Enter username"
+                  placeholder={t('common.enterUsername')}
                   disabled={isLoading}
                   className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                 />
@@ -271,7 +271,7 @@ export default function LocalTournamentPlayerRegistration({
 
               <div>
                 <label className="block text-gray-300 text-sm mb-2 font-medium">
-                  Password
+                  {t('common.password')}
                 </label>
                 <input
                   type="password"
@@ -280,7 +280,7 @@ export default function LocalTournamentPlayerRegistration({
                     setNewPlayerPassword(e.target.value);
                     setErrorMessage(''); // Clear error when user types
                   }}
-                  placeholder="Enter password"
+                  placeholder={t('common.enterPassword')}
                   disabled={isLoading}
                   className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                 />
@@ -299,7 +299,7 @@ export default function LocalTournamentPlayerRegistration({
                 disabled={isLoading}
                 className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all disabled:opacity-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleAddPlayer}
@@ -313,10 +313,10 @@ export default function LocalTournamentPlayerRegistration({
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Adding...
+                    {('g')}
                   </>
                 ) : (
-                  'Add Player'
+                  t('common.addPlayer')
                 )}
               </button>
             </div>

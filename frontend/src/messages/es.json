@@ -99,12 +99,19 @@
     "enterOtpStep": "2. Introduce el código de 6 dígitos de tu aplicación para verificar.",
     "verifying": "Verificando...",
     "enable": "Activar",
+    "usernameLengthError": "El nombre de usuario debe tener entre 3 y 20 caracteres",
+    "generate2FASecretFailed": "No se pudo generar el secreto de 2FA",
+    "invalidCode": "Código inválido. Inténtalo de nuevo.",
+    "accountDeletedSuccess": "¡Cuenta eliminada con éxito!",   
     "errors": {
       "updateFailed": "Error al actualizar el perfil",
       "securityUpdateFailed": "Error al actualizar la configuración de seguridad",
       "twoFactorUpdateFailed": "Error al actualizar la configuración de 2FA",
       "deleteFailed": "Error al eliminar la cuenta",
-      "unexpectedError": "Ocurrió un error inesperado"
+      "unexpectedError": "Ocurrió un error inesperado",
+      "passwordUpdateFailed": "No se pudo actualizar la contraseña",
+      "noNewPasswordEntered": "No se ingresó una nueva contraseña. Se omitió la actualización de la contraseña.",
+      "disable2FAFailed": "No se pudo desactivar la autenticación de dos factores"
     }
   },
   "home": {
@@ -517,7 +524,21 @@
     "backToPlayerSetup": "Volver a Configuración de Jugador",
     "connecting": "Conectando...",
     "startGame": "Iniciar Juego",
-    "alreadyInGame": "ya estás en el juego"
+    "alreadyInGame": "ya estás en el juego",
+    "addUser": "Agregar usuario",
+    "registeredPlayers": "Jugadores registrados",
+    "host": "Anfitrión",
+    "tournamentLeader": "Líder del torneo",
+    "notRegistered": "No registrado",
+    "addPlayer": "Agregar jugador",
+    "username": "Nombre de usuario",
+    "enterUsername": "Introduce el nombre de usuario",
+    "password": "Contraseña",
+    "enterPassword": "Introduce la contraseña",
+    "cancel": "Cancelar",
+    "adding": "Agregando...",
+    "needMorePlayers": "Se necesitan {count} jugadores más..."
+    
   }
 }
 
