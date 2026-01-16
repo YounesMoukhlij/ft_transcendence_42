@@ -45,19 +45,40 @@ services:
     networks:
       - monitoring
 
-  nginx:
+  # nginx:
+  #   build:
+  #     context: .
+  #     dockerfile: ./infra/Dockerfile.nginx
+  #   container_name: nginx
+  #   image: nginx:0.1
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - Frontend
+  #   restart: always
+  #   networks:
+  #     - monitoring
+
+
+  waf:
     build:
       context: .
-      dockerfile: ./infra/Dockerfile.nginx
-    container_name: nginx
-    image: nginx:0.1
+      dockerfile: ./infra/Dockerfile.waf
+      network: host
+    container_name: waf
+    image: waf:0.1
     ports:
       - "8080:8080"
     depends_on:
       - Frontend
+      - Backend
     restart: always
     networks:
       - monitoring
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/nginx.conf
+      - ./infra/modsecurity.conf:/etc/nginx/modsec/modsecurity.conf
+
 
 networks:
   monitoring:

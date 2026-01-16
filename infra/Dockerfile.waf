@@ -1,0 +1,97 @@
+FROM debian:latest
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    nginx \
+    build-essential \
+    gcc \
+    make \
+    g++ \
+    libssl-dev \
+    libpcre2-dev \
+    zlib1g-dev \
+    git \
+    libtool \
+    automake \
+    autoconf \
+    liblmdb-dev \
+    libxml2-dev \
+    libcurl4-openssl-dev \
+    libyajl-dev \
+    libgeoip-dev \
+    wget \
+    ca-certificates \
+    pkg-config \
+    flex \
+    bison \
+    doxygen \
+    && rm -rf /var/lib/apt/lists/*
+
+# Get nginx version
+RUN NGINX_VERSION=$(nginx -v 2>&1 | grep -oP '\d+\.\d+\.\d+') && \
+    echo "Nginx version: $NGINX_VERSION" && \
+    echo $NGINX_VERSION > /tmp/nginx_version.txt
+
+# Install ModSecurity
+WORKDIR /tmp
+RUN git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity && \
+    cd ModSecurity && \
+    git submodule init && \
+    git submodule update && \
+    ./build.sh && \
+    ./configure --with-pcre2 && \
+    make -j$(nproc) && \
+    make install
+
+# Install ModSecurity-nginx connector
+WORKDIR /tmp
+RUN NGINX_VERSION=$(cat /tmp/nginx_version.txt) && \
+    echo "Building connector for nginx $NGINX_VERSION" && \
+    git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git && \
+    wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
+    tar -xzvf nginx-${NGINX_VERSION}.tar.gz && \
+    cd nginx-${NGINX_VERSION} && \
+    ./configure --with-compat --add-dynamic-module=../ModSecurity-nginx --with-cc-opt='-g -O2' && \
+    make modules && \
+    rm -rf /usr/share/nginx/modules && \
+    mkdir -p /etc/nginx/modules /usr/share/nginx/modules && \
+    cp objs/ngx_http_modsecurity_module.so /etc/nginx/modules/ && \
+    cp objs/ngx_http_modsecurity_module.so /usr/share/nginx/modules/
+
+# Install OWASP ModSecurity Core Rule Set (CRS)
+WORKDIR /etc/nginx/modsec
+RUN git clone --depth 1 https://github.com/coreruleset/coreruleset.git && \
+    cp coreruleset/crs-setup.conf.example crs-setup.conf && \
+    cp -r coreruleset/rules /etc/nginx/modsec/rules
+
+# Create necessary directories
+RUN mkdir -p /var/log/modsec /var/log/nginx /etc/nginx/ssl /tmp/nginx /var/cache/nginx/client_temp
+
+# Download unicode.mapping file
+RUN wget -O /etc/nginx/modsec/unicode.mapping \
+    https://raw.githubusercontent.com/SpiderLabs/ModSecurity/v3/master/unicode.mapping
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/log/modsec /var/log/nginx /tmp/nginx /var/cache/nginx && \
+    chmod -R 755 /var/log/modsec /tmp/nginx /var/cache/nginx
+
+# Clean up
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/nginx-* /tmp/ModSecurity* /tmp/nginx_version.txt
+
+WORKDIR /etc/nginx
+
+# Verify module exists
+RUN ls -la /etc/nginx/modules/ngx_http_modsecurity_module.so && \
+    ls -la /usr/share/nginx/modules/ngx_http_modsecurity_module.so
+
+
+RUN mkdir -p /etc/nginx/ssl /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/frontend.key -out /etc/nginx/ssl/frontend.crt -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=e1r9p7/UID=frontend"
+
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/backend.key -out /etc/nginx/ssl/backend.crt -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=api.e1r9p7/UID=backend"
+
+EXPOSE 8080
+
+CMD ["nginx", "-g", "daemon off;"]
