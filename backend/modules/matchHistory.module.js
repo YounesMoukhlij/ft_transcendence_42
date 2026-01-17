@@ -2,23 +2,38 @@
 export async function getMatchHistory(request, reply) {
 
   const username = request.params.username;
+  const page = request.query.page || 0;
 
   try {
+      const pageNumber = parseInt(page) || 0;
+      const limit = 8;
         const MatchHistoryQuery = request.server.db.prepare(
-        `select game_history_id as id, (select username from users where id_user=user_win) as winner, 
-        (select username from users where id_user=user_lose) as loser,
-        (select profile_img from users where id_user=user_win) as winner_img,
-        (select profile_img from users where id_user=user_lose) as loser_img,
-        win_score, lose_score, game_date, duration, type,
-        longest_rally, average_rally, ball_max_speed, blockchain_hash as blockChainHash,
-        touches_win, max_points_streak_win, max_leading_time_win,
-        touches_lose, max_points_streak_lose, max_leading_time_lose
-        from game_history where user_win=(select id_user from users where username=?) 
-        OR user_lose=(select id_user from users where username=?)
-        ORDER BY game_date DESC;`
+        `SELECT *
+        FROM (
+          SELECT
+            game_history_id AS id,
+            (SELECT username FROM users WHERE id_user = user_win)  AS winner,
+            (SELECT username FROM users WHERE id_user = user_lose) AS loser,
+            (SELECT profile_img FROM users WHERE id_user = user_win)  AS winner_img,
+            (SELECT profile_img FROM users WHERE id_user = user_lose) AS loser_img,
+            win_score, lose_score, game_date, duration, type,
+            longest_rally, average_rally, ball_max_speed, blockchain_hash as blockChainHash,
+            touches_win, max_points_streak_win, max_leading_time_win,
+            touches_lose, max_points_streak_lose, max_leading_time_lose,
+            ROW_NUMBER() OVER (ORDER BY game_date DESC) AS paginationId
+          FROM game_history
+          WHERE (
+            user_win  = (SELECT id_user FROM users WHERE username = ?)
+            OR
+            user_lose = (SELECT id_user FROM users WHERE username = ?)
+          )
+        ) t
+        WHERE paginationId > ?
+        ORDER BY paginationId
+        LIMIT ?;`
       );
 
-      const MatchHistory = MatchHistoryQuery.all(username, username);
+      const MatchHistory = MatchHistoryQuery.all(username, username, pageNumber * limit, limit + 1);
 
 
 MatchHistory.forEach(match => {

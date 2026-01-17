@@ -1,6 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "./ui/card"
 import { Badge } from "./ui/badge"
-import { Calendar, Link, ExternalLink } from "lucide-react"
+import { Calendar, Link, ExternalLink, ChevronRight, ChevronLeft } from "lucide-react"
 import { GameModalDemo } from "./ui/modal"
 import { useState, useEffect} from "react"
 import { GameDetails } from "@/types/user"
@@ -19,6 +19,8 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
   const { user: currentUser } = useUserStore();
   const [selectedMatch, setSelectedMatch] = useState<GameDetails | null>(null)
   const [matchHistory, setMatchHistory] = useState<GameDetails[] | null>(null)
+  const [page, setPage] = useState<number>(0);
+  const [hasMore, setHasMore] = useState<boolean>(false);
   const targetUsername = username;
   const router = useRouter();
   const {t} = useTranslation();
@@ -38,7 +40,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
 
       try {
         const res = await api.get<GameDetails[]>(
-          `/api/getMatchHistory/${targetUsername}`,
+          `/api/getMatchHistory/${targetUsername}?page=${page}`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }
@@ -125,6 +127,33 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
                   }
         </div>
       </CardContent>
+      <CardFooter>
+         <div className="flex items-center justify-center gap-4">
+          <button
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition-colors ${
+              page <= 1
+                ? 'opacity-50 cursor-not-allowed text-gray-600'
+                : 'hover:bg-gray-900 text-white'
+            }`}
+          >
+            <ChevronLeft size={20} />
+          </button>
+
+          <span className="text-gray-400 font-mono">
+            Page {page + 1}
+          </span>
+
+          <button
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition-colors ${
+              !hasMore
+                ? 'opacity-50 cursor-not-allowed text-gray-600'
+                : 'hover:bg-gray-900 text-white'
+            }`}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      </CardFooter>
     </Card>
   )
 }
