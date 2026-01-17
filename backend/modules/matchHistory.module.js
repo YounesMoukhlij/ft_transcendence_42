@@ -6,7 +6,7 @@ export async function getMatchHistory(request, reply) {
 
   try {
       const pageNumber = parseInt(page) || 0;
-      const limit = 8;
+      const limit = 5;
         const MatchHistoryQuery = request.server.db.prepare(
         `SELECT *
         FROM (

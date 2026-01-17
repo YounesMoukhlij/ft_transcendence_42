@@ -11,3 +11,11 @@ all delete requests should be changed to POST
 
 // CHECK the local tournaments endpoints, espicially the saveGame endpoint
 // make sure everything is validated
+
+
+
+
+
+// I am testing game now, socket dyal lgame kadeconecta 
+
+// check how date is saved in 1vs1 and make it like local tournament

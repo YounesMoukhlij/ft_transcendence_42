@@ -24,10 +24,10 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
   const targetUsername = username;
   const router = useRouter();
   const {t} = useTranslation();
-
-
+  
 
    useEffect(() => {
+    const limit : number = 5;
     const fetchMatchHistory = async () => {
       if (!currentUser?.access_token) {
         console.log("You must be logged in to view profiles");
@@ -45,14 +45,22 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }
         );
-        setMatchHistory(res.data);
+        if (res.data.length > limit)
+        {
+          setHasMore(true)
+          setMatchHistory(res.data.slice(0,limit));
+        }
+        else 
+        {
+          setHasMore(false);   
+          setMatchHistory(res.data);
+        } 
       } catch (err) {
         console.error(err);
       }
     };
-
     fetchMatchHistory();
-  }, [targetUsername, currentUser]);
+  }, [targetUsername, currentUser, page]);
 
   return (
     <Card>
@@ -67,9 +75,9 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="h-70">
         <div className="match_table">
-          <table className="w-full ">
+          <table className="w-full">
             <thead>
               <tr className="border-b">
                 <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.date')}</th>
@@ -114,9 +122,11 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
                     </td>
                  </>
                     :
+                    <>
                     <td onClick={() => setSelectedMatch(match)} className="py-3 px-4 text-sm text-muted-foreground">   
                     {t('profile.duel')}
                     </td>
+                    </>
                     }
                 </tr>
               ))}
@@ -127,28 +137,32 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
                   }
         </div>
       </CardContent>
-      <CardFooter>
-         <div className="flex items-center justify-center gap-4">
+      <CardFooter className="flex justify-center">
+         <div className="flex -ml-10 mt-5 items-center gap-4">
           <button
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition-colors ${
-              page <= 1
-                ? 'opacity-50 cursor-not-allowed text-gray-600'
+            className={`flex  gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition duration-300 ease-in-out ${
+              page <= 0
+                ? 'opacity-50 text-gray-600'
                 : 'hover:bg-gray-900 text-white'
             }`}
+            disabled={page <= 0}
+            onClick={()=> {setPage(page - 1)}}
           >
             <ChevronLeft size={20} />
           </button>
 
-          <span className="text-gray-400 font-mono">
+          <span className="flex text-gray-400 font-mono w-12">
             Page {page + 1}
           </span>
 
           <button
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition-colors ${
+              className={`flex  gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition duration-300 ease-in-out  ${
               !hasMore
-                ? 'opacity-50 cursor-not-allowed text-gray-600'
+                ? 'opacity-50 text-gray-600'
                 : 'hover:bg-gray-900 text-white'
             }`}
+            disabled={!hasMore}
+            onClick={()=> {setPage(page + 1)}}
           >
             <ChevronRight size={20} />
           </button>

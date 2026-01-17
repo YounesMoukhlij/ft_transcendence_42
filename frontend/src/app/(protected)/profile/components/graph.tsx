@@ -83,7 +83,7 @@ export function IllustrationGraph({ data }: ChartProps) {
 
   
   const width : number = size.width > 235 ? size.width : 235;
-  const height : number = 250
+  const height : number = 300
   const padding : number = 40
 
   const maxValue = Math.max(...(data?.map(d => Math.max(d.wins, d.losses)) || [0]));
