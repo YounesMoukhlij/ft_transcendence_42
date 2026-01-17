@@ -4,6 +4,7 @@ import { profile } from 'console';
 import { handleGameMessage } from './gameWebSocketHandler.js';
 import { statusShare } from './statusHandler.js';
 import jwt from 'jsonwebtoken';
+import { convertCompilerOptionsFromJson } from 'typescript';
 
 export function setupWebSocketServer(wss, db, users_socket, gameManager) {
   const parseTokenFromReq = (req) => {
@@ -131,9 +132,6 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
         return;
       }
 
-      // ----------------------
-      // Chat-related messages
-      // ----------------------
       if (data.type === 'istyping') {
         const socketFriend = users_socket.get(String(data.friend));
         if (socketFriend) {
@@ -168,17 +166,18 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
       }
 
       if (data.type === 'message') {
-        
+
         if (typeof data !== "object" || typeof data.input !== "string" || data.input.trim().length === 0 || typeof data.contactId === "undefined" ||typeof data.conversation_id === "undefined" || typeof data.userId === "undefined") {
           return;
         }
+
         const socketFriend = users_socket.get(String(data.contactId));
 
         try {
 
           if (data.contactId == data.userId)
               return ;
-          
+
           const room = db.prepare("SELECT *  FROM room WHERE conversation_id = ?").get(data.conversation_id);
           const map = room.members.split(",").map(id => id.trim());
 
@@ -190,10 +189,10 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
             console.log("you are blocked");
             return ;
           }
-
-          db.prepare('INSERT INTO message (conv_id, message, sender, isSeen) VALUES (?, ?, ?, ?)').run(data.conversation_id, data.input, idStr, 0);
-
-          db.prepare('UPDATE room SET lastMessage = ?, lastMessageTime = CURRENT_TIMESTAMP, lastMessageSender = ? WHERE conversation_id = ?')
+                    
+            db.prepare('INSERT INTO message (conv_id, message, sender, isSeen) VALUES (?, ?, ?, ?)').run(data.conversation_id, data.input, idStr, 0);
+                    
+            db.prepare('UPDATE room SET lastMessage = ?, lastMessageTime = CURRENT_TIMESTAMP, lastMessageSender = ? WHERE conversation_id = ?')
             .run(data.input, idStr, data.conversation_id);
 
           if (socketFriend) {

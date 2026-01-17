@@ -207,8 +207,8 @@ export default function Messages(){
             }
           );
           setMessages(msgsRes.data);
-          console.log("bot messages ===================++>", msgsRes.data);
-        }else {        const msgsRes = await api.get(
+        }else {        
+          const msgsRes = await api.get(
             `/api/getMsgs`,
             {
             params: {
@@ -220,7 +220,6 @@ export default function Messages(){
           }
         );
           setMessages(msgsRes.data);
-          console.log("human messages ===================++>", msgsRes.data);
 
         }
         } catch (err) {
@@ -241,48 +240,69 @@ export default function Messages(){
     },[contactId])
 
   const handleSend = async () => {
-    if (input.trim().length == 0){
+  try {
+    if (input.trim().length === 0) {
       setInput('');
       return;
     }
-    const conversation_id = friends.find(item => item.id_user === contactId)?.conversation_id;
 
-    try {
-      if (!socket)
-        return ;
-      if ( contactId == -2)
-          return setInput('');
-        socket.send(
-          JSON.stringify({
-          type: "message",
-          input,
-          contactId,
-          conversation_id,
-          userId : user.id_user,
-    }));
+    if (!socket) return;
 
-    const object: Message = {
+    if (contactId === -2) {
+      setInput('');
+      return;
+    }
+
+    let conversationid =
+      friends.find(item => item.id_user === contactId)?.conversation_id;
+
+    if (!conversationid) {
+      const res = await api.get('/api/getConversationId', {
+        params: { id: contactId },
+        headers: {
+          Authorization: `Bearer ${user.access_token}`,
+        },
+      });
+
+      conversationid = res.data.conversation_id;
+    }
+
+    socket.send(
+      JSON.stringify({
+        type: "message",
+        input,
+        contactId,
+        conversation_id: conversationid,
+        userId: user.id_user,
+      })
+    );
+
+    const messageObject = {
       sender_user_id: user.id_user,
       message: input,
-      conv_id: conversation_id,
+      conv_id: conversationid,
       created_at: getFormattedDate(),
-      isSeen: false
-    };
-    addMessage(object);
-
-      const updateLastMessageObject = {
-      lastMessage: input,
-      sender: user.id_user,
-      lastMessageTime: new Date().toISOString()
+      isSeen: false,
     };
 
-    updateLastMessage(updateLastMessageObject , contactId);
+    addMessage(messageObject);
 
-    } catch (err) {
-      console.error(err);
-    }
+    updateLastMessage(
+      {
+        lastMessage: input,
+        sender: user.id_user,
+        lastMessageTime: new Date().toISOString(),
+      },
+      contactId
+    );
+
     setInput('');
+
+  } catch (err) {
+    console.error("handleSend error:", err);
   }
+};
+
 
   function handleEnterKey(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Enter') {

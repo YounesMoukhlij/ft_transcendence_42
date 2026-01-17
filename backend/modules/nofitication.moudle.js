@@ -674,25 +674,19 @@ export function DeleteNotification(request , reply){
 export function getConversationId(request , reply)
 {
 
-  console.log("1-=================+>");
   const { id } = request.query;
   if (!id )
     return reply(400).send(fasle);
-  console.log("1-=================+>");
   try{
-    console.log("1-=================+>");
     const targetUser = request.server.db.prepare("SELECT id_user FROM users WHERE id_user = ?").get(id);
     if (!targetUser)
       return reply.code(404).send({ error: "user not found" });
-    console.log("1-=================+>");
     
     
     
     const caseOne = id + "," + request.user.id_user;
     const casetwo= request.user.id_user+ "," + id ;
-    console.log("1-=================+>");
     const roomId = request.server.db.prepare("SELECT conversation_id FROM room WHERE members = ? OR members = ?").get(caseOne , casetwo);
-    console.log("1-=================+>");
     reply.code(200).send(roomId);
 
   }catch(err){

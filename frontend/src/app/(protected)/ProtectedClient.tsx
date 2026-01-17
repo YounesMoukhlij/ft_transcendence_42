@@ -68,7 +68,6 @@ export default function ProtectedClient({
           });
 
         } else if (data.title == "friend request accepted") {
-
           addNotification(data);
           const sentRequests = useUserStore.getState().sentRequests;
           removeSentRequests(data.sender_user);
