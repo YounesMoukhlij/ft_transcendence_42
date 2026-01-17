@@ -68,10 +68,11 @@ export default function ProtectedClient({
           });
 
         } else if (data.title == "friend request accepted") {
+          console.log("data =============+>" , data);
           addNotification(data);
           const sentRequests = useUserStore.getState().sentRequests;
           removeSentRequests(data.sender_user);
-          addFriend({ id_user: data.sender_user , conversation_id: data.room_id });
+          addFriend({ id_user: data.sender_user , username:data.username , conversation_id: data.room_id });
         } else if (data.title == "game challenge") {
           // Handle game challenge notifications
           addNotification(data);

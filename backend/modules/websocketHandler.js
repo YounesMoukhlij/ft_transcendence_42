@@ -18,82 +18,7 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
     }
   };
 
-  const syncNotifications = (socket, userId) => {
-    // Send all pending notifications to the user when they connect/reconnect
-
-
-
-    setTimeout(() => {
-      try {
-        const getNotificationsStmt = db.prepare(`
-          SELECT n.*,
-                 u.username as sender_username,
-                 u.profile_img as sender_profile_img
-          FROM notification n
-          LEFT JOIN users u ON n.sender_user = u.id_user
-          WHERE n.getter_user = ? AND n.is_seen = 0
-          ORDER BY n.notify_id DESC
-        `);
-        const notifications = getNotificationsStmt.all(userId);
-
-        for (const notif of notifications) {
-          const now = new Date();
-          let expired = null;
-
-
-
-          
-          if (notif.expired) {
-            try {
-              let expiredStr = notif.expired;
-              if (expiredStr && expiredStr.match(/^\d{2}-\d{2}-\d{2}/)) {
-                const parts = expiredStr.split(' ');
-                const datePart = parts[0].split('-');
-                if (datePart[0].length === 2) {
-                  datePart[0] = '20' + datePart[0];
-                  expiredStr = datePart.join('-') + ' ' + (parts[1] || '00:00:00');
-                }
-              }
-              expired = new Date(expiredStr.replace(' ', 'T') + 'Z');
-            } catch {
-              expired = null;
-            }
-          }
-
-          if (!expired || expired > now) {
-            let tournamentId = null;
-            if (notif.title === 'tournament invite' && notif.notifyBody) {
-              try {
-                const parsed = JSON.parse(notif.notifyBody);
-                if (parsed.tournamentId) tournamentId = parsed.tournamentId;
-              } catch {
-                // ignore
-              }
-            }
-
-            const notifyData = {
-              getter_user: notif.getter_user,
-              sender_user: notif.sender_user,
-              sender_username: notif.sender_username || 'Unknown',
-              title: notif.title,
-              sender_profile_img: notif.sender_profile_img || '',
-              notify_id: notif.notify_id,
-              expired: notif.expired,
-              tournamentId: tournamentId
-            };
-
-            socket.send(JSON.stringify({
-              type: 'notify',
-              data: notifyData
-            }));
-          }
-        }
-      } catch (error) {
-        console.error('Error syncing notifications on connection:', error);
-      }
-    }, 500);
-  };
-
+  
   const afterAuth = (socket, userId) => {
     const idStr = String(userId);
     socket.userId = idStr;
@@ -122,7 +47,7 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
       // ignore
     }
 
-    syncNotifications(socket, userId);
+    // syncNotifications(socket, userId);
 
     socket.on('message', (message) => {
       let data;

@@ -237,6 +237,14 @@ export const useUserStore = create(
   })),
 
 
+  // updateFriendConversationId:(id , convId)=> 
+  //   set((state)=> ({
+  //   friends: state.friends.map((f) =>
+  //     f.id_user == id 
+  //       ? {...f ,conversation_id : convId }
+  //       : f
+  //   ),
+  // })),
 
 updatePinStatus: (attribute, friendId, value) => {
   const isPinned = value !== -1;

@@ -253,9 +253,8 @@ export default function Messages(){
       return;
     }
 
-    let conversationid =
-      friends.find(item => item.id_user === contactId)?.conversation_id;
-
+    let conversationid = friends.find(item => item.id_user === contactId)?.conversation_id;
+    
     if (!conversationid) {
       const res = await api.get('/api/getConversationId', {
         params: { id: contactId },

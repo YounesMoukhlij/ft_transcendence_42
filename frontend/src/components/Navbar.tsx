@@ -45,7 +45,7 @@ export default function Navbar() {
   const searchRef = useRef<HTMLDivElement>(null);
   
   const setUsername = useUserStore.setState;
-  const { addFriend,  friends,  addPendingRequestsArray, removePendingRequests, sentRequests, pendingRequests, addSentRequests , 
+  const { addFriend,  friends,  addPendingRequestsArray, removePendingRequests, sentRequests, pendingRequests, addSentRequests , setFriends,
           notifications , deleteNotification ,setnotifications} = useUserStore();
   const user = useUserStore((state) => state.user);
 
@@ -239,8 +239,25 @@ export default function Navbar() {
       removePendingRequests(item.sender_user);
       addFriend(object);
     }
-    // console.log("item ------< " , item);
+
     deleteNotification(item.notify_id);
+
+
+    const response = await api.get(`/api/GetFriends`, {
+        headers: {
+          Authorization: `Bearer ${user.access_token}`
+        }
+      });
+
+    const ress = await api.get(`/api/GetbotChat`, {
+            headers: {
+              Authorization: `Bearer ${user.access_token}`
+            }
+          });
+
+
+    const combined = [...ress.data, ...response.data];
+    setFriends(combined);
 
   }
 

@@ -1330,11 +1330,11 @@ export async function FortyTwoAuth(request, reply) {
             userId = result.lastInsertRowid;
             isNewUser = true;
             user = request.server.db.prepare("SELECT * FROM users WHERE id_user = ?").get(userId);
+            request.server.db.prepare("INSERT INTO bot_conv (user_id) VALUES (?)").run(userId);
         }
 
 
             // for me abechcha every user must be have a room with bot 
-            request.server.db.prepare("INSERT INTO bot_conv (user_id) VALUES (?)").run(userId);
 
         if (user.twoFA_enabled) {
             return reply.redirect(`${process.env.FRONTEND_URL}/signIn?2fa_required=true&userId=${userId}`);
