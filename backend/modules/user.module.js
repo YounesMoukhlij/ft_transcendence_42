@@ -8,6 +8,11 @@ export async function GetbotChat(request, reply) {
       return reply.code(200).send([]);
     }
 
+
+      const lastMsg = request.server.db.prepare(`SELECT * FROM bot_room WHERE conversation_id = ? ORDER BY datetime(created_at) DESC LIMIT 1`)
+      .get(results[0].conversation_id);
+
+
     const botsWithAvatar = results.map(bot => ({
       ...bot,
       username: "avatar",
@@ -15,6 +20,7 @@ export async function GetbotChat(request, reply) {
       status: true,
       xp: 0,
       isBot: true,
+      lastMessage: lastMsg?.message,
       profile_img:
         "https://imgs.search.brave.com/c1fLBdRqs4DYbPB7INH5uTQgPV5OlxpHY73_TWx1NJ0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90My5m/dGNkbi5uZXQvanBn/LzAzLzY0Lzc2Lzk4/LzM2MF9GXzM2NDc2/OTg2NV9tVm1Ld3Rj/MTI4Nnp4a3Vza214/VXVnMkFlWDdOWXlI/QS5qcGc"
     }));

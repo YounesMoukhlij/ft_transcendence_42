@@ -232,6 +232,12 @@ function FriendCard({ item }) {
     const router = useRouter();
     const { user } = useUserStore();
 
+  if (item?.id_user == -2 && item?.lastMessage == null){
+
+
+    console.log("here=======. item ");
+    return null;
+  } 
 
     return (
         <div onClick={() => router.push(`/chat?friend=${item.id_user}`)}
