@@ -27,8 +27,6 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
               return "bronze-theme"
             }
           }
-          
-          
           return (
            <div
   className={ getRankClass(userStats.rankType) + " w-full mx-auto artistic-background shadow-2xl p-8 flex items-center justify-between space-x-8"}
@@ -45,8 +43,6 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
   />
             </div> 
 
-
-          
             <div>
                 <h2 className="text-3xl font-extrabold text-white">
                    {userStats.fullName?.toUpperCase()}

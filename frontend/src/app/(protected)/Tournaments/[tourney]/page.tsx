@@ -83,8 +83,7 @@ const MatchConnector = ({
 };
 
 export default function TournamentBracket() {
-  const [tournamentData, setTournamentData] = useState<Match[] | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [tournamentData, setTournamentData] = useState<Match[] | null>(null);;
   const { user: currentUser } = useUserStore();
   const params = useParams();
   const tournament_id = params.tourney;
@@ -95,12 +94,11 @@ export default function TournamentBracket() {
     if (!tournament_id) return;
 
     let active = true;
-    setLoading(true);
 
     const fetchTournamentBracket = async () => {
       try {
         const res = await api.get<Match[]>(
-          `/getTournamentBracket/${tournament_id}`,
+          `/api/getTournamentBracket/${tournament_id}`,
           {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }
@@ -113,18 +111,14 @@ export default function TournamentBracket() {
           router.replace('/not-found');
           return;
         }
-      } finally {
-        setLoading(false);
-      }
     };
-
+  };
     fetchTournamentBracket();
     return () => {
       active = false;
     };
   }, [tournament_id, currentUser]);
 
-  if (!currentUser || loading) return <Loading />;
   if (!tournamentData) return <Loading />;
 
   return (

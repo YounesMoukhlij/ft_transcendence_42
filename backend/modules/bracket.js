@@ -5,12 +5,12 @@ import { Block } from "ethers";
 export async function getTournamentBracket(request, reply) {
 
   const tournament_id = request.params.id;
-
+  
   if (!tournament_id) {
     return reply.code(400).send({ error: "tournament id is required" });
   }
-
-    try{
+  
+  try{
     const query = request.server.db.prepare(
       `select game_date as date, 
       (select username from users where id_user=user_win) as winner,

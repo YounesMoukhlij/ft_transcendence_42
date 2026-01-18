@@ -23,7 +23,7 @@ export async function getMatchHistory(request, reply) {
             (SELECT username FROM users WHERE id_user = user_lose) AS loser,
             (SELECT profile_img FROM users WHERE id_user = user_win)  AS winner_img,
             (SELECT profile_img FROM users WHERE id_user = user_lose) AS loser_img,
-            win_score, lose_score, game_date, duration, type,
+            win_score, lose_score, game_date, duration, type, tournament_id,
             longest_rally, average_rally, ball_max_speed, blockchain_hash as blockChainHash,
             touches_win, max_points_streak_win, max_leading_time_win,
             touches_lose, max_points_streak_lose, max_leading_time_lose,

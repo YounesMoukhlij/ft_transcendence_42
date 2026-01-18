@@ -23,9 +23,6 @@ interface ProfileProps {
   user: User
 }
 
-
-
-
 export  function Profile({user} : ProfileProps)  {
 
 const [overviewV, setOverviewV] = useState(true);
@@ -57,9 +54,8 @@ const getRank = (): "gold" | "silver" | "bronze" => {
   losses: user.losses,
   winRate: user.winRate || 0,
   currentStreak: user.currentStreak,
-  totalTournaments: 4,
-  tournamentsWon: 2,
-  bestStreak: 12,
+  totalTournaments: user.totalTournaments,
+  tournamentsWon: user.tournamentsWon,
   averageScore: user.averageScore || 0,
   level: Math.floor(user.xp / 1000),
   bronzePlayers: user.bronzePlayers,
@@ -69,7 +65,7 @@ const getRank = (): "gold" | "silver" | "bronze" => {
 
 const recentMatches = user.recentMatches;
   
-const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel / 10, 700); 
+const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel / 10, 700);
 
 
   return (

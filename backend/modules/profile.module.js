@@ -31,6 +31,23 @@ export async function getUserStatsbyId(request, reply) {
 
     const winRate = Math.floor(Number(wins.total) / Number(totalMatches.total) * 100);
 
+    const tournamentsNbQuery = request.server.db.prepare(
+      "select COUNT(DISTINCT tournament_id) AS total from game_history WHERE type='tournament' AND (user_win=? OR user_lose=?)"
+    );
+    const tournamentNb = tournamentsNbQuery.get(id, id);
+
+    const tournamentsWonQuery = request.server.db.prepare(
+      `SELECT COUNT(*) AS total
+      FROM (
+        SELECT COUNT(*) AS wins
+        FROM game_history
+        WHERE type='tournament' AND user_win=?
+        GROUP BY tournament_id
+      )
+      WHERE wins = 2;`
+    );
+    const tournamentsWonNb = tournamentsWonQuery.get(id);
+
 
     const currentStreakQuery = request.server.db.prepare(`select COUNT(*) as total from game_history
       where user_win=? AND
@@ -82,16 +99,18 @@ export async function getUserStatsbyId(request, reply) {
   match.score = `${userScore} - ${opponentScore}`;
   });
 
-    userStats.totalMatches = totalMatches.total;
-    userStats.wins = wins.total;
-    userStats.losses = losses.total;
-    userStats.winRate = winRate;
-    userStats.currentStreak = currentStreak.total;
+    userStats.totalMatches = Number(totalMatches.total);
+    userStats.wins = Number(wins.total);
+    userStats.losses = Number(losses.total);
+    userStats.winRate = Number(winRate);
+    userStats.currentStreak = Number(currentStreak.total);
     userStats.averageScore = (Number(winGoals.total) + Number(lossGoals.total)) / Number(totalMatches.total);
     userStats.bronzePlayers = Number(bronzePlayersCount.total);
     userStats.silverPlayers = Number(silverPlayersCount.total);
     userStats.goldPlayers = Number(goldPlayersCount.total);
     userStats.recentMatches = recentMatches;
+    userStats.totalTournaments = Number(tournamentNb.total);
+    userStats.tournamentsWon = Number(tournamentsWonNb.total);
     return reply.send(userStats);
   } catch (err) {
     console.log(err);
@@ -130,6 +149,23 @@ export async function getUserStats(request, reply) {
     const losses = lossesQuery.get(id);
 
     const winRate = Math.floor(Number(wins.total) / Number(totalMatches.total) * 100);
+
+     const tournamentsNbQuery = request.server.db.prepare(
+      "select COUNT(DISTINCT tournament_id) AS total from game_history WHERE type='tournament' AND (user_win=? OR user_lose=?)"
+    );
+    const tournamentNb = tournamentsNbQuery.get(id, id);
+
+    const tournamentsWonQuery = request.server.db.prepare(
+      `SELECT COUNT(*) AS total
+      FROM (
+        SELECT COUNT(*) AS wins
+        FROM game_history
+        WHERE type='tournament' AND user_win=?
+        GROUP BY tournament_id
+      )
+      WHERE wins = 2;`
+    );
+    const tournamentsWonNb = tournamentsWonQuery.get(id);
 
 
     const currentStreakQuery = request.server.db.prepare(`select COUNT(*) as total from game_history
@@ -182,16 +218,18 @@ export async function getUserStats(request, reply) {
   match.score = `${userScore} - ${opponentScore}`;
   });
 
-    userStats.totalMatches = totalMatches.total;
-    userStats.wins = wins.total;
-    userStats.losses = losses.total;
-    userStats.winRate = winRate;
-    userStats.currentStreak = currentStreak.total;
+    userStats.totalMatches = Number(totalMatches.total);
+    userStats.wins = Number(wins.total);
+    userStats.losses = Number(losses.total);
+    userStats.winRate = Number(winRate);
+    userStats.currentStreak = Number(currentStreak.total);
     userStats.averageScore = (Number(winGoals.total) + Number(lossGoals.total)) / Number(totalMatches.total);
     userStats.bronzePlayers = Number(bronzePlayersCount.total);
     userStats.silverPlayers = Number(silverPlayersCount.total);
     userStats.goldPlayers = Number(goldPlayersCount.total);
     userStats.recentMatches = recentMatches;
+    userStats.totalTournaments = Number(tournamentNb.total);
+    userStats.tournamentsWon = Number(tournamentsWonNb.total);
     return reply.send(userStats);
   } catch (err) {
     console.log(err);

@@ -102,7 +102,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
                  { match.type == "tournament" ?
                  <>
                     <td className="py-3 px-4 text-sm text-muted-foreground">
-                      <span onClick={() => router.push(`/Tournaments/${match.tournament_id}`)} className="inline cursor-pointer hover:text-primary
+                      <span onClick={() => {router.push(`/Tournaments/${match.tournament_id}`)}} className="inline cursor-pointer hover:text-primary
                         transition duration-300 ease-in-out"> {t('game.tournament')}
                           < ExternalLink  className="inline w-4 h-4 ml-1 mb-1"/>
                       </span> 

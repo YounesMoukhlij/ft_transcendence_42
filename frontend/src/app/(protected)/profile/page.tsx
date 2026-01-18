@@ -20,7 +20,7 @@ export default function UserProfile() {
     const fetchUserData = async () => {
       try {
         const res = await api.get(
-          `/api/getUserStats`,
+          `/api/getUserStats/${currentUser.id_user}`,
           { headers: { Authorization: `Bearer ${currentUser.access_token}` } }
         );
 
@@ -32,7 +32,6 @@ export default function UserProfile() {
 
     fetchUserData();
   }, [currentUser]);
-
 
 
   // Not logged in

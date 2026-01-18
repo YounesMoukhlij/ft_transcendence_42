@@ -18,7 +18,6 @@ interface UserStats {
   wins: number
   losses: number
   currentStreak: number
-  bestStreak: number
   averageScore: number
   conversationId: number,
 }
@@ -52,7 +51,7 @@ const isSelfProfile: boolean =
 useEffect(() => {
   const friendshipStatus = () => 
 {
-  // handleClick();
+
   if (sentRequests?.find(friend => friend.getter_user === userStats.id))
     setFriendshipText("Cancel request");
 
