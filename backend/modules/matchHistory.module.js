@@ -1,12 +1,19 @@
 
 export async function getMatchHistory(request, reply) {
 
-  const username = request.params.username;
-  const page = request.query.page || 0;
+  const { username } = request.params || {};
+  const pageRaw = request.query?.page;
 
+  if (!username || typeof username !== 'string') {
+    return reply.status(400).send({ error: 'Invalid username' });
+  }
+
+  const pageNumber = Number(pageRaw);
+  if (!Number.isInteger(pageNumber) || pageNumber < 0) {
+    return reply.status(400).send({ error: 'Invalid page' });
+  }
+  const limit = 5;
   try {
-      const pageNumber = parseInt(page) || 0;
-      const limit = 5;
         const MatchHistoryQuery = request.server.db.prepare(
         `SELECT *
         FROM (

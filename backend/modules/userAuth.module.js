@@ -705,6 +705,24 @@ export async function createLocalTournament(request, reply) { // Added by Ayoub,
     }
 }
 
+
+const validateScores = (winnerScore, loserScore) => {
+  const w = Number(winnerScore);
+  if (!Number.isInteger(w) || (w !== 5 && w !== 10)) return false;
+
+  const l = Number(loserScore);
+  if (!Number.isInteger(l) || l < 0 || l >= w) return false;
+
+  return true;
+};
+
+const validateId = (id) =>{
+    const validatedId = Number(id);
+    if (!Number.isInteger(validatedId) || validatedId < 1)
+        return (-1);
+    return (validatedId);
+} 
+
 export async function saveTournamentMatch(request, reply) {
     const {
         winner,
@@ -724,15 +742,20 @@ export async function saveTournamentMatch(request, reply) {
         max_leading_time_lose,
     } = request.body;
 
-    if (!winner || !loser || win_score === undefined || lose_score === undefined) {
-        return reply.code(400).send({
-            success: false,
-            message: "Missing required fields!"
-        });
-    }
-    const winnerId = parseInt(winner, 10);
-    const loserId = parseInt(loser, 10);
-    const tournamentId = parseInt(tournament_id, 10);
+  
+    if (!validateScores(win_score, lose_score)) {
+        return reply.status(400).send({ error: 'Error in scores' });
+  }
+    const winnerId = validateId(winner);
+    const loserId = validateId(loser);
+    const tournamentId = validateId(tournament_id);
+
+    if (winnerId === -1 || loserId === -1 || tournamentId === -1)
+        return reply.status(400).send({ error: 'Error in The Ids provided'});
+
+    const safeWinScore  = Number(win_score);
+    const safeLoseScore  = Number(lose_score);
+
     
     try {
         // kanshouf awsh kayna tournament
@@ -834,8 +857,8 @@ export async function saveTournamentMatch(request, reply) {
         const result = query.run(
             winnerId,
             loserId,
-            win_score,
-            lose_score,
+            safeWinScore,
+            safeLoseScore,
             'tournament',
             tournament_id || null,
             duration || null,
@@ -864,8 +887,8 @@ export async function saveTournamentMatch(request, reply) {
                     tournament_id,
                     winnerName,
                     loserName,
-                    win_score,
-                    lose_score,
+                    safeWinScore,
+                    safeLoseScore,
                     tournamentName
                   );
             const receipt = await tx.wait();
