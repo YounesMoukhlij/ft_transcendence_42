@@ -52,26 +52,30 @@ export default function Messages(){
   const [showMore , setshowMore] = useState<boolean>(false);
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
+  const [confirm , Setconfirm] = useState<boolean>(false);
   const { handleUnfriend, handleBlock } = useFriendActions();
   const { handleDeblock } = useDeblock();
   const {t} = useTranslation();
 
 
-  async function  handleGameInvite()
-   {
-    try{
-      await api.post(`/api/sendGameChallenge`,{
-        Friend_id: contactId,
-      },
-    {
-      headers: {
-        Authorization: `Bearer ${user.access_token}`
+  async function Handleconfirm(mode : boolean){
+    if (mode){
+      {
+        try{
+          await api.post(`/api/sendGameChallenge`,{
+            Friend_id: contactId,
+          },
+          {
+          headers: {
+          Authorization: `Bearer ${user.access_token}`
+        }});
+      }catch(err){
+        console.log(err);
       }
-    });
-  }catch(err){
-    console.log(err);
+    }
+    Setconfirm(!confirm);
   }
-  }
+}
 
   useEffect(()=>{
     if (input.length > 0 && user.typing_indicator && socket){
@@ -89,6 +93,7 @@ export default function Messages(){
       if (menuRef.current && !menuRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {
         setShow(false);
         setshowMore(false);
+        Setconfirm(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -147,9 +152,6 @@ export default function Messages(){
 
     const item = friends.find(f => f.id_user === friendId);
 
-    // console.log("||||||||||||" , bot[0]);
-    // console.log("||||||||||||==========+>. " , item);
-    
     if (!item){
       
       // if (bot.length > 0 && friendId == -2){
@@ -230,10 +232,6 @@ export default function Messages(){
     useEffect(()=>{
         if (contactId === -1)
             return ;
-      // if (contactId === -2) {
-      //   setMessages([]); 
-      //   return;
-      // }
         const id = friends.find(item => item.id_user === contactId)?.conversation_id;
         if (id)
           getMsgFunction(id);
@@ -397,12 +395,24 @@ export default function Messages(){
                 }
             </div>
 
-            <div className="flex-1 relative rounded-2xl flex flex-col overflow-hidden min-h-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
-                    {SmallFriendList && 
+            <div  className="flex-1 relative rounded-2xl flex flex-col overflow-hidden min-h-0   bg-gray-950 ">
+
+                  { confirm &&
+                    <div ref={menuRef} >
+                      <div  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-black w-[20rem] h-[10rem] flex  flex-col justify-around rounded-3xl ">
+                        <p className="w-full flex justify-center pt-1">you will send challenge to {friend?.username} </p>
+                        <div className="flex justify-center items-center h-[2rem] gap-4">
+                          <button className="w-[7rem] h-full bg-red-700 hover:cursor-pointer " onClick={()=> Handleconfirm(false)}>Cancel</button>
+                          <button className="w-[7rem] h-full bg-green-900 hover:cursor-pointer " onClick={()=> Handleconfirm(true)}>confirm</button>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                  {SmallFriendList && 
                         <div onClick={()=> SetSmallFriendList(false)} className="sm:hidden z-30 absolute bg-black w-full h-full">
                             <FriendList />
                         </div>
-                    }
+                  }
 
                     <div className="chat-body flex-1 flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar min-h-0">
                         <div className="flex justify-center">
@@ -498,7 +508,7 @@ export default function Messages(){
                                   />
                                 </div>
 
-                                <div className="mr-2 sm:mr-4 hover:cursor-pointer" onClick={handleGameInvite}>
+                                <div className="mr-2 sm:mr-4 hover:cursor-pointer" onClick={()=>Setconfirm(true)}>
                                   <button>
                                     <IoGameController className="w-8 h-8 lg:w-8 lg:h-8 text-gray-400 hover:text-white transition-colors" />
                                   </button>

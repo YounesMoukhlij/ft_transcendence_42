@@ -15,6 +15,7 @@ import fastifyStatic from '@fastify/static';
 import fastifyJwt from '@fastify/jwt';
 import GameManager from './modules/gameManager.js';
 import { setupWebSocketServer } from './modules/websocketHandler.js';
+import nodeVault from "node-vault";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -219,4 +220,24 @@ try {
 
 
 
+const vault = nodeVault({
+  endpoint: "http://vault:8200",
+  token: "hvs.ynTc8hchHKkpbGqvJvurh9jJ",
+});
+
+async function getSecrets() {
+  try {
+    const secret = await vault.read("secret/data/db");
+    console.log("DB password:", secret.data.data.password);
+  } catch (err) {
+    console.error("Error reading secret:", err.message);
+  }
+}
+
+getSecrets();
 startServer();
+
+
+
+
+
