@@ -79,6 +79,17 @@ services:
       - ./infra/nginx.conf:/etc/nginx/sites-available/default
       - ./infra/modsecurity.conf:/etc/nginx/modsec/modsecurity.conf
 
+  vault:
+    build:
+      context: .
+      dockerfile: ./infra/Dockerfile.vault
+    container_name: vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: "http://127.0.0.1:8200"
+    cap_add:
+      - IPC_LOCK
 
 networks:
   monitoring:
