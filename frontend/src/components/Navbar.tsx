@@ -631,7 +631,7 @@ export default function Navbar() {
                                  className="flex items-center gap-3 p-3 rounded-lg bg-gray-900 hover:bg-gray-800 transition"
                                >
                                  <Link
-                                   href={`/profile/${result.username}`}
+                                   href={`/profile/${result.id_user}`}
                                    onClick={() => {
                                      setSearchOpen(false);
                                      setSearchQuery('');
