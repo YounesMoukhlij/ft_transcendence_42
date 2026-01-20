@@ -8,11 +8,11 @@ const nextConfig: NextConfig = {
         hostname: 'cdn.intra.42.fr',
       },
      {
-        protocol: 'https',
-        hostname: 'localhost',
-        port: '8080',
-        pathname: '/api/uploads/*',
-      },
+      protocol: 'https',
+      hostname: 'localhost',
+      port: '8080',
+      pathname: '/**',
+    },
       {
         protocol: 'https',
         hostname: 'upload.wikimedia.org',
@@ -22,17 +22,22 @@ const nextConfig: NextConfig = {
         hostname: 'i.pravatar.cc',
       },
       {
-        protocol: 'http',
-        hostname: 'localhost',
+        protocol: "https",
+        hostname: "static.vecteezy.com",
       },
       {
-        protocol: 'http',
-        hostname: '127.0.0.1',
+        protocol: "https",
+        hostname: "t4.ftcdn.net",
       },
       {
-        protocol: 'http',
-        hostname: '10.32.87.105',
+        protocol: "https",
+        hostname: "img.freepik.com",
       },
+      {
+        protocol: "https",
+        hostname: "encrypted-tbn0.gstatic.com",
+      },
+
     ],
   },
 };

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from 'react-toastify'
 import axios from 'axios'
 import { useUserStore } from "../../store/userStore"
+import { getProfileImageUrl } from '@/lib/utils'
 
 
 interface SignInFormProps {
@@ -40,8 +41,10 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
         }
       });
       
-      const userData = response.data;
-      console.log('OAuth user data:', userData)
+      
+      const userData = {...response.data , profile_img: getProfileImageUrl(response.data.profile_img)} ;
+
+      console.log('OAuth user data:==============+>', userData)
       
       setUser(userData, userData.refresh_token) 
       document.cookie = `auth_token=${userData.access_token}; path=/`;

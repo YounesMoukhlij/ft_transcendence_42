@@ -297,6 +297,8 @@
     "saturday": "sam"
   },
   "game": {
+    "ModeSubtitle": "Sélectionnez un mode et commencez à en profiter dès maintenant",
+    "playNow": "Jouer maintenant",
     "selectMode": "Sélectionner le Mode de Jeu",
     "local": "Local",
     "ai": "IA",

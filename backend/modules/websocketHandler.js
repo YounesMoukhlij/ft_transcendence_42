@@ -24,7 +24,6 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
     socket.userId = idStr;
     users_socket.set(idStr, socket);
 
-    console.log("============> connected the new size of map " , users_socket.size);
 
     let statusMode = 1;
     try {
@@ -201,28 +200,28 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
       }
     }
 
-    // No token => expect first message to be userId
-    socket.once('message', (msg) => {
-      try {
-        const userId = parseInt(msg.toString());
-        if (isNaN(userId)) {
-          socket.close();
-          return;
-        }
+    // // No token => expect first message to be userId
+    // socket.once('message', (msg) => {
+    //   try {
+    //     const userId = parseInt(msg.toString());
+    //     if (isNaN(userId)) {
+    //       socket.close();
+    //       return;
+    //     }
 
-        const userQuery = db.prepare('SELECT id_user FROM users WHERE id_user = ?');
-        const user = userQuery.get(userId);
-        if (!user) {
-          socket.close();
-          return;
-        }
+    //     const userQuery = db.prepare('SELECT id_user FROM users WHERE id_user = ?');
+    //     const user = userQuery.get(userId);
+    //     if (!user) {
+    //       socket.close();
+    //       return;
+    //     }
 
-        afterAuth(socket, userId);
-      } catch (error) {
-        console.error('Error in WebSocket connection:', error);
-        socket.close();
-      }
-    });
+    //     afterAuth(socket, userId);
+    //   } catch (error) {
+    //     console.error('Error in WebSocket connection:', error);
+    //     socket.close();
+    //   }
+    // });
   });
 }
 

@@ -40,6 +40,7 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
     alt={userStats.username}
     fill
     className="rounded-full object-cover"
+    unoptimized
   />
             </div> 
 

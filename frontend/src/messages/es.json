@@ -296,6 +296,8 @@
     "saturday": "sáb"
   },
   "game": {
+    "playNow": "Jugar ahora",
+    "ModeSubtitle": "Selecciona un modo y empieza a disfrutar ahora",
     "selectMode": "Seleccionar Modo de Juego",
     "local": "Local",
     "ai": "IA",
