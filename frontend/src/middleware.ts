@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+// import { useUserStore } from './store/userStore.js';
 
 const PROTECTED_PATHS = [
   '/',
@@ -16,7 +17,8 @@ const PUBLIC_PATHS = ['/signIn', '/signUp']
 export function middleware(request: NextRequest) {
   const isAuthenticated = request.cookies.has('auth_token')
   const currentPath = request.nextUrl.pathname
-
+  // const [user, setUser] = useUserStore((state) => [state.user, state.setUser]);
+  
   const isPublicPath = PUBLIC_PATHS.some(path =>
     currentPath === path || currentPath.startsWith(path)
   )

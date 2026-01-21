@@ -28,18 +28,22 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // 1. Clear Zustand Store (LocalStorage)
-      // Assuming you have a logout action in your store
-      useUserStore.getState().logout();
+      try {
+        const response = await api.post('/refreshToken');
+        const { access_token } = response.data;
 
-      // 2. Clear Cookies manually (Client-side)
-      document.cookie = 'auth_token=; Max-Age=0; path=/;';
+        // Update Zustand Store with new token
+        useUserStore.getState().setUserToken(access_token);
 
-      // 3. Force Redirect to SignIn
-      // We use window.location because we are outside a React Component
-      window.location.href = '/signIn';
+        originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        useUserStore.getState().logout();
+        document.cookie = 'auth_token=; Max-Age=0; path=/;';
+        window.location.href = '/signIn';
+        return Promise.reject(refreshError);
+      }
     }
-
     return Promise.reject(error);
   }
 );

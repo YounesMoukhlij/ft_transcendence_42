@@ -68,9 +68,49 @@ export function generateToken(username, email, id_user) {
     }
 
     const payload = { username, email, id_user };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+    // for 15 minutes
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
 
     return token;
+}
+
+export function generateRefreshToken(username, email, id_user) {
+    if (!username || !email || !id_user) {
+        throw new Error("Username, email, and user ID are required to generate refresh token");
+    }
+
+    const payload = { username, email, id_user };
+    const refreshToken = jwt.sign(payload, process.env.REFRESH_JWT_SECRET, { expiresIn: '1d' });
+
+    return refreshToken;
+}
+
+
+export function verifyToken(token) {
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        return { valid: true, decoded };
+    } catch (error) {
+        return { valid: false, message: error.message };
+    }
+}
+// end point to update token if expired
+export async function refreshToken(request, reply) {
+    const { refresh_token } = request.cookies;
+    if (!refresh_token) {
+        return reply.code(401).send({ success: false, message: "No refresh token provided" });
+    }
+    try {
+        const decoded = jwt.verify(refresh_token, process.env.REFRESH_JWT_SECRET);
+        const newToken = generateToken(decoded.username, decoded.email, decoded.id_user);
+        request.server.db
+            .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
+            .run(newToken, decoded.id_user);
+        return reply.code(200).send({ success: true, token: newToken });
+    } catch (error) {
+        console.error("Error refreshing token:", error);
+        return reply.code(401).send({ success: false, message: "Invalid refresh token" });
+    }
 }
 
 

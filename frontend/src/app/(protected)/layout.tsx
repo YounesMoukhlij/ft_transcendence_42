@@ -107,12 +107,19 @@
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import ProtectedClient from "./ProtectedClient";
+import { LogOut } from "lucide-react";
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = useUserStore((state) => state.user);
+  if (!user) {
+    window.location.href = '/signIn';
+
+    return null;
+  }
  return (
     <ProtectedClient>
       {/* Outer wrapper: Full screen height */}
