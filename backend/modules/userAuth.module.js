@@ -69,12 +69,13 @@ export function generateToken(username, email, id_user) {
 
     const payload = { username, email, id_user };
     // for 15 minutes
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2m' });
 
     return token;
 }
 
 export function generateRefreshToken(username, email, id_user) {
+   try {
     if (!username || !email || !id_user) {
         throw new Error("Username, email, and user ID are required to generate refresh token");
     }
@@ -83,6 +84,10 @@ export function generateRefreshToken(username, email, id_user) {
     const refreshToken = jwt.sign(payload, process.env.REFRESH_JWT_SECRET, { expiresIn: '1d' });
 
     return refreshToken;
+    } catch (error) {
+        console.error("Error generating refresh token:", error);
+        throw error;
+    }
 }
 
 
@@ -96,12 +101,12 @@ export function verifyToken(token) {
 }
 // end point to update token if expired
 export async function refreshToken(request, reply) {
-    const { refresh_token } = request.cookies;
-    if (!refresh_token) {
+    const refreshToken = request.cookies.refresh_token;
+    if (!refreshToken) {
         return reply.code(401).send({ success: false, message: "No refresh token provided" });
     }
     try {
-        const decoded = jwt.verify(refresh_token, process.env.REFRESH_JWT_SECRET);
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_JWT_SECRET);
         const newToken = generateToken(decoded.username, decoded.email, decoded.id_user);
         request.server.db
             .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
@@ -382,6 +387,7 @@ export async function updateUserPassword(request, reply) {
                 message: "User not found" 
             });
         }
+    
 
         const isPasswordValid = await bcrypt.compare(current_password, user.password);
         
@@ -559,18 +565,34 @@ export async function login(request, reply) {
         }
         const token = generateToken(user.username, user.email, user.id_user);
         
+        // [UPDATED] Generate Refresh Token
+        const refreshToken = generateRefreshToken(user.username, user.email, user.id_user);
+
+        // // [UPDATED] Set refresh token as HTTP Only cookie
+        // // Ensures it's available for the /refreshToken endpoint later
+        // reply.setCookie('refresh_token', refreshToken, {
+        //     path: '/',            // Available for all paths
+        //     httpOnly: false,       // Not accessible via JS
+        //     secure: true,         // Send only over HTTPS
+        //     sameSite: 'lax',   // CSRF protection
+        //     maxAge: 24 * 60 * 60  // 1 day
+        // });
+
         const { password: _, twoFA_secret: __, ...userWithoutPassword } = user;
+        // set access token and refresh token in db
         request.server.db
-            .prepare("UPDATE users SET access_token = ?  WHERE id_user = ?")
-            .run(token, user.id_user);
+            .prepare("UPDATE users SET access_token = ?, refresh_token = ? WHERE id_user = ?")
+            .run(token, refreshToken, user.id_user);
         
         userWithoutPassword.access_token = token;
+        userWithoutPassword.refresh_token = refreshToken;
 
         return reply.code(200).send({ 
             success: true, 
             message: "Login successful",
             user: userWithoutPassword,
             token: token,
+            refresh_token: refreshToken
         });
 
     } catch (error) {
@@ -581,7 +603,6 @@ export async function login(request, reply) {
         });
     }
 }
-
 // added this for remote tournament
 
 export async function registerInTournament(request, reply) {

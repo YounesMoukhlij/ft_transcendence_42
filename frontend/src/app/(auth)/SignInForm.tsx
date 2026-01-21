@@ -143,6 +143,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
 
   // --- HANDLERS ---
   const handleGoogleAuth = () => {
+    alert("Redirecting to Google for authentication...")
     window.location.href = `${process.env.NEXT_PUBLIC_BACK_API}/api/auth/google`
   }
 
@@ -189,6 +190,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
         if (data.user) {
           setUser(data.user) 
           document.cookie = `auth_token=${data.user.access_token}; path=/`;
+          document.cookie = `refresh_token=${data.user.refresh_token}; path=/`;
         }
         toast.success('Login successful!')
         setUsername('')

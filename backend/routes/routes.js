@@ -22,7 +22,8 @@ import {
     me,
     registerInTournament,
     saveTournamentMatch,
-    createLocalTournament
+    createLocalTournament,
+    refreshToken
 
 } from '../modules/userAuth.module.js';
 import { getUserStats, getUserStatsbyId } from '../modules/profile.module.js';
@@ -86,6 +87,7 @@ export default async function routes(fastify, options) {
   fastify.get('/auth/42', Initiate42Auth);
   fastify.get('/GoogleAuth', GoogleAuth);
   fastify.get('/42Auth', FortyTwoAuth);
+  fastify.post('/refreshToken', refreshToken);  // to refresh access token using the refresh token stored in HttpOnly cookie
   
 
   fastify.post('/sendGameChallenge' , sendGameChallenge); // in order to send game challenge must be the user in friend list 

@@ -340,21 +340,27 @@ const ProfileSettingsPage = () => {
   }
 
   // 5. DELETE ACCOUNT (Axios)
-  const handleDeleteAccount = async () => {
+const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     try {
-     await api.post(`/api/DeleteAccount`, {
+     await api.delete(`${process.env.NEXT_PUBLIC_BACK_API}/api/DeleteAccount`, {
         headers: { Authorization: `Bearer ${user.access_token}` }
       })
-      toast.success(t('settings.accountDeletedSuccess'))
+      toast.success('Account deleted successfully!')
       setUser(null)
       setIsDeleteDialogOpen(false)
+      localStorage.clear();
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
       router.push('/signIn')
+    // window.location.href = '/signIn';
     } catch (error) {
       console.error('Account deletion error:', error)
-      const msg = error.response?.data?.message || t('settings.errors.deleteFailed')
+      const msg = error.response?.data?.message || 'An unexpected error occurred while deleting the account'
       toast.error(msg)
     } finally {
+      
       setIsDeletingAccount(false)
     }
   }

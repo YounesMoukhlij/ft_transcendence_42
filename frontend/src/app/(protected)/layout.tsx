@@ -104,10 +104,17 @@
 //     </div>
 //   );
 // }
+"use client";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import ProtectedClient from "./ProtectedClient";
-import { LogOut } from "lucide-react";
+import { useUserStore } from "@/store/userStore";
+
+const logout = () => {
+  document.cookie = 'auth_token=; Max-Age=0; path=/;';
+  useUserStore.getState().clearUser();
+  window.location.href = '/signIn';
+}
 
 export default function ProtectedLayout({
   children,
@@ -116,8 +123,7 @@ export default function ProtectedLayout({
 }) {
   const user = useUserStore((state) => state.user);
   if (!user) {
-    window.location.href = '/signIn';
-
+    logout();
     return null;
   }
  return (
