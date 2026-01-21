@@ -138,7 +138,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-center">
-         <div className="flex -ml-10 mt-5 items-center gap-4">
+         <div className="flex -ml-10 mt-25 items-center gap-4 sm:mt-5">
           <button
             className={`flex  gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition duration-300 ease-in-out ${
               page <= 0
@@ -151,8 +151,8 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
             <ChevronLeft size={20} />
           </button>
 
-          <span className="flex text-gray-400 font-mono w-12">
-            Page {page + 1}
+          <span className="flex justify-center text-gray-400 font-mono w-10">
+            {page + 1}
           </span>
 
           <button
