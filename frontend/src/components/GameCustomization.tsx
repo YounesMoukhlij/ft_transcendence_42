@@ -231,10 +231,9 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
   };
 
   return (
-    <div className='w-[100%] h-[100%]'>
-      <div className='text-white opacity-98 w-[100%] h-[100%] rounded-2xl p-6 flex flex-col relative border-2 border-white'
+    <div className='flex justify-center items-center w-full h-full bg-black'>
+      <div className='text-white opacity-98 w-[80%] h-[80%] rounded-2xl p-6 flex flex-col relative border border-gray-500 '
            style={{
-             background: 'linear-gradient(145deg, #374151, #1f2937)',
              boxShadow: `
                inset 0 1px 0 rgba(255,255,255,0.1),
                inset 0 -1px 0 rgba(0,0,0,0.3),
@@ -251,7 +250,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
         </h1>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col gap-3">
+        <div className="flex-1 flex flex-col gap-3 ">
           {/* Table Background Section */}
           <div className="flex flex-col gap-2">
             <h2 className="text-base font-semibold"
@@ -396,16 +395,16 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
                   }}>
                 {t('game.aiDifficulty')}
               </h2>
-              <div className="flex gap-3 justify-center">
+              <div className="flex gap-6 justify-center ">
                 {(['easy', 'medium', 'hard'] as const).map((difficulty) => (
                   <button
                     key={difficulty}
-                    className={`px-4 py-2 rounded-lg border-2 transition-all duration-300 font-semibold text-sm
+                    className={`px-4 py-2 rounded-lg border-2 transition-all duration-300 font-semibold text-sm w-26 hover:cursor-pointer 
                       ${aiDifficulty === difficulty ? 'scale-110' : 'hover:scale-105'}
                     `}
                     style={{
                       background: aiDifficulty === difficulty
-                        ? 'linear-gradient(135deg, #3b82f6, #1e40af)'
+                        ? ' #1e40af'
                         : 'linear-gradient(135deg, #4b5563, #374151)',
                       color: '#ffffff',
                       boxShadow: aiDifficulty === difficulty
@@ -444,16 +443,16 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
                   }}>
                 {t('game.winningScore')}
               </h2>
-              <div className="flex gap-3 justify-center">
+              <div className="flex gap-6 justify-center">
                 {([5, 10] as const).map((score) => (
                   <button
                     key={score}
-                    className={`px-4 py-2 rounded-lg border-2 transition-all duration-300 font-semibold text-sm
+                    className={`px-4 py-2 rounded-lg border-2 transition-all duration-300 font-semibold text-sm w-26 hover:cursor-pointer 
                       ${winningScore === score ? 'scale-110' : 'hover:scale-105'}
                     `}
                     style={{
                       background: winningScore === score
-                        ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                        ? '#d97706'
                         : 'linear-gradient(135deg, #4b5563, #374151)',
                       color: '#ffffff',
                       boxShadow: winningScore === score
@@ -542,25 +541,17 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
         </div>
 
         {/* Action Buttons - Fixed at bottom */}
-        <div className="flex justify-center space-x-4 pt-3 border-t border-gray-700">
+        <div className="flex justify-center space-x-4 pt-3 border-t border-gray-700 ">
           <button
             onClick={onBack}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm"
+            className="px-4 py-2 bg-gray-600  rounded-lg duration-200 inline-flex items-center gap-2 hover:text-white text-sm transition-colors border border-gray-500  hover:bg-neutral-800 hover:cursor-pointer"
           >
             {t('game.backToPlayerSetup')}
           </button>
           <button
             onClick={handleStartGame}
-            className="pb-2 cursor-pointer bg-black border-2 border-white hover:bg-white hover:text-black px-6 py-2 rounded-xl text-base font-bold transition-all duration-300 hover:scale-105"
-            style={{
-              boxShadow: `
-                inset 0 1px 0 rgba(255,255,255,0.3),
-                inset 0 -1px 0 rgba(0,0,0,0.3),
-                0 4px 8px rgba(59,130,246,0.3),
-                0 0 0 1px rgba(59,130,246,0.2)
-              `,
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-            }}
+            // center the text in button
+            className="px-10 py-2 bg-gray-600  rounded-lg duration-200 inline-flex items-center gap-2 hover:text-white text-sm transition-colors border border-gray-500  hover:bg-neutral-800 hover:cursor-pointer "
           >
             {gameState.mode === 'remote' && !isSocketConnected
               ? t('game.connecting')

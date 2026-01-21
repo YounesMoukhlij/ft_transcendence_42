@@ -14,42 +14,31 @@ export default function GamePage() {
     document.title = t('game.selectMode');
   }, [t]);
 
+  // Kept structure but unused color properties will be ignored in the render for the monochrome look
   const gameModes = [
     {
       mode: "ai",
       title: 'game.ai',
       description: 'game.playXOGameLocally',
       icon: Bot,
-      gradientFrom: "from-blue-500",
-      gradientTo: "to-indigo-600",
-      iconBg: "bg-blue-500"
     },
     {
       mode: "local",
       title: 'game.gameVsHuman',
       description: 'game.playAgainstComputer',
       icon: Users,
-      gradientFrom: "from-purple-500",
-      gradientTo: "to-pink-600",
-      iconBg: "bg-purple-500"
     },
     {
       mode: "tournament",
       title: 'game.localTournament',
       description: 'game.allPlayersSameDevice',
       icon: Trophy,
-      gradientFrom: "from-amber-500",
-      gradientTo: "to-orange-600",
-      iconBg: "bg-amber-500"
     },
     {
       mode: "remote",
       title: 'game.remoteGame',
       description: 'game.playWithFriendOnline',
       icon: Wifi,
-      gradientFrom: "from-green-500",
-      gradientTo: "to-emerald-600",
-      iconBg: "bg-green-500"
     }
   ];
 
@@ -70,10 +59,10 @@ export default function GamePage() {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 sm:p-6 lg:p-8 h-full">
+    <div className="flex flex-col justify-center items-center w-full bg-neutral-950 p-4 sm:p-6 lg:p-8  text-white">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full mb-4 sm:mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-neutral-900 border border-neutral-800 rounded-full mb-4 sm:mb-6">
             <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -82,7 +71,7 @@ export default function GamePage() {
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-3">
             {t('game.selectMode')}
           </h1>
-          <p className="text-slate-400 text-sm sm:text-base">
+          <p className="text-neutral-400 text-sm sm:text-base">
             {t('game.ModeSubtitle')}
           </p>
         </div>
@@ -94,11 +83,11 @@ export default function GamePage() {
               <div
                 key={index}
                 onClick={() => handleClick(mode.mode)}
-                className="relative group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-slate-600 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/10"
+                className="relative group cursor-pointer bg-neutral-900 border border-neutral-800 hover:border-white rounded-xl p-6 sm:p-8 transition-all duration-300"
               >
                 <div className="flex justify-center mb-4">
-                  <div className={`inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br ${mode.gradientFrom} ${mode.gradientTo} rounded-full shadow-lg`}>
-                    <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-neutral-950 border border-neutral-800 rounded-full group-hover:bg-white group-hover:text-black transition-colors duration-300">
+                    <Icon className="w-8 h-8 sm:w-10 sm:h-10" />
                   </div>
                 </div>
 
@@ -106,19 +95,17 @@ export default function GamePage() {
                   <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
                     {t(mode.title)}
                   </h2>
-                  <p className="text-slate-400 text-xs sm:text-sm mb-4">
+                  <p className="text-neutral-400 text-xs sm:text-sm mb-6">
                     {t(mode.description)}
                   </p>
                   
-                  <button className={`inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${mode.gradientFrom} ${mode.gradientTo} text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity`}>
+                  <button className="inline-flex items-center gap-2 px-6 py-2 bg-white text-black text-sm font-bold rounded hover:bg-neutral-200 transition-colors">
                     {t('game.playNow')}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
                 </div>
-
-                <div className={`absolute inset-0 bg-gradient-to-br ${mode.gradientFrom} ${mode.gradientTo} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-300`}></div>
               </div>
             );
           })}
@@ -128,7 +115,7 @@ export default function GamePage() {
         <div className="text-center">
           <button 
             onClick={() => router.back()}
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors"
+            className="inline-flex items-center gap-2 text-neutral-500 hover:text-white text-sm transition-colors hover:cursor-pointer border raduis px-4 py-2 hover:bg-neutral-800"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

@@ -31,7 +31,10 @@ api.interceptors.response.use(
 
       try {
 
-       const response = await api.post('/api/refreshToken');
+       const response = await fetch(`${API_URL}/api/refreshtoken`, {
+          method: 'POST',
+          credentials: 'include'
+        });
       // No additional code needed here
         alert("Token refreshed successfully");
         // [COMMENT] Backend now updated to return { access_token: "..." }

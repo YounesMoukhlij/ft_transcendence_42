@@ -69,7 +69,7 @@ export function generateToken(username, email, id_user) {
 
     const payload = { username, email, id_user };
     // for 15 minutes
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2m' });
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30m' });
 
     return token;
 }
@@ -101,6 +101,10 @@ export function verifyToken(token) {
 }
 // end point to update token if expired
 export async function refreshToken(request, reply) {
+    console.log("Refresh token endpoint called");
+    console.log("Cookies received:", request.cookies);
+    console.log("Refresh token from cookies:", request.cookies.refresh_token);
+    return ;
     const refreshToken = request.cookies.refresh_token;
     if (!refreshToken) {
         return reply.code(401).send({ success: false, message: "No refresh token provided" });

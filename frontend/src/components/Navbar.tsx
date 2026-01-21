@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { IoSearchOutline, IoNotificationsOutline, IoPersonCircleOutline, IoMenuOutline, IoCloseOutline, IoLogOutOutline } from 'react-icons/io5';
+import { IoSearchOutline, IoNotificationsOutline, IoPersonCircleOutline, IoMenuOutline, IoCloseOutline, IoLogOutOutline, IoTrophyOutline } from 'react-icons/io5';
 import { IoGameControllerOutline, IoChatbubbleOutline, IoPersonOutline, IoSettingsOutline } from "react-icons/io5";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,7 @@ import { getProfileImageUrl } from '@/lib/utils';
 import { getWebSocket } from './globalSocket';
 import { useGameContext } from './GameContext';
 import { useTranslation } from '../contexts/LanguageContext';
+import path from 'path';
 
 interface SearchResult {
   id_user: number;
@@ -745,10 +746,12 @@ export default function Navbar() {
   }, [user]);
 
   const sidebarItems = [
-    { path: '/game', icon: <IoGameControllerOutline className="text-xl" />, alt: 'Game' },
-    { path: '/chat', icon: <IoChatbubbleOutline className="text-xl" />, alt: 'Chat' },
     { path: '/profile', icon: <IoPersonOutline className="text-xl" />, alt: 'Profile' },
+    { path: '/chat', icon: <IoChatbubbleOutline className="text-xl" />, alt: 'Chat' },
+    { path: '/game', icon: <IoGameControllerOutline className="text-xl" />, alt: 'Game' },
+    { path: '/leaderboard', icon: <IoTrophyOutline className="text-xl" />, alt: 'Leaderboard' },
     { path: '/settings', icon: <IoSettingsOutline className="text-xl" />, alt: 'Settings' },
+
   ];
     const handleLogout = () => {
     localStorage.clear();
@@ -797,7 +800,7 @@ export default function Navbar() {
 
             {/* Mobile Hamburger */}
             <div className="relative" ref={hamburgerRef}>
-              <button onClick={toggleMobileMenu} className="p-2 text-white hover:bg-gray-800 rounded-full transition-colors">
+              <button onClick={toggleMobileMenu} className="p-2 text-white hover:bg-gray-800 rounded-full transition-colors hover:cursor-pointer">
                 {mobileMenuOpen ? <IoCloseOutline className="w-7 h-7" /> : <IoMenuOutline className="w-7 h-7" />}
               </button>
 
@@ -816,7 +819,7 @@ export default function Navbar() {
                     ))}
                   </div>
                   <div className="h-px bg-gray-800 w-full"></div>
-                  <div className="flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                  <div className="flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-red-500/50 hover:text-white transition-colors cursor-pointer"
                     onClick={handleLogout}
                   >
                     <IoLogOutOutline className="text-xl" />
