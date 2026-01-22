@@ -64,7 +64,7 @@ export function PerformanceChart({username }: PerformanceChartProps) {
 
 
   return (
-    <Card>
+    <Card className="bg-card/60 border-gray-800">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

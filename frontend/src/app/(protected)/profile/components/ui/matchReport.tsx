@@ -36,7 +36,7 @@ export function MatchStats({duration, totalTouches, pointsPerSecond, maxSpeed} :
           {/* Ball Max Speed Card */}
           <div className=" border rounded-2xl p-6 text-center relative overflow-hidden">
             <p className="text-6xl text-primary font-extrabold leading-none">
-              {_maxSpeed}
+              {_maxSpeed || 0} 
               <span className="text-xl font-normal ml-1">km/h</span>
             </p>
             <p className="text-gray-300 font-light text-sm mt-1">
@@ -54,7 +54,7 @@ export function MatchStats({duration, totalTouches, pointsPerSecond, maxSpeed} :
           </div>
           <div className=" border border-gray-700 rounded-xl px-6 py-4 text-center shadow-md">
             <p className="text-lg font-semibold">{pointsPerSecond}</p>
-            <p className="text-xs text-gray-400">{t('profile.pointsPerSecond')}</p>
+            <p className="text-xs text-gray-400">{t('profile.secondsPerPoint')}</p>
           </div>
         </div>
       </div>

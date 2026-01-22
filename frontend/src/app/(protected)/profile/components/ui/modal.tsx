@@ -54,17 +54,17 @@ export function GameModalDemo({game, onClose} : GameModalProps)
 
   const {t} = useTranslation(); 
 
-  const hostScore : number = game.hostScore;
-  const hostTouches : number = game.hostTouches;
-  const hostStreak : number = game.hostMaxStreak;
-  const hostLeading: number = game.hostLeadingTime;
+  const hostScore : number = Number(game.hostScore);
+  const hostTouches : number = Number(game.hostTouches);
+  const hostStreak : number = Number(game.hostMaxStreak);
+  const hostLeading: number = Number(game.hostLeadingTime);
   
   
   
-  const guestScore : number = game.guestScore;
-  const guestTouches : number = game.guestTouches;
-  const guestStreak : number = game.guestMaxStreak;
-  const guestLeading: number = game.guestLeadingTime;
+  const guestScore : number = Number(game.guestScore);
+  const guestTouches : number = Number(game.guestTouches);
+  const guestStreak : number = Number(game.guestMaxStreak);
+  const guestLeading: number = Number(game.guestLeadingTime);
 
   const hostImg = getProfileImageUrl(game.hostImg);
   const guestImg = getProfileImageUrl(game.guestImg);

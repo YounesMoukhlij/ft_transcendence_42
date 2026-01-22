@@ -25,9 +25,7 @@ interface ProfileProps {
 
 export  function Profile({user} : ProfileProps)  {
 
-const [overviewV, setOverviewV] = useState(true);
 // const [matchHistoryV, setMatchHistoryV] = useState(false);
-const [AnalyticsV, setAnalyticsV] = useState(false);
 const [activeTab, setActiveTab] = useState("overview");
 const {friends} = useUserStore();
 const {t} = useTranslation();
@@ -90,30 +88,27 @@ console.log("avatar is : ====>", userStats.avatar);
           <TabsList className="grid w-full grid-cols-3 bg-card/50 backdrop-blur-sm border border-border/50 ">
             <TabsTrigger
               value="overview"
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer"
-              onClick={() => {setOverviewV(true); setAnalyticsV(false);}}
+              className="flex items-center gap-2 data-[state=active]:bg-slate-800 data-[state=active]:text-primary-foreground cursor-pointer"
             >
               <BarChart3 className="w-4 h-4" />
               {t('profile.overview')}
             </TabsTrigger>
             <TabsTrigger
               value="matches"
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer"
-              onClick={() => {setOverviewV(false);  setAnalyticsV(false); }}
+              className="flex items-center gap-2 data-[state=active]:bg-slate-800 data-[state=active]:text-primary-foreground cursor-pointer"
             >
               <Calendar className="w-4 h-4" />
               {t('profile.matchHistory')}
             </TabsTrigger>
             <TabsTrigger
               value="performance"
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer"
-              onClick={() => {setOverviewV(false);  setAnalyticsV(true);}}
+              className="flex items-center gap-2 data-[state=active]:bg-slate-800 data-[state=active]:text-primary-foreground cursor-pointer"
             >
               <TrendingUp className="w-4 h-4" />
               {t('profile.analytics')}
             </TabsTrigger>
           </TabsList>
-          <TabsContent data-showo={overviewV} value="overview" className="space-y-6 transition-all duration-300 opacity-0 scale-95  data-[showo=true]:opacity-100 data-[showo=true]:scale-100">
+          <TabsContent  value="overview" className="space-y-6 transition-all duration-300">
             <StatsOverview userStats={userStats} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -155,8 +150,10 @@ console.log("avatar is : ====>", userStats.avatar);
 
               <Card className="bg-card/60 backdrop-blur-sm border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-sm font-medium text-card-foreground">{t('profile.avgScore')}</CardTitle>
-                  <Award className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="flex flex-row items-center justify-between space-y-0 pb-2 text-sm font-medium text-card-foreground">
+                    {t('profile.avgScore')}
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-card-foreground">{userStats?.averageScore?.toFixed(2)}</div>
@@ -210,11 +207,11 @@ console.log("avatar is : ====>", userStats.avatar);
             </Card>
           </TabsContent>
 
-          <TabsContent data-show={activeTab == "matches" ? true : false} value="matches" className="space-y-6 transition-all duration-800 data-[show=false]:opacity-0 data-[show=true]:opacity-100">
+          <TabsContent  value="matches" className="space-y-6 transition-all duration-800">
             <MatchHistoryTable username={userStats.username}/>
           </TabsContent>
 
-          <TabsContent data-show={AnalyticsV} value="performance" className="space-y-6 transition-all duration-300 opacity-0 scale-95  data-[show=true]:opacity-100 data-[show=true]:scale-100">
+          <TabsContent value="performance" className="space-y-6 transition-all duration-300">
             <PerformanceChart username={userStats.username}/>
           </TabsContent>
         </Tabs>

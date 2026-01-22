@@ -41,7 +41,8 @@ const useCountUp = (endValue: number, duration: number = 2000) => {
 
 const formatDuration = (time : number) =>
 {
-
+  if (time === 0)
+    return ("0s");
   const minutes = Math.floor(time / 60);
   const seconds = time % 60;
   let duration : string = "";

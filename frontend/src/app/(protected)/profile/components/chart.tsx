@@ -90,7 +90,7 @@ export function IllustrationChart({ data }: ChartProps) {
         <svg 
           width={width} 
           height={height} 
-          className="bg-[#0f172a] rounded-lg"
+          className="bg-card/50 rounded-lg"
           style={{
             transition: 'width 0.5s ease'
           }}

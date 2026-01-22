@@ -133,7 +133,7 @@ export function IllustrationGraph({ data }: ChartProps) {
       <svg
         width={width}
         height={height}
-        className="bg-slate-900 rounded-xl shadow-md transition-all"
+        className="bg-card/50 rounded-xl shadow-md transition-all"
         style={{
             transition: 'width 0.5s ease'
         }}

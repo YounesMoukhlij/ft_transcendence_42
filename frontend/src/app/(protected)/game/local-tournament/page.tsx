@@ -406,7 +406,7 @@ export default function LocalTournamentPage() {
         return (
           <div className="w-full max-w-4xl mx-auto h-full  rounded-3xl shadow-2xl   p-8 flex flex-col items-center justify-center">
             <div className="text-center mb-8">
-              <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300 mb-4">
+              <h1 className="text-5xl font-bold text-white bg-clip-text mb-4">
                 {t('game.localTournament')}
               </h1>
               <p className="text-gray-300 text-lg">
@@ -414,7 +414,7 @@ export default function LocalTournamentPage() {
               </p>
             </div>
             <div className="space-y-6 w-full max-w-md">
-              <div className="bg-gray-800 rounded-xl p-6 border-2 border-blue-400">
+              <div className="bg-[#1a1f2e]/40 rounded-xl p-6 border-2 border-gray-800">
                 <div className="text-center mb-4">
                   <h2 className="text-2xl font-semibold text-white mb-2">
                     {t('game.playersLabel')}
@@ -445,7 +445,7 @@ export default function LocalTournamentPage() {
                       }
                     }}
                     placeholder={t('game.enterTournamentName') || 'Enter tournament name...'}
-                    className={`w-full px-4 py-3 bg-gray-700 border-2 ${
+                    className={`w-full px-4 py-3 bg-[#1a1f2e]/60 border-2 ${
                       tournamentNameError ? 'border-red-500' : 'border-gray-600 focus:border-blue-500'
                     } rounded-lg text-white placeholder-gray-400 focus:outline-none transition-colors`}
                     maxLength={20}
@@ -463,7 +463,7 @@ export default function LocalTournamentPage() {
                   disabled={!tournamentName.trim()}
                   className={`w-full px-8 py-4 text-white rounded-xl text-xl font-semibold transition-all duration-300 transform shadow-lg ${
                     tournamentName.trim()
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105'
+                      ? 'bg-blue-500/60 cursor-pointer  hover:scale-102'
                       : 'bg-gray-600 cursor-not-allowed opacity-50'
                   }`}
                 >

@@ -243,7 +243,7 @@ const handleCancelFriendRequest = async () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Player Profile Card */}
-      <Card className="lg:col-span-1">
+      <Card className="lg:col-span-1 bg-card/40 border-gray-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
@@ -295,7 +295,7 @@ const handleCancelFriendRequest = async () => {
              <Button 
              variant="default" 
              className="mt-2"
-             onClick={() => router.push(`/chat?friend=${userStats.id}`)} // http://localhost:3000/chat?friend=5
+             onClick={() => router.push(`/chat?friend=${userStats.id}`)}
              >
               {t('profile.message')}
             </Button>
@@ -307,7 +307,7 @@ const handleCancelFriendRequest = async () => {
       </Card>
 
       {/* Performance Summary */}
-      <Card className="lg:col-span-2">
+      <Card className="lg:col-span-2 bg-card/50  border-gray-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />

@@ -106,7 +106,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-sm border-border">
+    <Card className="bg-card/20  border-gray-800">
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -125,7 +125,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
               placeholder={t('leagues.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-input border-border text-foreground"
+              className="pl-10  bg-card/20 border-border text-foreground"
             />
           </div>
         </div>
@@ -133,12 +133,12 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
         <div className="rounded-lg border border-border my_league_table">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/20 hover:bg-muted/30 p-10">
+              <TableRow className="bg-muted/10 p-10 rounded-lg">
                 <TableHead className="text-muted-foreground font-semibold ">
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("name")}
-                    className="h-auto p-0 font-semibold text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 font-semibold text-muted-foreground hover:bg-muted/20"
                   >
                     {t('leagues.playerName')} {getSortIcon("name")}
                   </Button>
@@ -147,7 +147,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("gamesPlayed")}
-                    className="h-auto p-0 font-semibold text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 font-semibold text-muted-foreground hover:bg-muted/20"
                   >
                     {t('leagues.games')} {getSortIcon("gamesPlayed")}
                   </Button>
@@ -156,7 +156,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("wins")}
-                    className="h-auto p-0 font-semibold text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 font-semibold text-muted-foreground hover:bg-muted/20"
                   >
                     {t('leagues.wins')} {getSortIcon("wins")}
                   </Button>
@@ -165,7 +165,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("losses")}
-                    className="h-auto p-0 font-semibold text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 font-semibold text-muted-foreground hover:bg-muted/20"
                   >
                     {t('leagues.losses')} {getSortIcon("losses")}
                   </Button>
@@ -174,7 +174,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("pointsScored")}
-                    className="h-auto p-0 font-semibold text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 font-semibold text-muted-foreground hover:bg-muted/20"
                   >
                     {t('leagues.pointsScored')} {getSortIcon("pointsScored")}
                   </Button>
@@ -183,7 +183,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("pointsConceded")}
-                    className="h-auto p-0 font-semibold text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 font-semibold text-muted-foreground hover:bg-muted/20"
                   >
                     {t('leagues.pointsConceded')} {getSortIcon("pointsConceded")}
                   </Button>
@@ -192,7 +192,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("difference")}
-                    className="h-auto p-0 font-semibold text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 font-semibold text-muted-foreground hover:bg-muted/20"
                   >
                     {t('leagues.difference')} {getSortIcon("difference")}
                   </Button>
@@ -201,7 +201,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("experience")}
-                    className="h-auto p-0 font-semibold text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 font-semibold text-muted-foreground hover:bg-muted/20"
                   >
                     {t('leagues.exp')} {getSortIcon("experience")}
                   </Button>

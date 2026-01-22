@@ -294,7 +294,9 @@
     "friday": "vie",
     "saturday": "sáb",
     "pointsPerSecond": "Puntos por segundo",
-    "totalTouches": "Toques totales"
+    "totalTouches": "Toques totales",
+    "secondsPerPoint": "Segundos por punto"
+
   },
   "game": {
     "playNow": "Jugar ahora",
@@ -548,7 +550,12 @@
     "controls": "Controles",
     "useWASDOrArrows": "Usa WASD o las flechas para moverte",
     "firstTo10PointsWins": "El primero en llegar a 10 puntos gana",
-    "viewResults": "Ver resultados"
+    "viewResults": "Ver resultados",
+    "selectFriend": "Seleccionar amigo",
+    "challengeFriends": "Desafía a tus amigos a una partida y demuéstrales quién es el mejor",
+    "startMatching": "Iniciar emparejamiento",
+    "matchWithRandom": "Juega contra un jugador aleatorio en línea y empieza a jugar al instante",
+    "playRandomOrFriend": "Juega contra un oponente aleatorio o desafía a un amigo a una partida épica"
     
   }
 }

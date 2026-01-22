@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { TournamentMatch } from './GameContext';
 import { FaTrophy, FaGamepad, FaCheck, FaClock } from 'react-icons/fa';
 import { useTranslation } from '@/contexts/LanguageContext';
+import {getProfileImageUrl} from '@/lib/utils'
 
 interface LocalTournamentBracketProps {
   bracket: TournamentMatch[];
@@ -50,14 +51,14 @@ export default function LocalTournamentBracket({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto h-full bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 rounded-3xl shadow-2xl border-2 border-blue-500 p-6 overflow-auto">
+    <div className="w-full max-w-7xl mx-auto rounded-3xl shadow-2xl border-2 border-gray-800 p-6 overflow-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300">
+        <h1 className="text-4xl font-bold text-white bg-clip-text">
           {t('game.tournamentBracket')}
         </h1>
         <button
           onClick={onBack}
-          className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all"
+          className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all cursor-pointer"
         >
           {t('common.back')}
         </button>
@@ -71,10 +72,9 @@ export default function LocalTournamentBracket({
           return (
             <div key={round} className="flex-1 min-w-[280px]">
               <div className="text-center mb-4">
-                <h2 className="text-2xl font-bold text-blue-300 mb-2">
+                <h2 className="text-2xl font-bold  mb-2">
                   {getRoundName(round, totalRounds)}
                 </h2>
-                <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
               </div>
 
               <div className="space-y-4">
@@ -86,11 +86,9 @@ export default function LocalTournamentBracket({
                   return (
                     <div
                       key={match.id}
-                      className={`bg-gray-800 rounded-xl p-4 border-2 transition-all duration-300 ${
+                      className={`bg-[#1a1f2e]/40 rounded-xl p-4 border transition-all duration-300 ${
                         isCurrentMatch
                           ? 'border-blue-500 shadow-lg shadow-blue-500/50 scale-105'
-                          : isReady
-                          ? 'border-yellow-500'
                           : isFinished
                           ? 'border-green-500'
                           : 'border-gray-600'
@@ -107,19 +105,20 @@ export default function LocalTournamentBracket({
                       <div
                         className={`mb-2 p-3 rounded-lg transition-all ${
                           match.winner?.id === match.player1?.id
-                            ? 'bg-green-900 border-2 border-green-500'
+                            ? 'bg-[#1a1f2e]/60 border border-yellow-100/20'
                             : isFinished && match.winner?.id !== match.player1?.id
-                            ? 'bg-gray-700 opacity-50'
-                            : 'bg-gray-700'
+                            ? 'bg-[#1a1f2e]/60 opacity-50'
+                            : 'bg-[#1a1f2e]/60'
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <Image
-                            src={match.player1?.avatar || '/default-avatar.png'}
+                            src={getProfileImageUrl(match.player1?.avatar) || '/default-avatar.png'}
                             alt={match.player1?.name || t('game.player1')}
                             width={40}
                             height={40}
                             className="w-10 h-10 rounded-full border-2 border-blue-400"
+                            unoptimized
                           />
                           <span className="text-white font-semibold flex-1">
                             {match.player1?.name || t('game.waiting')}
@@ -137,19 +136,20 @@ export default function LocalTournamentBracket({
                       <div
                         className={`p-3 rounded-lg transition-all ${
                           match.winner?.id === match.player2?.id
-                            ? 'bg-green-900 border-2 border-green-500'
+                            ? 'bg-[#1a1f2e]/50 border border-yellow-100/20'
                             : isFinished && match.winner?.id !== match.player2?.id
-                            ? 'bg-gray-700 opacity-50'
-                            : 'bg-gray-700'
+                            ? 'bg-[#1a1f2e]/50 opacity-50'
+                            : 'bg-[#1a1f2e]/50'
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <Image
-                            src={match.player2?.avatar || '/default-avatar.png'}
+                            src={getProfileImageUrl(match.player2?.avatar) || '/default-avatar.png'}
                             alt={match.player2?.name || t('game.player2')}
                             width={40}
                             height={40}
                             className="w-10 h-10 rounded-full border-2 border-blue-400"
+                            unoptimized
                           />
                           <span className="text-white font-semibold flex-1">
                             {match.player2?.name || t('game.waiting')}
@@ -164,7 +164,7 @@ export default function LocalTournamentBracket({
                       {isCurrentMatch && isReady && !isFinished && (
                         <button
                           onClick={onStartMatch}
-                          className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+                          className="w-full mt-4 px-4 py-3 bg-blue-500/50 text-white rounded-lg font-semibold transition-all transform hover:scale-101 flex items-center cursor-pointer justify-center gap-2"
                         >
                           <FaGamepad />
                           {t('game.startMatch')}
@@ -182,7 +182,7 @@ export default function LocalTournamentBracket({
       {/* Current Match Highlight */}
       {currentMatch && (
         <div className="mt-8 text-center">
-          <div className="inline-block bg-blue-900 bg-opacity-50 rounded-xl p-4 border-2 border-blue-500">
+          <div className="inline-block bg-blue-200 bg-opacity-50 rounded-xl p-4 border border-gray-800">
             <p className="text-blue-300 text-lg font-semibold">
               {t('game.currentMatch')}: {getRoundName(currentMatch.round, totalRounds)}
             </p>

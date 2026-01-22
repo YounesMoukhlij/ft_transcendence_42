@@ -294,7 +294,8 @@
     "friday": "fri",
     "saturday": "sat",
     "pointsPerSecond": "Points Per Second",
-    "totalTouches": "Total Touches"
+    "totalTouches": "Total Touches",
+    "secondsPerPoint": "Seconds per point"
   },
   "game": {
     "ModeSubtitle": "select mode and start enjoy now",
@@ -615,7 +616,12 @@
     "winningScore": "Winning Score",
     "tournamentNameMinLength": "Tournament name must be at least 3 characters",
     "tournamentNameMaxLength": "Tournament name must be less than 20 characters",
-    "tournamentNameInvalidChars": "Tournament name can only contain letters, numbers, spaces, hyphens, and underscores"
+    "tournamentNameInvalidChars": "Tournament name can only contain letters, numbers, spaces, hyphens, and underscores",
+    "selectFriend": "Select Friend",
+    "challengeFriends": "Challenge your friends to a match and show them who is the best",
+    "startMatching": "Start Matching",
+    "matchWithRandom": "Match with a random player online and start playing instantly",
+    "playRandomOrFriend": "Play against a random opponent or challenge a friend to an epic match"
   }
 }
 

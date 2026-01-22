@@ -1552,14 +1552,14 @@ class GameManager {
       const stmt = this.db.prepare(`
         INSERT INTO game_history (
           user_win, user_lose, win_score, lose_score,
-          type, tournament_id, game_date, duration,
+          type, tournament_id, duration,
           total_touches, points_per_second, ball_max_speed,
           touches_win, touches_lose,
           max_points_streak_win, max_points_streak_lose,
           max_leading_time_win, max_leading_time_lose,
           blockchain_hash
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const player1Score = room.gameState.player1.score;
@@ -1630,7 +1630,6 @@ class GameManager {
         loseScore,
         gameType, // 'tournament' for tournament matches, 'casual' for regular games
         tournamentDbId, // tournament_id (NULL for casual games, database ID for tournament matches)
-        new Date().toISOString(),
         duration,
         totalTouches || 0, // total_touches
         pointsPerSecond || 0, // points_per_second

@@ -2,7 +2,7 @@
 
 
 
-// in game 
+
 
 // NEED to check translation in the whole project, and check for responsivity
 
@@ -14,22 +14,18 @@
 
 
 
-// I am testing game now, socket dyal lgame kadeconecta 
-
-// check how date is saved in 1vs1 and make it like local tournament
-
-
-
-
 // Tsswira fel game ou partie dyal youness kamla
 // design fyal lgame ou dyal youness partie 
 // tsswria ta f search 
 
 
 
-
 // ayoub 
-khde, 3la game details card, backend data, ou ta l front responsive 
+card khass ghi it9ad text 
+CHECK ball speed sometimes it comes NULL, and I have to make it 0
+date format f 1vs1
+Les images kamlin mazal madert 3lihoum
+
 
 
 

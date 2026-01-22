@@ -55,6 +55,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
           setHasMore(false);   
           setMatchHistory(res.data);
         }
+        console.log("Fetched matches", res.data);
       } catch (err) {
         console.error(err);
       }
@@ -63,7 +64,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
   }, [targetUsername, currentUser, page]);
 
   return (
-    <Card>
+    <Card className="bg-card/50 border-gray-800" >
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

@@ -139,7 +139,7 @@ export default function LocalTournamentPlayerRegistration({
   return (
     <div key={`registration-${updateCounter}`} className="w-full max-w-6xl mx-auto h-full   rounded-3xl shadow-2xl  p-6 overflow-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300">
+        <h2 className="text-3xl font-bold text-white bg-clip-text ">
           {t('game.registerPlayers')}
         </h2>
         <div className="flex gap-3">
@@ -175,8 +175,8 @@ export default function LocalTournamentPlayerRegistration({
                 index === 0
                   ? 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-2 border-yellow-400'
                   : player.name.trim() !== ''
-                  ? 'bg-gradient-to-r from-gray-800 to-gray-900 border-2 border-green-400'
-                  : 'bg-gradient-to-r from-gray-800 to-gray-900 border-2 border-gray-600'
+                  ? 'bg-[#1a1f2e]/30 border-2 border-green-400'
+                  : 'bg-[#1a1f2e]/30 border-2 border-gray-800'
               }`}
             >
               <div className="flex items-center gap-4">
@@ -229,7 +229,7 @@ export default function LocalTournamentPlayerRegistration({
       {/* Add User Modal */}
       {showAddUserModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-3xl p-6 border-2 border-blue-500 max-w-md w-full">
+          <div className="bg-[#1a1f2e]/40 rounded-3xl p-6 border-2 border-gray-800 max-w-md w-full">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-white">{t('game.addUser')}</h3>
               <button
@@ -265,7 +265,7 @@ export default function LocalTournamentPlayerRegistration({
                   }}
                   placeholder={t('game.enterUsername')}
                   disabled={isLoading}
-                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-[#1a1f2e]/60 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                 />
               </div>
 
@@ -282,7 +282,7 @@ export default function LocalTournamentPlayerRegistration({
                   }}
                   placeholder={t('game.enterPassword')}
                   disabled={isLoading}
-                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-[#1a1f2e]/60 border-2 border-gray-600 text-white rounded-xl focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                 />
               </div>
 
@@ -306,7 +306,7 @@ export default function LocalTournamentPlayerRegistration({
                 disabled={!newPlayerUsername.trim() || !newPlayerPassword.trim() || isLoading}
                 className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
                   newPlayerUsername.trim() && newPlayerPassword.trim() && !isLoading
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                    ? 'bg-blue-500/60 cursor-pointer  hover:scale-102 text-white'
                     : 'bg-gray-700 text-gray-400 cursor-not-allowed'
                 }`}
               >
@@ -329,21 +329,19 @@ export default function LocalTournamentPlayerRegistration({
         <button
           onClick={onComplete}
           disabled={!allPlayersReady}
-          className={`px-16 py-5 rounded-2xl text-xl font-bold transition-all transform shadow-2xl ${
+          className={`px-16 py-5 rounded-2xl text-xl font-bold transition-all transform shadow-2xl border border-gray-800 ${
             allPlayersReady
-              ? 'bg-white border-2 border-white hover:from-emerald-600 hover:via-blue-600 hover:to-purple-700 text-black hover:scale-105 animate-pulse'
-              : 'bg-white-100 text-gray-400 cursor-not-allowed border-2 border-white'
+              ? 'bg-blue-500/60 cursor-pointer hover:scale-105 '
+              : 'cursor-not-allowed border-2 '
           }`}
         >
           <div className="flex items-center gap-3">
             {allPlayersReady ? (
               <>
                 <span>{t('common.continue')}</span>
-                <span>✨</span>
               </>
             ) : (
               <>
-                <span>⏳</span>
                 <span> {t('game.need')} {4 - tempPlayers.filter(p => p.name.trim() !== '').length} {t('game.morePlayers')} </span>
               </>
             )}

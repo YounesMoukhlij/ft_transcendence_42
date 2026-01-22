@@ -360,11 +360,11 @@ export default function InviteFriendPage() {
           </div>
         )}
 
-        <div className="bg-gray-800 rounded-lg p-6 mb-6">
+        <div className="bg-[#1a1f2e]/40 rounded-lg p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">{t('game.yourFriends')}</h2>
 
           {friendsList.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-center py-8 ">
               <p className="text-gray-400 text-lg mb-2">{t('game.noFriendsFound')}</p>
               <p className="text-gray-500 text-sm">{t('game.addFriendsToInvite')}</p>
             </div>
@@ -380,7 +380,7 @@ export default function InviteFriendPage() {
                 return (
                   <div
                     key={friend.id_user}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+                    className={`flex items-center justify-between p-4 rounded-lg border border-gray-800 transition-all bg-gray-950/40 ${
                       isSending
                         ? 'bg-gray-700 border-gray-600 opacity-60 cursor-not-allowed'
                         : !isOnline
@@ -437,7 +437,7 @@ export default function InviteFriendPage() {
                       )}
                       <button
                         disabled={!canInvite && !wasSent}
-                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                        className={`px-4 py-2 rounded-lg font-semibold transition-colors cursor-pointer ${
                           isSending
                             ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
                             : !isOnline
@@ -479,13 +479,13 @@ export default function InviteFriendPage() {
         <div className="flex justify-center gap-4">
           <button
             onClick={() => router.back()}
-            className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors font-semibold"
+            className="px-6 py-3 bg-[#1a1f2e]/90 text-white rounded-lg hover:bg-gray-600 transition-colors cursor-pointer font-semibold"
           >
             {t('game.back')}
           </button>
           <button
             onClick={() => router.push('/game')}
-            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-semibold"
+            className="px-6 py-3 bg-[#1a1f2f]/90 text-white rounded-lg hover:bg-gray-500 transition-colors cursor-pointer font-semibold"
           >
             {t('game.gameMenu')}
           </button>

@@ -295,7 +295,9 @@
     "friday": "ven",
     "saturday": "sam",
     "pointsPerSecond": "Points par seconde",
-    "totalTouches": "Touches totales"
+    "totalTouches": "Touches totales",
+    "secondsPerPoint": "Secondes par point"
+
 
   },
   "game": {
@@ -550,7 +552,12 @@
     "controls": "Commandes",
     "useWASDOrArrows": "Utilisez les touches WASD ou les flèches pour vous déplacer",
     "firstTo10PointsWins": "Le premier à atteindre 10 points gagne",
-    "viewResults": "Voir les résultats"
+    "viewResults": "Voir les résultats",
+    "selectFriend": "Sélectionner un ami",
+    "challengeFriends": "Défiez vos amis dans un match et montrez-leur qui est le meilleur",
+    "startMatching": "Commencer le matchmaking",
+    "matchWithRandom": "Affrontez un joueur aléatoire en ligne et commencez à jouer instantanément",
+    "playRandomOrFriend": "Affrontez un adversaire aléatoire ou défiez un ami dans un match épique"
   
 
 
