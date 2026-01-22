@@ -292,8 +292,10 @@ export function handleGameMessage(socket, userId, message, gameManager, db, user
 
     case 'leaveRoom': {
       const roomCode = message.payload?.roomCode;
+      const isBack = message.payload?.back;
+
       if (roomCode) {
-        gameManager.removePlayer(roomCode, userId);
+        gameManager.removePlayer(roomCode, userId, isBack);
       } else {
       }
       break;

@@ -1,14 +1,13 @@
 import axios from 'axios';
-import { useUserStore } from '../store/userStore'; // Adjust path to your store
+import { useUserStore } from '../store/userStore';
 
-const API_URL = process.env.NEXT_PUBLIC_BACK_API; // Your backend URL
 
 const api = axios.create({
-  baseURL: API_URL,
-  withCredentials: true, // Important for cookies
+  baseURL: process.env.NEXT_PUBLIC_BACK_API,
+  withCredentials: true, // Include cookies in requests
 });
 
-// Request Interceptor: Attach token if needed (optional if using cookies only)
+
 api.interceptors.request.use((config) => {
   const user = useUserStore.getState().user;
   if (user?.access_token) {
@@ -27,19 +26,38 @@ api.interceptors.response.use(
     // Check if error is 401 (Unauthorized) and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+    
 
-      // 1. Clear Zustand Store (LocalStorage)
-      // Assuming you have a logout action in your store
-      useUserStore.getState().logout();
+      try {
+        // Attempt to refresh the token
+        console.log('before refresh');
+        const response = await axios.post('/api/refreshToken');
+        // const { access_token } = response.data.
+        if (!response.data.success || !response.data.token) {
+          throw new Error('Refresh token failed');
+      
+        }
+        console.log('Token refreshed successfully', response.data.token);
+        
+        const token = response.data.token;
+        document.cookie = `auth_token=${token}; path=/; max-age=900`;
 
-      // 2. Clear Cookies manually (Client-side)
-      document.cookie = 'auth_token=; Max-Age=0; path=/;';
+        useUserStore.getState().setAccessToken(token);
 
-      // 3. Force Redirect to SignIn
-      // We use window.location because we are outside a React Component
-      window.location.href = '/signIn';
+        console.log('after', response.data.token);
+
+
+        // Retry the original request with the new token
+        originalRequest.headers['Authorization'] = `Bearer ${token}`;
+
+       return api(originalRequest);
+      } catch (refreshError) {
+        // useUserStore.getState().logout();
+        // document.cookie = 'auth_token=; Max-Age=0; path=/;';
+        // window.location.href = '/signIn';
+        return Promise.reject(refreshError);
+      }
     }
-
     return Promise.reject(error);
   }
 );

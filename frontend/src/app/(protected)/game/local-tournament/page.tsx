@@ -471,6 +471,16 @@ export default function LocalTournamentPage() {
                 </button>
               </div>
             </div>
+            
+          <div className="mt-8 text-center">
+          <button
+            onClick={() => router.push('/game')}
+            className="inline-flex items-center gap-2 text-white/50 hover:text-white transition-all duration-200 text-sm font-medium group"
+          >
+            <span className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
+            <span>{t('game.backToGameModes') || 'Back to Game Modes'}</span>
+          </button>
+        </div>
           </div>
         );
 

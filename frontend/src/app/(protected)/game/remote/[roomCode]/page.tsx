@@ -8,7 +8,7 @@ import PingPongGame from '@/components/PingPongGame';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { IoExpand, IoContract } from 'react-icons/io5';
 import api from "@/lib/api"
-import { getBackendURL } from '@/lib/utils';
+import { getProfileImageUrl } from '@/lib/utils';
 import { ServerGameState } from '@/types/game';
 
 // Extended Document interface for vendor-prefixed fullscreen APIs
@@ -30,15 +30,6 @@ interface ExtendedElement extends HTMLElement {
 
 const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png';
 
-// Helper function to resolve profile image URL
-const getProfileImageUrl = (profileImg: string | null | undefined): string => {
-  if (!profileImg) return defaultProfileImg;
-  const API_URL = getBackendURL();
-  if (profileImg.startsWith('/uploads/')) {
-    return `${API_URL}${profileImg}`;
-  }
-  return profileImg;
-};
 
 export default function RemoteGameRoomPage() {
   const { t } = useTranslation();
@@ -77,6 +68,14 @@ export default function RemoteGameRoomPage() {
   const handleAcceptRematchRef = useRef<(() => void) | null>(null);
   const handleDeclineRematchRef = useRef<(() => void) | null>(null);
   const messageHandlerAttachedRef = useRef<boolean>(false);
+
+
+  function Redirect({ to }: { to: string }) {
+      router.push(to);
+  return null;
+}
+
+
 
   useEffect(() => {
     document.title = t('game.onlineMultiplayerPingPong');
@@ -553,6 +552,7 @@ export default function RemoteGameRoomPage() {
   }, [socket, roomCode, router, t]);
 
   const leaveRoom = useCallback(() => {
+    console.log("werk 3la back");
     if (autoRedirectTimerRef.current) {
       clearTimeout(autoRedirectTimerRef.current);
       autoRedirectTimerRef.current = null;
@@ -560,7 +560,7 @@ export default function RemoteGameRoomPage() {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({
         type: 'leaveRoom',
-        payload: { roomCode }
+        payload: { roomCode, back:true}
       }));
     }
     router.push('/game');
@@ -622,10 +622,14 @@ export default function RemoteGameRoomPage() {
           <h2 className="text-4xl font-bold mb-4">{t('game.gameOver')}</h2>
           <p className="text-2xl mt-4 mb-6">{t('game.isTheWinner', { winner: gameOver.winner })}</p>
           
+          {gameOver.reason === 'opponentClickedOnBack' &&(
+              <Redirect to="/game" /> 
+            )}
+
           {gameOver.reason === 'opponentQuit' && gameOver.message && (
-            <p className="text-yellow-400 text-lg mb-4 font-semibold">{gameOver.message}</p>
+            <p className="text-yellow-400 text-lg mb-4 font-semibold">{gameOver.message} Hello</p>
           )}
-          
+
           <p className="text-lg mb-4">
             {t('game.finalScore')}: {gameOver.finalScore.player1} - {gameOver.finalScore.player2}
           </p>
@@ -685,7 +689,7 @@ export default function RemoteGameRoomPage() {
             onClick={leaveRoom}
             className={`mt-4 ${gameOver.reason !== 'opponentQuit' ? 'ml-4' : ''} px-6 py-3 bg-blue-500 rounded-lg text-lg hover:bg-blue-600 transition-colors`}
           >
-            {t('game.backToGameLobby')}
+            {t('game.backToGameModes')}
           </button>
         </div>
       ) : (
@@ -712,6 +716,7 @@ export default function RemoteGameRoomPage() {
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = defaultProfileImg;
                         }}
+                        unoptimized
                       />
                       {serverGameState?.player1 && (
                         <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-800 flex items-center justify-center">
@@ -742,6 +747,7 @@ export default function RemoteGameRoomPage() {
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = defaultProfileImg;
                         }}
+                        unoptimized
                       />
                       {serverGameState?.player2 && (
                         <div className="absolute -bottom-1 -left-1 bg-red-500 rounded-full w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-800 flex items-center justify-center">
@@ -773,6 +779,7 @@ export default function RemoteGameRoomPage() {
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = defaultProfileImg;
                       }}
+                      unoptimized
                     />
                     <span className="text-white text-xs font-semibold truncate max-w-[100px]">
                       {player1Username || serverGameState?.player1?.username || 'P1'}
@@ -798,6 +805,7 @@ export default function RemoteGameRoomPage() {
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = defaultProfileImg;
                       }}
+                      unoptimized
                     />
                   </div>
                 </div>

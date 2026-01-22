@@ -9,6 +9,8 @@ import axios from 'axios';
 import { getBackendURL } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTranslation } from '@/contexts/LanguageContext';
+import {getProfileImageUrl} from '@/lib/utils';
+
 
 interface Friend {
   id_user: number;
@@ -400,7 +402,7 @@ export default function InviteFriendPage() {
                     <div className="flex items-center gap-4 flex-1">
                       <div className="relative">
                         <Image
-                          src={friend.profile_img || 'https://i.pravatar.cc/150?img=4'}
+                          src={getProfileImageUrl(friend.profile_img)}
                           alt={friend.username || friend.name || 'Friend'}
                           width={48}
                           height={48}
@@ -408,6 +410,7 @@ export default function InviteFriendPage() {
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = 'https://i.pravatar.cc/150?img=4';
                           }}
+                          unoptimized
                         />
                         {/* Online status indicator */}
                         <div

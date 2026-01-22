@@ -9,7 +9,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { IoExpand, IoContract } from 'react-icons/io5';
 import { useUserStore } from '@/store/userStore';
 import api from "@/lib/api"
-import { getBackendURL } from '@/lib/utils';
+import {getProfileImageUrl} from '@/lib/utils';
 
 // Extended Document interface for vendor-prefixed fullscreen APIs
 interface ExtendedDocument extends Document {
@@ -30,20 +30,8 @@ interface ExtendedElement extends HTMLElement {
 
 const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png';
 
-// Helper function to resolve profile image URL
-const getProfileImageUrl = (profileImg: string | null | undefined): string => {
-  if (!profileImg) return defaultProfileImg;
 
-  const API_URL = getBackendURL();
 
-  // If the path is from our DB (e.g., /uploads/...), prefix with API_URL
-  if (profileImg.startsWith('/uploads/')) {
-    return `${API_URL}${profileImg}`;
-  }
-
-  // Otherwise, it's a full URL (default or from OAuth), use it directly
-  return profileImg;
-};
 
 export default function AIGamePage() {
   const { t } = useTranslation();
@@ -276,6 +264,7 @@ export default function AIGamePage() {
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = defaultProfileImg;
                     }}
+                    unoptimized
                   />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -303,6 +292,7 @@ export default function AIGamePage() {
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = defaultProfileImg;
                     }}
+                    unoptimized
                   />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -330,6 +320,7 @@ export default function AIGamePage() {
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = defaultProfileImg;
                   }}
+                  unoptimized
                 />
                 <span className="text-white text-xs font-semibold truncate max-w-[100px]">
                   {player1Name}
@@ -349,6 +340,7 @@ export default function AIGamePage() {
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = defaultProfileImg;
                   }}
+                  unoptimized
                 />
               </div>
             </div>

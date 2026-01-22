@@ -744,7 +744,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             id: localPlayers[1].id || `player-2`,
             id_user: typeof localPlayers[1].id_user === 'number' ? localPlayers[1].id_user : (typeof localPlayers[1].id_user === 'string' ? parseInt(localPlayers[1].id_user, 10) : undefined)
           };
-          console.log('📤 PingPongGame: Calling onTournamentMatchEnd with:', {
+          console.log(' PingPongGame: Calling onTournamentMatchEnd with:', {
             winnerPlayer,
             matchStats,
             gameStatsSummary: {
@@ -1105,7 +1105,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     return (
       <div className="text-white text-center">
         <h2>Your opponent has left the game.</h2>
-        <button onClick={handleExit} className="mt-4 px-4 py-2 bg-blue-500 rounded">Back to Game Lobby</button>
+        <button onClick={handleExit} className="mt-4 px-4 py-2 bg-blue-500 rounded">Back derrrrrr to Game Lobby</button>
       </div>
     );
   }
@@ -1120,7 +1120,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     const winnerIsPlayer1 = player1Score > player2Score;
 
     return (
-      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl animate-pulse">
+      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl">
         <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
           {/* Trophy/Skull Icon with Animation */}
           <div className="mb-4 sm:mb-6">
@@ -1130,7 +1130,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
           </div>
 
           {/* Title with Gradient */}
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 text-white tracking-tight">
             {isUserWinner ? t('game.victory') || 'Victory!' : t('game.gameOver') || 'Game Over'}
           </h2>
 
@@ -1140,19 +1140,19 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
           </p>
 
           {/* Score Card */}
-          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border-2 border-purple-400/50">
-            <p className="text-sm text-gray-300 mb-2">Final Score</p>
+          <div className="mb-6 p-4 bg-[#1a1f2e]/40 rounded-lg border border-gray-800">
+            <p className="text-sm text-gray-300 mb-2">{t('profile.finalScore')}</p>
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
-                <p className="text-lg sm:text-xl font-bold text-white">{player1Name}</p>
-                <p className={`text-3xl sm:text-4xl font-extrabold ${winnerIsPlayer1 ? 'text-yellow-400' : 'text-purple-300'}`}>
+                <p className="text-lg sm:text-xl font-bold text-white">f{player1Name}</p>
+                <p className={`text-3xl sm:text-4xl font-extrabold text-white `}>
                   {player1Score}
                 </p>
               </div>
               <span className="text-2xl text-gray-400">-</span>
               <div className="text-center">
                 <p className="text-lg sm:text-xl font-bold text-white">{player2Name}</p>
-                <p className={`text-3xl sm:text-4xl font-extrabold ${!winnerIsPlayer1 ? 'text-yellow-400' : 'text-pink-300'}`}>
+                <p className={`text-3xl sm:text-4xl font-extrabold text-white`}>
                   {player2Score}
                 </p>
               </div>
@@ -1194,37 +1194,37 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   if (winner && gameState.mode === 'ai') {
     const isPlayerWinner = winner === 'You';
     return (
-      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl animate-pulse">
+      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl shadow-2xl">
         <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
-          {/* Trophy/Skull Icon with Animation */}
+
           <div className="mb-4 sm:mb-6">
-            <div className="text-6xl sm:text-8xl drop-shadow-lg animate-bounce">
+            <div className="text-6xl sm:text-8xl drop-shadow-lg">
               {isPlayerWinner ? '🏆' : '🤖'}
             </div>
           </div>
 
-          {/* Title with Gradient */}
+
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
             {isPlayerWinner ? 'Victory!' : 'Game Over'}
           </h2>
 
           {/* Winner Name */}
           <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-white">
-            {winner} Won!
+            {t('game.youWon')}
           </p>
 
           {/* Score Card */}
-          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border-2 border-purple-400/50">
-            <p className="text-sm text-gray-300 mb-2">Final Score</p>
+          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-800/50">
+            <p className="text-sm text-gray-300 mb-2">{t('profile.finalScore')}</p>
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
                 <p className="text-2xl sm:text-3xl font-bold text-white">You</p>
-                <p className="text-3xl sm:text-4xl font-extrabold text-purple-300">{scores.player1}</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-white">{scores.player1}</p>
               </div>
               <span className="text-2xl text-gray-400">-</span>
               <div className="text-center">
                 <p className="text-2xl sm:text-3xl font-bold text-white">AI</p>
-                <p className="text-3xl sm:text-4xl font-extrabold text-pink-300">{scores.player2}</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-white">{scores.player2}</p>
               </div>
             </div>
           </div>
@@ -1237,13 +1237,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
                 resetGameState();
                 keysPressed.current = {};
               }}
-              className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
+              className="px-6 py-3 bg-blue-500/60 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
               Play Again
             </button>
             <button
               onClick={handleExit}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
+              className="px-6 py-3  bg-gray-500 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
               Back to Game Modes
             </button>
@@ -1258,39 +1258,39 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     const winnerIsPlayer1 = winner === localPlayers[0]?.name;
 
     return (
-      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl animate-pulse">
+      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl shadow-2xl ">
         <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
-          {/* Trophy Icon with Animation */}
+
           <div className="mb-4 sm:mb-6">
-            <div className="text-6xl sm:text-8xl drop-shadow-lg animate-bounce">
+            <div className="text-6xl sm:text-8xl drop-shadow-lg ">
               🏆
             </div>
           </div>
 
           {/* Title with Gradient */}
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 bg-clip-text text-white tracking-tight">
             Victory!
           </h2>
 
           {/* Winner Name */}
           <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-white">
-            {winner} Wins! 🎉
+            {winner} {t('chat.wins')} ! 
           </p>
 
           {/* Score Card */}
-          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border-2 border-purple-400/50">
-            <p className="text-sm text-gray-300 mb-2">Final Score</p>
+          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-800/50">
+            <p className="text-sm text-gray-300 mb-2">{t('profile.finalScore')}</p>
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
                 <p className="text-lg sm:text-xl font-bold text-white">{localPlayers[0]?.name || 'Player 1'}</p>
-                <p className={`text-3xl sm:text-4xl font-extrabold ${winnerIsPlayer1 ? 'text-yellow-400' : 'text-purple-300'}`}>
+                <p className={`text-3xl sm:text-4xl text-bold text-white`}>
                   {scores.player1}
                 </p>
               </div>
               <span className="text-2xl text-gray-400">-</span>
               <div className="text-center">
                 <p className="text-lg sm:text-xl font-bold text-white">{localPlayers[1]?.name || 'Player 2'}</p>
-                <p className={`text-3xl sm:text-4xl font-extrabold ${!winnerIsPlayer1 ? 'text-yellow-400' : 'text-pink-300'}`}>
+                <p className={`text-3xl sm:text-4xl text-bold text-white`}>
                   {scores.player2}
                 </p>
               </div>
@@ -1309,7 +1309,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
                   if (onGameOver) onGameOver(null); // Notify parent that game is reset
                 }, 50);
               }}
-              className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
+            className="px-6 py-3 bg-blue-500/60 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
               Play Again
             </button>
@@ -1318,7 +1318,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
                 if (onGameOver) onGameOver(null); // Notify parent before exit
                 handleExit();
               }}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
+              className="px-6 py-3  bg-gray-500 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
               Back to Game Modes
             </button>

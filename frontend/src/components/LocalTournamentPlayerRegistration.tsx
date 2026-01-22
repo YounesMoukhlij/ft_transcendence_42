@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Player } from './GameContext';
-import { FaUser, FaCrown, FaPlus, FaTimes } from 'react-icons/fa';
+import {FaCrown, FaPlus, FaTimes } from 'react-icons/fa';
 import Image from 'next/image';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useUserStore } from '@/store/userStore';
+import { getProfileImageUrl } from '@/lib/utils';
 
 interface LocalTournamentPlayerRegistrationProps {
   tempPlayers: Player[];
@@ -185,11 +186,12 @@ export default function LocalTournamentPlayerRegistration({
                     index === 0 ? 'border-yellow-400' : 'border-blue-400'
                   }`}>
                     <Image
-                      src={player.avatar}
+                      src={getProfileImageUrl(player.avatar)}
                       alt={`${t('game.player')} ${index + 1}`}
                       width={48}
                       height={48}
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                   </div>
                   {index === 0 && (

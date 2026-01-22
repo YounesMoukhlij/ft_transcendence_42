@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useGameContext } from '@/components/GameContext';
 import { useUserStore } from '@/store/userStore';
 import { useTranslation } from '@/contexts/LanguageContext';
-import { FaUser, FaUpload, FaCheck, FaArrowRight, FaCrown } from 'react-icons/fa';
+import { FaUser, FaCheck, FaArrowRight, FaCrown } from 'react-icons/fa';
+import { getProfileImageUrl } from '@/lib/utils';
 
 const predefinedAvatars = [
   'https://static.vecteezy.com/system/resources/thumbnails/013/336/791/small/gamer-streamer-mascot-logo-illustration-free-vector.jpg',
@@ -73,7 +74,7 @@ function Player2Setup() {
   const isFormValid = name.trim().length > 0 && avatar.length > 0;
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-full bg-black p-4 sm:p-6">
+    <div className="flex items-center justify-center  w-full bg-black p-4 sm:p-6">
       <div className="w-full max-w-5xl">
         {/* Players Display - Side by Side */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -84,11 +85,12 @@ function Player2Setup() {
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <Image
-                      src={player1.avatar || 'https://i.pravatar.cc/150?img=1'}
+                      src={getProfileImageUrl(player1.avatar)}
                       alt={player1.name}
                       width={80}
                       height={80}
                       className="w-20 h-20 rounded-full border-2 border-white/20 object-cover"
+                      unoptimized
                     />
                     <div className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full border-2 border-black flex items-center justify-center">
                       <FaCrown className="w-4 h-4 text-black" />
@@ -119,11 +121,12 @@ function Player2Setup() {
                 <div className="relative">
                   {avatar ? (
                     <Image
-                      src={avatar}
+                      src={getProfileImageUrl(avatar)}
                       alt="Player 2"
                       width={80}
                       height={80}
                       className="w-20 h-20 rounded-full border-2 border-white/20 object-cover"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-white/5 border-2 border-white/10 flex items-center justify-center">
@@ -218,11 +221,12 @@ function Player2Setup() {
                         }`}
                       >
                         <Image
-                          src={src}
+                          src={getProfileImageUrl(src)}
                           alt={`Avatar ${index + 1}`}
                           width={100}
                           height={100}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          unoptimized
                         />
                         {avatar === src && (
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -263,7 +267,6 @@ function Player2Setup() {
           </div>
         </div>
 
-        {/* Back Button */}
         <div className="mt-8 text-center">
           <button
             onClick={() => router.push('/game')}

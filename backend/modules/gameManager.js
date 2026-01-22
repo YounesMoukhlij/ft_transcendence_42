@@ -459,7 +459,7 @@ class GameManager {
             loserUsername = room.player1.username;
             // Set final scores: winner gets WINNING_SCORE, loser gets current score
             // CRITICAL: Set to a high value to ensure frontend detects winner (frontend checks for >= 10)
-            const finalWinningScore = Math.max(WINNING_SCORE, 10); // Use at least 10 for frontend detection
+            const finalWinningScore = Math.max(WINNING_SCORE, 5); // Use at least 10 for frontend detection
             room.gameState.player2.score = finalWinningScore;
           } else if (!p2SocketValid) {
             // Player2 disconnected - Player1 wins
@@ -471,7 +471,7 @@ class GameManager {
             loserUsername = room.player2.username;
             // Set final scores: winner gets WINNING_SCORE, loser gets current score
             // CRITICAL: Set to a high value to ensure frontend detects winner (frontend checks for >= 10)
-            const finalWinningScore = Math.max(WINNING_SCORE, 10); // Use at least 10 for frontend detection
+            const finalWinningScore = Math.max(WINNING_SCORE, 5); // Use at least 10 for frontend detection
             room.gameState.player1.score = finalWinningScore;
           } else {
             // Both disconnected - shouldn't happen, but handle gracefully
@@ -956,9 +956,11 @@ class GameManager {
   }
 
   // Remove player from room (called when player explicitly quits or disconnects)
-  removePlayer(roomCode, playerId) {
+  removePlayer(roomCode, playerId, isBack) {
     const room = this.gameRooms.get(roomCode);
+
     if (!room) {
+      console.log("khona khrej ldakhel gga3");
 
       // Room not found - this can happen if:
       // 1. Room was already deleted (opponent already left)
@@ -1015,17 +1017,18 @@ class GameManager {
 
           // Get winner socket to send gameOver message
           const winnerSocket = this.usersSocket.get(winner.id?.toString() || winner.id_user?.toString());
-
+          
           // Send gameOver to winner if socket is available
           if (winnerSocket && winnerSocket.readyState === 1) {
+            console.log("Khona clicka back\n\n\n\n");
             const gameOverPayload = {
               winner: winner.username || winner.name,
               winnerId: winner.id || winner.id_user,
-              reason: 'opponentQuit',
+              reason: 'opponentClickedOnBack',
               message: `${quitter.username || quitter.name} quit the game. You win!`,
               finalScore: {
-                player1: isPlayer1 ? 0 : 10,
-                player2: isPlayer1 ? 10 : 0
+                player1: isPlayer1 ? 0 : 5,
+                player2: isPlayer1 ? 5 : 0
               }
               // NOTE: Do NOT send finalGameState when room is not found
               // The frontend should handle opponentQuit without updating game state scores
@@ -1162,7 +1165,7 @@ class GameManager {
     // Set final scores: winner gets WINNING_SCORE, quitter gets current score
     // CRITICAL: Set to a high value to ensure frontend detects winner (frontend checks for >= 10)
     // But also ensure it matches the actual winning score for consistency
-    const finalWinningScore = Math.max(WINNING_SCORE, 10); // Use at least 10 for frontend detection
+    const finalWinningScore = Math.max(WINNING_SCORE, 5); // Use at least 10 for frontend detection
     if (room.player1.id === playerId) {
       room.gameState.player2.score = finalWinningScore;
     } else {
@@ -1179,7 +1182,7 @@ class GameManager {
       const gameOverPayload = {
         winner: winner.username,
         winnerId: winner.id,
-        reason: 'opponentQuit',
+        reason: `${isBack ? 'opponentClickedOnBack' :'opponentQuit' }`,
         message: `${quitter.username} quit the game. You win!`,
         finalScore: {
           player1: room.gameState.player1.score,
@@ -1707,7 +1710,7 @@ class GameManager {
 
     if (found) {
 
-      this.removePlayer(found.roomCode, playerId);
+      this.removePlayer(found.roomCode, playerId, false);
 
     }
 

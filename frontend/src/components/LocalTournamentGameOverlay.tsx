@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Player } from './GameContext';
 import { useTranslation } from '@/contexts/LanguageContext';
+import { getProfileImageUrl } from '@/lib/utils';
 
 const defaultProfileImg = 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/HeathJoker.png/250px-HeathJoker.png';
 
@@ -33,7 +34,7 @@ export default function LocalTournamentGameOverlay({
           <div className="flex items-center gap-3 flex-1">
             <div className="relative">
               <Image
-                src={player1.avatar || defaultProfileImg}
+                src={getProfileImageUrl(player1.avatar || defaultProfileImg)}
                 alt={player1.name}
                 width={64}
                 height={64}
@@ -41,6 +42,7 @@ export default function LocalTournamentGameOverlay({
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = defaultProfileImg;
                 }}
+                unoptimized
               />
               <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-800 flex items-center justify-center">
                 <span className="text-white text-xs font-bold">{score1}</span>
@@ -63,7 +65,7 @@ export default function LocalTournamentGameOverlay({
           <div className="flex items-center gap-3 flex-1 flex-row-reverse text-right">
             <div className="relative">
               <Image
-                src={player2.avatar || defaultProfileImg}
+                src={getProfileImageUrl(player2.avatar)}
                 alt={player2.name}
                 width={64}
                 height={64}
@@ -71,6 +73,7 @@ export default function LocalTournamentGameOverlay({
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = defaultProfileImg;
                 }}
+                unoptimized
               />
               <div className="absolute -bottom-1 -left-1 bg-red-500 rounded-full w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-800 flex items-center justify-center">
                 <span className="text-white text-xs font-bold">{score2}</span>
@@ -94,7 +97,7 @@ export default function LocalTournamentGameOverlay({
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <Image
-            src={player1.avatar || defaultProfileImg}
+            src={getProfileImageUrl(player1.avatar)}
             alt={player1.name}
             width={32}
             height={32}
@@ -102,6 +105,7 @@ export default function LocalTournamentGameOverlay({
             onError={(e) => {
               (e.target as HTMLImageElement).src = defaultProfileImg;
             }}
+            unoptimized
           />
           <span className="text-white text-xs font-semibold truncate max-w-[100px]">
             {player1.name || 'P1'}
@@ -115,7 +119,7 @@ export default function LocalTournamentGameOverlay({
             {player2.name || 'P2'}
           </span>
           <Image
-            src={player2.avatar || defaultProfileImg}
+            src={getProfileImageUrl(player2.avatar)}
             alt={player2.name}
             width={32}
             height={32}
@@ -123,6 +127,7 @@ export default function LocalTournamentGameOverlay({
             onError={(e) => {
               (e.target as HTMLImageElement).src = defaultProfileImg;
             }}
+            unoptimized
           />
         </div>
       </div>

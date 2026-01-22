@@ -6,6 +6,8 @@ import { useUserStore } from "@/store/userStore";
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import Loading from '@/components/Loading/page';
+import Logo from '@/components/Logo'
+import Image from 'next/image';
 
 
 type Match = {
@@ -17,7 +19,8 @@ type Match = {
   guest_id: number,
   date : string,
   winner : number,
-  winner_name: string
+  winner_name: string,
+  tournamentName: string
  };
 
 const TeamBox = ({isFinals = false,  isWinner, score, name }: {isFinals?: boolean,  isWinner : boolean, score: number, name: string }) => {
@@ -105,6 +108,7 @@ export default function TournamentBracket() {
         );
         if (!active) return;
         setTournamentData(res.data);
+        console.log("TOurnament data: ", res.data);
       } catch (err) {
         console.error("Error loading tournament:", err);
         if ((err).response?.status === 404) {
@@ -122,37 +126,29 @@ export default function TournamentBracket() {
   if (!tournamentData) return <Loading />;
 
   return (
-    <div className="min-h-[90vh] mt-4 flex bg-slate-950 text-white font-sans  flex-col md:flex-row lg:flex-row ">
+    <div className="h-[84vh] mt-4 flex bg-slate-950 text-white font-sans  flex-col md:flex-row lg:flex-row ">
       
-      {/* --- Left Panel: Hero / Branding --- */}
       <div className="relative md:min-w-[27%] lg:min-w-[27%] bg-slate-900 flex flex-col items-center justify-center p-8 border-r border-white/5 overflow-hidden">
 
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-20 -left-20 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/4 -right-10 w-96 h-2 bg-gradient-to-r from-transparent via-sky-500/20 to-transparent -rotate-45 transform"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-slate-950 via-slate-900/50 to-transparent"></div>
-     
-          {/* <div className="absolute inset-0 opacity-[0.03]" 
-               style={{ backgroundImage: 'linear-gradient(135deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-          </div> */}
-        </div>
+    
 
    
-        <div className="relative z-10 flex flex-col items-center text-center space-y-6">
+        <div className="relative z-10 flex flex-col items-center  text-center space-y-6">
 
           <div className="relative group cursor-pointer">
             <div className="absolute -inset-1 bg-gradient-to-r from-sky-600 to-sky-400 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
             <div className="relative w-24 h-24 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center shadow-2xl">
               
               
+         <Logo  />
       
             
             </div>
           </div> 
      <div className="space-y-1">
-            <h3 className="text-primary text-xs font-bold tracking-[0.2em] uppercase">Section VII Boys Golf</h3>
+            <h3 className="text-primary text-xs font-bold tracking-[0.2em] uppercase">{} </h3>
             <h1 className="text-5xl md:text-3xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 uppercase tracking-tighter transition-all ease-in-out duration-300 ">
-              Champion<br/>ship<br/>Tourney
+              {tournamentData[0].tournamentName.length > 8 ? tournamentData[0].tournamentName.substring(0, 8)+ " ..." : tournamentData[0].tournamentName}<br/>Tournament
             </h1>
           </div>
         </div>
@@ -187,8 +183,8 @@ export default function TournamentBracket() {
                 <div className="absolute left-full top-0 bottom-0 w-16 -ml-8 pointer-events-none">
                   <MatchConnector
                     gameLabel="Semifinal"                   
-                    date={match.date}
-                    time={match.date}
+                    date={match.date.substring(0, 10)}
+                    time={match.date.substring(10)}
                     isFinals={false}
                   />
                 </div>
@@ -239,9 +235,13 @@ export default function TournamentBracket() {
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
                     
                    {
-                     tournamentData && tournamentData[2] &&
+                     tournamentData && tournamentData[2] ?
+                     <>
+                     <span  onClick={() => {router.push(`/profile/${tournamentData[2].winner_name}`)}} className="block text-xl font-black text-white uppercase hover:text-primary cursor-pointer">{tournamentData[2].winner_name || "TBD"}</span>
+                     </>
+                     : 
+                    <span  className="block text-xl font-black text-white uppercase hover:text-primary cursor-pointer">TBD</span>
                      
-                     <span  onClick={() => {router.push(`/profile/${tournamentData[2].winner_name}`)}} className="block text-xl font-black text-white uppercase hover:text-primary cursor-pointer">{tournamentData[2].winner_name}</span>
                    }
                  </div>
               </div>

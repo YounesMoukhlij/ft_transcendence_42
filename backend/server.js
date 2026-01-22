@@ -16,6 +16,7 @@ import fastifyJwt from '@fastify/jwt';
 import GameManager from './modules/gameManager.js';
 import { setupWebSocketServer } from './modules/websocketHandler.js';
 import nodeVault from "node-vault";
+import cookie from '@fastify/cookie';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +28,7 @@ const uploadsDir = path.join(__dirname, 'uploads');
 const app = fastify({
   logger: true, 
   bodyLimit: 10 * 1024 * 1024,
+  trustProxy: true // for https
 });
 
 

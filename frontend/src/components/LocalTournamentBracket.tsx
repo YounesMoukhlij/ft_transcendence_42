@@ -113,7 +113,7 @@ export default function LocalTournamentBracket({
                       >
                         <div className="flex items-center gap-3">
                           <Image
-                            src={getProfileImageUrl(match.player1?.avatar) || '/default-avatar.png'}
+                            src={getProfileImageUrl(match.player1?.avatar)}
                             alt={match.player1?.name || t('game.player1')}
                             width={40}
                             height={40}
@@ -144,7 +144,7 @@ export default function LocalTournamentBracket({
                       >
                         <div className="flex items-center gap-3">
                           <Image
-                            src={getProfileImageUrl(match.player2?.avatar) || '/default-avatar.png'}
+                            src={getProfileImageUrl(match.player2?.avatar)}
                             alt={match.player2?.name || t('game.player2')}
                             width={40}
                             height={40}

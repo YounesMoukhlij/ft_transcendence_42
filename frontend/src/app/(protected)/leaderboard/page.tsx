@@ -55,6 +55,7 @@ const LeaderboardItem = ({ player, rank }: { player: Player, rank: number }) => 
           alt={player.username}
           width={48}
           height={48}
+          unoptimized
           className={`w-12 h-12 rounded-full object-cover border-2 border-gray-600 ${rank === 1 ? 'border-yellow-400' : rank === 2 ? 'border-gray-400' : rank === 3 ? 'border-yellow-800' : ''}`}
         />
         <div>

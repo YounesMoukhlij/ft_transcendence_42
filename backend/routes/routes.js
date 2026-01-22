@@ -22,7 +22,8 @@ import {
     me,
     registerInTournament,
     saveTournamentMatch,
-    createLocalTournament
+    createLocalTournament,
+    refreshToken
 
 } from '../modules/userAuth.module.js';
 import { getUserStats, getUserStatsbyId } from '../modules/profile.module.js';
@@ -45,8 +46,8 @@ import { getTournamentBracket, recordMatchOnBlockChain, getMatchFromBlockChainBy
 export default async function routes(fastify, options) {
 
   fastify.addHook('onRequest' , async (request , reply) => {
-        const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser" , "/forgotPassword",
-       "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/auth/42", "/42Auth", "/2fa/login-verify"];
+        const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser" , "/forgotPassword", // n7ydo whda men 42 auth
+       "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/2fa/login-verify", "/refreshToken"];
     const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
 
 

@@ -13,6 +13,7 @@ export async function getTournamentBracket(request, reply) {
   try{
     const query = request.server.db.prepare(
       `select game_date as date, 
+      (select name from tournaments where id_tournament = ?) as tournamentName, 
       (select username from users where id_user=user_win) as winner,
       user_win as winner_id,
       (select username from users where id_user=user_lose) as loser,
@@ -20,7 +21,7 @@ export async function getTournamentBracket(request, reply) {
       win_score, lose_score from game_history
        where tournament_id =? ORDER BY game_date`
   );
-    const tournament = query.all(tournament_id); 
+    const tournament = query.all(tournament_id, tournament_id); 
     if (!tournament || tournament.length === 0) {
       return reply.code(404).send({ error: "tournament not found" });
     }
@@ -43,6 +44,7 @@ export async function getTournamentBracket(request, reply) {
           guest_id : !result ? element.winner_id : element.loser_id,
           date:  element.date,
           winner : element.winner_id,
+          tournamentName : element.tournamentName
         }
         if (index == 0)
           firstWinner = element.winner_id;   
@@ -60,7 +62,8 @@ export async function getTournamentBracket(request, reply) {
           guest_id : !result ? element.winner_id : element.loser_id,
           date:  element.date,
           winner : element.winner_id,
-          winner_name: element.winner
+          winner_name: element.winner,
+          tournamentName : element.tournamentName
         }
         Matches.push(obj); 
       }

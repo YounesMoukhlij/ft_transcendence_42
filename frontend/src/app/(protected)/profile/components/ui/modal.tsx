@@ -23,24 +23,6 @@ interface GameModalProps {
   onClose: () => void
 }
 
-
-// const getleadingSeconds = (time : string) =>
-// { 
-//   let seconds :  number = 0;
-//   if (time.indexOf("m") == -1 && time.indexOf("s") != -1)
-//   {
-//     seconds += Number(time.substring(0, time.indexOf("s")));
-
-//   }
-//   else if (time.indexOf("m") == 1)
-//   {
-//    seconds += Number(time.substring(0, time.indexOf("m"))) * 60;
-//    seconds += Number(time.substring(time.indexOf("m") + 1, time.indexOf("s")));
-//   }
-//   return seconds;
-// }
-
-
 export function GameModalDemo({game, onClose} : GameModalProps) 
 {
   const [open, setOpen] = useState(false);
@@ -63,8 +45,8 @@ export function GameModalDemo({game, onClose} : GameModalProps)
   
   const guestScore : number = Number(game.guestScore);
   const guestTouches : number = Number(game.guestTouches);
-  const guestStreak : number = Number(game.guestMaxStreak);
-  const guestLeading: number = Number(game.guestLeadingTime);
+  const guestStreak : number = Number(game.guestMaxStreak) || 0;
+  const guestLeading: number = Number(game.guestLeadingTime) || 0;
 
   const hostImg = getProfileImageUrl(game.hostImg);
   const guestImg = getProfileImageUrl(game.guestImg);
@@ -100,6 +82,7 @@ export function GameModalDemo({game, onClose} : GameModalProps)
                       alt={game.host}
                       fill
                       className="rounded-sm object-cover"
+                      unoptimized
                     />
                 </div>
                 <p className="ml-10 mt-2">{game.host}</p>
@@ -118,6 +101,7 @@ export function GameModalDemo({game, onClose} : GameModalProps)
                       alt={game.guest}
                       fill
                       className="rounded-sm object-cover"
+                      unoptimized
                     />
                 </div>
                 <p className="ml-10 mt-2">{game.guest}</p>
@@ -150,7 +134,6 @@ export function GameModalDemo({game, onClose} : GameModalProps)
                     </TableBody>
                 </Table>
            </div>
-
             {
               <MatchStats duration={formatDuration(game.duration)} totalTouches={game.total_touches} pointsPerSecond={game.points_per_second} maxSpeed={game.ball_max_speed} />
 

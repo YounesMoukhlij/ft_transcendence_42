@@ -67,7 +67,6 @@ const ProfileSettingsPage = () => {
   const languages = [
     { id: 'en', label: 'English', flag: '🇬🇧' },
     { id: 'es', label: 'Spanish', flag: '🇪🇸' },
-    { id: 'tz', label: 'Tamazight', flag: '🇲🇦' },
     { id: 'fr', label: 'French', flag: '🇫🇷' }
   ]
 

@@ -14,6 +14,7 @@ export default function NotFound() {
               fill
               className="object-cover grayscale hover:scale-105 transition-transform duration-500"
               priority
+              unoptimized
             />
         </div>
 

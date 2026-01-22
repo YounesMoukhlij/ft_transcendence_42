@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Player } from './GameContext';
 import { FaTrophy, FaCrown, FaFire, FaStar } from 'react-icons/fa';
 import { useTranslation } from '@/contexts/LanguageContext';
+import { getProfileImageUrl } from '@/lib/utils';
 
 interface LocalTournamentAnimationsProps {
   champion: Player | null;
@@ -101,11 +102,12 @@ export default function LocalTournamentAnimations({
           <div className="relative bg-gray-900 rounded-3xl p-8 border-4 border-yellow-400 shadow-2xl">
             <div className="flex items-center justify-center gap-4 mb-4">
               <Image
-                src={champion.avatar}
+                src={getProfileImageUrl(champion.avatar)}
                 alt={champion.name}
                 width={96}
                 height={96}
                 className="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg"
+                unoptimized
               />
               <FaCrown className="text-yellow-400 text-5xl animate-bounce" />
             </div>

@@ -9,7 +9,7 @@ import PingPongGame from '@/components/PingPongGame';
 import GameCustomization from '@/components/GameCustomization';
 import { useUserStore } from '@/store/userStore';
 import api from "@/lib/api"
-import { getBackendURL } from '@/lib/utils';
+import { getProfileImageUrl } from '@/lib/utils';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ServerGameState } from '@/types/game';
 import Image from 'next/image';
@@ -557,11 +557,12 @@ export default function RemoteGamePage() {
                             <div className="flex items-center gap-3">
                               <div className="relative">
                                 <Image
-                                  src={friend.profile_img || 'https://i.pravatar.cc/150?img=3'}
+                                  src={getProfileImageUrl(friend.profile_img)}
                                   alt={friend.username || friend.name || 'Friend'}
                                   width={32}
                                   height={32}
                                   className="w-8 h-8 rounded-full bg-gray-600 object-cover"
+                                  unoptimized
                                 />
                                 <div
                                   className={`absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full border border-gray-700 ${
