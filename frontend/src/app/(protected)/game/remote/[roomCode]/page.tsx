@@ -46,7 +46,7 @@ export default function RemoteGameRoomPage() {
   const params = useParams();
   const { roomCode } = params;
   const { setGameMode } = useGameContext();
-  const { socket, user } = useUserStore();
+  const { socket, user ,connect } = useUserStore();
   
   const [serverGameState, setServerGameState] = useState<ServerGameState | null>(null);
   const [opponentLeft, setOpponentLeft] = useState(false);
@@ -370,12 +370,14 @@ export default function RemoteGameRoomPage() {
 
     // Check if socket is available and connected
     if (!socket) {
+      connect();
+      console.log("ok msogra===============+>");
       console.error('[RemoteGameRoom] No socket available');
       setError(t('game.connectionError'));
-      const redirectTimer = setTimeout(() => {
-        router.push('/game');
-      }, 2000);
-      return () => clearTimeout(redirectTimer);
+      // const redirectTimer = setTimeout(() => {
+      //   router.push('/game');
+      // }, 2000);
+      // return () => clearTimeout(redirectTimer);
     }
 
     // Message handler function

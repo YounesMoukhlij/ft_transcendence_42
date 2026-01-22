@@ -1286,7 +1286,7 @@ export async function GoogleAuth(request, reply) {
             .prepare("UPDATE users SET access_token = ? WHERE id_user = ?")
             .run(token, userId);
 
-        return reply.redirect(`${process.env.FRONTEND_URL}/signIn?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}&token=${token}`);
+        return reply.redirect(`${process.env.FRONTEND_URL}signIn?googleAuth=success&userId=${userId}&isNewUser=${isNewUser}&token=${token}`);
 
     } catch (error) {
         console.error('Google auth failed:', error);

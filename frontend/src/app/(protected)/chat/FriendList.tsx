@@ -53,7 +53,7 @@ function BlockedCard({ item }) {
       ))}
 
       <div className="flex items-center w-[20%]">
-        <img className="rounded-full border-2 border-gray-600" src={getProfileImageUrl(item.profile_img)} alt="profile" />
+        <img className="rounded-full   border-2 border-gray-600" src={getProfileImageUrl(item.profile_img)} alt="profile" />
       </div>
       <div className="flex items-center">
         <h1 className="text-white text-2xl">{item.username}</h1>
@@ -246,8 +246,7 @@ function FriendCard({ item }) {
                 <div className="relative">
                     <img
                         src={getProfileImageUrl(item.profile_img)}
-                        className="h-12 2xl:h-23 2xl:w-23 sm:w-14 sm:h-14 md:w-16 md:h-16 object-cover rounded-full border-3 border-gray-600 shadow-lg"
-                    />
+                        className="h-12 2xl:h-23 2xl:w-23 sm:w-14 sm:h-14 md:w-16 md:h-16 object-cover rounded-full border-3 border-gray-600 shadow-lg"/>
                       {
                         // item.status_share && 
                         <div

@@ -44,7 +44,7 @@ export const useUserStore = create(
 
 
 
-    connect: () => {
+  connect: () => {
     const state = get();
 
     if (state.socket || state.isConnect) return;
@@ -58,6 +58,7 @@ export const useUserStore = create(
 
     try {
       const ws = new WebSocket(url);
+      let heartbeatInterval = null;
 
       ws.onopen = () => {
         set({
@@ -65,6 +66,12 @@ export const useUserStore = create(
           isConnect: true,
           reconnectAttempts: 0,
         });
+
+        heartbeatInterval = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 30000);
       };
 
       ws.onclose = () => {
@@ -73,7 +80,7 @@ export const useUserStore = create(
         set({ socket: null, isConnect: false });
 
         const attempts = get().reconnectAttempts + 1;
-        const delay = Math.min(1000 * 2 ** attempts, 30000); 
+        const delay = Math.min(100 * 2 ** attempts, 30000); 
 
         set({ reconnectAttempts: attempts });
 
@@ -194,14 +201,6 @@ export const useUserStore = create(
   })),
 
 
-  // updateFriendConversationId:(id , convId)=> 
-  //   set((state)=> ({
-  //   friends: state.friends.map((f) =>
-  //     f.id_user == id 
-  //       ? {...f ,conversation_id : convId }
-  //       : f
-  //   ),
-  // })),
 
 updatePinStatus: (attribute, friendId, value) => {
   const isPinned = value !== -1;

@@ -371,7 +371,10 @@ export default function Messages(){
                             <GiHamburgerMenu onClick={smallListFriendShow} size={20} className="text-white"/>
                         </div>
                         <div className="w-[80%] h-full flex items-center gap-3.5 p-3 flex-1 ">
-                            <img className="min-h-[60%] max-h-[180%] lg:h-[100%] xl:h-[120%] 2xl:h-[180%] rounded-[50%] border-2 border-gray-700" src={getProfileImageUrl(friend?.profile_img)}/>
+                            {/* <img className="min-h-[60%] max-h-[180%] lg:h-[100%] xl:h-[120%] 2xl:h-[180%] rounded-[50%] border-2 border-gray-700" src={getProfileImageUrl(friend?.profile_img)}/>
+                             */}
+                            <img className="h-[150%] aspect-square object-cover rounded-full border-2 border-gray-700"  src={getProfileImageUrl(friend?.profile_img)} alt="Profile"/>
+
                             <div className="flex flex-col">
                                 <h1 className="text-xl sm:text-2xl md:text-3xl text-white">{friend?.username}</h1>
                                 {
@@ -447,7 +450,7 @@ export default function Messages(){
                                       </span>
                                       {item.sender === user.id_user && (
                                         <div className="ml-2">
-                                          {item.isSeen ? <FaCheckDouble className="text-gray-400"/> : <FaCheck className="text-gray-500"/>}
+                                          {item.isSeen ? <FaCheckDouble className="text-blue-200"/> : <FaCheck className="text-gray-500"/>}
                                         </div>
                                       )}
                                     </div>

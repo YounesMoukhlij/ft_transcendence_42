@@ -56,6 +56,12 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
         return;
       }
 
+      if (data.type === 'ping') {
+        socket.send(JSON.stringify({ type: 'pong' }));
+        console.log("here================================++>");
+        return;
+      }
+
       if (data.type === 'istyping') {
         const socketFriend = users_socket.get(String(data.friend));
         if (socketFriend) {
