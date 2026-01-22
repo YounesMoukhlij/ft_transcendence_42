@@ -198,34 +198,21 @@ class GameManager {
         player1: 'stop',
         player2: 'stop'
       },
-      // Statistics tracking
+      // Statistics tracking (simplified - only what's saved to DB)
       stats: {
-        // Rally tracking (consecutive touches without scoring)
-        currentRally: 0,
-        longestRally: 0,
-        totalRallies: [],
+        currentRally: 0, // Used for internal tracking only
         totalTouches: 0,
-
-        // Ball speed tracking
         maxBallSpeed: 0,
-
-        // Player touches
         player1Touches: 0,
         player2Touches: 0,
-
-        // Point streaks
         player1CurrentStreak: 0,
         player2CurrentStreak: 0,
         player1MaxStreak: 0,
         player2MaxStreak: 0,
-
-        // Leading time tracking
         player1LeadingStart: null,
         player2LeadingStart: null,
         player1LeadingTime: 0,
         player2LeadingTime: 0,
-
-        // Previous scores for detecting score changes
         previousPlayer1Score: 0,
         previousPlayer2Score: 0
       }
@@ -334,21 +321,6 @@ class GameManager {
     const { ball } = gameState;
     const stats = room.stats;
 
-    // Calculate current ball speed (magnitude of velocity vector)
-    // Speed in pixels per frame, convert to pixels per second (60 FPS)
-    const speedPixelsPerFrame = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
-    const speedPixelsPerSecond = speedPixelsPerFrame * 60;
-
-    // Convert to approximate m/s (assuming ~100 pixels = 1 meter for a ping pong table)
-    // A standard ping pong table is ~2.74m x 1.525m, our game is 800x600 pixels
-    // So approximately: 800 pixels ≈ 2.74m, therefore 1 pixel ≈ 0.003425m
-    const pixelsToMeters = 0.003425;
-    const speedMetersPerSecond = speedPixelsPerSecond * pixelsToMeters;
-
-    if (speedMetersPerSecond > stats.maxBallSpeed) {
-      stats.maxBallSpeed = speedMetersPerSecond;
-    }
-
     // Move ball
     ball.x += ball.dx;
     ball.y += ball.dy;
@@ -367,10 +339,13 @@ class GameManager {
       ball.dx = -ball.dx * 1.02; // Speed increase
       ball.x = 10 + PADDLE_WIDTH + BALL_RADIUS;
 
-      // Track touch and rally
+      // Track touch
       stats.player1Touches++;
-      stats.currentRally++;
       stats.totalTouches++;
+      
+      // Update max ball speed only on collision (when speed changes)
+      const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy) * 60 * 0.003425;
+      if (speed > stats.maxBallSpeed) stats.maxBallSpeed = speed;
     }
 
     // Paddle collision - Right paddle (player2)
@@ -381,10 +356,13 @@ class GameManager {
       ball.dx = -ball.dx * 1.02; // Speed increase
       ball.x = GAME_WIDTH - PADDLE_WIDTH - 10 - BALL_RADIUS;
 
-      // Track touch and rally
+      // Track touch
       stats.player2Touches++;
-      stats.currentRally++;
       stats.totalTouches++;
+      
+      // Update max ball speed only on collision
+      const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy) * 60 * 0.003425;
+      if (speed > stats.maxBallSpeed) stats.maxBallSpeed = speed;
     }
 
     // Scoring
@@ -400,14 +378,8 @@ class GameManager {
     }
 
     if (ballReset) {
-      // End of rally - save rally length and reset
-      if (stats.currentRally > 0) {
-        stats.totalRallies.push(stats.currentRally);
-        if (stats.currentRally > stats.longestRally) {
-          stats.longestRally = stats.currentRally;
-        }
-        stats.currentRally = 0;
-      }
+      // Reset for next point
+      stats.currentRally = 0;
 
       ball.x = GAME_WIDTH / 2;
       ball.y = GAME_HEIGHT / 2;
@@ -1485,11 +1457,9 @@ class GameManager {
     room.historySaved = false;
     room.historySavedAt = null;
 
-    // Reset statistics for rematch
+    // Reset statistics for rematch (simplified)
     room.stats = {
       currentRally: 0,
-      longestRally: 0,
-      totalRallies: [],
       totalTouches: 0,
       maxBallSpeed: 0,
       player1Touches: 0,
@@ -1583,7 +1553,7 @@ class GameManager {
         INSERT INTO game_history (
           user_win, user_lose, win_score, lose_score,
           type, tournament_id, game_date, duration,
-          longest_rally, average_rally, ball_max_speed,
+          total_touches, points_per_second, ball_max_speed,
           touches_win, touches_lose,
           max_points_streak_win, max_points_streak_lose,
           max_leading_time_win, max_leading_time_lose,
@@ -1621,10 +1591,11 @@ class GameManager {
         stats.player2LeadingTime += (now - stats.player2LeadingStart) / 1000;
       }
 
-      // Calculate average rally
-      const averageRally = stats.totalRallies.length > 0
-        ? stats.totalRallies.reduce((sum, r) => sum + r, 0) / stats.totalRallies.length
-        : 0;
+      // Calculate total touches and seconds per point (stored as points_per_second for compatibility)
+      const totalTouches = stats.totalTouches || (stats.player1Touches + stats.player2Touches);
+      const totalPoints = winScore + loseScore;
+      // Seconds per point: how many seconds on average between each point scored
+      const pointsPerSecond = totalPoints > 0 ? Math.round((duration / totalPoints) * 100) / 100 : 0;
 
       // Get statistics for winner and loser
       const touchesWin = winnerId === room.player1.id ? stats.player1Touches : stats.player2Touches;
@@ -1661,8 +1632,8 @@ class GameManager {
         tournamentDbId, // tournament_id (NULL for casual games, database ID for tournament matches)
         new Date().toISOString(),
         duration,
-        stats.longestRally || null,
-        averageRally > 0 ? Math.round(averageRally * 100) / 100 : null, // Round to 2 decimal places
+        totalTouches || 0, // total_touches
+        pointsPerSecond || 0, // points_per_second
         ballMaxSpeedMetersPerSecond, // Ball max speed in m/s
         touchesWin || 0,
         touchesLose || 0,
@@ -1684,7 +1655,7 @@ class GameManager {
         console.log(`Tournament Match: Tournament String ID ${tournamentStringId}, DB ID ${tournamentDbId}, Round ${tournamentRound}`);
         console.log(`Player Names: Winner=${winnerName} (Avatar: ${winnerAvatar || 'N/A'}), Loser=${loserName} (Avatar: ${loserAvatar || 'N/A'})`);
       }
-      console.log(`Stats: Duration: ${duration}s, Longest Rally: ${stats.longestRally}, Avg Rally: ${averageRally.toFixed(2)}, Max Speed: ${ballMaxSpeedMetersPerSecond?.toFixed(2) || 0}m/s`);
+      console.log(`Stats: Duration: ${duration}s, Total Touches: ${totalTouches}, Points/Sec: ${pointsPerSecond.toFixed(3)}, Max Speed: ${ballMaxSpeedMetersPerSecond?.toFixed(2) || 0}m/s`);
       console.log(`Touches - Winner: ${touchesWin}, Loser: ${touchesLose}`);
       console.log(`Streaks - Winner: ${maxStreakWin}, Loser: ${maxStreakLose}`);
       console.log(`Leading Time - Winner: ${Math.floor(maxLeadingTimeWin)}s, Loser: ${Math.floor(maxLeadingTimeLose)}s`);

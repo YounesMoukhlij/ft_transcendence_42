@@ -54,7 +54,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
         {
           setHasMore(false);   
           setMatchHistory(res.data);
-        } 
+        }
       } catch (err) {
         console.error(err);
       }

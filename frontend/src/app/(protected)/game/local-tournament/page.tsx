@@ -181,15 +181,14 @@ export default function LocalTournamentPage() {
       // Always attempt to save match data - backend will handle guest players
       const isPlayer1Winner = matchStats.finalScore.player1 > matchStats.finalScore.player2;
 
-      // Calculate base values first
+      // Calculate base values from matchStats (now properly tracked)
       const win_score = (() => {
         if (matchStats?.finalScore) {
           const p1 = Number(matchStats.finalScore.player1) || 0;
           const p2 = Number(matchStats.finalScore.player2) || 0;
           return Math.max(p1, p2);
         }
-        // Fallback: assume winner has 10 points, loser has less
-        return isPlayer1Winner ? 10 : 9;
+        return 5; // Default winning score
       })();
 
       const lose_score = (() => {
@@ -198,8 +197,7 @@ export default function LocalTournamentPage() {
           const p2 = Number(matchStats.finalScore.player2) || 0;
           return Math.min(p1, p2);
         }
-        // Fallback: assume winner has 10 points, loser has less
-        return isPlayer1Winner ? 9 : 10;
+        return 0;
       })();
 
       const duration = (() => {
@@ -208,73 +206,58 @@ export default function LocalTournamentPage() {
         return Math.max(actualDuration, 10);
       })();
 
-      const longest_rally = (() => {
-        const actualLongest = matchStats?.longestRally || 0;
-        // Estimate based on scores if no rallies tracked
-        const totalPoints = win_score + lose_score;
-        return Math.max(actualLongest, Math.min(totalPoints * 2, 20)); // Estimate 2 touches per point, max 20
-      })();
+      // Get touches directly from game stats - now properly tracked
+      const touches_win = isPlayer1Winner 
+        ? (matchStats?.player1Touches || 0) 
+        : (matchStats?.player2Touches || 0);
+      
+      const touches_lose = !isPlayer1Winner 
+        ? (matchStats?.player1Touches || 0) 
+        : (matchStats?.player2Touches || 0);
 
-      const average_rally = (() => {
-        const actualAverage = matchStats?.averageRally ? Math.round(matchStats.averageRally * 100) / 100 : 0;
-        // Estimate based on longest rally if available
-        return actualAverage > 0 ? actualAverage : Math.max(longest_rally * 0.7, 3); // Estimate 70% of longest, min 3
-      })();
+      // Total touches (new field replacing longest_rally)
+      const total_touches = matchStats?.totalTouches || (touches_win + touches_lose);
 
-      const touches_win = (() => {
-        const actualTouches = isPlayer1Winner ? (matchStats?.player1Touches || 0) : (matchStats?.player2Touches || 0);
-        // Estimate based on rallies and average rally length
-        const estimatedTouches = longest_rally > 0 ? Math.round(average_rally * (win_score + lose_score) * 0.6) : 0;
-        return Math.max(actualTouches, estimatedTouches, win_score * 3); // At least 3 touches per point won
-      })();
+      // Seconds per point (stored as points_per_second for DB compatibility)
+      // E.g., "a point every 6 seconds"
+      const totalPointsScored = win_score + lose_score;
+      const points_per_second = matchStats?.pointsPerSecond 
+        ? Math.round(matchStats.pointsPerSecond * 100) / 100 
+        : (totalPointsScored > 0 ? Math.round((duration / totalPointsScored) * 100) / 100 : 0);
 
       const matchData = {
         // Player information - use tournament player data directly
         winner: winner.id_user,
         loser: loser.id_user,       
-        // Match scores - use calculated values
+        // Match scores
         win_score,
         lose_score,
         tournament_id: tournamentId,
         duration,
-        longest_rally,
-        average_rally,
-        ball_max_speed: (() => {
-          const actualSpeed = matchStats?.maxBallSpeed ? Math.round(matchStats.maxBallSpeed * 100) / 100 : 0;
-          // Provide reasonable default for ball speed
-          return Math.max(actualSpeed, 8.5); // Default ball speed in m/s
-        })(),
+        // New simplified stats
+        total_touches,
+        points_per_second,
+        ball_max_speed: matchStats?.maxBallSpeed ? Math.round(matchStats.maxBallSpeed * 100) / 100 : 6,
         touches_win,
-        touches_lose: (() => {
-          const actualTouches = !isPlayer1Winner ? (matchStats?.player1Touches || 0) : (matchStats?.player2Touches || 0);
-          // Estimate based on winner's touches
-          return Math.max(actualTouches, Math.round(touches_win * 0.7), lose_score * 2); // Estimate 70% of winner, min 2 per point lost
-        })(),
-        max_points_streak_win: (() => {
-          const actualStreak = isPlayer1Winner ? (matchStats?.maxStreakPlayer1 || 0) : (matchStats?.maxStreakPlayer2 || 0);
-          // Estimate based on score difference
-          const scoreDiff = win_score - lose_score;
-          return Math.max(actualStreak, Math.min(win_score, Math.max(1, scoreDiff)));
-        })(),
-        max_points_streak_lose: (() => {
-          const actualStreak = !isPlayer1Winner ? (matchStats?.maxStreakPlayer1 || 0) : (matchStats?.maxStreakPlayer2 || 0);
-          // Estimate based on loser's best performance
-          return Math.max(actualStreak, Math.min(lose_score, 2));
-        })(),
-        max_leading_time_win: (() => {
-          const actualTime = matchStats?.leadingTimePlayer1 || matchStats?.leadingTimePlayer2 ?
-            Math.round((isPlayer1Winner ? (matchStats.leadingTimePlayer1 || 0) : (matchStats.leadingTimePlayer2 || 0)) / 1000) : 0;
-          // Estimate based on duration and win margin ok ok 
-          const estimatedTime = Math.round(duration * 0.7); // Assume winner led 70% of the match ma3endna mandiro a ba AYOUB
-          return Math.max(actualTime, estimatedTime);
-        })(),
-        max_leading_time_lose: (() => {
-          const actualTime = matchStats?.leadingTimePlayer1 || matchStats?.leadingTimePlayer2 ?
-            Math.round((!isPlayer1Winner ? (matchStats.leadingTimePlayer1 || 0) : (matchStats.leadingTimePlayer2 || 0)) / 1000) : 0;
-          // Estimate based on remaining time
-          const estimatedTime = Math.round(duration * 0.2); // Assume loser led 20% of the match
-          return Math.max(actualTime, estimatedTime);
-        })()
+        touches_lose,
+        // Streaks - now properly tracked per point
+        max_points_streak_win: isPlayer1Winner 
+          ? (matchStats?.maxStreakPlayer1 || 1) 
+          : (matchStats?.maxStreakPlayer2 || 1),
+        max_points_streak_lose: !isPlayer1Winner 
+          ? (matchStats?.maxStreakPlayer1 || 0) 
+          : (matchStats?.maxStreakPlayer2 || 0),
+        // Leading time - now properly accumulated in milliseconds
+        max_leading_time_win: Math.round(
+          (isPlayer1Winner 
+            ? (matchStats?.leadingTimePlayer1 || 0) 
+            : (matchStats?.leadingTimePlayer2 || 0)) / 1000
+        ),
+        max_leading_time_lose: Math.round(
+          (!isPlayer1Winner 
+            ? (matchStats?.leadingTimePlayer1 || 0) 
+            : (matchStats?.leadingTimePlayer2 || 0)) / 1000
+        )
       };
       // Validate matchData before sending
       const validationErrors = [];

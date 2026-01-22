@@ -54,10 +54,10 @@ CREATE TABLE game_history (
     
     -- General data
     game_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    duration INTEGER,                     -- in seconds or minutes
-    longest_rally INTEGER,                -- max touches before a goal
-    average_rally REAL,                   -- average touches before a goal
-    ball_max_speed REAL,                  -- km/h or m/s
+    duration INTEGER,                     -- in seconds
+    total_touches INTEGER,                -- total paddle hits in the match
+    points_per_second REAL,               -- game pace (total points / duration)
+    ball_max_speed REAL,                  -- m/s
 
     -- Player data
     touches_win INTEGER,

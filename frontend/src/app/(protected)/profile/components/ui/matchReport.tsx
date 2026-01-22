@@ -6,13 +6,13 @@ import { useTranslation } from '@/contexts/LanguageContext';
 
 interface MatchStatsProps {
   duration: string;
-  longestRally: number
-  avgRally: number;
+  totalTouches: number;
+  pointsPerSecond: number;
   maxSpeed: number;
 }
 
-export function MatchStats({duration, longestRally, maxSpeed, avgRally} : MatchStatsProps) {
-    const _longestRally = useCountUp(longestRally, 850);
+export function MatchStats({duration, totalTouches, pointsPerSecond, maxSpeed} : MatchStatsProps) {
+    const _totalTouches = useCountUp(totalTouches, 850);
     const _maxSpeed = useCountUp(maxSpeed, 850);
     const {t} = useTranslation();
 
@@ -24,10 +24,10 @@ export function MatchStats({duration, longestRally, maxSpeed, avgRally} : MatchS
           {/* Longest Rally Card */}
           <div className="border rounded-2xl p-6 text-center relative overflow-hidden">
             <p className="text-6xl text-primary font-extrabold leading-none">
-             {_longestRally}
+             {_totalTouches}
             </p>
             <p className="text-gray-300 font-light text-sm mt-1">
-              {t('profile.longestRally')}
+              {t('profile.totalTouches')}
             </p>
             {/* Waveform SVG */}
            
@@ -53,8 +53,8 @@ export function MatchStats({duration, longestRally, maxSpeed, avgRally} : MatchS
             <p className="text-xs text-gray-400">{t('profile.duration')}</p>
           </div>
           <div className=" border border-gray-700 rounded-xl px-6 py-4 text-center shadow-md">
-            <p className="text-lg font-semibold">{avgRally}</p>
-            <p className="text-xs text-gray-400">{t('profile.averageRally')}</p>
+            <p className="text-lg font-semibold">{pointsPerSecond}</p>
+            <p className="text-xs text-gray-400">{t('profile.pointsPerSecond')}</p>
           </div>
         </div>
       </div>

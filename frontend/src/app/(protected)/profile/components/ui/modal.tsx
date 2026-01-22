@@ -152,7 +152,7 @@ export function GameModalDemo({game, onClose} : GameModalProps)
            </div>
 
             {
-              <MatchStats duration={formatDuration(game.duration)} longestRally={game.longest_rally} avgRally={game.average_rally} maxSpeed={game.ball_max_speed} />
+              <MatchStats duration={formatDuration(game.duration)} totalTouches={game.total_touches} pointsPerSecond={game.points_per_second} maxSpeed={game.ball_max_speed} />
 
             }
           </div>

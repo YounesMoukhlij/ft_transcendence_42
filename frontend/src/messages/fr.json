@@ -223,7 +223,6 @@
     "winRate": "Taux de Victoire",
     "totalGames": "Total des Jeux",
     "rank": "Rang",
-    "level": "Niveau",
     "xp": "XP",
     "overview": "Aperçu",
     "matchHistory": "Historique des Matchs",
@@ -294,7 +293,10 @@
     "wednesday": "mer",
     "thursday": "jeu",
     "friday": "ven",
-    "saturday": "sam"
+    "saturday": "sam",
+    "pointsPerSecond": "Points par seconde",
+    "totalTouches": "Touches totales"
+
   },
   "game": {
     "ModeSubtitle": "Sélectionnez un mode et commencez à en profiter dès maintenant",
@@ -302,9 +304,7 @@
     "selectMode": "Sélectionner le Mode de Jeu",
     "local": "Local",
     "ai": "IA",
-    "online": "En ligne",
     "tournament": "Tournoi",
-    "inviteFriend": "Inviter un Ami",
     "gameVsHuman": "Jeu vs Humain",
     "playOnline": "Jouer en ligne",
     "remoteGame": "Jeu à Distance",
@@ -361,11 +361,9 @@
     "chooseAnAvatar": "Choisissez un avatar",
     "upload": "Télécharger",
     "preview": "Aperçu",
-    "continue": "Continuer",
     "hostPlayer": "Joueur Hôte",
     "player": "Joueur",
     "enterNameForPlayer": "Entrez le nom du Joueur {number}",
-    "registerPlayers": "Enregistrer les Joueurs",
     "chooseAvatar": "Choisir un Avatar",
     "settingUpLocalGame": "Configuration du jeu local...",
     "connectingToServer": "Connexion au serveur... Veuillez patienter un instant.",
@@ -553,6 +551,8 @@
     "useWASDOrArrows": "Utilisez les touches WASD ou les flèches pour vous déplacer",
     "firstTo10PointsWins": "Le premier à atteindre 10 points gagne",
     "viewResults": "Voir les résultats"
+  
+
 
   }
 }

@@ -47,8 +47,8 @@ export interface GameDetails
     duration: number,
     type: string,
     tournament_id: number,
-    longest_rally: number,
-    average_rally: number,
+    total_touches: number,
+    points_per_second: number,
     ball_max_speed: number,
     blockChainHash: string,
 

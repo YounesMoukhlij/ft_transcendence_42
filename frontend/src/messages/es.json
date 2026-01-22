@@ -222,7 +222,6 @@
     "winRate": "Tasa de Victoria",
     "totalGames": "Total de Juegos",
     "rank": "Rango",
-    "level": "Nivel",
     "xp": "XP",
     "overview": "Resumen",
     "matchHistory": "Historial de Partidos",
@@ -293,7 +292,9 @@
     "wednesday": "mié",
     "thursday": "jue",
     "friday": "vie",
-    "saturday": "sáb"
+    "saturday": "sáb",
+    "pointsPerSecond": "Puntos por segundo",
+    "totalTouches": "Toques totales"
   },
   "game": {
     "playNow": "Jugar ahora",
@@ -301,9 +302,7 @@
     "selectMode": "Seleccionar Modo de Juego",
     "local": "Local",
     "ai": "IA",
-    "online": "En línea",
     "tournament": "Torneo",
-    "inviteFriend": "Invitar Amigo",
     "gameVsHuman": "Juego vs Humano",
     "playOnline": "Jugar en línea",
     "remoteGame": "Juego Remoto",
@@ -360,11 +359,9 @@
     "chooseAnAvatar": "Elige un avatar",
     "upload": "Subir",
     "preview": "Vista previa",
-    "continue": "Continuar",
     "hostPlayer": "Jugador Anfitrión",
     "player": "Jugador",
     "enterNameForPlayer": "Ingresa nombre para Jugador {number}",
-    "registerPlayers": "Registrar Jugadores",
     "chooseAvatar": "Elegir Avatar",
     "settingUpLocalGame": "Configurando juego local...",
     "connectingToServer": "Conectando al servidor... Por favor espera un momento.",
@@ -552,6 +549,7 @@
     "useWASDOrArrows": "Usa WASD o las flechas para moverte",
     "firstTo10PointsWins": "El primero en llegar a 10 puntos gana",
     "viewResults": "Ver resultados"
+    
   }
 }
 

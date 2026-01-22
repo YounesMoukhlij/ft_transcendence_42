@@ -87,17 +87,15 @@ const useLocalGameState = () => {
     // Tournament match statistics - always initialize
     gameStats: {
       startTime: Date.now(),
-      rallies: [], // Array of rally lengths (touches before goal)
       player1Touches: 0,
       player2Touches: 0,
-      player1Streak: 0,
-      player2Streak: 0,
+      currentStreakPlayer1: 0, // Current consecutive points
+      currentStreakPlayer2: 0,
       maxStreakPlayer1: 0,
       maxStreakPlayer2: 0,
       player1LeadingTime: 0,
       player2LeadingTime: 0,
-      currentRallyTouches: 0,
-      lastScorer: null,
+      lastLeadingPlayer: null as string | null, // Track who was leading last check
       lastLeadingCheck: Date.now(),
       maxBallSpeed: 0,
     },
@@ -119,17 +117,15 @@ const useLocalGameState = () => {
       },
       gameStats: {
         startTime: Date.now(), // Reset start time for new match
-        rallies: [], // Reset rallies for new match
         player1Touches: 0,
         player2Touches: 0,
-        player1Streak: 0,
-        player2Streak: 0,
+        currentStreakPlayer1: 0,
+        currentStreakPlayer2: 0,
         maxStreakPlayer1: 0,
         maxStreakPlayer2: 0,
         player1LeadingTime: 0,
         player2LeadingTime: 0,
-        currentRallyTouches: 0,
-        lastScorer: null,
+        lastLeadingPlayer: null,
         lastLeadingCheck: Date.now(),
         maxBallSpeed: 0,
       },
@@ -139,22 +135,20 @@ const useLocalGameState = () => {
   const updateGameState = useCallback((keysPressed: { [key: string]: boolean }, isAIMode: boolean = false, difficulty: 'easy' | 'medium' | 'hard' = 'medium', deltaTime: number = 1) => {
     setGameState(prev => {
       const now = Date.now();
-      // Ensure gameStats always exists with default values
+      // Ensure gameStats always exists with default values - preserve all accumulated values
       const defaultGameStats = {
-        startTime: prev.gameStats?.startTime || Date.now(), // Don't reset startTime if it exists
-        rallies: prev.gameStats?.rallies || [], // Don't reset accumulated rallies
-        player1Touches: prev.gameStats?.player1Touches || 0, // Don't reset accumulated touches
+        startTime: prev.gameStats?.startTime || Date.now(),
+        player1Touches: prev.gameStats?.player1Touches || 0,
         player2Touches: prev.gameStats?.player2Touches || 0,
-        player1Streak: 0, // Reset streaks per frame (they're calculated)
-        player2Streak: 0,
-        maxStreakPlayer1: prev.gameStats?.maxStreakPlayer1 || 0, // Preserve max streaks
+        currentStreakPlayer1: prev.gameStats?.currentStreakPlayer1 || 0, // Preserve current streak
+        currentStreakPlayer2: prev.gameStats?.currentStreakPlayer2 || 0,
+        maxStreakPlayer1: prev.gameStats?.maxStreakPlayer1 || 0,
         maxStreakPlayer2: prev.gameStats?.maxStreakPlayer2 || 0,
-        player1LeadingTime: prev.gameStats?.player1LeadingTime || 0, // Preserve leading time
+        player1LeadingTime: prev.gameStats?.player1LeadingTime || 0,
         player2LeadingTime: prev.gameStats?.player2LeadingTime || 0,
-        currentRallyTouches: prev.gameStats?.currentRallyTouches || 0, // Preserve current rally
-        lastScorer: prev.gameStats?.lastScorer || null, // Preserve last scorer
-        lastLeadingCheck: Date.now(), // Always update this
-        maxBallSpeed: prev.gameStats?.maxBallSpeed || 0, // Preserve max ball speed
+        lastLeadingPlayer: prev.gameStats?.lastLeadingPlayer || null,
+        lastLeadingCheck: prev.gameStats?.lastLeadingCheck || Date.now(),
+        maxBallSpeed: prev.gameStats?.maxBallSpeed || 0,
       };
       let statsUpdate = { ...defaultGameStats };
       // Paddles - smooth movement based on delta time
@@ -315,8 +309,7 @@ const useLocalGameState = () => {
         vy = Math.sin(angle) * newSpeed;
         speed = newSpeed;
 
-        // Track statistics: increment rally touches and player 1 touches
-        statsUpdate.currentRallyTouches++;
+        // Track statistics: increment player 1 touches
         statsUpdate.player1Touches++;
 
         // Track max ball speed
@@ -350,8 +343,7 @@ const useLocalGameState = () => {
         vy = Math.sin(angle) * newSpeed;
         speed = newSpeed;
 
-        // Track statistics: increment rally touches and player 2 touches
-        statsUpdate.currentRallyTouches++;
+        // Track statistics: increment player 2 touches
         statsUpdate.player2Touches++;
 
         // Track max ball speed
@@ -366,13 +358,21 @@ const useLocalGameState = () => {
       const newScores = { ...prev.scores };
       let ballReset = false;
 
-      // Track leading time (check every few frames to avoid excessive updates)
-      if (now - statsUpdate.lastLeadingCheck > 100) { // Check every 100ms
-        if (newScores.player1 > newScores.player2) {
-          statsUpdate.player1LeadingTime += (now - statsUpdate.lastLeadingCheck);
-        } else if (newScores.player2 > newScores.player1) {
-          statsUpdate.player2LeadingTime += (now - statsUpdate.lastLeadingCheck);
+      // Track leading time (check every 100ms to avoid excessive updates)
+      const timeSinceLastCheck = now - statsUpdate.lastLeadingCheck;
+      if (timeSinceLastCheck >= 100) {
+        // Determine who is currently leading
+        const currentLeader = newScores.player1 > newScores.player2 ? 'player1' : 
+                              newScores.player2 > newScores.player1 ? 'player2' : null;
+        
+        // Add time to the current leader
+        if (currentLeader === 'player1') {
+          statsUpdate.player1LeadingTime += timeSinceLastCheck;
+        } else if (currentLeader === 'player2') {
+          statsUpdate.player2LeadingTime += timeSinceLastCheck;
         }
+        
+        statsUpdate.lastLeadingPlayer = currentLeader;
         statsUpdate.lastLeadingCheck = now;
       }
 
@@ -381,45 +381,27 @@ const useLocalGameState = () => {
         newScores.player2++;
         ballReset = true;
 
-        // Track rally completion
-        statsUpdate.rallies.push(statsUpdate.currentRallyTouches);
-
-        // Update streaks
-        if (statsUpdate.lastScorer === 'player2') {
-          statsUpdate.player2Streak++;
-          if (statsUpdate.player2Streak > statsUpdate.maxStreakPlayer2) {
-            statsUpdate.maxStreakPlayer2 = statsUpdate.player2Streak;
-          }
-        } else {
-          statsUpdate.player2Streak = 1;
-          statsUpdate.player1Streak = 0; // Reset opponent streak
+        // Update streaks - player 2 scored, so increment their streak and reset player 1's
+        statsUpdate.currentStreakPlayer2++;
+        statsUpdate.currentStreakPlayer1 = 0; // Reset opponent streak
+        
+        // Update max streak if current streak is higher
+        if (statsUpdate.currentStreakPlayer2 > statsUpdate.maxStreakPlayer2) {
+          statsUpdate.maxStreakPlayer2 = statsUpdate.currentStreakPlayer2;
         }
-        statsUpdate.lastScorer = 'player2';
-
-        // Reset rally touches for next rally
-        statsUpdate.currentRallyTouches = 0;
 
       } else if (x - BALL_RADIUS > GAME_WIDTH) { // Ball passed right paddle (player 1 scores)
         newScores.player1++;
         ballReset = true;
 
-        // Track rally completion
-        statsUpdate.rallies.push(statsUpdate.currentRallyTouches);
-
-        // Update streaks
-        if (statsUpdate.lastScorer === 'player1') {
-          statsUpdate.player1Streak++;
-          if (statsUpdate.player1Streak > statsUpdate.maxStreakPlayer1) {
-            statsUpdate.maxStreakPlayer1 = statsUpdate.player1Streak;
-          }
-        } else {
-          statsUpdate.player1Streak = 1;
-          statsUpdate.player2Streak = 0; // Reset opponent streak
+        // Update streaks - player 1 scored, so increment their streak and reset player 2's
+        statsUpdate.currentStreakPlayer1++;
+        statsUpdate.currentStreakPlayer2 = 0; // Reset opponent streak
+        
+        // Update max streak if current streak is higher
+        if (statsUpdate.currentStreakPlayer1 > statsUpdate.maxStreakPlayer1) {
+          statsUpdate.maxStreakPlayer1 = statsUpdate.currentStreakPlayer1;
         }
-        statsUpdate.lastScorer = 'player1';
-
-        // Reset rally touches for next rally
-        statsUpdate.currentRallyTouches = 0;
       }
 
       const newBall = ballReset
@@ -698,20 +680,22 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     if (!winner && isLocalMode) {
       if (tournamentMode && onTournamentMatchEnd && localPlayers.length >= 2) {
         // gameStats is already available from useLocalGameState
+        const matchDuration = Date.now() - gameStats.startTime;
+        const totalPoints = scores.player1 + scores.player2;
 
-        // Calculate final match statistics
+        // Calculate final match statistics with new simplified structure
         const matchStats = {
           player1Id: localPlayers[0].id_user || localPlayers[0].id,
           player2Id: localPlayers[1].id_user || localPlayers[1].id,
           finalScore: scores,
-          duration: Date.now() - gameStats.startTime,
-          longestRally: Math.max(...gameStats.rallies, 0),
-          averageRally: gameStats.rallies.length > 0
-            ? gameStats.rallies.reduce((a, b) => a + b, 0) / gameStats.rallies.length
-            : 0,
-          maxBallSpeed: gameStats.maxBallSpeed || 0,
+          duration: matchDuration,
+          // Total touches for each player (ball hits on paddle)
+          totalTouches: (gameStats.player1Touches || 0) + (gameStats.player2Touches || 0),
           player1Touches: gameStats.player1Touches || 0,
           player2Touches: gameStats.player2Touches || 0,
+          // Seconds per point (average time between points - e.g., "a point every 6 seconds")
+          pointsPerSecond: totalPoints > 0 ? ((matchDuration / 1000) / totalPoints) : 0,
+          maxBallSpeed: gameStats.maxBallSpeed || 0,
           maxStreakPlayer1: gameStats.maxStreakPlayer1 || 0,
           maxStreakPlayer2: gameStats.maxStreakPlayer2 || 0,
           leadingTimePlayer1: gameStats.player1LeadingTime || 0,
@@ -736,10 +720,11 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             winnerPlayer,
             matchStats,
             gameStatsSummary: {
-              duration: Date.now() - (gameStats.startTime || Date.now()),
-              ralliesCount: gameStats.rallies?.length || 0,
+              duration: matchDuration,
+              totalTouches: matchStats.totalTouches,
               player1Touches: gameStats.player1Touches || 0,
               player2Touches: gameStats.player2Touches || 0,
+              pointsPerSecond: matchStats.pointsPerSecond,
               maxBallSpeed: gameStats.maxBallSpeed || 0,
               maxStreakPlayer1: gameStats.maxStreakPlayer1 || 0,
               maxStreakPlayer2: gameStats.maxStreakPlayer2 || 0
@@ -763,10 +748,11 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             winnerPlayer,
             matchStats,
             gameStatsSummary: {
-              duration: Date.now() - (gameStats.startTime || Date.now()),
-              ralliesCount: gameStats.rallies?.length || 0,
+              duration: matchDuration,
+              totalTouches: matchStats.totalTouches,
               player1Touches: gameStats.player1Touches || 0,
               player2Touches: gameStats.player2Touches || 0,
+              pointsPerSecond: matchStats.pointsPerSecond,
               maxBallSpeed: gameStats.maxBallSpeed || 0,
               maxStreakPlayer1: gameStats.maxStreakPlayer1 || 0,
               maxStreakPlayer2: gameStats.maxStreakPlayer2 || 0
