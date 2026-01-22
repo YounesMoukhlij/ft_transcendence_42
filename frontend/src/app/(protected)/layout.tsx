@@ -104,7 +104,8 @@
 //     </div>
 //   );
 // }
-"use client";
+'use client';
+
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import ProtectedClient from "./ProtectedClient";
@@ -114,7 +115,7 @@ const logout = () => {
   document.cookie = 'auth_token=; Max-Age=0; path=/;';
   useUserStore.getState().clearUser();
   window.location.href = '/signIn';
-}
+};
 
 export default function ProtectedLayout({
   children,
@@ -122,33 +123,25 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const user = useUserStore((state) => state.user);
+
+  
   if (!user) {
-    logout();
+    // logout();
+    console.log("need to login");
     return null;
   }
- return (
+
+  return (
     <ProtectedClient>
-      {/* Outer wrapper: Full screen height */}
       <div className="min-h-screen flex flex-col bg-transparent text-white">
-        
-        {/* 1. Navbar: Fixed at top */}
         <Navbar />
 
-        {/* 2. Content Wrapper
-          flex-row: Aligns Sidebar and Main side-by-side
-          pt-28: Clears space for the fixed Navbar (24 + padding)
-          gap-6: Space between sidebar and main content
-        */}
         <div className="flex flex-1 pt-28 px-4 pb-4 gap-6 max-w-[98%] mx-auto w-full">
-          
-          {/* Left: Sidebar (Auto width, Sticky behavior handled inside component) */}
           <Sidebar />
 
-          {/* Right: Main Content (Takes remaining space) */}
           <main className="flex-1 w-full overflow-y-auto rounded-3xl bg-transparent">
             {children}
           </main>
-
         </div>
       </div>
     </ProtectedClient>

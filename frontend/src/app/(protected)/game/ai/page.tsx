@@ -318,7 +318,7 @@ export default function AIGamePage() {
 
         {/* Player Profile Images in Fullscreen - Minimal (hidden when game is over) */}
         {!gameOver && isFullscreen && (
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700 shadow-xl">
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700 shadow-xl debug">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Image
@@ -378,7 +378,7 @@ export default function AIGamePage() {
 
         {/* Controls and Info - Hidden in fullscreen and when game is over */}
         {!isFullscreen && !gameOver && (
-          <div className="w-full max-w-2xl mt-4 text-center space-y-4">
+          <div className="w-full max-w-2xl mt-4 text-center space-y-4 debug">
             {/* Difficulty Display */}
             <div className="text-white text-lg">
               <span className="opacity-70">Difficulty: </span>

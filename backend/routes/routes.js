@@ -47,7 +47,7 @@ export default async function routes(fastify, options) {
 
   fastify.addHook('onRequest' , async (request , reply) => {
         const publicRoutes = ["/login", "/signUp", "/auth/42", "/42Auth" , "/AddUser" , "/forgotPassword",
-       "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/auth/42", "/42Auth", "/2fa/login-verify"];
+       "/verifyCode", "/resetPasswordWithToken", "/auth/google", "/GoogleAuth", "/auth/42", "/42Auth", "/2fa/login-verify" , "/refreshToken"];
     const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
 
 

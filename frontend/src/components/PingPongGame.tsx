@@ -1134,7 +1134,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     const winnerIsPlayer1 = player1Score > player2Score;
 
     return (
-      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl animate-pulse">
+      <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br shadow-2xl ">
         <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">
           {/* Trophy/Skull Icon with Animation */}
           <div className="mb-4 sm:mb-6">

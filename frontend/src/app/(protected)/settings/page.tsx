@@ -67,7 +67,6 @@ const ProfileSettingsPage = () => {
   const languages = [
     { id: 'en', label: 'English', flag: '🇬🇧' },
     { id: 'es', label: 'Spanish', flag: '🇪🇸' },
-    { id: 'tz', label: 'Tamazight', flag: '🇲🇦' },
     { id: 'fr', label: 'French', flag: '🇫🇷' }
   ]
 
@@ -118,16 +117,7 @@ const ProfileSettingsPage = () => {
     reader.readAsDataURL(file)
   }
 
-  // const getProfileImageUrl = () => {
-  //   if (previewImage) return previewImage
-  //   const currentImg = user.profile_img ;
-  //   if (currentImg && currentImg.startsWith('/uploads/')) {
-  //     return `${process.env.NEXT_PUBLIC_BACK_API}${currentImg}`
-  //   }
-  //   return currentImg
-  // }
-
-  // 1. SAVE PROFILE (Axios)
+  // 1. SAVE PROFILE 
   const handleSaveProfile = async () => {
     setIsLoading(true)
     try {
@@ -183,7 +173,7 @@ const ProfileSettingsPage = () => {
     }
   }
 
-  // 2. SAVE SECURITY (Axios)
+  // 2. SAVE SECURITY 
   const handleSaveSecurity = async () => {
     setIsLoading(true)
 
@@ -252,7 +242,7 @@ const ProfileSettingsPage = () => {
     }
   }
 
-  // 3. TOGGLE 2FA (Axios)
+  // 3. TOGGLE 2FA 
   const handleToggle2FA = async () => {
     setIsLoading(true)
     if (is2FAEnabled) {
@@ -308,7 +298,7 @@ const ProfileSettingsPage = () => {
     }
   }
 
-  // 4. VERIFY 2FA (Axios)
+  // 4. VERIFY 2FA 
   const handleVerify2FA = async () => {
     setIsLoading(true)
     try {
@@ -339,7 +329,7 @@ const ProfileSettingsPage = () => {
     }
   }
 
-  // 5. DELETE ACCOUNT (Axios)
+  // 5. DELETE ACCOUNT 
 const handleDeleteAccount = async () => {
     setIsDeletingAccount(true)
     try {

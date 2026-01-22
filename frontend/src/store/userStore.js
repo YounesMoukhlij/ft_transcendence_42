@@ -41,7 +41,9 @@ export const useUserStore = create(
 
       Set_Display_game_invite: (value) => set({ Display_game_invite: value }),
       setInviterData: (data) => set({ inviterData: data }),
-
+      setAccessToken: (token) => set((state) => ({
+        user: { ...state.user, access_token: token }
+      })),
 
 
     connect: () => {

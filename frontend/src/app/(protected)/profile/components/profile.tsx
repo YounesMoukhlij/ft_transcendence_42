@@ -66,7 +66,6 @@ const recentMatches = user.recentMatches;
   
 const _levelProgress = useCountUp(userStats.experience % userStats.expForLevel / 10, 700);
 
-console.log("avatar is : ====>", userStats.avatar);
   return (
     <div className="">
       <div className="container mx-auto ">
