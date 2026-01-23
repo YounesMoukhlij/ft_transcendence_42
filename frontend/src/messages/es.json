@@ -576,7 +576,8 @@
     "exitFullscreen": "Salir",
     "youLost": "Has perdido",
     "you": "Tú",
-    "youWon": "¡HAS GANADO!"
+    "youWon": "¡HAS GANADO!",
+    "champion": "Campeón"
     
   }
 }

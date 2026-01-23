@@ -135,7 +135,7 @@ export function GameModalDemo({game, onClose} : GameModalProps)
                 </Table>
            </div>
             {
-              <MatchStats duration={formatDuration(game.duration)} totalTouches={game.total_touches} pointsPerSecond={game.points_per_second} maxSpeed={game.ball_max_speed} />
+              <MatchStats duration={formatDuration(game.duration)} totalTouches={game.total_touches || 0} pointsPerSecond={game.points_per_second || 0} maxSpeed={game.ball_max_speed || 0} />
 
             }
           </div>

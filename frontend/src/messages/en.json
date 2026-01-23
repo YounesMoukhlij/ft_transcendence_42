@@ -633,7 +633,8 @@
     "connectingToGame": "Connecting to game...",
     "opponentLeftGame": "Your opponent has left the game.",
     "exitGame": "Exit Game",
-    "you": "You"
+    "you": "You",
+    "champion": "Champion"
   }
 }
 
