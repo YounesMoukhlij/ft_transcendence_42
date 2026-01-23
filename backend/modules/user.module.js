@@ -33,21 +33,17 @@ export async function GetbotChat(request, reply) {
 }
 
 export async function GetbotMessages(request, reply) {
-  const result = ParseIdSchema.safeParse(request.query);
-  if (!result.success) {
-    return reply.code(400).send("missing params");
-  }
-  const { id } = result.data;
-
   try{
 
+    const object = request.server.db.prepare("SELECT * FROM bot_conv WHERE user_id = ? ").get(request.user.id_user);
+    if(!object.conversation_id)
+        return reply.code(403).send(false);
 
     const query = request.server.db.prepare("SELECT * FROM bot_room WHERE conversation_id = ? ORDER BY created_at ASC");
-    const message = query.all(id);
+    const message = query.all(object.conversation_id);
 
 
-
-     const messages = message.map(bot => ({
+    const messages = message.map(bot => ({
       ...bot,
 
       sender: -2,
@@ -99,9 +95,13 @@ export async function blockFunction(request , reply){
 
   const { conv_id , friend_id} = result.data;
 
-
+  
+  if (friend_id == request.user.id_user)
+    return reply.code(400).send(false);
 
   const socket = request.server.users_socket.get(friend_id.toString());
+
+  
   try{
 
 
@@ -113,7 +113,7 @@ export async function blockFunction(request , reply){
 
     const members = room.members.split(',').map(n => Number(n));
 
-    if (!members.includes(request.user.id_user))
+    if (!members.includes(request.user.id_user) || members.includes(friend_id))
       return reply.code(403).send({ error: "you are not a member of this conversation" });
 
 
@@ -161,6 +161,10 @@ export async function DeblockFunction(request , reply){
   const {conv_id , friend_id } = result.data;
 
 
+
+  if (friend_id == request.user.id_user)
+    return reply.code(400).send(false);
+
   const socket = request.server.users_socket.get(friend_id.toString());
 
   try{
@@ -173,7 +177,7 @@ export async function DeblockFunction(request , reply){
 
     const members = room.members.split(',').map(n => Number(n));
 
-    if (!members.includes(request.user.id_user))
+    if (!members.includes(request.user.id_user) || !members.includes(request.user.friend_id) )
       return reply.code(403).send({ error: "you are not a member of this conversation" });
 
     const query = request.server.db.prepare(`SELECT * FROM  room WHERE conversation_id = ?`);
@@ -205,8 +209,6 @@ export async function DeblockFunction(request , reply){
         }
       }));
     }
-
-
     reply.code(200).send(true);
     
   }catch(err){
@@ -217,6 +219,7 @@ export async function DeblockFunction(request , reply){
 
 
 export async function unfriend(request, reply) {
+
   const result = BlockSchema.safeParse(request.body);
   if (!result.success)
     return reply.code(400).send("missing params");
@@ -225,7 +228,7 @@ export async function unfriend(request, reply) {
   const userId = request.user.id_user;
 
   try {
- 
+
     const roomStmt = request.server.db.prepare(
       "SELECT members FROM room WHERE conversation_id = ?"
     );
@@ -234,13 +237,9 @@ export async function unfriend(request, reply) {
     if (!room)
       return reply.code(404).send({ error: "conversation  not found" });
 
-    // try {
       const members = room.members.split(',').map(n => Number(n));
-    // } catch {
-    //   return reply.code(500).send({ error: "invalid room members format" });
-    // }
 
-    if (!members.includes(userId))
+    if (!members.includes(userId) || !members.includes(friend_id))
       return reply.code(403).send({ error: "you are not a member of this conversation" });
 
     request.server.db

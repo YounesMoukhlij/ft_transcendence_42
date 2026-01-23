@@ -14,7 +14,6 @@ import { RiMore2Fill } from "react-icons/ri";
 import FriendList from './FriendList'
 
 import {getFormattedDate} from './tools'
-import {Message} from './types'
 import {formatMessageTime} from './tools'
 
 import { MdBlock } from "react-icons/md";
@@ -73,8 +72,8 @@ export default function Messages(){
         console.log(err);
       }
     }
-    Setconfirm(!confirm);
   }
+  Setconfirm(!confirm);
 }
 
   useEffect(()=>{
@@ -402,11 +401,11 @@ export default function Messages(){
 
                   { confirm &&
                     <div ref={menuRef} >
-                      <div  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-black w-[20rem] h-[10rem] flex  flex-col justify-around rounded-3xl ">
-                        <p className="w-full flex justify-center pt-1">you will send challenge to {friend?.username} </p>
+                      <div  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 border-2 border-gray-800 w-[20rem] h-[8rem] flex  flex-col justify-around rounded-3xl ">
+                        <p className="w-full flex justify-center pt-1">{t('chat.sendChallengeTo') + friend?.username} </p>
                         <div className="flex justify-center items-center h-[2rem] gap-4">
-                          <button className="w-[7rem] h-full bg-red-700 hover:cursor-pointer " onClick={()=> Handleconfirm(false)}>Cancel</button>
-                          <button className="w-[7rem] h-full bg-green-900 hover:cursor-pointer " onClick={()=> Handleconfirm(true)}>confirm</button>
+                          <button className="w-[7rem] rounded-lg h-full border border-gray-800 bg-red-500/50 cursor-pointer hover:bg-red-600/50" onClick={()=> Handleconfirm(false)}>{t('common.cancel')}</button>
+                          <button className="w-[7rem] h-full rounded-lg border border-gray-800 bg-blue-500/50 cursor-pointer hover:bg-blue-600/50 " onClick={()=> Handleconfirm(true)}>{t('common.confirm')}</button>
                         </div>
                       </div>
                     </div>
@@ -511,7 +510,7 @@ export default function Messages(){
                                   />
                                 </div>
 
-                                <div className="mr-2 sm:mr-4 hover:cursor-pointer" onClick={()=>Setconfirm(true)}>
+                                <div ref={buttonRef} className="mr-2 sm:mr-4 hover:cursor-pointer" onClick={() => Setconfirm(!confirm)}>
                                   <button>
                                     <IoGameController className="w-8 h-8 lg:w-8 lg:h-8 text-gray-400 hover:text-white transition-colors" />
                                   </button>

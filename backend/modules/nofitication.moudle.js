@@ -142,6 +142,14 @@ export async function cancelFriendRequest(request , reply){
   const socket = request.server.users_socket.get(response.getter_user.toString());
 
 
+  try{
+    const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ? AND sender_user = ?');
+    const result =  query.run(id , request.user.id_user );
+    if (result.changes === 0){
+      return reply.code(404).send("notification not found");
+    }
+
+
   if (socket)
   {
     const object = {
@@ -155,14 +163,7 @@ export async function cancelFriendRequest(request , reply){
     }));
   }
 
-  try{
-    const query = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ? AND sender_user = ?');
-    const result =  query.run(id , request.user.id_user );
-    if (result.changes === 0){
-      return reply.code(404).send("notification not found");
-    }
-
-    return reply.code(200).send("Friend request deleted successfully");
+  return reply.code(200).send("Friend request deleted successfully");
 
   }catch(err){
     reply.code(500);
@@ -357,12 +358,15 @@ export async function GetFriends(request, reply) {
 
     const placeholders = allFriendIds.map(() => '?').join(', ');
     const getFriendDetailsStmt = db.prepare(`
-      SELECT id_user, username, fullname, profile_img, xp, status, bio , lastSeen
+      SELECT id_user, username, fullname, profile_img, xp,
+      (select COUNT(*) as total from game_history WHERE user_win IN (${placeholders})) as wins,
+      (select COUNT(*) as total from game_history WHERE user_lose IN (${placeholders})) as losses,
+      status, bio , lastSeen
       FROM users
       WHERE id_user IN (${placeholders})
     `);
 
-    const friendDetails = getFriendDetailsStmt.all(...allFriendIds);
+    const friendDetails = getFriendDetailsStmt.all(...allFriendIds, ...allFriendIds, ...allFriendIds);
 
     // Update status based on real-time socket connections (more accurate than DB)
     const usersSocket = request.server.users_socket;
@@ -399,6 +403,7 @@ export async function GetFriends(request, reply) {
         pinnedUser2: conv?.pinnedUser2 ?? -1
       };
     });
+    console.log("Hello : ===>  ", result);
 
     return reply.send(result);
 

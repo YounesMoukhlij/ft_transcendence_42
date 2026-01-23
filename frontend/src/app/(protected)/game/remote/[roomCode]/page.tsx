@@ -370,13 +370,11 @@ export default function RemoteGameRoomPage() {
     // Check if socket is available and connected
     if (!socket) {
       connect();
-      console.log("ok msogra===============+>");
-      console.error('[RemoteGameRoom] No socket available');
-      setError(t('game.connectionError'));
-      // const redirectTimer = setTimeout(() => {
-      //   router.push('/game');
-      // }, 2000);
-      // return () => clearTimeout(redirectTimer);
+      router.push('/game');
+      const redirectTimer = setTimeout(() => {
+        router.push('/game');
+      }, 2000);
+      return () => clearTimeout(redirectTimer);
     }
 
     // Message handler function
@@ -627,7 +625,7 @@ export default function RemoteGameRoomPage() {
             )}
 
           {gameOver.reason === 'opponentQuit' && gameOver.message && (
-            <p className="text-yellow-400 text-lg mb-4 font-semibold">{gameOver.message} Hello</p>
+            <p className="text-yellow-400 text-lg mb-4 font-semibold">{gameOver.message}</p>
           )}
 
           <p className="text-lg mb-4">
@@ -728,7 +726,7 @@ export default function RemoteGameRoomPage() {
                       <p className="text-white font-semibold text-sm sm:text-base md:text-lg truncate">
                         {player1Username || serverGameState?.player1?.username || 'Player 1'}
                       </p>
-                      <p className="text-gray-400 text-xs sm:text-sm">Left Paddle</p>
+                      <p className="text-gray-400 text-xs sm:text-sm">{t('game.leftPaddle')}</p>
                     </div>
                   </div>
                   
@@ -759,7 +757,7 @@ export default function RemoteGameRoomPage() {
                       <p className="text-white font-semibold text-sm sm:text-base md:text-lg truncate">
                         {player2Username || serverGameState?.player2?.username || 'Player 2'}
                       </p>
-                      <p className="text-gray-400 text-xs sm:text-sm">Right Paddle</p>
+                      <p className="text-gray-400 text-xs sm:text-sm">{t('game.rightPaddle')}</p>
                     </div>
                   </div>
                 </div>
@@ -842,13 +840,10 @@ export default function RemoteGameRoomPage() {
               <div className="w-full max-w-2xl mt-4 text-center space-y-4">
                 <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
                   <p className="text-white text-sm md:text-base mb-2">
-                    <span className="font-semibold">Controls:</span> Use <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">W</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">S</kbd> or <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↑</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↓</kbd> keys to move your paddle
-                  </p>
-                  <p className="text-gray-400 text-xs md:text-sm mb-2">
-                    First to 10 points wins!
+                    <span className="font-semibold">{t('game.controls')}</span> <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">W</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">S</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↑</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↓</kbd>
                   </p>
                   <p className="text-gray-500 text-xs">
-                    Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-xs">F</kbd> for fullscreen mode
+                    {t('game.pressFForFullscreen')}
                   </p>
                 </div>
 
@@ -861,12 +856,12 @@ export default function RemoteGameRoomPage() {
                     {isFullscreen ? (
                       <>
                         <IoContract className="w-5 h-5" />
-                        <span>Exit Fullscreen</span>
+                        <span>{t('game.exitFullscreen')}</span>
                       </>
                     ) : (
                       <>
                         <IoExpand className="w-5 h-5" />
-                        <span>Fullscreen</span>
+                        <span>{t('game.fullscreen')}</span>
                       </>
                     )}
                   </button>
@@ -885,24 +880,24 @@ export default function RemoteGameRoomPage() {
               <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-6 py-3 border border-gray-700 shadow-xl">
                 <div className="flex items-center gap-4 text-white text-sm flex-wrap justify-center">
                   <div>
-                    <span className="opacity-70">Room: </span>
+                    <span className="opacity-70">{t('game.room')}: </span>
                     <span className="font-semibold">{roomCode}</span>
                   </div>
                   <div className="h-4 w-px bg-gray-600"></div>
                   <div>
-                    <span className="opacity-70">Controls: </span>
-                    <span className="font-semibold">W/S or ↑/↓</span>
+                    <span className="opacity-70">{t('game.controls')}: </span>
+                    <span className="font-semibold">W/S / ↑/↓</span>
                   </div>
                   <div className="h-4 w-px bg-gray-600"></div>
                   <div className="opacity-70 text-xs">
-                    Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded">F</kbd> to exit fullscreen
+                    {t('game.exitFullscreen')}
                   </div>
                   <div className="h-4 w-px bg-gray-600"></div>
                   <button
                     onClick={leaveRoom}
                     className="px-4 py-1.5 bg-red-600 hover:bg-red-700 rounded transition-colors text-sm font-medium"
                   >
-                    Leave Game
+                    {t('game.exitGame')}
                   </button>
                 </div>
               </div>

@@ -12,10 +12,8 @@ import '../app/(protected)/chat/page.css';
 import { friendRequestType } from '@/app/(protected)/chat/types';
 import Logo from '../components/Logo';
 import { getProfileImageUrl } from '@/lib/utils';
-import { getWebSocket } from './globalSocket';
 import { useGameContext } from './GameContext';
 import { useTranslation } from '../contexts/LanguageContext';
-import path from 'path';
 
 interface SearchResult {
   id_user: number;
@@ -169,7 +167,7 @@ function SearchBar() {
                           className="flex items-center gap-3 p-3 rounded-lg bg-gray-900 hover:bg-gray-800 transition"
                         >
                           <Link
-                            href={`/profile/${result.username}`}
+                            href={`/profile/${result.id_user}`}
                             onClick={() => {
                               setSearchOpen(false);
                               setSearchQuery('');
@@ -410,113 +408,113 @@ function NotificationsIcon() {
     }
   }
 
-  async function AcceptTournamentInvite(item) {
-    if (!user?.access_token) return;
+  // async function AcceptTournamentInvite(item) {
+  //   if (!user?.access_token) return;
 
-    try {
-      const tournamentId = item.tournamentId;
-      if (!tournamentId) {
-        toast.error('Tournament ID not found in invitation');
-        return;
-      }
+  //   try {
+  //     const tournamentId = item.tournamentId;
+  //     if (!tournamentId) {
+  //       toast.error('Tournament ID not found in invitation');
+  //       return;
+  //     }
 
-      const gameSocket = getWebSocket();
+  //     const gameSocket = getWebSocket();
 
-      if (gameSocket.readyState === WebSocket.CONNECTING) {
-        await new Promise((resolve) => {
-          gameSocket.addEventListener('open', resolve, { once: true });
-        });
-      }
+  //     if (gameSocket.readyState === WebSocket.CONNECTING) {
+  //       await new Promise((resolve) => {
+  //         gameSocket.addEventListener('open', resolve, { once: true });
+  //       });
+  //     }
 
-      if (gameSocket.readyState === WebSocket.OPEN) {
-        if (user?.id_user) gameSocket.send(String(user.id_user));
-        await new Promise(resolve => setTimeout(resolve, 100));
+  //     if (gameSocket.readyState === WebSocket.OPEN) {
+  //       if (user?.id_user) gameSocket.send(String(user.id_user));
+  //       await new Promise(resolve => setTimeout(resolve, 100));
 
-        gameSocket.send(JSON.stringify({
-          type: 'game',
-          action: 'acceptTournamentInvite',
-          payload: {
-            tournamentId: tournamentId,
-            avatar: user.avatar,
-            color: '#10B981'
-          }
-        }));
-      } else {
-        toast.error('Connection not available. Please refresh the page.');
-        return;
-      }
+  //       gameSocket.send(JSON.stringify({
+  //         type: 'game',
+  //         action: 'acceptTournamentInvite',
+  //         payload: {
+  //           tournamentId: tournamentId,
+  //           avatar: user.avatar,
+  //           color: '#10B981'
+  //         }
+  //       }));
+  //     } else {
+  //       toast.error('Connection not available. Please refresh the page.');
+  //       return;
+  //     }
 
-      try {
-        await axios.delete(
-          `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
-          {
-            params: { notifyId: item.notify_id },
-            headers: { Authorization: `Bearer ${user.access_token}` }
-          }
-        );
-      } catch (err) {
-        console.log(err);
-      }
+  //     try {
+  //       await axios.delete(
+  //         `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
+  //         {
+  //           params: { notifyId: item.notify_id },
+  //           headers: { Authorization: `Bearer ${user.access_token}` }
+  //         }
+  //       );
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
 
-      deleteNotification(item.notify_id);
-      setNotificationIndex(false);
-      router.push('/game/tournament');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to accept tournament invitation');
-    }
-  }
+  //     deleteNotification(item.notify_id);
+  //     setNotificationIndex(false);
+  //     router.push('/game/tournament');
+  //   } catch (err) {
+  //     console.error(err);
+  //     toast.error('Failed to accept tournament invitation');
+  //   }
+  // }
 
-  async function RejectTournamentInvite(item) {
-    if (!user?.access_token) return;
+  // async function RejectTournamentInvite(item) {
+  //   if (!user?.access_token) return;
 
-    try {
-      const tournamentId = item.tournamentId;
-      if (!tournamentId) {
-        toast.error('Tournament ID not found in invitation');
-        return;
-      }
+  //   try {
+  //     const tournamentId = item.tournamentId;
+  //     if (!tournamentId) {
+  //       toast.error('Tournament ID not found in invitation');
+  //       return;
+  //     }
 
-      const gameSocket = getWebSocket();
+  //     const gameSocket = getWebSocket();
 
-      if (gameSocket.readyState === WebSocket.CONNECTING) {
-        await new Promise((resolve) => {
-          gameSocket.addEventListener('open', resolve, { once: true });
-        });
-      }
+  //     if (gameSocket.readyState === WebSocket.CONNECTING) {
+  //       await new Promise((resolve) => {
+  //         gameSocket.addEventListener('open', resolve, { once: true });
+  //       });
+  //     }
 
-      if (gameSocket.readyState === WebSocket.OPEN) {
-        if (user?.id_user) gameSocket.send(String(user.id_user));
-        await new Promise(resolve => setTimeout(resolve, 100));
+  //     if (gameSocket.readyState === WebSocket.OPEN) {
+  //       if (user?.id_user) gameSocket.send(String(user.id_user));
+  //       await new Promise(resolve => setTimeout(resolve, 100));
 
-        gameSocket.send(JSON.stringify({
-          type: 'game',
-          action: 'declineTournamentInvite',
-          payload: {
-            tournamentId: tournamentId
-          }
-        }));
-      }
+  //       gameSocket.send(JSON.stringify({
+  //         type: 'game',
+  //         action: 'declineTournamentInvite',
+  //         payload: {
+  //           tournamentId: tournamentId
+  //         }
+  //       }));
+  //     }
 
-      deleteNotification(item.notify_id);
-      setNotificationIndex(false);
+  //     deleteNotification(item.notify_id);
+  //     setNotificationIndex(false);
 
-      try {
-        await axios.delete(
-          `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
-          {
-            params: { notifyId: item.notify_id },
-            headers: { Authorization: `Bearer ${user.access_token}` }
-          }
-        );
-      } catch (err) {
-        console.log(err);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to decline tournament invitation');
-    }
-  }
+  //     try {
+  //       await axios.delete(
+  //         `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
+  //         {
+  //           params: { notifyId: item.notify_id },
+  //           headers: { Authorization: `Bearer ${user.access_token}` }
+  //         }
+  //       );
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     toast.error('Failed to decline tournament invitation');
+  //   }
+  // }
 
   return (
     <div className="relative" ref={buttonRef}>
@@ -536,12 +534,12 @@ function NotificationsIcon() {
           className="absolute right-0 top-full mt-4 w-96 max-h-[500px] bg-black border-2 border-gray-500 rounded-2xl overflow-hidden shadow-2xl z-50"
         >
           <div className="p-3 border-b border-gray-700 font-semibold text-white bg-gray-900/50">
-            Notifications
+            {t('common.notifications')}
           </div>
           <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
             {notifications.length === 0 ? (
               <div className="text-center text-gray-400 py-8 text-sm">
-                No notifications
+                {t('common.noNotifications')}
               </div>
             ) : (
               notifications.map((item, index) => {
@@ -561,7 +559,7 @@ function NotificationsIcon() {
                           {item.sender_username}
                         </p>
                         <p className="text-sm text-gray-400">
-                          invited you to a <span className="text-blue-400 font-medium">1 vs 1 game</span>
+                          {t('navbar.invitedTo')} <span className="text-blue-400 font-medium">{t('navbar.1v1')}</span>
                         </p>
                       </div>
                       {isTimeValid(item) ? (
@@ -570,58 +568,57 @@ function NotificationsIcon() {
                             onClick={() => AcceptGameChallenge(item)}
                             className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
                           >
-                            Accept
+                            {t('common.accept')}
                           </button>
                           <button
                             onClick={() => RejectGameChallenge(item)}
                             className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
                           >
-                            Decline
+                            {t('common.decline')}
                           </button>
                         </div>
                       ) : (
-                        <p className="text-gray-500 text-sm">expired</p>
+                        <p className="text-gray-500 text-sm">{t('navbar.expired')}</p>
                       )}
                     </div>
                   );
                 }
-
-                if (item.title === "tournament invite") {
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-4 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-black hover:from-gray-800 transition"
-                    >
-                      <img
-                        src={getProfileImageUrl(item.sender_profile_img)}
-                        alt="profile"
-                        className="w-12 h-12 rounded-full border-2 border-gray-600 object-cover"
-                      />
-                      <div className="flex flex-col flex-1">
-                        <p className="text-white font-semibold">
-                          {item.sender_username}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          invited you to a <span className="text-blue-400 font-medium">tournament</span>
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => AcceptTournamentInvite(item)}
-                          className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => RejectTournamentInvite(item)}
-                          className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
-                        >
-                          Decline
-                        </button>
-                      </div>
-                    </div>
-                  );
-                }
+                // if (item.title === "tournament invite") {
+                //   return (
+                //     <div
+                //       key={index}
+                //       className="flex items-center gap-3 p-4 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-black hover:from-gray-800 transition"
+                //     >
+                //       <img
+                //         src={getProfileImageUrl(item.sender_profile_img)}
+                //         alt="profile"
+                //         className="w-12 h-12 rounded-full border-2 border-gray-600 object-cover"
+                //       />
+                //       <div className="flex flex-col flex-1">
+                //         <p className="text-white font-semibold">
+                //           {item.sender_username}
+                //         </p>
+                //         <p className="text-sm text-gray-400">
+                //           invited you to a <span className="text-blue-400 font-medium">tournament</span>
+                //         </p>
+                //       </div>
+                //       <div className="flex gap-2">
+                //         <button
+                //           onClick={() => AcceptTournamentInvite(item)}
+                //           className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+                //         >
+                //           {t('common.accept')}
+                //         </button>
+                //         <button
+                //           onClick={() => RejectTournamentInvite(item)}
+                //           className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+                //         >
+                //           {t('common.decline')}
+                //         </button>
+                //       </div>
+                //     </div>
+                //   );
+                // }
 
                 if (item.title === "friend request accepted") {
                   return (
@@ -639,7 +636,7 @@ function NotificationsIcon() {
                           {item.sender_username}
                         </p>
                         <p className="text-green-400 text-sm">
-                          accepted your friend request
+                          {t('common.acceptedFriendRequest')}
                         </p>
                       </div>
                     </div>
@@ -668,13 +665,13 @@ function NotificationsIcon() {
                         onClick={() => AcceptFriendRequest(item)}
                         className="flex-1 bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg font-medium transition"
                       >
-                        Confirm
+                        {t('common.confirm')}
                       </button>
                       <button
                         onClick={() => DelteFriendRequest(item.notify_id)}
                         className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium transition"
                       >
-                        Delete
+                        {t('common.delete')}
                       </button>
                     </div>
                   </div>
@@ -808,7 +805,7 @@ export default function Navbar() {
               {mobileMenuOpen && (
                 <div className="absolute right-0 top-full mt-4 w-64 bg-black border border-gray-800 rounded-2xl shadow-2xl p-4 flex flex-col gap-4 z-50">
                   <div>
-                    <h3 className="text-gray-500 text-xs uppercase font-bold mb-2 px-2">Menu</h3>
+                    <h3 className="text-gray-500 text-xs uppercase font-bold mb-2 px-2">{t('common.menu')}</h3>
                     {sidebarItems.map((item) => (
                       <Link key={item.path} href={item.path} onClick={() => setMobileMenuOpen(false)}>
                         <div className="flex items-center gap-3 p-3 rounded-xl text-gray-300 hover:bg-white hover:text-black transition-colors">
@@ -823,7 +820,7 @@ export default function Navbar() {
                     onClick={handleLogout}
                   >
                     <IoLogOutOutline className="text-xl" />
-                    <span className="font-medium">Logout</span>
+                    <span className="font-medium">{t('common.logout')}</span>
                   </div>
                 </div>
               )}

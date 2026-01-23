@@ -328,7 +328,7 @@ export default function LocalGamePage() {
                   <p className="text-white font-semibold text-sm sm:text-base md:text-lg truncate">
                     {player1Name}
                   </p>
-                  <p className="text-gray-400 text-xs sm:text-sm">Left Paddle</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">{t('game.leftPaddle')}</p>
                 </div>
               </div>
 
@@ -353,7 +353,7 @@ export default function LocalGamePage() {
                   <p className="text-white font-semibold text-sm sm:text-base md:text-lg truncate">
                     {player2Name}
                   </p>
-                  <p className="text-gray-400 text-xs sm:text-sm">Right Paddle</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">{t('game.rightPaddle')}</p>
                 </div>
               </div>
             </div>
@@ -423,21 +423,18 @@ export default function LocalGamePage() {
             {/* Controls Instructions */}
             <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
               <p className="text-white text-sm md:text-base mb-2">
-                <span className="font-semibold">Controls:</span>
+                <span className="font-semibold">{t('game.controls')}:</span>
               </p>
               <div className="flex flex-col gap-2 text-sm md:text-base">
                 <p className="text-white">
-                  <span className="font-semibold">{player1Name}:</span> Use <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">W</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">S</kbd> keys
+                  <span className="font-semibold">{player1Name}: </span><kbd className="px-2 py-1 bg-gray-700 rounded text-sm">W</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">S</kbd>
                 </p>
                 <p className="text-white">
-                  <span className="font-semibold">{player2Name}:</span> Use <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↑</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↓</kbd> Arrow keys
+                  <span className="font-semibold">{player2Name}: </span> <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↑</kbd> / <kbd className="px-2 py-1 bg-gray-700 rounded text-sm">↓</kbd> 
                 </p>
               </div>
-              <p className="text-gray-400 text-xs md:text-sm mt-2">
-                First to 10 points wins!
-              </p>
               <p className="text-gray-500 text-xs mt-2">
-                Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-xs">F</kbd> for fullscreen mode
+                {t('game.pressFForFullscreen')}
               </p>
             </div>
 
@@ -452,12 +449,12 @@ export default function LocalGamePage() {
                 {isFullscreen ? (
                   <>
                     <IoContract className="w-5 h-5" />
-                    <span>Exit Fullscreen</span>
+                    {t('game.exitFullscreen')}
                   </>
                 ) : (
                   <>
                     <IoExpand className="w-5 h-5" />
-                    <span>Fullscreen</span>
+                    <span>{t('game.fullscreen')}</span>
                   </>
                 )}
               </button>
@@ -490,18 +487,18 @@ export default function LocalGamePage() {
                 aria-label="Exit Fullscreen"
               >
                 <IoContract className="w-4 h-4" />
-                Exit Fullscreen
+                {t('game.exitFullscreen')}
               </button>
               <div className="h-4 w-px bg-gray-600"></div>
               <div className="opacity-70 text-xs">
-                Press <kbd className="px-1.5 py-0.5 bg-gray-700 rounded">F</kbd> for fullscreen
+                {t('game.pressFForFullscreen')}
               </div>
               <div className="h-4 w-px bg-gray-600"></div>
               <button
                 onClick={() => router.push('/game')}
                 className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 rounded transition-colors text-sm font-medium"
               >
-                Exit Game
+                {t('game.exitGame')}
               </button>
             </div>
           </div>

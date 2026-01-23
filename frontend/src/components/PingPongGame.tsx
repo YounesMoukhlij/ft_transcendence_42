@@ -1104,8 +1104,8 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
   if (opponentLeft) {
     return (
       <div className="text-white text-center">
-        <h2>Your opponent has left the game.</h2>
-        <button onClick={handleExit} className="mt-4 px-4 py-2 bg-blue-500 rounded">Back derrrrrr to Game Lobby</button>
+        <h2>{t('game.opponentLeftGame')}</h2>
+        <button onClick={handleExit} className="mt-4 px-4 py-2 bg-blue-500 rounded">{t('game.backToGameLobby')}</button>
       </div>
     );
   }
@@ -1131,7 +1131,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
           {/* Title with Gradient */}
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 text-white tracking-tight">
-            {isUserWinner ? t('game.victory') || 'Victory!' : t('game.gameOver') || 'Game Over'}
+            {isUserWinner ? t('profile.victory') : t('game.gameOver') }
           </h2>
 
           {/* Winner Name */}
@@ -1177,7 +1177,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
               onClick={handleExit}
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              {t('game.backToLobby') || 'Back to Game Lobby'}
+              {t('game.backToGameLobby')}
             </button>
           </div>
         </div>
@@ -1187,7 +1187,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
   // Loading/initial state for remote game
   if (!tournamentMode && gameState.mode !== 'ai' && gameState.mode !== 'local' && !serverGameState) {
-    return <div className="text-white">Connecting to game...</div>;
+    return <div className="text-white">{t('game.connectingToGame')}</div>;
   }
 
   // Winner screen for AI mode - Modern and decorated
@@ -1202,15 +1202,12 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
               {isPlayerWinner ? '🏆' : '🤖'}
             </div>
           </div>
-
-
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-tight">
-            {isPlayerWinner ? 'Victory!' : 'Game Over'}
+            {isPlayerWinner ? t('profile.victory') + "!" : t('game.gameOver') + "!"}
           </h2>
 
-          {/* Winner Name */}
           <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-white">
-            {t('game.youWon')}
+            {isPlayerWinner ? t('game.youWon') : t('game.youLost')}
           </p>
 
           {/* Score Card */}
@@ -1218,7 +1215,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             <p className="text-sm text-gray-300 mb-2">{t('profile.finalScore')}</p>
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
-                <p className="text-2xl sm:text-3xl font-bold text-white">You</p>
+                <p className="text-2xl sm:text-3xl font-bold text-white">{t('game.you')}</p>
                 <p className="text-3xl sm:text-4xl font-extrabold text-white">{scores.player1}</p>
               </div>
               <span className="text-2xl text-gray-400">-</span>
@@ -1239,13 +1236,13 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
               }}
               className="px-6 py-3 bg-blue-500/60 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              Play Again
+              {t('game.playAgain')}
             </button>
             <button
               onClick={handleExit}
               className="px-6 py-3  bg-gray-500 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              Back to Game Modes
+            {t('game.backToGameModes')}
             </button>
           </div>
         </div>
@@ -1269,7 +1266,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
           {/* Title with Gradient */}
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 bg-clip-text text-white tracking-tight">
-            Victory!
+            {t('profile.victory')}
           </h2>
 
           {/* Winner Name */}
@@ -1311,7 +1308,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
               }}
             className="px-6 py-3 bg-blue-500/60 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              Play Again
+              {t('game.playAgain')}
             </button>
             <button
               onClick={() => {
@@ -1320,7 +1317,7 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
               }}
               className="px-6 py-3  bg-gray-500 text-white rounded-lg font-semibold text-base sm:text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              Back to Game Modes
+              {t('game.backToGameModes')}
             </button>
           </div>
         </div>
@@ -1345,29 +1342,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
             objectFit: 'contain',
           }}
         />
-      </div>
-      <div className="mt-4 text-center text-white">
-        {gameState.mode === 'ai' ? (
-          <>
-            <p>Use W/S keys to move your paddle.</p>
-            <p>First to {winningScore} points wins!</p>
-          </>
-        ) : tournamentMode ? (
-          <>
-            <p>Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
-            <p>First to {winningScore} points wins!</p>
-          </>
-        ) : gameState.mode === 'local' ? (
-          <>
-            <p>Player 1: W/S keys. Player 2: Up/Down Arrow keys.</p>
-            <p>First to {winningScore} points wins!</p>
-          </>
-        ) : (
-          <>
-            <p>Use W/S or Arrow Up/Down keys to move your paddle.</p>
-            <p>First to {winningScore} points wins!</p>
-          </>
-        )}
       </div>
     </div>
   );

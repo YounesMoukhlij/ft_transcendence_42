@@ -22,7 +22,8 @@
     "back": "Atrás",
     "continue": "Continuar",
     "league": "Liga",
-    "of": "de"
+    "of": "de",
+    "menu": "Menú"
   },
   "settings": {
     "title": "Configuración de la cuenta",
@@ -139,7 +140,8 @@
     "gameChallengeDeclined": "{username} rechazó tu desafío de juego.",
     "tournamentInviteAccepted": "¡Invitación al torneo aceptada! Redirigiendo...",
     "expired": "expirado",
-    "invitedTo1v1": "te invitó a un juego 1 vs 1",
+    "invitedTo": "te invitó a ",
+    "1v1": " un juego 1 vs 1",
     "acceptedFriendRequest": "aceptó tu solicitud de amistad",
     "invitedToTournamentText": "te invitó a unirse a un torneo",
     "navigation": "Navegación",
@@ -186,7 +188,8 @@
     "showOnlineStatus": "Mostrar estado en línea",
     "general": "General",
     "blocked": "Bloqueado",
-    "noBlockedUsers": "Aún no hay usuarios bloqueados."
+    "noBlockedUsers": "Aún no hay usuarios bloqueados.",
+    "sendChallengeTo": "Enviarás un desafío a "
   },
   "leaderboard": {
     "title": "Clasificación",
@@ -299,6 +302,7 @@
 
   },
   "game": {
+    "waiting": "Esperando...",
     "playNow": "Jugar ahora",
     "ModeSubtitle": "Selecciona un modo y empieza a disfrutar ahora",
     "selectMode": "Seleccionar Modo de Juego",
@@ -555,7 +559,24 @@
     "challengeFriends": "Desafía a tus amigos a una partida y demuéstrales quién es el mejor",
     "startMatching": "Iniciar emparejamiento",
     "matchWithRandom": "Juega contra un jugador aleatorio en línea y empieza a jugar al instante",
-    "playRandomOrFriend": "Juega contra un oponente aleatorio o desafía a un amigo a una partida épica"
+    "playRandomOrFriend": "Juega contra un oponente aleatorio o desafía a un amigo a una partida épica",
+    "readyToPlay": "Listo para jugar",
+    "setupRequired": "Configuración requerida",
+    "characters": "caracteres",
+    "nameSet": "Nombre establecido",
+    "avatarSelected": "Avatar seleccionado",
+    "connectingToGame": "Conectando al juego...",
+    "opponentLeft": "Tu oponente ha abandonado",
+    "opponentLeftGame": "Tu oponente ha abandonado el juego.",
+    "exitGame": "Salir del juego",
+    "leftPaddle": "Pala izquierda",
+    "rightPaddle": "Pala derecha",
+    "pressFForFullscreen": "Presiona F para el modo de pantalla completa",
+    "fullscreen": "Pantalla completa",
+    "exitFullscreen": "Salir",
+    "youLost": "Has perdido",
+    "you": "Tú",
+    "youWon": "¡HAS GANADO!"
     
   }
 }

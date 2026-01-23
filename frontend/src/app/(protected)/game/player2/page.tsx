@@ -12,7 +12,7 @@ const predefinedAvatars = [
   'https://static.vecteezy.com/system/resources/thumbnails/013/336/791/small/gamer-streamer-mascot-logo-illustration-free-vector.jpg',
   'https://t4.ftcdn.net/jpg/09/74/99/11/360_F_974991185_UffDpZ0MV6MvJ75h8yik3AMSlVDKrHBy.jpg',
   'https://img.freepik.com/photos-premium/logo-jeu_1117469-9898.jpg?semt=ais_hybrid&w=740&q=80',
-  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeekLP91mcYn2AmlKqugd2aJOi93fQ2uyyDw&s',
+  'https://m.media-amazon.com/images/S/pv-target-images/16627900db04b76fae3b64266ca161511422059cd24062fb5d900971003a0b70.jpg',
 ];
 
 function Player2Setup() {
@@ -103,7 +103,7 @@ function Player2Setup() {
                       </span>
                     </div>
                     <p className="text-white text-2xl font-bold">{player1.name}</p>
-                    <p className="text-white/50 text-sm mt-1">Ready to play</p>
+                    <p className="text-white/50 text-sm mt-1">{t('game.readyToPlay')}</p>
                   </div>
                 </div>
               </div>
@@ -137,14 +137,14 @@ function Player2Setup() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="px-3 py-1 bg-white/10 text-white text-xs font-bold rounded-full border border-white/20">
-                      Player 2
+                      {t('game.player')} 2
                     </span>
                   </div>
                   <p className="text-white text-2xl font-bold">
-                    {name || 'Waiting...'}
+                    {name || t('game.waiting')}
                   </p>
                   <p className={`text-sm mt-1 ${isFormValid ? 'text-white' : 'text-white/30'}`}>
-                    {isFormValid ? 'Ready to play' : 'Setup required'}
+                    {isFormValid ? t('game.readyToPlay') : t('game.setupRequired')}
                   </p>
                 </div>
               </div>
@@ -184,18 +184,16 @@ function Player2Setup() {
                   </div>
                   <div className="flex justify-between items-center">
                     <p className="text-white/50 text-sm">
-                      {name.length}/16 characters
+                      {name.length}/16 {t('game.characters')}
                     </p>
                     {name.trim().length > 0 && (
                       <p className="text-white text-sm font-medium flex items-center gap-1">
                         <FaCheck className="w-3 h-3" />
-                        Name set
+                        {t('game.nameSet')}
                       </p>
                     )}
                   </div>
                 </div>
-
-                {/* Avatar Selection */}
                 <div className="space-y-4">
                   <label className="flex items-center gap-2 text-white font-bold text-base">
                     <span className="w-8 h-8 rounded-lg bg-white text-black flex items-center justify-center text-sm font-bold">
@@ -242,7 +240,7 @@ function Player2Setup() {
                   {avatar && (
                     <p className="text-white text-sm font-medium flex items-center gap-2 mt-2">
                       <FaCheck className="w-4 h-4" />
-                      Avatar selected
+                      {t("game.avatarSelected")}
                     </p>
                   )}
                 </div>

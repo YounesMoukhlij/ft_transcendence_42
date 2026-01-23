@@ -22,7 +22,8 @@
     "back": "Retour",
     "continue": "Continuer",
     "league": "Ligue",
-    "of": "de"
+    "of": "de",
+    "menu": "Menu"
   },
   "settings": {
     "title": "Paramètres du compte",
@@ -140,7 +141,8 @@
     "gameChallengeDeclined": "{username} a refusé votre défi de jeu.",
     "tournamentInviteAccepted": "Invitation au tournoi acceptée ! Redirection...",
     "expired": "expiré",
-    "invitedTo1v1": "vous a invité à un jeu 1 vs 1",
+    "invitedTo": "vous a invité à ",
+    "1v1": " un jeu 1 vs 1",
     "acceptedFriendRequest": "a accepté votre demande d'ami",
     "invitedToTournamentText": "vous a invité à rejoindre un tournoi",
     "navigation": "Navigation",
@@ -187,7 +189,8 @@
     "showOnlineStatus": "Afficher le statut en ligne",
     "general": "Général",
     "blocked": "Bloqué",
-    "noBlockedUsers": "Aucun utilisateur bloqué pour le moment."
+    "noBlockedUsers": "Aucun utilisateur bloqué pour le moment.",
+    "sendChallengeTo": "Vous enverrez un défi à "
   },
   "leaderboard": {
     "title": "Classement",
@@ -301,6 +304,7 @@
 
   },
   "game": {
+    "waiting": "En attente...",
     "ModeSubtitle": "Sélectionnez un mode et commencez à en profiter dès maintenant",
     "playNow": "Jouer maintenant",
     "selectMode": "Sélectionner le Mode de Jeu",
@@ -557,7 +561,25 @@
     "challengeFriends": "Défiez vos amis dans un match et montrez-leur qui est le meilleur",
     "startMatching": "Commencer le matchmaking",
     "matchWithRandom": "Affrontez un joueur aléatoire en ligne et commencez à jouer instantanément",
-    "playRandomOrFriend": "Affrontez un adversaire aléatoire ou défiez un ami dans un match épique"
+    "playRandomOrFriend": "Affrontez un adversaire aléatoire ou défiez un ami dans un match épique",
+    "readyToPlay": "Prêt à jouer",
+    "setupRequired": "Configuration requise",
+    "characters": "caractères",
+    "nameSet": "Nom défini",
+    "avatarSelected": "Avatar sélectionné",
+    "connectingToGame": "Connexion au jeu...",
+    "opponentLeft": "Votre adversaire a quitté",
+    "opponentLeftGame": "Votre adversaire a quitté la partie.",
+    "exitGame": "Quitter",
+    "leftPaddle": "Raquette gauche",
+    "rightPaddle": "Raquette droite",
+    "pressFForFullscreen": "Appuyez sur F pour le mode plein écran",
+    "fullscreen": "Plein écran",
+    "exitFullscreen": "Quitter le plein écran",
+    "youLost": "Vous avez perdu",
+    "you": "Vous",
+    "youWon": "VOUS AVEZ GAGNÉ !"
+
   
 
 

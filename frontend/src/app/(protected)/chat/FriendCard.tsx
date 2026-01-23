@@ -111,6 +111,7 @@ export default function FriendCard() {
   const { handleDeblock } = useDeblock();
   const { handleUnfriend, handleBlock } = useFriendActions();
 
+  console.log("These are friends : === >", friends);
   const {t} = useTranslation();
   useEffect(() => {
     const friendId = Number(searchParams.get("friend"));

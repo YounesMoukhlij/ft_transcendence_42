@@ -36,7 +36,6 @@ export default function LocalTournamentBracket({
 
   const totalRounds = Math.max(...bracket.map(m => m.round));
   const rounds = Array.from({ length: totalRounds }, (_, i) => i + 1);
-
   const getMatchStatusIcon = (match: TournamentMatch) => {
     if (match.status === 'finished') {
       return <FaCheck className="text-green-400" />;
@@ -44,6 +43,7 @@ export default function LocalTournamentBracket({
     if (match.status === 'playing') {
       return <FaGamepad className="text-blue-400 animate-pulse" />;
     }
+
     if (match.status === 'pending' && match.player1 && match.player2) {
       return <FaGamepad className="text-yellow-400" />;
     }
@@ -182,8 +182,8 @@ export default function LocalTournamentBracket({
       {/* Current Match Highlight */}
       {currentMatch && (
         <div className="mt-8 text-center">
-          <div className="inline-block bg-blue-200 bg-opacity-50 rounded-xl p-4 border border-gray-800">
-            <p className="text-blue-300 text-lg font-semibold">
+          <div className="inline-block bg-neutral-800/60 bg-opacity-70 rounded-xl p-4 border border-gray-800">
+            <p className="text-white text-lg font-semibold">
               {t('game.currentMatch')}: {getRoundName(currentMatch.round, totalRounds)}
             </p>
           </div>

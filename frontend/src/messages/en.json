@@ -22,7 +22,8 @@
     "back": "Back",
     "continue": "Continue",
     "league": "League",
-    "en": "of"
+    "en": "of",
+    "menu": "Menu"
   },
   "settings": {
     "title": "Account Settings",
@@ -139,7 +140,8 @@
     "gameChallengeDeclined": "{username} declined your game challenge.",
     "tournamentInviteAccepted": "Tournament invitation accepted! Redirecting...",
     "expired": "expired",
-    "invitedTo1v1": "invited you to a 1 vs 1 game",
+    "invitedTo": "invited you to a ",
+    "1v1":" 1 vs 1 game",
     "acceptedFriendRequest": "accepted your friend request",
     "invitedToTournamentText": "invited you to join a tournament",
     "navigation": "Navigation",
@@ -186,7 +188,8 @@
     "showOnlineStatus": "Show Online Status",
     "general": "General",
     "blocked": "Blocked",
-    "noBlockedUsers": "No blocked users yet."
+    "noBlockedUsers": "No blocked users yet.",
+    "sendChallengeTo": "You will send a challenge to "
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -621,7 +624,16 @@
     "challengeFriends": "Challenge your friends to a match and show them who is the best",
     "startMatching": "Start Matching",
     "matchWithRandom": "Match with a random player online and start playing instantly",
-    "playRandomOrFriend": "Play against a random opponent or challenge a friend to an epic match"
+    "playRandomOrFriend": "Play against a random opponent or challenge a friend to an epic match",
+    "readyToPlay": "Ready to play",
+    "setupRequired": "Setup required",
+    "characters": "Characters",
+    "nameSet": "Name set",
+    "avatarSelected": "Avatar selected",
+    "connectingToGame": "Connecting to game...",
+    "opponentLeftGame": "Your opponent has left the game.",
+    "exitGame": "Exit Game",
+    "you": "You"
   }
 }
 

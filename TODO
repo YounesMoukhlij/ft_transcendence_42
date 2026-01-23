@@ -1,30 +1,8 @@
 
 
-
-
-
-
-// NEED to check translation in the whole project, and check for responsivity
-
-
-// CHECK the local tournaments endpoints, espicially the saveGame endpoint
-// make sure everything is validated
-
-
-
-
-
-// Tsswira fel game ou partie dyal youness kamla
-// design fyal lgame ou dyal youness partie 
-// tsswria ta f search 
-
-
-
 // ayoub 
 card khass ghi it9ad text 
-CHECK ball speed sometimes it comes NULL, and I have to make it 0
-date format f 1vs1
-Les images kamlin mazal madert 3lihoum
+ball speed
 Award xp after local tournament matches
 Tournament creation validation should be in backend
 tournament bracket css not loading 
@@ -35,8 +13,12 @@ tournament bracket css not loading
 // Need to check refresh token and redirect to signing when token is expired
 
 
-// let claude do his job 
-fash lgame kaytssala ou khona kaykhrej ou kayrefreshi 
 
+
+//This need to be fixed 
+generate2FA ===========+++> missing parsing
+saveTournamentMatch=============++> parsing 
+createLocalTournament==========+++++>name lentgh 
+DeleteFriendRequest cancelFriendRequest DeleteNotification  ===============> logical parsing
 
 

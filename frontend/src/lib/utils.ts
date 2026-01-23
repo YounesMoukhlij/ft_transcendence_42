@@ -1,6 +1,8 @@
+"use client"
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import axios from "axios"
+import { useRouter } from "next/router"
 
 export const getProfileImageUrl = (currentImg: string) => {
 
@@ -152,4 +154,9 @@ export async function makeAuthenticatedRequest<T>(
     // Re-throw if not a 401 or no refresh token
     throw error;
   }
+}
+export function RedirectToGameLobby({ to }: { to: string }) {
+  const router = useRouter();
+      router.push(to);
+  return null;
 }
