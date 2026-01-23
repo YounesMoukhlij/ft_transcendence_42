@@ -34,7 +34,7 @@ const ForgotPasswordPage = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/forgotPassword`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/api/forgotPassword`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -64,7 +64,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/verifyCode`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/api/verifyCode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -108,7 +108,7 @@ const ForgotPasswordPage = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/resetPasswordWithToken`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API}/api/resetPasswordWithToken`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetToken, newPassword }),
@@ -151,7 +151,7 @@ const ForgotPasswordPage = () => {
         return (
           <>
             <p className="text-sm sm:text-base text-gray-300 mb-4 sm:mb-6 md:mb-8">
-              A 6-digit code was sent to <span className="font-semibold text-white">{email}</span>. It expires in 1 minute.
+              A 6-digit code was sent to <span className="font-semibold text-white">{email}</span>. It expires in 5 minutes.
             </p>
             <form className="flex flex-col space-y-3 sm:space-y-4" onSubmit={handleVerifyCode}>
               <input type="text" placeholder="XXX-XXX" className="w-full p-3 sm:p-3.5 md:p-4 pl-4 sm:pl-5 rounded-xl md:rounded-2xl border border-gray-300 outline-0 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 bg-gray-100 text-black text-xl font-bold sm:text-base transition-all duration-300 ease-in-out text-center" value={code} onChange={handleStateChange(setCode)} required maxLength={6} disabled={loading} />
@@ -201,4 +201,3 @@ const ForgotPasswordPage = () => {
 };
 
 export default ForgotPasswordPage;
-

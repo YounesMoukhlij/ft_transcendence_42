@@ -11,7 +11,7 @@ const PROTECTED_PATHS = [
   '/game',
 ]
 
-const PUBLIC_PATHS = ['/signIn', '/signUp']
+const PUBLIC_PATHS = ['/signIn', '/signUp', '/forgot-password']
 
 export function middleware(request: NextRequest) {
   const isAuthenticated = request.cookies.has('auth_token')

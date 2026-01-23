@@ -82,7 +82,7 @@ export function generateToken(username, email, id_user) {
 
   const payload = { username, email, id_user };
   // for 15 minutes
-  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "30m" });
+  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1m" });
 
   return token;
 }
@@ -1237,7 +1237,7 @@ async function sendVerificationCode(userEmail, code) {
                     <div class="content">
                     <p>Salam Allah Alaykom,</p>
                     <p>We received a request to reset your password for the account:</p>
-                    <p>Enter the following verification code to proceed. This code is valid for <strong>60 seconds</strong>:</p>
+                    <p>Enter the following verification code to proceed. This code is valid for <strong>5 minutes</strong>:</p>
                     <div class="code-box">${code}</div>
                     <p>If you did not request a password reset, please ignore this email.</p>
                     <p>Thanks,<br><strong>The ft_transcendence_42 Team</strong></p>
@@ -1261,34 +1261,34 @@ async function sendVerificationCode(userEmail, code) {
 export async function forgotPassword(request, reply) {
   const { email } = request.body;
   const redis = request.server.redis;
-
   if (!email) {
     return reply
-      .code(400)
-      .send({ success: false, message: "Email is required." });
+    .code(400)
+    .send({ success: false, message: "Email is required." });
   }
-
+  
   try {
     const authMethod = request.server.db
-      .prepare("SELECT auth_method FROM users WHERE email = ?")
-      .get(email);
+    .prepare("SELECT auth_method FROM users WHERE email = ?")
+    .get(email);
     if (!authMethod || authMethod.auth_method !== 0) {
       return reply.code(400).send({
         success: false,
         message:
-          "Password reset is only available for standard authentication users. Use OAuth to log in.",
+        "Password reset is only available for standard authentication users. Use OAuth to log in.",
       });
     }
     const user = request.server.db
-      .prepare("SELECT username FROM users WHERE email = ?")
-      .get(email);
+    .prepare("SELECT username FROM users WHERE email = ?")
+    .get(email);
     if (!user) {
       return reply.code(200).send({
         success: true,
         message: "This email does not exist in our databases. :(",
       });
     }
-
+    console.log("the mail ", email);
+    
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     await redis.set(`reset:${email}`, code, { EX: 120 });
 
@@ -1333,7 +1333,7 @@ export async function verifyCode(request, reply) {
       .get(email);
     const resetToken = jwt.sign(
       { id_user: user.id_user, email: user.email, purpose: "password-reset" },
-      SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: "5m" },
     );
 
