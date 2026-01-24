@@ -22,8 +22,6 @@ export default function ProtectedClient({
   } = useUserStore();
 
 
-  const sentRequests = useUserStore.getState().sentRequests;
-
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   const playSound = () => {
@@ -68,13 +66,11 @@ export default function ProtectedClient({
           });
 
         } else if (data.title == "friend request accepted") {
-          console.log("data =============+>" , data);
           addNotification(data);
-          const sentRequests = useUserStore.getState().sentRequests;
+          // const sentRequests = useUserStore.getState().sentRequests;
           removeSentRequests(data.sender_user);
           addFriend({ id_user: data.sender_user , username:data.username , conversation_id: data.room_id });
         } else if (data.title == "game challenge") {
-          // Handle game challenge notifications
           addNotification(data);
         }
       }
@@ -122,17 +118,15 @@ export default function ProtectedClient({
       
       else if (type === "your turn") addBot(data);
       else if (type === "gameInvitation") {
-        // Handle real-time game invitation from friend
-        // This is sent by GameManager.sendFriendInvitation
+
         const invitationData = {
-          notify_id: Date.now(), // Temporary ID for real-time display
+          notify_id: Date.now(),
           getter_user: user?.id_user,
           sender_user: data.payload?.from?.id,
           sender_username: data.payload?.from?.username,
           title: "game challenge",
-          sender_profile_img: null, // Will be fetched from notification API
+          sender_profile_img: null,
           expired: null,
-          // Store invitation data for acceptance
           invitationData: data.payload
         };
         addNotification(invitationData);

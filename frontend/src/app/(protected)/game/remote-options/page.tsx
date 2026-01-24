@@ -2,8 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/contexts/LanguageContext';
-import { FaSearch, FaUserFriends, FaArrowRight, FaRandom } from 'react-icons/fa';
-import { IoGameControllerOutline } from 'react-icons/io5';
+import { FaSearch, FaUserFriends, FaArrowRight } from 'react-icons/fa';
 
 export default function RemoteOptionsPage() {
   const { t } = useTranslation();

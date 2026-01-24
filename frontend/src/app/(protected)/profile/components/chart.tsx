@@ -96,7 +96,7 @@ export function IllustrationChart({ data }: ChartProps) {
           }}
         
         >
-          {/* Grid lines + Y-axis labels */}
+          {/* Grid lines + Y-axis  */}
           {ticks.map((t, i) => {
             const y = getY(t);
             return (
@@ -121,7 +121,7 @@ export function IllustrationChart({ data }: ChartProps) {
             );
           })}
           
-          {/* X-axis labels */}
+          {/* X-axis */}
           {data.map((d, i) => (
             <text
               key={i}

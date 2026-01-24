@@ -39,7 +39,6 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
   const {t} = useTranslation();
 
   const players = data;
-  console.log("data ===========> ", data);
   const filteredAndSortedPlayers = useMemo(() => {
   const filtered = players?.filter((player) => player.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
@@ -64,7 +63,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
     if (sortField === field) {
       setSortDirection(sortDirection === "desc" ? "asc" : sortDirection === "asc" ? null : "desc")
       if (sortDirection === "asc") {
-        setSortField("difference") // Reset to default
+        setSortField("difference")
       }
     } else {
       setSortField(field)
@@ -216,7 +215,7 @@ export function PlayerTable({ league, data }: PlayerTableProps) {
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">#{index + 1}</span>
                        <Link
-                      href={`/profile/${player.id}`} // navigate to their profile
+                      href={`/profile/${player.id}`}
                       className="hover:underline text-blue-500"
                       >
                       {player.name}

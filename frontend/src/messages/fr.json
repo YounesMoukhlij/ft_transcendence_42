@@ -299,7 +299,8 @@
     "saturday": "sam",
     "pointsPerSecond": "Points par seconde",
     "totalTouches": "Touches totales",
-    "secondsPerPoint": "Secondes par point"
+    "secondsPerPoint": "Secondes par point",
+    "noMatchHistory": "Aucun historique de match pour le moment"
 
 
   },
@@ -538,8 +539,8 @@
     "tournamentLeader": "Chef du tournoi",
     "notRegistered": "Non inscrit",
     "addPlayer": "Ajouter un joueur",
-    "username": "Nom d’utilisateur",
-    "enterUsername": "Entrez le nom d’utilisateur",
+    "username": "Nom d'utilisateur",
+    "enterUsername": "Entrez le nom d'utilisateur",
     "password": "Mot de passe",
     "enterPassword": "Entrez le mot de passe",
     "cancel": "Annuler",

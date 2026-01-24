@@ -139,7 +139,7 @@ async function handleSettingChange(label, newValue) {
       settingAttribute = "status_share";
       break;
     default:
-      console.warn("Unknown setting:", label);
+      console.log("Unknown setting:", label);
       return;
   }
 
@@ -157,7 +157,7 @@ async function handleSettingChange(label, newValue) {
 
     updateUserSetting(settingAttribute, newValue);
   } catch (err) {
-    console.error("Failed to update setting:", err);
+    console.log("Failed to update setting:", err);
   }
 }
 
@@ -234,8 +234,6 @@ function FriendCard({ item }) {
 
   if (item?.id_user == -2 && item?.lastMessage == null){
 
-
-    console.log("here=======. item ");
     return null;
   } 
 
@@ -310,7 +308,6 @@ export default function FriendList( )
 
 
           const combined = [...ress.data, ...res.data];
-          console.log(combined);
 
           setFriends(combined);
 

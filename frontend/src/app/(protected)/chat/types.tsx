@@ -12,8 +12,6 @@ export interface EmojiClickData {
   emoji: string;
 }
 
-
-
 export interface Message{
   sender_user_id: number;
   message: string;

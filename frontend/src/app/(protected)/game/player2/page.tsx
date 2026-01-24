@@ -22,7 +22,7 @@ function Player2Setup() {
   const user = useUserStore((state) => state.user);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('');
-  const [upload, setUpload] = useState<File | null>(null);
+  // const [upload, setUpload] = useState<File | null>(null);
   const [isHovering, setIsHovering] = useState<number | null>(null);
 
   useEffect(() => {
@@ -41,19 +41,10 @@ function Player2Setup() {
 
   const handleAvatarSelect = (src: string) => {
     setAvatar(src);
-    setUpload(null);
+    // setUpload(null);
   };
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setAvatar(ev.target?.result as string);
-        setUpload(e.target.files![0]);
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    }
-  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

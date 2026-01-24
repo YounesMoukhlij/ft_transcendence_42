@@ -8,6 +8,7 @@ import { useUserStore } from "@/store/userStore";
 import { useRouter } from "next/navigation"
 import api from "@/lib/api";
 import { useTranslation } from '@/contexts/LanguageContext';
+import { NoMatchHistory } from "./noMatchHistory"
 
 
 
@@ -24,17 +25,16 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
   const targetUsername = username;
   const router = useRouter();
   const {t} = useTranslation();
+  const [noData, setNoData] = useState<boolean>(false);
   
 
    useEffect(() => {
     const limit : number = 5;
     const fetchMatchHistory = async () => {
       if (!currentUser?.access_token) {
-        console.log("You must be logged in to view profiles");
         return;
       }
       if (!targetUsername) {
-        console.log("Username is missing");
         return;
       }
 
@@ -45,7 +45,11 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
             headers: { Authorization: `Bearer ${currentUser.access_token}` },
           }
         );
-        if (res.data.length > limit)
+        if (res.data.length === 0)
+        {
+          setNoData(true);
+        }
+        else if (res.data.length > limit)
         {
           setHasMore(true)
           setMatchHistory(res.data.slice(0,limit));
@@ -55,9 +59,8 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
           setHasMore(false);   
           setMatchHistory(res.data);
         }
-        console.log("Fetched matches", res.data);
       } catch (err) {
-        console.error(err);
+        console.log(err);
       }
     };
     fetchMatchHistory();
@@ -80,7 +83,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
         <div className="match_table">
           <table className="w-full">
             <thead>
-              <tr className="border-b">
+              <tr className="border-b  border-gray-700/50">
                 <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.date')}</th>
                 <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.opponent')}</th>
                 <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('profile.result')}</th>
@@ -90,9 +93,10 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
             </thead>
             <tbody>
               {
-                matchHistory 
+               noData ? <NoMatchHistory />
+               : matchHistory 
               && matchHistory.map((match) => (
-                <tr key={match.id} className="border-b hover:bg-muted/50 transition-colors cursor-pointer">
+                <tr key={match.id} className="border-b border-gray-700/50 hover:bg-muted/50 cursor-pointer">
               
                   <td onClick={() => setSelectedMatch(match)} className="py-3 px-4 text-sm">{match.game_date.substring(0, match.game_date.length - 3)}</td>
                   <td onClick={() => setSelectedMatch(match)} className="py-3 px-4 font-medium">{match.opponent}</td>
@@ -139,9 +143,9 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-center">
-         <div className="flex -ml-10 mt-25 items-center gap-4 sm:mt-5">
+         <div className="flex mt-25 items-center gap-4 sm:mt-5">
           <button
-            className={`flex  gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition duration-300 ease-in-out ${
+            className={`flex  gap-2 px-4 py-2 rounded-lg border border-gray-700/50 bg-black transition duration-300 ease-in-out ${
               page <= 0
                 ? 'opacity-50 text-gray-600'
                 : 'hover:bg-gray-900 text-white'
@@ -157,7 +161,7 @@ export function MatchHistoryTable({username} : MatchHistoryTableProps) {
           </span>
 
           <button
-              className={`flex  gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-black transition duration-300 ease-in-out  ${
+              className={`flex  gap-2 px-4 py-2 rounded-lg border border-gray-700/50 bg-black transition duration-300 ease-in-out  ${
               !hasMore
                 ? 'opacity-50 text-gray-600'
                 : 'hover:bg-gray-900 text-white'

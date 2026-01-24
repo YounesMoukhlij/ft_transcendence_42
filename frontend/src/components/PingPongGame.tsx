@@ -7,13 +7,26 @@ import { useRouter } from 'next/navigation';
 import { ServerGameState, Player } from '../types/game';
 import { useTranslation } from '../contexts/LanguageContext';
 
+interface MatchStats {
+  finalScore: { player1: number; player2: number };
+  duration: number;
+  player1Touches?: number;
+  player2Touches?: number;
+  totalTouches?: number;
+  pointsPerSecond?: number;
+  maxBallSpeed?: number;
+  maxStreakPlayer1?: number;
+  maxStreakPlayer2?: number;
+  leadingTimePlayer1?: number;
+  leadingTimePlayer2?: number;
+}
+
 const PADDLE_HEIGHT = 100;
 const GAME_HEIGHT = 600;
 const GAME_WIDTH = 800;
 const PADDLE_WIDTH = 16;
 const BALL_RADIUS = 10;
-const winningScore = 5;
-const AI_winningScore = 10; // AI games are first to 10 points
+
 
 // Game constants for smooth gameplay
 const PADDLE_SPEED = 10; // Pixels per frame at 60 FPS (600 pixels/second)
@@ -64,7 +77,7 @@ interface PingPongGameProps {
   // Tournament mode props
   tournamentMode?: boolean;
   tournamentPlayers?: Player[];
-  onTournamentMatchEnd?: (winner: Player, matchStats?: any) => void;
+  onTournamentMatchEnd?: (winner: Player, matchStats?: MatchStats) => void;
   isTournamentFinalMatch?: boolean; // Hide rematch button and game over screen for final match
   onScoreUpdate?: (scores: { player1: number; player2: number }) => void; // Callback for score updates
 
@@ -105,7 +118,7 @@ const useLocalGameState = () => {
     // Random initial direction
     const angle = (Math.random() * Math.PI / 3) - Math.PI / 6; // -30 to +30 degrees
     const speed = BALL_INITIAL_SPEED;
-    setGameState(prevState => ({
+    setGameState(() => ({
       scores: { player1: 0, player2: 0 },
       paddles: [GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2],
       ball: {
@@ -150,8 +163,8 @@ const useLocalGameState = () => {
         lastLeadingCheck: prev.gameStats?.lastLeadingCheck || Date.now(),
         maxBallSpeed: prev.gameStats?.maxBallSpeed || 0,
       };
-      let statsUpdate = { ...defaultGameStats };
-      // Paddles - smooth movement based on delta time
+      const statsUpdate = { ...defaultGameStats };
+
       const newPaddles = [...prev.paddles];
       // AI mode: Support both W/S and Arrow Up/Down keys for player 1
       if (isAIMode) {
@@ -1117,7 +1130,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
     const player2Score = serverGameState?.player2?.score || 0;
     const player1Name = serverGameState?.player1?.username || 'Player 1';
     const player2Name = serverGameState?.player2?.username || 'Player 2';
-    const winnerIsPlayer1 = player1Score > player2Score;
 
     return (
       <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-2xl">
@@ -1252,8 +1264,6 @@ const PingPongGame: React.FC<PingPongGameProps> = ({
 
   // Winner screen for local mode - Modern and decorated (like AI mode)
   if (winner && gameState.mode === 'local' && !tournamentMode) {
-    const winnerIsPlayer1 = winner === localPlayers[0]?.name;
-
     return (
       <div className="relative w-full max-w-md mx-auto p-1 rounded-2xl shadow-2xl ">
         <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl p-6 sm:p-8 text-center">

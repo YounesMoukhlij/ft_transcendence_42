@@ -40,7 +40,6 @@ const SecurityTab = ({
         <p className="text-gray-500">{t('settings.securitySubtitle')}</p>
       </div>
 
-      {/* OAuth Info Message */}
       {!isPasswordAuth && (
         <div className='mb-6 p-4 bg-black border-2 border-gray-400 rounded-xl'>
           <p className='text-sm text-gray-500 flex items-start gap-2'>
@@ -52,13 +51,10 @@ const SecurityTab = ({
         </div>
       )}
 
-      {/* Password Fields and 2FA Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        {/* Password Fields */}
         {isPasswordAuth && (
           <>
-            {/* Current Password */}
             <div className="md:col-span-2">
               <label htmlFor="currentPassword" className='flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2'>
                 <Lock size={16} />
@@ -75,7 +71,6 @@ const SecurityTab = ({
               />
             </div>
 
-            {/* New Password */}
             <div>
               <label htmlFor="newPassword" className='flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2'>
                 <Lock size={16} />
@@ -92,7 +87,6 @@ const SecurityTab = ({
               />
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className='flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2'>
                 <Lock size={16} />
@@ -111,11 +105,9 @@ const SecurityTab = ({
           </>
         )}
 
-        {/* Security Preferences Section */}
         <div className="mt-8 pt-6 border-t border-gray-700 w-full md:col-span-2">
           <h3 className="text-lg font-semibold mb-4">{t('settings.securityPreferences')}</h3>
 
-          {/* 2FA Toggle */}
           <div className={`flex items-center justify-between p-2 border border-gray-500 rounded-xl `}>
             <div className="flex items-center gap-3">
               <Shield size={20} className="text-gray-400" />
@@ -133,7 +125,6 @@ const SecurityTab = ({
         </div>
       </div>
 
-      {/* Save Button for Security */}
       <div className="flex justify-end pt-6 mt-6 border-t border-gray-700">
         <button
           onClick={handleSaveSecurity}

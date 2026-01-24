@@ -29,7 +29,6 @@ const useCountUp = (endValue: number, duration: number = 2000) => {
     };
 
     window.requestAnimationFrame(animateCount);
-    // Cleanup function to prevent memory leaks if component unmounts
     return () => {
       startTime = null;
     };

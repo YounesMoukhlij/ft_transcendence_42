@@ -298,7 +298,8 @@
     "saturday": "sáb",
     "pointsPerSecond": "Puntos por segundo",
     "totalTouches": "Toques totales",
-    "secondsPerPoint": "Segundos por punto"
+    "secondsPerPoint": "Segundos por punto",
+    "noMatchHistory": "Sin historial de partidos aún"
 
   },
   "game": {

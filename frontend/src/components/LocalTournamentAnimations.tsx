@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Player } from './GameContext';
-import { FaTrophy, FaCrown, FaFire, FaStar } from 'react-icons/fa';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { getProfileImageUrl } from '@/lib/utils';
 

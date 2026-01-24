@@ -35,7 +35,7 @@ const paddleColors = [
 
 interface GameCustomizationProps {
   onBack: () => void;
-  onStartGame: (customization: { tableBg: string; ballColor: string; paddleColor: string; aiDifficulty?: 'easy' | 'medium' | 'hard' | null; winningScore?: 5 | 10 | null; }) => void;
+  onStartGame: (customization: { tableBg: string; ballColor: string; paddleColor: string; aiDifficulty?: 'easy' | 'medium' | 'hard' | null; winningScore?: number | null; }) => void;
   isSocketConnected?: boolean;
 }
 
@@ -96,7 +96,7 @@ const GameCustomization: React.FC<GameCustomizationProps> = ({ onBack, onStartGa
   const [ballColor, setBallColor] = useState<string>(getRandomDefaults.ballColor);
   const [paddleColor, setPaddleColor] = useState<string>(getRandomDefaults.paddleColor);
   const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>(getRandomDefaults.aiDifficulty);
-  const [winningScore, setWinningScore] = useState<5 | 10>(getRandomDefaults.winningScore);
+  const [winningScore, setWinningScore] = useState<number>(getRandomDefaults.winningScore);
 
   // Create axios instance with token, but only if token exists
   const axiosInstance = useMemo(() => {

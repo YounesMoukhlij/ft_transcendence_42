@@ -17,7 +17,6 @@
 }
 
 
-/* Add this for dark background */
 
 body {
     background-color: #000;
@@ -25,7 +24,6 @@ body {
 }
 
 
-/* Or add this class to your main container */
 
 .dark-space-bg {
     background: radial-gradient(ellipse at center, #0a0a23 0%, #000000 100%);

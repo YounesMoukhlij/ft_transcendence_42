@@ -112,7 +112,7 @@ export default function TournamentBracket() {
         if (!active) return;
         setTournamentData(res.data);
       } catch (err) {
-        console.error("Error loading tournament:", err);
+        console.log("Error loading tournament:", err);
         if ((err).response?.status === 404) {
           router.replace('/not-found');
           return;
@@ -204,8 +204,6 @@ export default function TournamentBracket() {
                 </div>
              ))}
           </div>
-
-          {/* Winner Column */}
           <div className="flex flex-col justify-center items-start pt-2 ">
             <div className="relative animate-in fade-in slide-in-from-left duration-1000 ">
               
@@ -226,7 +224,6 @@ export default function TournamentBracket() {
                  </div>
               </div>
 
-              {/* Champion Label Text below */}
               <div className="mt-4 text-center">
                  <h2 className="text-2xl font-black text-primary tracking-widest uppercase" style={{ textShadow: '0 0 20px rgba(34,197,94,0.5)' }}>
                     {t('game.champion')}

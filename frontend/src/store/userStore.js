@@ -26,7 +26,6 @@ export const useUserStore = create(
       socket: null,
       friends: [],
 
-      // Game invite UI state (used by ProtectedClient)
       Display_game_invite: false,
       inviterData: null,
 
@@ -58,7 +57,7 @@ export const useUserStore = create(
 
     try {
       const ws = new WebSocket(url);
-      let heartbeatInterval = null;
+      // let heartbeatInterval = null;
 
       ws.onopen = () => {
         set({
@@ -90,12 +89,12 @@ export const useUserStore = create(
       };
 
       ws.onerror = (err) => {
-        console.error("WebSocket error:", err);
+        console.log("error ", err);
         ws.close();
       };
 
     } catch (err) {
-      console.error("Failed to create WebSocket:", err);
+        console.log("error ", err);
     }
   },
 
@@ -313,29 +312,23 @@ updatePinStatus: (attribute, friendId, value) => {
       addSentRequests: (friend) =>
         set((state) => {
           const updated = [...state.sentRequests, friend];
-          console.log("BEFORE:", state.sentRequests);
-          console.log("ADDING:", friend);
-          console.log("AFTER:", updated);
           return { sentRequests: updated };
         }),
 
 
     addSentRequestsArray: (friendsArray) =>
     set(() => ({
-      sentRequests: [...friendsArray], // creates a new array, no accumulation
+      sentRequests: [...friendsArray],
     })),
 
       removeSentRequests: (id) =>
         set((state) => (
-                  console.log("chtachedddddddd" , id),{
+        {
           sentRequests: state.sentRequests.filter(
             (u) => u.getter_user !== id
           ),
         })),
 
-      // ----------------------
-      //   MESSAGES
-      // ----------------------
 
       setMessages: (messagesArray) => set({ messages: messagesArray }),
 
@@ -353,14 +346,12 @@ updatePinStatus: (attribute, friendId, value) => {
 
  deleteNotification: (id) =>
   set((state) => {
-    console.log("Deleting notification with id:", id);
-    // console.log("Current notifications before delete:", state.notifications);
+
 
     const newNotifications = state.notifications.filter(
       (n) => n.notify_id !== id
     );
 
-    console.log("Notifications after delete:", newNotifications);
 
     return { notifications: newNotifications };
   }),
@@ -445,8 +436,7 @@ updatePinStatus: (attribute, friendId, value) => {
         profile_img: state.profile_img,
       }),
 
-      onRehydrateStorage: (state) => {
-         console.log("Hydration completed", state);
+      onRehydrateStorage: () => {
         return (state, error) => {
           state.setHasHydrated(true);
           if (!error) state.initConnection();

@@ -39,14 +39,9 @@ const _avgPoints = useCountUp(Math.round(userStats.averageScore * 100) / 100, 70
 const [friendshipText, setFriendshipText] = useState("Add Friend");
 const {t} = useTranslation();
 
-
-// 1. isSelfProfile
 const isSelfProfile: boolean =
   currentUser?.username === userStats.username;
 
-
-
-// 3. friendship Status 
 
 useEffect(() => {
   const friendshipStatus = () => 
@@ -196,7 +191,6 @@ const handleUnfriend = async () =>
 const rejectFriendRequest = async () => {
 
    try {
-      //  Reject friend request
       const notify_id = pendingRequests.filter(object => object.sender_user == userStats.id)[0].notify_id;
      const res =  await api.delete(`/api/DeleteFriendRequest` , {
       params:{
@@ -242,7 +236,6 @@ const handleCancelFriendRequest = async () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Player Profile Card */}
       <Card className="lg:col-span-1 bg-card/40 border-gray-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -306,7 +299,6 @@ const handleCancelFriendRequest = async () => {
         </CardContent>
       </Card>
 
-      {/* Performance Summary */}
       <Card className="lg:col-span-2 bg-card/50  border-gray-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

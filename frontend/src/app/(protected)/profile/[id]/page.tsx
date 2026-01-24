@@ -37,7 +37,6 @@ export default function UserProfile({ params }: UserProfileProps) {
         setProfile(res.data);
         
       } catch (err) {
-        console.error("Error loading profile:", err);
         if ((err).response?.status === 404) {
           router.replace('/not-found');
           return; 
@@ -54,7 +53,7 @@ export default function UserProfile({ params }: UserProfileProps) {
       }
       catch (err)
       {
-        console.error("Error loading profile:", err);
+        console.log("Error loading profile:", err);
       }
 
      

@@ -152,14 +152,6 @@ export default function Messages(){
     const item = friends.find(f => f.id_user === friendId);
 
     if (!item){
-      
-      // if (bot.length > 0 && friendId == -2){
-
-      //   // alert(contactId);
-      //   SetFriend(bot[0]);
-      //   setContactId(-2);
-      // }
-      // else 
         setContactId(-1);
     }
     else {
@@ -224,7 +216,7 @@ export default function Messages(){
 
         }
         } catch (err) {
-        console.error("Error fetching messages:", err);
+        console.log("Error fetching messages:", err);
         }
     }
 
@@ -295,7 +287,7 @@ export default function Messages(){
     setInput('');
 
   } catch (err) {
-    console.error("handleSend error:", err);
+    console.log("handleSend error:", err);
   }
 };
 
@@ -370,8 +362,6 @@ export default function Messages(){
                             <GiHamburgerMenu onClick={smallListFriendShow} size={20} className="text-white"/>
                         </div>
                         <div className="w-[80%] h-full flex items-center gap-3.5 p-3 flex-1 ">
-                            {/* <img className="min-h-[60%] max-h-[180%] lg:h-[100%] xl:h-[120%] 2xl:h-[180%] rounded-[50%] border-2 border-gray-700" src={getProfileImageUrl(friend?.profile_img)}/>
-                             */}
                             <img className="h-[150%] aspect-square object-cover rounded-full border-2 border-gray-700"  src={getProfileImageUrl(friend?.profile_img)} alt="Profile"/>
 
                             <div className="flex flex-col">

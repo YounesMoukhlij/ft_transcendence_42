@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons'; // Example: Importing the coffee icon
+import { faXmark } from '@fortawesome/free-solid-svg-icons'; 
 import {
   Table,
   TableBody,
@@ -69,14 +69,13 @@ export function GameModalDemo({game, onClose} : GameModalProps)
               <h2 className="text-2xl font-bold mb-4">{t('profile.gameDetails')}</h2>
 
             </div>
-           <hr />
+           <hr className="text-gray-700/50" />
             
 
             
            <div className="flex justify-around items-center">
             <div className="w-32 h-32 mt-6">
-                <div className=" relative w-28 h-28 border bg-background rounded-sm ">
-                  {/* <img src={game.hostImg} alt="pfp" className="rounded-sm" /> */}
+                <div className=" relative w-28 h-28 border border-gray-700/50 bg-background rounded-sm ">
                       <Image
                       src={hostImg}
                       alt={game.host}
@@ -94,8 +93,7 @@ export function GameModalDemo({game, onClose} : GameModalProps)
                 </h1>
             </div>
             <div className="w-32 h-32 mt-6 flex-col justify-center">
-                <div className=" relative w-28 h-28 border bg-background rounded-sm">
-                  {/* <img src={game.guestImg} alt="pfp" className="rounded-sm "/> */}
+                <div className=" relative w-28 h-28 border border-gray-700/50 bg-background rounded-sm">
                       <Image
                       src={guestImg}
                       alt={game.guest}
@@ -110,22 +108,22 @@ export function GameModalDemo({game, onClose} : GameModalProps)
            <div className="mt-8 ">
              <Table>
                     <TableBody>
-                         <TableRow className={hostScore > guestScore ? "left-overtake" : "right-overtake"}>
+                         <TableRow className={hostScore > guestScore ? "left-overtake border-b border-gray-700/50" : "right-overtake border-b border-gray-700/50"}>
                              <TableCell  className="text-left ">{hostScore}</TableCell>
                             <TableHead  className="text-center font-semibold">{t('profile.finalScore')}</TableHead>
                             <TableCell  className="text-right">{guestScore}</TableCell>
                         </TableRow>
-                          <TableRow className={hostTouches > guestTouches ? "left-overtake" : "right-overtake"}>
+                          <TableRow className={hostTouches > guestTouches ? "left-overtake border-b border-gray-700/50" : "right-overtake border-b border-gray-700/50"}>
                              <TableCell  className="text-left ">{hostTouches}</TableCell>
                             <TableHead  className="text-center font-semibold">{t('profile.touches')}</TableHead>
                             <TableCell  className="text-right">{guestTouches}</TableCell>
                         </TableRow>
-                          <TableRow className={hostStreak > guestStreak ? "left-overtake" : "right-overtake"}>
+                          <TableRow className={hostStreak > guestStreak ? "left-overtake border-b border-gray-700/50" : "right-overtake border-b border-gray-700/50"}>
                              <TableCell  className="text-left">{hostStreak}</TableCell>
                             <TableHead  className="text-center font-semibold">{t('profile.maxStreak')}</TableHead>
                             <TableCell  className="text-right">{guestStreak}</TableCell>
                         </TableRow>
-                         <TableRow className={hostLeading > guestLeading ? "left-overtake" : "right-overtake"}>
+                         <TableRow className={hostLeading > guestLeading ? "left-overtake border-b border-gray-700/50" : "right-overtake border-b border-gray-700/50"}>
                              <TableCell  className="text-left w-23">{formatDuration(game.hostLeadingTime)}</TableCell>
                             <TableHead  className="text-center font-semibold">{t('profile.maxLeadingTime')}</TableHead>
                             <TableCell  className="text-right max-w-10 ">{formatDuration(game.guestLeadingTime)}</TableCell>

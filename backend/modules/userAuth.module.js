@@ -9,6 +9,9 @@ import { promisify } from "util";
 import stream from "stream";
 import { contract } from "../config/blockchain.js";
 
+import { saveTournamentMatchValidation} from "./moduleSchema.js";
+
+
 const pipeline = promisify(stream.pipeline);
 
 function sendMessage(socket, conv_id, message) {
@@ -81,8 +84,7 @@ export function generateToken(username, email, id_user) {
   }
 
   const payload = { username, email, id_user };
-  // for 15 minutes
-  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1m" });
+  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "50m" });
 
   return token;
 }
@@ -521,6 +523,9 @@ export async function update2FA(request, reply) {
 export async function generate2FA(request, reply) {
   const { id_user, email } = request.user;
 
+
+
+
   try {
     const secret = otplib.authenticator.generateSecret();
     const otpauth = otplib.authenticator.keyuri(
@@ -820,14 +825,14 @@ export async function registerInTournament(request, reply) {
     }
 }
 
-export async function createLocalTournament(request, reply) { // Added by Ayoub, creates tournament and return its ID  
+export async function createLocalTournament(request, reply) {
     const { name } = request.body;
     const host = request.user.id_user;
 
-    if (!name) {
+    if (!name || name.length < 3 || name.length > 20) {
         return reply.code(400).send({
             success: false,
-            message: "Missing tournament name"
+            message: "Invalid tournament name. It must be between 3 and 20 characters."
         });
     }
     try {
@@ -867,6 +872,12 @@ const validateId = (id) =>{
 } 
 
 export async function saveTournamentMatch(request, reply) {
+
+    const result = saveTournamentMatchValidation.safeParse(request.body);
+    if (!result.success) {
+        return reply.status(400).send({ error: 'Invalid input data', details: result.error.errors });
+    }
+
     const {
         winner,
         loser,
@@ -883,8 +894,7 @@ export async function saveTournamentMatch(request, reply) {
         max_points_streak_lose,
         max_leading_time_win,
         max_leading_time_lose,
-    } = request.body;
-
+    } = result.data;
   
     if (!validateScores(win_score, lose_score)) {
         return reply.status(400).send({ error: 'Error in scores' });
@@ -1044,37 +1054,15 @@ export async function saveTournamentMatch(request, reply) {
         console.error("Error in recordMatchonBlockChain:", err);
       reply.code(500).send({ error: "Transaction failed, Game saved in Db but not in blockChain" });
     }
+        try {
+            const awardXPStmt = request.server.db.prepare('UPDATE users SET xp = xp + ? WHERE id_user = ?');
 
-
-
-        // Award XP for tournament win - only to authenticated users (not guests) Commented out for now
-        // try {
-        //     const awardXPStmt = request.server.db.prepare('UPDATE users SET xp = xp + ? WHERE id_user = ? AND auth_method != -1');
-
-        //     // Award more XP for tournament wins (more competitive than casual games)
-        //     const tournamentWinnerXP = 800;
-        //     const tournamentLoserXP = 300;
-
-        //     let winnerXPAdded = 0;
-        //     let loserXPAdded = 0;
-
-        //     // Only award XP to authenticated winner
-        //     if (winner_info.id_user && typeof winner_info.id_user === 'number') {
-        //         awardXPStmt.run(tournamentWinnerXP, winnerUserId);
-        //         winnerXPAdded = tournamentWinnerXP;
-        //     }
-
-        //     // Only award XP to authenticated loser
-        //     if (loser_info.id_user && typeof loser_info.id_user === 'number') {
-        //         awardXPStmt.run(tournamentLoserXP, loserUserId);
-        //         loserXPAdded = tournamentLoserXP;
-        //     }
-
-        //     console.log(`Tournament XP awarded: Winner ${winnerUserId} +${winnerXPAdded} XP, Loser ${loserUserId} +${loserXPAdded} XP`);
-        // } catch (xpError) {
-        //     console.error('Error awarding tournament XP:', xpError);
-        //     // Don't fail the entire request if XP update fails
-        // }
+            awardXPStmt.run(600, winnerId);
+            awardXPStmt.run(250, loserId);
+            
+        } catch (xpError) {
+            console.error('Error awarding tournament XP:', xpError);
+        }
         return reply.code(201).send({
             success: true,
             message: "Tournament match data saved successfully In both Db and BlockChain",

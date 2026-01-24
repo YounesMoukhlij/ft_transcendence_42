@@ -94,9 +94,11 @@ export async function DeleteFriendRequest(request , reply){
 
   const {id} = result.data;
 
-  const firstQuery = request.server.db.prepare("select getter_user, sender_user from notification where notify_id = ?");
+  const firstQuery = request.server.db.prepare("select getter_user, sender_user , title from notification where notify_id = ?");
   const response = firstQuery.get(id);
 
+  if (response.getter_user !== request.user.id_user || response.title !== "request friend")
+    return reply.code(403).send("not authorized");
 
   const socket = request.server.users_socket.get(response.sender_user.toString());
 
@@ -129,16 +131,20 @@ export async function DeleteFriendRequest(request , reply){
 
 
 
-export async function cancelFriendRequest(request , reply){
+export async function cancelFriendRequest(request , reply)
+{
   const result = ParseIdSchema.safeParse(request.query);
   if (!result.success)
     return reply.code(400).send("missing params");
 
   const {id} = result.data;
 
-  const firstQuery = request.server.db.prepare("select getter_user, sender_user from notification where notify_id = ?");
+  const firstQuery = request.server.db.prepare("select getter_user, sender_user , title from notification where notify_id = ?");
   const response = firstQuery.get(id);
-  
+
+  if (response.sender_user !== request.user.id_user || response.title !== "request friend")
+    return reply.code(403).send("not authorized");
+
   const socket = request.server.users_socket.get(response.getter_user.toString());
 
 
@@ -641,6 +647,10 @@ export function DeleteNotification(request , reply){
 
     if (!notification) {
       return reply.code(404).send({ error: 'Notification not found' });
+    }
+
+    if (notification.getter_user !== request.user.id_user) {
+      return reply.code(403).send({ error: 'Not authorized to delete this notification' });
     }
 
     const deleteStmt = request.server.db.prepare('DELETE FROM notification WHERE notify_id = ? AND getter_user = ?');

@@ -36,7 +36,7 @@ export interface GameCustomisation {
   ballColor: string | null;
   paddleColor: string | null;
   aiDifficulty?: 'easy' | 'medium' | 'hard' | null;
-  winningScore?: 5 | 10 | null;
+  winningScore?: number | null;
 }
 
 export interface GameState {

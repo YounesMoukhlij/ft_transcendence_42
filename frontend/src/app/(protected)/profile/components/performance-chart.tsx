@@ -12,7 +12,6 @@ import { useTranslation } from '@/contexts/LanguageContext';
 
 
 
-
 interface PerformanceData {
   key: string
   wins: number
@@ -40,7 +39,6 @@ export function PerformanceChart({username }: PerformanceChartProps) {
         return;
       }
       if (!targetUsername) {
-        console.log("Username is missing");
         return;
       }
 
@@ -53,7 +51,7 @@ export function PerformanceChart({username }: PerformanceChartProps) {
         );
         setPerformanceData(res.data);
       } catch (err) {
-        console.error(err);
+        console.log(err);
       }
     };
 
@@ -75,10 +73,10 @@ export function PerformanceChart({username }: PerformanceChartProps) {
            <CardDescription>{t('profile.weeklyWinsLosses')}</CardDescription>
         </div>
         <div>
-          <Button data-state={illustration} onClick={()=> setIllustration("graph")}  variant="normal"  className="rounded data-[state=graph]:bg-primary mr-1">
+          <Button data-state={illustration} onClick={()=> setIllustration("graph")}  variant="normal"  className="rounded border-gray-700/50 data-[state=graph]:bg-primary mr-1">
           {t('profile.graph')}
         </Button> 
-        <Button data-state={illustration} onClick={()=> setIllustration("chart")} variant="normal"  className="data-[state=chart]:bg-primary">
+        <Button data-state={illustration} onClick={()=> setIllustration("chart")} variant="normal"  className="rounded border-gray-700/50 data-[state=chart]:bg-primary">
             {t('profile.chart')}
         </Button> 
         </div>

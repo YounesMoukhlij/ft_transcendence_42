@@ -408,113 +408,6 @@ function NotificationsIcon() {
     }
   }
 
-  // async function AcceptTournamentInvite(item) {
-  //   if (!user?.access_token) return;
-
-  //   try {
-  //     const tournamentId = item.tournamentId;
-  //     if (!tournamentId) {
-  //       toast.error('Tournament ID not found in invitation');
-  //       return;
-  //     }
-
-  //     const gameSocket = getWebSocket();
-
-  //     if (gameSocket.readyState === WebSocket.CONNECTING) {
-  //       await new Promise((resolve) => {
-  //         gameSocket.addEventListener('open', resolve, { once: true });
-  //       });
-  //     }
-
-  //     if (gameSocket.readyState === WebSocket.OPEN) {
-  //       if (user?.id_user) gameSocket.send(String(user.id_user));
-  //       await new Promise(resolve => setTimeout(resolve, 100));
-
-  //       gameSocket.send(JSON.stringify({
-  //         type: 'game',
-  //         action: 'acceptTournamentInvite',
-  //         payload: {
-  //           tournamentId: tournamentId,
-  //           avatar: user.avatar,
-  //           color: '#10B981'
-  //         }
-  //       }));
-  //     } else {
-  //       toast.error('Connection not available. Please refresh the page.');
-  //       return;
-  //     }
-
-  //     try {
-  //       await axios.delete(
-  //         `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
-  //         {
-  //           params: { notifyId: item.notify_id },
-  //           headers: { Authorization: `Bearer ${user.access_token}` }
-  //         }
-  //       );
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-
-  //     deleteNotification(item.notify_id);
-  //     setNotificationIndex(false);
-  //     router.push('/game/tournament');
-  //   } catch (err) {
-  //     console.error(err);
-  //     toast.error('Failed to accept tournament invitation');
-  //   }
-  // }
-
-  // async function RejectTournamentInvite(item) {
-  //   if (!user?.access_token) return;
-
-  //   try {
-  //     const tournamentId = item.tournamentId;
-  //     if (!tournamentId) {
-  //       toast.error('Tournament ID not found in invitation');
-  //       return;
-  //     }
-
-  //     const gameSocket = getWebSocket();
-
-  //     if (gameSocket.readyState === WebSocket.CONNECTING) {
-  //       await new Promise((resolve) => {
-  //         gameSocket.addEventListener('open', resolve, { once: true });
-  //       });
-  //     }
-
-  //     if (gameSocket.readyState === WebSocket.OPEN) {
-  //       if (user?.id_user) gameSocket.send(String(user.id_user));
-  //       await new Promise(resolve => setTimeout(resolve, 100));
-
-  //       gameSocket.send(JSON.stringify({
-  //         type: 'game',
-  //         action: 'declineTournamentInvite',
-  //         payload: {
-  //           tournamentId: tournamentId
-  //         }
-  //       }));
-  //     }
-
-  //     deleteNotification(item.notify_id);
-  //     setNotificationIndex(false);
-
-  //     try {
-  //       await axios.delete(
-  //         `https://${process.env.NEXT_PUBLIC_BACKENDIP}:${process.env.NEXT_PUBLIC_BACKENDPORT}/api/DeleteNotification`,
-  //         {
-  //           params: { notifyId: item.notify_id },
-  //           headers: { Authorization: `Bearer ${user.access_token}` }
-  //         }
-  //       );
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //     toast.error('Failed to decline tournament invitation');
-  //   }
-  // }
 
   return (
     <div className="relative" ref={buttonRef}>
@@ -583,42 +476,7 @@ function NotificationsIcon() {
                     </div>
                   );
                 }
-                // if (item.title === "tournament invite") {
-                //   return (
-                //     <div
-                //       key={index}
-                //       className="flex items-center gap-3 p-4 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-black hover:from-gray-800 transition"
-                //     >
-                //       <img
-                //         src={getProfileImageUrl(item.sender_profile_img)}
-                //         alt="profile"
-                //         className="w-12 h-12 rounded-full border-2 border-gray-600 object-cover"
-                //       />
-                //       <div className="flex flex-col flex-1">
-                //         <p className="text-white font-semibold">
-                //           {item.sender_username}
-                //         </p>
-                //         <p className="text-sm text-gray-400">
-                //           invited you to a <span className="text-blue-400 font-medium">tournament</span>
-                //         </p>
-                //       </div>
-                //       <div className="flex gap-2">
-                //         <button
-                //           onClick={() => AcceptTournamentInvite(item)}
-                //           className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
-                //         >
-                //           {t('common.accept')}
-                //         </button>
-                //         <button
-                //           onClick={() => RejectTournamentInvite(item)}
-                //           className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
-                //         >
-                //           {t('common.decline')}
-                //         </button>
-                //       </div>
-                //     </div>
-                //   );
-                // }
+
 
                 if (item.title === "friend request accepted") {
                   return (
@@ -685,10 +543,8 @@ function NotificationsIcon() {
   );
 }
 
-// ============ MAIN NAVBAR COMPONENT ============
 export default function Navbar() {
-  const router = useRouter();
-  const { setGameMode } = useGameContext();
+
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

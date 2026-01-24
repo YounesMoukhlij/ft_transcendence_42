@@ -33,12 +33,9 @@ export default function LeagueTable({ params }: LeaguePageProps) {
         });
         if (!active) return;
         setLeagueStats(res.data);
-        console.log(res.data);
       } catch (err) {
-        console.error("Error loading league:", err);
         if ((err).response?.status === 404) {
           redirect("/not-found");
-          return;
         }
       } finally {
         setLoading(false);

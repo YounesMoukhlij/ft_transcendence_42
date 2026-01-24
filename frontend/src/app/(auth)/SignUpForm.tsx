@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { toast } from 'react-toastify'
 import axios from 'axios'
 
-// Define the shape of the form data
 interface FormData {
   username: string
   email: string
@@ -19,7 +18,6 @@ interface SignUpFormProps {
 
 
 export default function SignUpForm({ onToggle }: SignUpFormProps) {
-  // State for form inputs
   const [formData, setFormData] = useState<FormData>({
     username: '',
     email: '',
@@ -31,13 +29,11 @@ export default function SignUpForm({ onToggle }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  // Handle input changes dynamically
   const handleInputChange = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }))
     if (error) setError('')
   }
 
-  // Client-side validation
   const validateForm = () => {
     const { username, email, password, confirmPassword } = formData
     
@@ -73,7 +69,6 @@ export default function SignUpForm({ onToggle }: SignUpFormProps) {
     return true
   }
 
-  // Handle Form Submission
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -85,26 +80,21 @@ export default function SignUpForm({ onToggle }: SignUpFormProps) {
     try {
       const {...userData } = formData
       
-      // --- AXIOS REFACTOR: POST Request ---
      await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/AddUser`, {
         username: userData.username.trim(),
         email: userData.email.trim(),
         password: userData.password
       })
 
-      // Axios automatically throws for non-2xx status, so if we reach here, it succeeded
       toast.success('Account created successfully! Please sign in.') 
       setFormData({ username: '', email: '', password: '', confirmPassword: '' })
       
-      // Switch to sign-in view
       onToggle()
       router.push('/signIn')
       
     } catch (error) {
-      console.error('Error during sign up:', error)
+      console.log('Error during sign up:', error)
       
-      // --- AXIOS ERROR HANDLING ---
-      // Extract the message from the backend response if available
       const errorMessage = error.response?.data?.message || 'Failed to create user'
       setError(errorMessage)
       toast.error(errorMessage)

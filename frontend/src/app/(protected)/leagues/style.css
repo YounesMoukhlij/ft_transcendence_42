@@ -17,7 +17,6 @@
   border-radius: 4px;
 }
 
-/* Hover effect */
 .my_league_table::-webkit-scrollbar-thumb:hover {
   background-color: var(--sidebar-primary);
 }

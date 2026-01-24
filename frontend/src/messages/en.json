@@ -298,7 +298,8 @@
     "saturday": "sat",
     "pointsPerSecond": "Points Per Second",
     "totalTouches": "Total Touches",
-    "secondsPerPoint": "Seconds per point"
+    "secondsPerPoint": "Seconds per point",
+    "noMatchHistory": "No match history yet"
   },
   "game": {
     "ModeSubtitle": "select mode and start enjoy now",

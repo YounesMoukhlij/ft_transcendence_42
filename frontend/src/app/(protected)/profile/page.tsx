@@ -26,7 +26,7 @@ export default function UserProfile() {
 
         if (res.status === 200) setProfile(res.data);
       } catch (err) {
-        console.error("Error fetching user data:", err);
+        console.log("Error fetching user data:", err);
       }
     };
 
@@ -34,10 +34,8 @@ export default function UserProfile() {
   }, [currentUser]);
 
 
-  // Not logged in
   if (!currentUser) return <Loading/>;
-
-  // Waiting for API data
+  
   if (!profile) return null; 
 
   return <Profile user={profile} />;

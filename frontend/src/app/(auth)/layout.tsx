@@ -10,12 +10,10 @@ export default function AuthLayout() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [isClient, setIsClient] = useState(false)
 
-  // Ensure hydration matches for Framer Motion and client logic to ensure client-side rendering and animations work correctly
   useEffect(() => {
     setIsClient(true)
   }, [])
 
-  // Check URL path on mount to determine initial state
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname
@@ -23,12 +21,10 @@ export default function AuthLayout() {
     }
   }, [])
 
-  // Toggle function passed down to child forms
   const toggleAuthMode = (mode: 'signIn' | 'signUp') => {
     setIsSignUp(mode === 'signUp')
     if (typeof window !== 'undefined') {
 
-      // Update browser URL without reloading
       window.history.pushState({}, '', `/${mode}`)
       
     }
@@ -42,7 +38,6 @@ export default function AuthLayout() {
     <div className="relative min-h-screen w-full overflow-hidden ">
       <div className="relative flex min-h-screen w-full">
         
-        {/* Animated Background Block */}
         <motion.div
           className="hidden md:block absolute w-1/2 h-screen z-10"
           initial={false}
@@ -50,12 +45,10 @@ export default function AuthLayout() {
           transition={{ type: "spring", stiffness: 150, damping: 20, duration: 1 }}
         >
           <div className="w-full h-full flex items-center justify-center">
-            {/*main animation */}
             <Loading/>
           </div>
         </motion.div>
 
-        {/* Sign In Container */}
         <motion.div
           className="absolute w-full md:w-1/2 h-screen flex items-center justify-center z-20"
           initial={false}
@@ -72,7 +65,6 @@ export default function AuthLayout() {
           </div>
         </motion.div>
 
-        {/* Sign Up Container */}
         <motion.div
           className="absolute w-full md:w-1/2 h-screen flex items-center justify-center z-20"
           initial={false}

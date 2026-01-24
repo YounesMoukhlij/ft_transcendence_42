@@ -54,8 +54,6 @@ export function PlayerBanner({ userStats }: PlayerBannerProps) {
             </div>
 
         </div>
-
-
         <div className="flex-shrink-0 flex items-center space-x-8 text-right z-20 hidden sm:flex ">
             
             <div className="flex flex-col items-center">

@@ -5,11 +5,11 @@ import Sidebar from "@/components/Sidebar";
 import ProtectedClient from "./ProtectedClient";
 import { useUserStore } from "@/store/userStore";
 
-const logout = () => {
-  document.cookie = 'auth_token=; Max-Age=0; path=/;';
-  useUserStore.getState().clearUser();
-  window.location.href = '/signIn';
-};
+// const logout = () => {
+//   document.cookie = 'auth_token=; Max-Age=0; path=/;';
+//   useUserStore.getState().clearUser();
+//   window.location.href = '/signIn';
+// };
 
 export default function ProtectedLayout({
   children,
@@ -20,7 +20,7 @@ export default function ProtectedLayout({
 
   
   if (!user) {
-    logout();
+    // logout();
     return null;
   }
 

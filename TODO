@@ -1,24 +1,16 @@
 
 
-// ayoub 
-card khass ghi it9ad text 
-ball speed
-Award xp after local tournament matches
-Tournament creation validation should be in backend
-tournament bracket css not loading 
-
-
-// SSR 
-
-// Need to check refresh token and redirect to signing when token is expired
 
 
 
 
-//This need to be fixed 
-generate2FA ===========+++> missing parsing
-saveTournamentMatch=============++> parsing 
-createLocalTournament==========+++++>name lentgh 
-DeleteFriendRequest cancelFriendRequest DeleteNotification  ===============> logical parsing
 
 
+
+
+
+// SSR ILA BGHA MZYAN, SINON 7YDO
+generate2FA ===========+++> missing parsing    // must check the data is exist and the email is owned by the user {khass tcheki hadi}
+1 ) if i delete user from user storage should logout (chouf layout li kayna f protected ila fiksitoha db m3a chatgpt gha diro mzn) // kadir mochkil f build
+2 ) leaderboard gha nssowl oussama gheda ra kayna chi haja dyal proxy khas dir liha false bach tkhdem fetch
+3 ) error dyal token 401 then 200 gheda gha nchuf kfch howa rah machi problem gher na9iw console

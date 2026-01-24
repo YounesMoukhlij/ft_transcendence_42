@@ -21,20 +21,17 @@ export function MatchStats({duration, totalTouches, pointsPerSecond, maxSpeed} :
       <div className="w-full max-w-lg rounded-3xl  bg-background shadow-lg ">
       
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-          {/* Longest Rally Card */}
-          <div className="border rounded-2xl p-6 text-center relative overflow-hidden">
+          <div className="border border-gray-700/50 rounded-2xl p-6 text-center relative overflow-hidden">
             <p className="text-6xl text-primary font-extrabold leading-none">
              {_totalTouches}
             </p>
             <p className="text-gray-300 font-light text-sm mt-1">
               {t('profile.totalTouches')}
             </p>
-            {/* Waveform SVG */}
            
           </div>
 
-          {/* Ball Max Speed Card */}
-          <div className=" border rounded-2xl p-6 text-center relative overflow-hidden">
+          <div className="border border-gray-700/50 rounded-2xl p-6 text-center relative overflow-hidden">
             <p className="text-6xl text-primary font-extrabold leading-none">
               {_maxSpeed || 0} 
               <span className="text-xl font-normal ml-1">km/h</span>
@@ -42,17 +39,14 @@ export function MatchStats({duration, totalTouches, pointsPerSecond, maxSpeed} :
             <p className="text-gray-300 font-light text-sm mt-1">
               {t('profile.ballMaxSpeed')}
             </p>
-            {/* Speedometer SVG */}
           </div>
         </div>
-
-        {/* Secondary Stats */}
         <div className="flex flex-wrap justify-center gap-4">
-          <div className="border border-gray-700 rounded-xl px-6 py-4 text-center shadow-md">
+          <div className="border border-gray-700/50 rounded-xl px-6 py-4 text-center shadow-md">
             <p className="text-lg font-semibold">{duration}</p>
             <p className="text-xs text-gray-400">{t('profile.duration')}</p>
           </div>
-          <div className=" border border-gray-700 rounded-xl px-6 py-4 text-center shadow-md">
+          <div className=" border border-gray-700/50 rounded-xl px-6 py-4 text-center shadow-md">
             <p className="text-lg font-semibold">{pointsPerSecond}</p>
             <p className="text-xs text-gray-400">{t('profile.secondsPerPoint')}</p>
           </div>

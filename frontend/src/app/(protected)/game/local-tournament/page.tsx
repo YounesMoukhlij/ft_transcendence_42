@@ -16,6 +16,21 @@ import LocalTournamentPlayerRegistration from '@/components/LocalTournamentPlaye
 import LocalTournamentGameOverlay from '@/components/LocalTournamentGameOverlay';
 import api from "@/lib/api"
 
+// Type for match statistics
+interface MatchStats {
+  finalScore: { player1: number; player2: number };
+  duration: number;
+  player1Touches?: number;
+  player2Touches?: number;
+  totalTouches?: number;
+  pointsPerSecond?: number;
+  maxBallSpeed?: number;
+  maxStreakPlayer1?: number;
+  maxStreakPlayer2?: number;
+  leadingTimePlayer1?: number;
+  leadingTimePlayer2?: number;
+}
+
 // Generate modern, attractive avatar SVGs with gradients and patterns
 const generateModernAvatarSVG = (primaryColor: string, secondaryColor: string, pattern: string): string => {
   const svg = `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
@@ -37,6 +52,7 @@ const generateModernAvatarSVG = (primaryColor: string, secondaryColor: string, p
     // For browser environment, use btoa with proper encoding
     return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
   } catch (e) {
+    console.log("error ", e);
     // Fallback for environments where btoa/unescape isn't available
     return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`;
   }
@@ -152,7 +168,7 @@ export default function LocalTournamentPage() {
   }, []);
 
   // Handle match completion - called from PingPongGame
-  const handleMatchComplete = useCallback((winner: GamePlayer, matchStats?: any) => {
+  const handleMatchComplete = useCallback((winner: GamePlayer, matchStats?: MatchStats) => {
     if (!currentMatch || !winner || !tournamentManager) return;
 
     setMatchWinner(winner);
@@ -162,16 +178,6 @@ export default function LocalTournamentPage() {
     // Update bracket with winner
     tournamentManager.setMatchWinner(currentMatch.id, winner);
 
-
-    // Save match data to database if statistics are available
-    console.log('Checking if we should save match data:', {
-      hasMatchStats: !!matchStats,
-      winnerIdUser: winner.id_user,
-      winnerId: winner.id,
-      winnerName: winner.name,
-      currentMatchPlayer1: currentMatch?.player1?.name,
-      currentMatchPlayer2: currentMatch?.player2?.name
-    });
 
     if (matchStats && currentMatch?.player1 && currentMatch?.player2) {
       // Determine winner and loser from tournament players

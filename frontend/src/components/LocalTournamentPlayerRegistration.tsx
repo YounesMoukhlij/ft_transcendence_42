@@ -41,9 +41,7 @@ export default function LocalTournamentPlayerRegistration({
     console.log('LocalTournamentPlayerRegistration: tempPlayers updated:', tempPlayers.map(p => ({ name: p.name, id: p.id })));
   }, [tempPlayers]);
 
-  const handleAvatarSelect = (playerIndex: number, avatarIndex: number) => {
-    updatePlayer(playerIndex, 'avatar', defaultAvatars[avatarIndex % defaultAvatars.length]);
-  };
+
 
   const handleAddPlayer = async () => {
     if (newPlayerUsername.trim() && newPlayerPassword.trim()) {
@@ -122,8 +120,8 @@ export default function LocalTournamentPlayerRegistration({
         } else {
           setErrorMessage(data.message || 'Authentication failed');
         }
-      } catch (error: any) {
-        // console.error('Error registering tournament user:', error);
+      } catch (error) {
+        console.error('Error registering tournament user:', error);
         setErrorMessage(
           error.message ||
           'Failed to authenticate user'

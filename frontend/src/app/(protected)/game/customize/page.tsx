@@ -17,9 +17,8 @@ export default function CustomizePage() {
   const [socketConnected, setSocketConnected] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(120); // 2 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState<number>(120);
 
-  // Ensure socket is connected for remote mode
   useEffect(() => {
     if (gameState.mode === 'remote' && _hasHydrated) {
       console.log('Remote mode - checking socket connection:', {
@@ -118,7 +117,7 @@ export default function CustomizePage() {
     };
 
     const handleError = (error: Event) => {
-      console.error('Socket error in customize page:', error);
+      console.log("error", error);
       setSocketConnected(false);
 
       // Try to reconnect after error
@@ -160,7 +159,9 @@ export default function CustomizePage() {
         : gameState.mode === 'remote'
         ? t('game.remoteGameCustomization')
         : t('game.gameCustomization');
-    document.title = title;
+    if (typeof document !== 'undefined') {
+      document.title = title;
+    }
   }, [gameState.mode, t]);
 
   useEffect(() => {
@@ -339,17 +340,9 @@ export default function CustomizePage() {
               } else {
                 setError(errorMessage);
               }
-            } else {
-              // For other errors, log them (only in development) and show to user
-              if (process.env.NODE_ENV === 'development') {
-                console.error('[CustomizePage] Error from server:', errorMessage);
-              }
-              setError(errorMessage);
-            }
-
+            } 
             setIsSearching(false);
             setTimeRemaining(120);
-            // Clear timeout
             if (countdownIntervalRef.current) {
               clearInterval(countdownIntervalRef.current);
               countdownIntervalRef.current = null;
@@ -358,13 +351,12 @@ export default function CustomizePage() {
               clearTimeout(searchTimeoutRef.current);
               searchTimeoutRef.current = null;
             }
-            // Clear challengeId on error so user can try again
             if (typeof window !== 'undefined') {
               localStorage.removeItem('pendingChallengeId');
             }
           }
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          console.log('Error parsing WebSocket message:', error);
         }
       };
 
@@ -425,7 +417,7 @@ export default function CustomizePage() {
             }
           }
         } catch (error) {
-          console.error('Error reading user from localStorage:', error);
+          console.log('Error reading user from localStorage:', error);
         }
       }
 
@@ -562,7 +554,7 @@ export default function CustomizePage() {
               <div className="relative">
                 <div className="animate-spin rounded-full h-24 w-24 md:h-32 md:w-32 border-4 border-transparent border-t-purple-500 border-r-blue-500"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 md:w-20 md:w-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <div className="w-16 h-16 md:w-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                     <span className="text-white font-bold text-lg md:text-xl">
                       {!isFriendChallenge && formatTime(timeRemaining)}
                     </span>

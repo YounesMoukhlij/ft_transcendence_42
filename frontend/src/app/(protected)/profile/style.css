@@ -4,27 +4,24 @@
 @custom-variant dark (&:is(.dark *));
 
 
-
-
 :root {
-  /* Updated to professional space theme with limited color palette */
-  --background: #0f1419; /* Deep space background */
-  --foreground: #e6e8eb; /* Soft white text */
-  --card: #1a1f2e; /* Subtle card background */
-  --card-foreground: #e6e8eb; /* Card text */
+  --background: #0f1419; 
+  --foreground: #e6e8eb;
+  --card: #1a1f2e; 
+  --card-foreground: #e6e8eb; 
   --popover: #1a1f2e;
   --popover-foreground: #e6e8eb;
-  --primary: #3b82f6; /* Professional blue primary */
+  --primary: #3b82f6; 
   --primary-foreground: #ffffff;
-  --secondary: #374151; /* Neutral gray */
+  --secondary: #374151;
   --secondary-foreground: #e6e8eb;
   --muted: #6b7280;
   --muted-foreground: #9ca3af;
-  --accent: #10b981; /* Subtle green accent */
+  --accent: #10b981; 
   --accent-foreground: #ffffff;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #2d3748; /* Subtle borders */
+  --border: #2d3748;
   --input: #1a1f2e;
   --ring: rgba(59, 130, 246, 0.3);
   --chart-1: #3b82f6;
@@ -133,7 +130,7 @@
     user-select: none;
   }
 
-  /* Added subtle star field overlay */
+
   body::before {
     content: "";
     position: fixed;
@@ -169,7 +166,7 @@
 
 
 :root {
-  --highlight-color: #FFD700; /* default gold */
+  --highlight-color: #FFD700;
   --highlight-glow1: rgba(255, 215, 0, 0.4);
   --highlight-glow2: rgba(255, 215, 0, 0.6);
   --highlight-shadow: rgba(255, 215, 0, 0.2);
@@ -189,7 +186,6 @@ pulse {
     border-style: solid;
     border-radius: 16px;
     border-color: var(--highlight-shadow);
-    /* animation: border-fill linear 1s; */
 
 }
 @keyframes mainBanner {
@@ -229,9 +225,9 @@ pulse {
 
 
 
-/* Variants */
+
 .gold-theme {
- --highlight-color: #FFD700; /* default gold */
+ --highlight-color: #FFD700; 
   --highlight-glow1: rgba(255, 215, 0, 0.4);
   --highlight-glow2: rgba(255, 215, 0, 0.6);
   --highlight-shadow: rgba(255, 215, 0, 0.2);
@@ -263,9 +259,7 @@ pulse {
 {
   box-shadow: red;
   position: relative;
-  /* filter: blur(1.5rem); */
-  /* opacity: 0.5; */
- 
+
 }
 .winner::after
 {
@@ -275,10 +269,8 @@ pulse {
   height: 100%;
   top: 0%;
   left: 0%;
-  /* transform: translate(50% 50%); */
   z-index: -1;
   background-color: var(--highlight-glow2);
-  /* border: 2px solid red; */
   filter: blur(1.2rem);
   opacity: 0.5;
 }
@@ -324,7 +316,7 @@ pulse {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;       /* full viewport */
+  height: 100vh;
 }
 
 .my-modal {
@@ -348,7 +340,6 @@ pulse {
   border-radius: 4px;
 }
 
-/* Hover effect */
 .my-modal::-webkit-scrollbar-thumb:hover {
   background-color: var(--sidebar-primary);
 }
@@ -378,7 +369,6 @@ pulse {
   border-radius: 4px;
 }
 
-/* Hover effect */
 .match_table::-webkit-scrollbar-thumb:hover {
   background-color: var(--sidebar-primary);
 }

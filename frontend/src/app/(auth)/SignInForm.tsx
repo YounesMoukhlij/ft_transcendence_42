@@ -22,19 +22,18 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
   const searchParams = useSearchParams()
   const setUser = useUserStore((state) => state.setUser)
   
-  // Refs to prevent StrictMode double execution
+
   const googleAuthEffectRef = useRef(false) 
   const fortyTwoAuthEffectRef = useRef(false)
 
-  // 2FA State
+
   const [show2FAInput, setShow2FAInput] = useState(false)
   const [twoFACode, setTwoFACode] = useState('')
   const [tempUserId, setTempUserId] = useState<string | null>(null)
 
-  // --- Helper: Fetch User Data (Shared by OAuth flows) ---
+
   const fetchUserData = async (token: string, isNewUser: string | null) => {
     try {
-      // console.log('-------------->', process.env.NEXT_PUBLIC_BACK_API)
       const response = await axios.get(`${process.env.NEXT_PUBLIC_BACK_API}/api/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -44,7 +43,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
       
       const userData = {...response.data , profile_img: getProfileImageUrl(response.data.profile_img)} ;
 
-      console.log('OAuth user data:==============+>', userData)
       
       setUser(userData, userData.refresh_token) 
       document.cookie = `auth_token=${userData.access_token}; path=/`;
@@ -56,12 +54,12 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
       toast.success(message)
       router.push('/')
     } catch (err) {
-      console.error('Failed to fetch user data:', err)
+      console.log('Failed to fetch user data:', err)
       toast.error('Failed to retrieve user information')
     }
   }
 
-  // --- GOOGLE OAUTH EFFECT ---
+
   useEffect(() => {
     const userId = searchParams.get('userId')
     const authError = searchParams.get('error')
@@ -69,7 +67,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
     const twoFARequired = searchParams.get('2fa_required')
     const token = searchParams.get('token')
 
-    // Handle 2FA required from OAuth
+
     if (twoFARequired === 'true' && userId) {
       if (googleAuthEffectRef.current) return;
       googleAuthEffectRef.current = true;
@@ -101,7 +99,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
   }, [searchParams, router, setUser])
 
   
-  // --- 42 OAUTH EFFECT ---
   useEffect(() => {
     const fortyTwoAuth = searchParams.get('42Auth')
     const userId = searchParams.get('userId')
@@ -110,7 +107,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
     const twoFARequired = searchParams.get('2fa_required')
     const token = searchParams.get('token')
     
-    // Check !fortyTwoAuth to avoid conflict with google effect
     if (twoFARequired === 'true' && userId && !fortyTwoAuth) { 
       if (fortyTwoAuthEffectRef.current) return;
       fortyTwoAuthEffectRef.current = true;
@@ -141,7 +137,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
   }, [searchParams, router, setUser])
 
 
-  // --- HANDLERS ---
   const handleGoogleAuth = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_BACK_API}/api/auth/google`
   }
@@ -160,7 +155,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
     return true
   }
 
-  // --- STANDARD LOGIN SUBMIT ---
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateForm()) return
@@ -169,7 +164,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
     setError('')
 
     try {
-      // --- AXIOS REFACTOR: POST Login ---
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/login`, { 
         username: username.trim(), 
         password: password 
@@ -177,15 +171,12 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
 
       const data = response.data
 
-      // Check if 2FA is triggered
       if (data.twoFA_required) {
         setTempUserId(data.userId.toString())
         setShow2FAInput(true)
         setPassword('')
         setError('')
       } else {
-        // Successful Standard Login
-        console.log('Login response data:', data.user)
         if (data.user) {
           setUser(data.user) 
           document.cookie = `auth_token=${data.user.access_token}; path=/`;
@@ -198,7 +189,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
       }
       
     } catch (error) {
-      console.error('Network error during login:', error)
+      console.log('Network error during login:', error)
       const errorMessage = error.response?.data?.message || 'Login failed. Please try again.'
       setError(errorMessage)
       toast.error(errorMessage)
@@ -207,7 +198,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
     }
   }
 
-  // --- 2FA VERIFY SUBMIT ---
   const handle2FALoginVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!twoFACode || twoFACode.length < 6 || !tempUserId) {
@@ -221,7 +211,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
     setError('');
 
     try {
-      // --- AXIOS REFACTOR: POST 2FA Verify ---
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACK_API}/api/2fa/login-verify`, {
         userId: parseInt(tempUserId),
         token: twoFACode
@@ -246,7 +235,7 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
       router.push('/')
 
     } catch (error) {
-      console.error('Network error during 2FA login:', error);
+      console.log('Network error during 2FA login:', error);
       const errorMessage = error.response?.data?.message || 'Invalid 2FA code. Please try again.';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -255,7 +244,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
     }
   };
 
-  // --- RENDER: 2FA FORM ---
   if (show2FAInput) {
     return (
       <div className="flex flex-col gap-6 items-center justify-center bg-amber-400">
@@ -324,7 +312,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
     );
   }
 
-  // --- RENDER: STANDARD LOGIN FORM ---
   return (
     <div className="flex flex-col gap-6 items-center justify-center">
       <div className='flex flex-col gap-2 sm:gap-3 items-center justify-center text-center'>
@@ -397,7 +384,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
           </button>
           
           <div className='flex gap-2 w-full sm:w-auto'>
-            {/* Google Button */}
             <button 
               type="button"
               disabled={isLoading}
@@ -412,7 +398,6 @@ export default function SignInForm({ onToggle }: SignInFormProps) {
               </svg>
             </button>
             
-            {/* 42 Button */}
             <button 
               type="button"
               disabled={isLoading}

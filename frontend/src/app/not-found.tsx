@@ -6,7 +6,6 @@ export default function NotFound() {
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
       <div className="max-w-lg w-full text-center space-y-8">
         
-        {/* Image Container */}
         <div className="relative w-full aspect-video border border-gray-800 rounded-lg overflow-hidden">
             <Image
               src="/notfound.png" 
@@ -18,7 +17,6 @@ export default function NotFound() {
             />
         </div>
 
-        {/* Text Content */}
         <div className="space-y-3">
           <h1 className="text-5xl font-bold tracking-tighter text-white">
             404
@@ -28,7 +26,6 @@ export default function NotFound() {
           </p>
         </div>
 
-        {/* Action Button */}
         <div>
           <Link 
             href="/"

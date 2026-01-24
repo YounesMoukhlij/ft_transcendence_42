@@ -14,20 +14,17 @@ const ForgotPasswordPage = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [resetToken, setResetToken] = useState('');
-  // router for navigation
 
 
-  // General UI state
+
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Generic handler to update state from input fields
   const handleStateChange = (setter) => (e) => {
     setter(e.target.value);
     if (error) setError(null);
   };
 
-  // Step 1: API call to send verification code
   const handleSendCode = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -57,7 +54,6 @@ const ForgotPasswordPage = () => {
     }
   };
   
-  // Step 2: API call to verify the code
   const handleVerifyCode = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -88,7 +84,6 @@ const ForgotPasswordPage = () => {
     }
   };
 
-  // Step 3: API call to reset the password using the token
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {

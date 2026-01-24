@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-
 import FriendList from './FriendList';
 import Messages from './Messages'
 import FriendCard from './FriendCard'

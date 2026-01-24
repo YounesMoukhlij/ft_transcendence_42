@@ -25,12 +25,10 @@ export function middleware(request: NextRequest) {
     currentPath === path || currentPath.startsWith(path + '/')
   )
 
-  // 1️⃣ Not logged in → block protected routes
   if (isProtectedPath && !isPublicPath && !isAuthenticated) {
     return NextResponse.redirect(new URL('/signIn', request.url))
   }
 
-  // 2️⃣ Logged in → block auth pages
   if (isPublicPath && isAuthenticated) {
     return NextResponse.redirect(new URL('/profile', request.url))
   }
