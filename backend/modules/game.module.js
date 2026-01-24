@@ -4,7 +4,7 @@ export async function saveGameCustomization(req, reply) {
     const userId = req.user.id_user;
     const db = req.server.db;
 
-    // Validate required fields
+    
     if (!tableBg || !ballColor || !paddleColor) {
         return reply.code(400).send({
             success: false,
@@ -12,7 +12,16 @@ export async function saveGameCustomization(req, reply) {
         });
     }
 
-    // Validate color format (should be hex colors)
+
+
+
+
+
+
+
+
+    
+    
     const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
     if (!hexColorRegex.test(tableBg) || !hexColorRegex.test(ballColor) || !hexColorRegex.test(paddleColor)) {
         return reply.code(400).send({
@@ -21,7 +30,7 @@ export async function saveGameCustomization(req, reply) {
         });
     }
 
-    // Validate aiDifficulty if provided
+    
     if (aiDifficulty && !['easy', 'medium', 'hard'].includes(aiDifficulty)) {
         return reply.code(400).send({
             success: false,
@@ -29,7 +38,7 @@ export async function saveGameCustomization(req, reply) {
         });
     }
 
-    // Validate winningScore if provided
+    
     if (winningScore && ![5, 10].includes(winningScore)) {
         return reply.code(400).send({
             success: false,
@@ -37,7 +46,7 @@ export async function saveGameCustomization(req, reply) {
         });
     }
 
-    // Validate user exists
+    
     const userExists = db.prepare('SELECT id_user FROM users WHERE id_user = ?').get(userId);
     if (!userExists) {
         return reply.code(404).send({

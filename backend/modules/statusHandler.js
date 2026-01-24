@@ -8,7 +8,7 @@ export function statusShare(id, mode, db, users_socket) {
   const friends2 = getFriendsStmt2.all(id).map(row => row.friend_id);
   const allFriends = [...friends1, ...friends2];
 
-  console.log(`[statusShare] User ${id} status changed to ${mode ? 'online' : 'offline'}. Notifying ${allFriends.length} friends.`);
+  // console.log(`[statusShare] User ${id} status changed to ${mode ? 'online' : 'offline'}. Notifying ${allFriends.length} friends.`);
 
   for (let i = 0; i < allFriends.length; i++) {
     const socket = users_socket.get(allFriends[i].toString());
@@ -22,7 +22,7 @@ export function statusShare(id, mode, db, users_socket) {
         type: "status",
         data: data
       }));
-      console.log(`[statusShare] Status update sent to friend ${allFriends[i]}: ${mode ? 'online' : 'offline'}`);
+      // console.log(`[statusShare] Status update sent to friend ${allFriends[i]}: ${mode ? 'online' : 'offline'}`);
     } else {
       console.log(`[statusShare] Friend ${allFriends[i]} is not connected, skipping status update`);
     }

@@ -389,7 +389,7 @@ export default function CustomizePage() {
 
   const handleBack = () => {
     if (gameState.mode === 'local' || gameState.mode === 'tournament') {
-      router.push('/game/versus-selection');
+      router.push('/game/player2');
     } else if (gameState.mode === 'remote') {
       router.back();
     } else {

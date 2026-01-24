@@ -14,3 +14,31 @@ generate2FA ===========+++> missing parsing    // must check the data is exist a
 1 ) if i delete user from user storage should logout (chouf layout li kayna f protected ila fiksitoha db m3a chatgpt gha diro mzn) // kadir mochkil f build
 2 ) leaderboard gha nssowl oussama gheda ra kayna chi haja dyal proxy khas dir liha false bach tkhdem fetch
 3 ) error dyal token 401 then 200 gheda gha nchuf kfch howa rah machi problem gher na9iw console
+
+
+
+
+
+
+
+
+
+
+
+
+
+YOUNES : 
+
+----------------> 1
+ ## Error Type
+Runtime ReferenceError
+
+## Error Message
+heartbeatInterval is not defined
+
+
+    at ws.onopen (file:///var/www/nextApp/.next/static/chunks/src_2b8006c2._.js:67:39)
+
+Next.js version: 15.5.9 (Turbopack)
+
+----------------> 2

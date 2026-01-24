@@ -37,13 +37,13 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
     try {
       db.prepare('UPDATE users SET status = ? WHERE id_user = ?').run(statusMode, userId);
     } catch {
-      // ignore
+      console.log('Error updating user status:', err);
     }
 
     try {
       statusShare(userId, statusMode, db, users_socket);
     } catch {
-      // ignore
+      console.log('Error updating user status:', err);
     }
 
     // syncNotifications(socket, userId);
@@ -58,7 +58,7 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
 
       if (data.type === 'ping') {
         socket.send(JSON.stringify({ type: 'pong' }));
-        console.log("here================================++>");
+        
         return;
       }
 
@@ -136,7 +136,7 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
             }));
           }
         } catch (err) {
-          // console.error('Error handling chat message:', err);
+          console.log('Error handling chat message:', err);
         }
         return;
       }
@@ -193,7 +193,7 @@ export function setupWebSocketServer(wss, db, users_socket, gameManager) {
       try {
         const decoded = jwt.verify(token, process.env.SECRET);
         const userId = decoded?.id_user;
-        console.log("============> new clinet want to connect " , userId);
+        // console.log("============> new clinet want to connect " , userId);
         if (!userId) {
           socket.close();
           return;
