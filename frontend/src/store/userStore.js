@@ -57,7 +57,7 @@ export const useUserStore = create(
 
     try {
       const ws = new WebSocket(url);
-      // let heartbeatInterval = null;
+      let heartbeatInterval = null;
 
       ws.onopen = () => {
         set({
@@ -74,8 +74,10 @@ export const useUserStore = create(
       };
 
       ws.onclose = () => {
-
-
+        if (heartbeatInterval) {
+          clearInterval(heartbeatInterval);
+          heartbeatInterval = null;
+        }
         set({ socket: null, isConnect: false });
 
         const attempts = get().reconnectAttempts + 1;

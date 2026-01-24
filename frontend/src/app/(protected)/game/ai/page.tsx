@@ -42,10 +42,12 @@ export default function AIGamePage() {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-function Redirect({ to }: { to: string }) {
+  function Redirect({ to }: { to: string }) {
+    useEffect(() => {
       router.push(to);
-  return null;
-}
+    }, [router, to]);
+    return null;
+  }
   const [player1ProfileImg, setPlayer1ProfileImg] = useState<string>(defaultProfileImg);
   const [player2ProfileImg, setPlayer2ProfileImg] = useState<string>(defaultProfileImg);
   const profileImagesFetched = useRef<boolean>(false);
@@ -359,12 +361,10 @@ function Redirect({ to }: { to: string }) {
             </div>
 
             <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-              <p className="text-white text-sm md:text-base mb-2">
-              <div>
+              <div className="text-white text-sm md:text-base mb-2">
                 <span className="opacity-70">{t('game.controls')}: </span>
                 <span className="font-semibold">W / S</span>
               </div>
-              </p>
               <p className="text-gray-500 text-xs">
                 {t('game.pressFForFullscreen')}
               </p>

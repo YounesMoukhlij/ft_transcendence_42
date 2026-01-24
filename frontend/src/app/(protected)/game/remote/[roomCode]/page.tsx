@@ -71,9 +71,11 @@ export default function RemoteGameRoomPage() {
 
 
   function Redirect({ to }: { to: string }) {
+    useEffect(() => {
       router.push(to);
-  return null;
-}
+    }, [router, to]);
+    return null;
+  }
 
 
 

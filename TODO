@@ -29,7 +29,7 @@ generate2FA ===========+++> missing parsing    // must check the data is exist a
 
 YOUNES : 
 
-----------------> 1
+----------------> 1 SOLVED
  ## Error Type
 Runtime ReferenceError
 
@@ -41,4 +41,11 @@ heartbeatInterval is not defined
 
 Next.js version: 15.5.9 (Turbopack)
 
-----------------> 2
+----------------> 2 SOLVED
+
+hydration errors when the front try to render something but the backend is rendering something else, they should render one thing at a time.
+
+
+----------------> 3 SOLVED
+
+Error during the remote 1vs1 game

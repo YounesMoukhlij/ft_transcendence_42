@@ -20,7 +20,14 @@ export async function saveGameCustomization(req, reply) {
 
 
 
+
     
+
+
+
+
+
+
     
     const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
     if (!hexColorRegex.test(tableBg) || !hexColorRegex.test(ballColor) || !hexColorRegex.test(paddleColor)) {
