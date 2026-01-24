@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameContext, Player as GamePlayer } from '@/components/GameContext';
 import PingPongGame from '@/components/PingPongGame';
 import GameCustomization from '@/components/GameCustomization';
 import { useUserStore } from '@/store/userStore';
 import { FaTrophy } from 'react-icons/fa';
+import { IoExpand, IoContract } from 'react-icons/io5';
 import { useTranslation } from '@/contexts/LanguageContext';
 import type { Player as GameTypePlayer, ServerGameState } from '@/types/game';
 import LocalTournamentManager from '@/components/LocalTournamentManager';
@@ -15,6 +16,21 @@ import LocalTournamentAnimations from '@/components/LocalTournamentAnimations';
 import LocalTournamentPlayerRegistration from '@/components/LocalTournamentPlayerRegistration';
 import LocalTournamentGameOverlay from '@/components/LocalTournamentGameOverlay';
 import api from "@/lib/api"
+
+interface ExtendedDocument extends Document {
+  webkitFullscreenElement?: Element | null;
+  mozFullScreenElement?: Element | null;
+  msFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void>;
+  mozCancelFullScreen?: () => Promise<void>;
+  msExitFullscreen?: () => Promise<void>;
+}
+
+interface ExtendedElement extends HTMLElement {
+  webkitRequestFullscreen?: () => Promise<void>;
+  mozRequestFullScreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+}
 
 // Type for match statistics
 interface MatchStats {
@@ -114,6 +130,8 @@ export default function LocalTournamentPage() {
     ballSpeed: 1,
     paddleSize: 1,
   });
+  const gameContainerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Initialize game mode
   useEffect(() => {
@@ -347,6 +365,111 @@ export default function LocalTournamentPage() {
     }
   }, [currentMatch, tournamentManager]);
 
+  const toggleFullscreen = useCallback(async () => {
+    const container = gameContainerRef.current;
+    if (!container) return;
+    try {
+      const extDoc = document as ExtendedDocument;
+      const extEl = container as ExtendedElement;
+      if (
+        document.fullscreenElement ||
+        extDoc.webkitFullscreenElement ||
+        extDoc.mozFullScreenElement ||
+        extDoc.msFullscreenElement
+      ) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (extDoc.webkitExitFullscreen) await extDoc.webkitExitFullscreen();
+        else if (extDoc.mozCancelFullScreen) await extDoc.mozCancelFullScreen();
+        else if (extDoc.msExitFullscreen) await extDoc.msExitFullscreen();
+      } else {
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+          container.focus();
+        } else if (extEl.webkitRequestFullscreen) {
+          await extEl.webkitRequestFullscreen();
+          container.focus();
+        } else if (extEl.mozRequestFullScreen) {
+          await extEl.mozRequestFullScreen();
+          container.focus();
+        } else if (extEl.msRequestFullscreen) {
+          await extEl.msRequestFullscreen();
+          container.focus();
+        }
+      }
+    } catch (e) {
+      console.error('Error toggling fullscreen:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const extDoc = document as ExtendedDocument;
+      const full = !!(
+        document.fullscreenElement ||
+        extDoc.webkitFullscreenElement ||
+        extDoc.mozFullScreenElement ||
+        extDoc.msFullscreenElement
+      );
+      setIsFullscreen(full);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (tournamentStep !== 'playing' || !currentMatch || !gameContainerRef.current) return;
+    const container = gameContainerRef.current;
+    const extDoc = document as ExtendedDocument;
+    if (
+      document.fullscreenElement ||
+      extDoc.webkitFullscreenElement ||
+      extDoc.mozFullScreenElement ||
+      extDoc.msFullscreenElement
+    )
+      return;
+    const t = setTimeout(async () => {
+      try {
+        const extEl = container as ExtendedElement;
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+          container.focus();
+        } else if (extEl.webkitRequestFullscreen) {
+          await extEl.webkitRequestFullscreen();
+          container.focus();
+        } else if (extEl.mozRequestFullScreen) {
+          await extEl.mozRequestFullScreen();
+          container.focus();
+        } else if (extEl.msRequestFullscreen) {
+          await extEl.msRequestFullscreen();
+          container.focus();
+        }
+      } catch {
+        console.log('Auto-fullscreen not available');
+      }
+    }, 100);
+    return () => clearTimeout(t);
+  }, [tournamentStep, currentMatch]);
+
+  useEffect(() => {
+    if (tournamentStep !== 'playing') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F' || e.key === 'F11') {
+        if (e.key === 'F11') e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tournamentStep, toggleFullscreen]);
 
   // Handle game state updates
   useEffect(() => {
@@ -557,67 +680,142 @@ export default function LocalTournamentPage() {
 
       case 'playing':
         return (
-          <div className="flex flex-col items-center justify-center w-full min-h-full p-4 bg-transparent transition-all duration-300">
+          <div
+            ref={gameContainerRef}
+            tabIndex={-1}
+            className={`flex flex-col items-center justify-center w-full transition-all duration-300 focus:outline-none ${
+              isFullscreen ? 'h-screen bg-black p-4' : 'min-h-full p-4 bg-transparent'
+            }`}
+          >
             {currentMatch && currentMatch.player1 && currentMatch.player2 && (
               <>
-                {/* Player Profile Images - Shown at top of game table */}
-                <LocalTournamentGameOverlay
-                  player1={currentMatch.player1}
-                  player2={currentMatch.player2}
-                  score1={gameScores.player1}
-                  score2={gameScores.player2}
-                  isFullscreen={false}
-                />
+                <div className={`w-full flex flex-col items-center ${isFullscreen ? 'h-full justify-center' : 'max-w-4xl'}`}>
+                  <LocalTournamentGameOverlay
+                    player1={currentMatch.player1}
+                    player2={currentMatch.player2}
+                    score1={gameScores.player1}
+                    score2={gameScores.player2}
+                    isFullscreen={isFullscreen}
+                  />
 
-                {/* Game Container */}
-                <div className="w-full flex flex-col items-center max-w-4xl">
-                  <div className="w-full">
-                    <PingPongGame
-                      tournamentMode={true}
-                      tournamentPlayers={[
-                        {
-                          id: currentMatch.player1.id ?? 'player-1',
-                          name: currentMatch.player1.name,
-                          avatar: currentMatch.player1.avatar,
-                          color: currentMatch.player1.color,
-                          username: currentMatch.player1.username,
-                          id_user: typeof currentMatch.player1.id_user === 'number' ? currentMatch.player1.id_user : undefined,
-                        },
-                        {
-                          id: currentMatch.player2.id ?? 'player-2',
-                          name: currentMatch.player2.name,
-                          avatar: currentMatch.player2.avatar,
-                          color: currentMatch.player2.color,
-                          username: currentMatch.player2.username,
-                          id_user: typeof currentMatch.player2.id_user === 'number' ? currentMatch.player2.id_user : undefined,
-                        },
-                      ] satisfies GameTypePlayer[]}
-                      onScoreUpdate={(scores) => setGameScores(scores)}
-                      onTournamentMatchEnd={(winner, matchStats) => {
-                        // Convert winner back to GameContext Player format
-                        const gameContextWinner: GamePlayer = {
-                          ...winner,
-                          color: winner.color || '#ffffff'
-                        };
-                        handleMatchComplete(gameContextWinner, matchStats); 
-                      }}
-                    />
+                  <div className={`w-full flex justify-center ${isFullscreen ? 'flex-1 items-center' : 'max-w-4xl'}`}>
+                    <div
+                      className={isFullscreen ? 'w-full h-full flex items-center justify-center' : 'w-full'}
+                      style={isFullscreen ? {
+                        aspectRatio: '4/3',
+                        maxWidth: '95vw',
+                        maxHeight: '95vh',
+                        width: 'auto',
+                        height: 'auto',
+                      } : {}}
+                    >
+                      <PingPongGame
+                        tournamentMode={true}
+                        tournamentPlayers={[
+                          {
+                            id: currentMatch.player1.id ?? 'player-1',
+                            name: currentMatch.player1.name,
+                            avatar: currentMatch.player1.avatar,
+                            color: currentMatch.player1.color,
+                            username: currentMatch.player1.username,
+                            id_user: typeof currentMatch.player1.id_user === 'number' ? currentMatch.player1.id_user : undefined,
+                          },
+                          {
+                            id: currentMatch.player2.id ?? 'player-2',
+                            name: currentMatch.player2.name,
+                            avatar: currentMatch.player2.avatar,
+                            color: currentMatch.player2.color,
+                            username: currentMatch.player2.username,
+                            id_user: typeof currentMatch.player2.id_user === 'number' ? currentMatch.player2.id_user : undefined,
+                          },
+                        ] satisfies GameTypePlayer[]}
+                        onScoreUpdate={(scores) => setGameScores(scores)}
+                        onTournamentMatchEnd={(winner, matchStats) => {
+                          const gameContextWinner: GamePlayer = {
+                            ...winner,
+                            color: winner.color || '#ffffff'
+                          };
+                          handleMatchComplete(gameContextWinner, matchStats);
+                        }}
+                      />
+                    </div>
                   </div>
+
+                  {!isFullscreen && (
+                    <div className="w-full max-w-2xl mt-4 text-center space-y-4">
+                      <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                        <p className="text-white text-sm md:text-base mb-2">
+                          <span className="font-semibold">{t('game.controls')}</span> {t('game.useWASDOrArrows')}
+                        </p>
+                        <p className="text-gray-400 text-xs md:text-sm mb-2">
+                          {t('game.firstTo10PointsWins')}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          {t('game.pressFForFullscreen')}
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={toggleFullscreen}
+                          className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                          aria-label={isFullscreen ? t('game.exitFullscreen') : t('game.fullscreen')}
+                        >
+                          <IoExpand className="w-5 h-5" />
+                          <span>{t('game.fullscreen')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Controls */}
-                <div className="w-full max-w-2xl mt-4 text-center space-y-4">
-                  {/* Controls Instructions */}
-                  <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                    <p className="text-white text-sm md:text-base mb-2">
-                      <span className="font-semibold">{t('game.controls')}</span> {t('game.useWASDOrArrows')}
-                    </p>
-                    <p className="text-gray-400 text-xs md:text-sm mb-2">
-                      {t('game.firstTo10PointsWins')}
-                    </p>
+                {isFullscreen && !showMatchCompletionModal && (
+                  <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-sm rounded-lg px-6 py-3 border border-gray-700 shadow-xl">
+                    <div className="flex items-center gap-4 text-white text-sm flex-wrap justify-center">
+                      <div>
+                        <span className="opacity-70">{t('game.controls')}: </span>
+                        <span className="font-semibold">W / S / ↑ / ↓</span>
+                      </div>
+                      <div className="h-4 w-px bg-gray-600" />
+                      <button
+                        type="button"
+                        onClick={toggleFullscreen}
+                        className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 transition-colors text-sm font-medium flex items-center gap-2"
+                        aria-label={t('game.exitFullscreen')}
+                      >
+                        <IoContract className="w-4 h-4" />
+                        {t('game.exitFullscreen')}
+                      </button>
+                      <div className="h-4 w-px bg-gray-600" />
+                      <span className="opacity-70 text-xs">{t('game.pressFForFullscreen')}</span>
+                    </div>
                   </div>
-                </div>
+                )}
               </>
+            )}
+
+            {/* Match Completion Modal - inside fullscreen container so it's visible in fullscreen */}
+            {showMatchCompletionModal && matchWinner && (
+              <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                <div className="bg-gray-900 rounded-3xl p-8 border-2 border-blue-500 max-w-md w-full mx-4">
+                  <div className="text-center">
+                    <FaTrophy className="text-yellow-400 text-6xl mx-auto mb-4" />
+                    <h2 className="text-3xl font-bold text-white mb-2">
+                      {t('game.matchWinner')}
+                    </h2>
+                    <p className="text-2xl text-blue-300 mb-6">
+                      {matchWinner.name}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleContinueAfterMatch}
+                      className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-lg font-semibold transition-all"
+                    >
+                      {tournamentManager?.getChampion() ? t('game.viewResults') : t('game.nextMatch')}
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         );
@@ -658,29 +856,6 @@ export default function LocalTournamentPage() {
   return (
     <div className="w-full h-full flex items-center justify-center p-4">
       {renderContent()}
-
-      {/* Match Completion Modal */}
-      {showMatchCompletionModal && matchWinner && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-3xl p-8 border-2 border-blue-500 max-w-md w-full mx-4">
-            <div className="text-center">
-              <FaTrophy className="text-yellow-400 text-6xl mx-auto mb-4" />
-              <h2 className="text-3xl font-bold text-white mb-2">
-                {t('game.matchWinner')}
-              </h2>
-              <p className="text-2xl text-blue-300 mb-6">
-                {matchWinner.name}
-              </p>
-              <button
-                onClick={handleContinueAfterMatch}
-                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-lg font-semibold transition-all"
-              >
-                {tournamentManager?.getChampion() ? t('game.viewResults') : t('game.nextMatch')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Tournament Winner Animation */}
       {showTournamentWinnerMessage && tournamentManager && (
