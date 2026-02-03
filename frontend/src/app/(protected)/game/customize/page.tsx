@@ -147,6 +147,8 @@ export default function CustomizePage() {
     };
   }, [socket, storeIsConnected, _hasHydrated, connect, gameState.mode, initConnection]);
 
+
+  
   // Set page title based on game mode
   useEffect(() => {
     const title =
